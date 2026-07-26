@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geomgang.core.Difficulty
 import com.geomgang.core.ForgeResult
+import com.geomgang.game.DestroyPhase
 import com.geomgang.game.ForgeUiState
 import kotlinx.coroutines.delay
 
@@ -68,11 +69,31 @@ fun ForgeScreen(
             contentAlignment = Alignment.Center,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                SwordView(state.sword, Modifier.size(150.dp, 210.dp))
+                // 제한 시간 창이 열려 있으면 검이 있던 자리를 원이나 파편이 차지한다.
+                when (val phase = state.destroyPhase) {
+                    is DestroyPhase.Prevent -> PreventRing(
+                        progress = phase.progress,
+                        enabled = state.canPrevent,
+                        onTap = onPrevent,
+                    )
+
+                    is DestroyPhase.Salvage -> SalvageShards(
+                        progress = phase.progress,
+                        onTap = onSalvage,
+                    )
+
+                    DestroyPhase.None -> SwordView(state.sword, Modifier.size(150.dp, 210.dp))
+                }
+
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = state.sword?.let { "+${it.level} ${it.family.displayName}" }
-                        ?: "검이 없다",
+                    text = when (state.destroyPhase) {
+                        is DestroyPhase.Prevent -> "지금 눌러야 한다"
+                        is DestroyPhase.Salvage -> "파편이 흩어진다"
+                        DestroyPhase.None ->
+                            state.sword?.let { "+${it.level} ${it.family.displayName}" }
+                                ?: "검이 없다"
+                    },
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                 )
@@ -94,30 +115,18 @@ fun ForgeScreen(
 
         Spacer(Modifier.height(16.dp))
 
+        // 창이 열려 있으면 하단 버튼을 감춘다. 원과 파편을 눌러야 하기 때문이다.
         if (state.awaitingDestroyChoice) {
             Text(
-                text = if (state.canPrevent) "방지권으로 되살리거나 조각을 주울 수 있다" else "파편이라도 줍자",
+                text = when (state.destroyPhase) {
+                    is DestroyPhase.Prevent ->
+                        if (state.canPrevent) "원을 눌러 검을 살려라" else "방지권이 없다"
+
+                    else -> "파편을 눌러 조각을 회수한다"
+                },
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
             )
-            Spacer(Modifier.height(10.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Button(
-                    onClick = onPrevent,
-                    enabled = state.canPrevent,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),
-                ) { Text("방지권 사용") }
-                OutlinedButton(
-                    onClick = onSalvage,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),
-                ) { Text("줍기") }
-            }
+            Spacer(Modifier.height(64.dp))
         } else {
             Button(
                 onClick = onForge,
