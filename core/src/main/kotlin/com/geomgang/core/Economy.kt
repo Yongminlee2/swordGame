@@ -24,8 +24,19 @@ object Economy {
 
     private const val COST_BASE = 30.0
     private const val COST_GROWTH = 1.45
+
     private const val PRICE_BASE = 60.0
-    private const val PRICE_GROWTH = 1.60
+
+    /**
+     * 판매가 증가율.
+     *
+     * 비용 증가율(1.45)과 비교해 정할 값이 아니다. 하락 구간에서 한 단계를 올리는 **기대** 비용은
+     * 재시도(1/p)와 떨어졌다가 되돌아오는 비용까지 곱해져 1.45보다 훨씬 빠르게 커진다.
+     * 시뮬레이션으로 재 보면 +0→+10 기대 비용이 약 11,850골드인데,
+     * 1.6 배율일 때 +10 판매가는 6,597골드라 한 바퀴마다 5,000골드씩 손해였다.
+     * 자본을 모을 수 없으니 플레이어가 영구 파산 상태로 저단계만 맴돌았다.
+     */
+    private const val PRICE_GROWTH = 1.80
 
     /** [currentLevel] 검을 한 단계 올리는 데 드는 비용. */
     fun upgradeCost(currentLevel: Int): Long {

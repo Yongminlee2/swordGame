@@ -33,23 +33,48 @@ class EconomyTest {
 
     @Test
     fun `판매가가 스펙 표와 일치한다`() {
-        // round(60 * 1.6^level)
+        // round(60 * 1.8^level)
         assertEquals(60L, Economy.sellPrice(0))
-        assertEquals(96L, Economy.sellPrice(1))
-        assertEquals(629L, Economy.sellPrice(5))
-        assertEquals(6597L, Economy.sellPrice(10))
-        assertEquals(69175L, Economy.sellPrice(15))
-        assertEquals(725355L, Economy.sellPrice(20))
+        assertEquals(108L, Economy.sellPrice(1))
+        assertEquals(1134L, Economy.sellPrice(5))
+        assertEquals(21423L, Economy.sellPrice(10))
+        assertEquals(404798L, Economy.sellPrice(15))
+        assertEquals(7648942L, Economy.sellPrice(20))
     }
 
     @Test
     fun `판매가는 비용보다 빠르게 증가한다`() {
-        // 스펙의 핵심 불변식. 고단계 도전이 계산이 서는 도박이 되려면 이게 성립해야 한다.
         for (level in 1..20) {
             val priceRatio = Economy.sellPrice(level).toDouble() / Economy.sellPrice(level - 1)
             val costRatio = Economy.upgradeCost(level).toDouble() / Economy.upgradeCost(level - 1)
             assertTrue("level=$level price=$priceRatio cost=$costRatio", priceRatio > costRatio)
         }
+    }
+
+    @Test
+    fun `판매가가 하락 구간의 기대 비용을 앞선다`() {
+        // 원시 비용끼리 비교하는 것만으로는 경제가 돌아가는지 알 수 없다.
+        // 하락 구간에서는 실패가 단계를 깎으므로, 한 단계를 올리는 기대 비용이
+        // 재시도(1/p)와 되돌아오는 비용까지 곱해져 훨씬 빠르게 커진다.
+        // +0 에서 +10 까지 올리는 기대 비용보다 +10 판매가가 커야 자본이 쌓인다.
+        var expectedCostToNext = 0.0
+        var cumulative = 0.0
+        for (current in 0 until 10) {
+            val target = current + 1
+            val p = RateTable.successRate(Difficulty.NORMAL, target)
+            val cost = Economy.upgradeCost(current).toDouble()
+            expectedCostToNext = when (RateTable.failureBand(target)) {
+                // 실패해도 제자리이므로 단순 재시도
+                FailureBand.STAY -> cost / p
+                // 실패하면 한 단계 떨어져 되돌아오는 비용이 더 붙는다
+                else -> (cost + (1 - p) * expectedCostToNext) / p
+            }
+            cumulative += expectedCostToNext
+        }
+        assertTrue(
+            "기대 비용 $cumulative vs 판매가 ${Economy.sellPrice(10)}",
+            Economy.sellPrice(10) > cumulative,
+        )
     }
 
     @Test
@@ -96,7 +121,7 @@ class EconomyTest {
     fun `검 판매는 골드를 주고 검을 없앤다`() {
         val before = state(gold = 0, sword = Sword(WeaponFamily.STRAIGHT, 10))
         val after = Economy.sellSword(before)
-        assertEquals(6597L, after.gold)
+        assertEquals(21423L, after.gold)
         assertNull(after.sword)
     }
 
