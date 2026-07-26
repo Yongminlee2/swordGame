@@ -18,6 +18,7 @@ import com.geomgang.game.ui.AchievementScreen
 import com.geomgang.game.ui.CodexScreen
 import com.geomgang.game.ui.CraftScreen
 import com.geomgang.game.ui.ForgeScreen
+import com.geomgang.game.ui.HuntScreen
 import com.geomgang.game.ui.ModeSelectScreen
 import com.geomgang.game.ui.ModeSummary
 import com.geomgang.game.ui.RecordsMenuScreen
@@ -27,7 +28,7 @@ import com.geomgang.game.ui.StatsScreen
 import com.geomgang.game.ui.SwordForgeTheme
 
 /** 강화 화면 위에 무엇이 올라와 있는지. */
-private enum class Overlay { None, Shop, Craft, Records, Codex, Achievements, Stats, Settings }
+private enum class Overlay { None, Hunt, Shop, Craft, Records, Codex, Achievements, Stats, Settings }
 
 /** 뒤로 가면 어디로 돌아가는지. 기록 하위 화면들은 메뉴로 돌아간다. */
 private fun Overlay.parent(): Overlay = when (this) {
@@ -89,12 +90,27 @@ private fun App(store: SaveStore) {
     BackHandler(enabled = !state.busy) {
         when {
             state.autoForging -> vm.stopAutoForge()
+            // 사냥 중이면 먼저 사냥터 목록으로, 거기서 한 번 더 누르면 강화 화면으로
+            state.hunt != null -> vm.leaveHunt()
             overlay != Overlay.None -> overlay = overlay.parent()
             else -> difficulty = null
         }
     }
 
     when (overlay) {
+        Overlay.Hunt -> HuntScreen(
+            state = state,
+            adventure = vm.adventure(),
+            onEnterZone = vm::enterZone,
+            onTap = vm::tapTarget,
+            onChallengeBoss = vm::challengeBoss,
+            onLeave = vm::leaveHunt,
+            onBack = {
+                vm.leaveHunt()
+                overlay = Overlay.None
+            },
+        )
+
         Overlay.Shop -> ShopScreen(
             state = state,
             onBuySword = vm::buySword,
@@ -148,6 +164,7 @@ private fun App(store: SaveStore) {
             onSalvage = vm::salvage,
             onToggleBlessing = vm::toggleBlessing,
             onToggleLuckCharm = vm::toggleLuckCharm,
+            onOpenHunt = { overlay = Overlay.Hunt },
             onOpenShop = { overlay = Overlay.Shop },
             onOpenCraft = { overlay = Overlay.Craft },
             onOpenMenu = { overlay = Overlay.Records },

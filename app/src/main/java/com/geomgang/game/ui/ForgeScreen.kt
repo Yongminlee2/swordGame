@@ -63,6 +63,7 @@ fun ForgeScreen(
     onSalvage: () -> Unit,
     onToggleBlessing: () -> Unit,
     onToggleLuckCharm: () -> Unit,
+    onOpenHunt: () -> Unit,
     onOpenShop: () -> Unit,
     onOpenCraft: () -> Unit,
     onOpenMenu: () -> Unit,
@@ -255,6 +256,25 @@ fun ForgeScreen(
                     .height(64.dp),
             ) {
                 Text("강 화", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.height(10.dp))
+            // 사냥이 강화 비용의 출처다. 강화 버튼 바로 아래에 둬서 왕복이 짧게 한다.
+            Button(
+                onClick = onOpenHunt,
+                enabled = !state.busy && !state.autoForging && state.sword != null,
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = Color(0xFF10222E),
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+            ) {
+                Text(
+                    text = "사냥터  ·  공격력 %,d".format(state.attackPower),
+                    fontWeight = FontWeight.Bold,
+                )
             }
             Spacer(Modifier.height(10.dp))
             AutoForgeBar(state, onStartAuto, onStopAuto)

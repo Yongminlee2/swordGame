@@ -42,6 +42,10 @@ data class ForgeUiState(
     val autoForging: Boolean = false,
     /** 자동강화를 켤 수 있는 상태인지 (안전구간 + 비용 충족). */
     val canAutoForge: Boolean = false,
+    /** 사냥 중일 때만 채워진다. */
+    val hunt: HuntUiState? = null,
+    /** 지금 검의 공격력. 사냥터 밖에서도 보여 준다. */
+    val attackPower: Long = 0,
 ) {
     /** 방지권이든 줍기든 응답을 기다리는 중인지. */
     val awaitingDestroyChoice: Boolean get() = destroyPhase != DestroyPhase.None

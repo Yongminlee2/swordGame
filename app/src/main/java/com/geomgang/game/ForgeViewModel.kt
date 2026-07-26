@@ -12,12 +12,15 @@ import com.geomgang.core.Progress
 import com.geomgang.core.ProgressState
 import com.geomgang.core.RateTable
 import com.geomgang.core.Achievement
+import com.geomgang.core.AdventureState
+import com.geomgang.core.Combat
 import com.geomgang.core.Recipes
 import com.geomgang.core.SaveStore
 import com.geomgang.core.Settings
 import com.geomgang.core.Timing
 import com.geomgang.core.UsedItems
 import com.geomgang.core.WeaponFamily
+import com.geomgang.core.Zone
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,6 +58,22 @@ class ForgeViewModel(
     private var countdownJob: Job? = null
 
     private var autoJob: Job? = null
+
+    // --- 사냥 상태 ---
+    // 지금 잡고 있는 대상만 메모리에 둔다. 저장되는 것은 구역과 잡은 수뿐이다.
+    // 앱을 껐다 켜면 잡던 몬스터는 사라지고 그 구역 처음부터인데, 그게 자연스럽다.
+    private var huntZone: Zone? = null
+    private var targetHp: Long = 0
+    private var targetMaxHp: Long = 0
+    private var fightingBoss = false
+    private var bossRemainingMillis: Long = 0
+    private var combo = 0
+    private var lastTapAt = 0L
+    private var lastDamage = 0L
+    private var lastHits = 0
+    private var bossFailed = false
+    private var zoneCleared = false
+    private var huntJob: Job? = null
 
     /**
      * 마지막 강화 결과. 연출이 끝나거나 파괴 창이 닫힐 때까지 유지한다.
@@ -268,6 +287,181 @@ class ForgeViewModel(
         _ui.value = render()
     }
 
+    // ---------------- 사냥 ----------------
+
+    /**
+     * 구역에 들어간다.
+     *
+     * 검이 없으면 들어갈 수 없다. 강화로 부서지면 사냥도 못 하게 되므로
+     * 파괴의 무게가 커지고 방지권의 값어치가 오른다.
+     */
+    fun enterZone(zone: Zone) {
+        if (busy || autoJob != null) return
+        if (game.sword == null) return
+        if (!game.adventure.isUnlocked(zone)) return
+
+        stopHuntLoop()
+        huntZone = zone
+        game = game.copy(adventure = game.adventure.copy(zoneId = zone.id))
+        bossFailed = false
+        zoneCleared = false
+        spawnNext()
+        startHuntLoop()
+        persist()
+        _ui.value = render()
+    }
+
+    /** 사냥터를 나온다. */
+    fun leaveHunt() {
+        stopHuntLoop()
+        huntZone = null
+        combo = 0
+        _ui.value = render()
+    }
+
+    /**
+     * 몬스터를 한 번 친다.
+     *
+     * 계열마다 최소 탭 간격이 달라서 대검은 느리고 세검은 빠르다.
+     * 간격을 못 채운 탭은 조용히 무시한다 — 눌렸는데 아무 일도 안 나는 게
+     * 잘못된 피해가 들어가는 것보다 낫다.
+     */
+    fun tapTarget() {
+        val zone = huntZone ?: return
+        val sword = game.sword ?: return
+        if (targetHp <= 0) return
+
+        val now = System.currentTimeMillis()
+        if (now - lastTapAt < Combat.minTapMillis(sword)) return
+        lastTapAt = now
+
+        val hit = Combat.hit(sword, combo, fightingBoss)
+        combo++
+        lastDamage = hit.damage
+        lastHits = hit.hits
+        targetHp -= hit.damage
+
+        if (targetHp <= 0) onTargetDown(zone)
+        _ui.value = render()
+    }
+
+    private fun onTargetDown(zone: Zone) {
+        val sword = game.sword
+        targetHp = 0
+        combo = 0
+
+        if (fightingBoss) {
+            val shards = Combat.shardReward(sword, zone.bossShards)
+            game = game.copy(
+                gold = game.gold + zone.bossGold,
+                shards = game.shards + shards,
+                adventure = game.adventure.copy(
+                    killsInZone = 0,
+                    clearedZoneIds = game.adventure.clearedZoneIds + zone.id,
+                ),
+            )
+            progress = Progress.refresh(Progress.onSell(progress, zone.bossGold))
+            zoneCleared = true
+            stopHuntLoop()
+        } else {
+            val shards = Combat.shardReward(sword, zone.monsterShards)
+            game = game.copy(
+                gold = game.gold + zone.monsterGold,
+                shards = game.shards + shards,
+                adventure = game.adventure.copy(killsInZone = game.adventure.killsInZone + 1),
+            )
+            progress = Progress.refresh(Progress.onSell(progress, zone.monsterGold))
+            if (!game.adventure.bossReady) spawnNext()
+        }
+        persist()
+    }
+
+    /** 보스에 도전한다. 잡몹을 정해진 수만큼 잡아야 열린다. */
+    fun challengeBoss() {
+        val zone = huntZone ?: return
+        if (!game.adventure.bossReady || game.sword == null) return
+        fightingBoss = true
+        bossFailed = false
+        targetMaxHp = zone.bossHp
+        targetHp = zone.bossHp
+        bossRemainingMillis = zone.bossSeconds * 1000L
+        combo = 0
+        startHuntLoop()
+        _ui.value = render()
+    }
+
+    private fun spawnNext() {
+        val zone = huntZone ?: return
+        fightingBoss = false
+        targetMaxHp = zone.monsterHp
+        targetHp = zone.monsterHp
+        bossRemainingMillis = 0
+        lastDamage = 0
+        lastHits = 0
+    }
+
+    /**
+     * 사냥터에서 1초마다 도는 루프.
+     *
+     * 용검의 화상 피해를 넣고, 보스전이면 제한 시간을 깎는다.
+     */
+    private fun startHuntLoop() {
+        stopHuntLoop()
+        huntJob = viewModelScope.launch {
+            while (huntZone != null) {
+                delay(HUNT_TICK_MILLIS)
+                val zone = huntZone ?: break
+
+                if (targetHp > 0) {
+                    val burn = Combat.burnPerSecond(game.sword)
+                    if (burn > 0) {
+                        targetHp -= burn
+                        if (targetHp <= 0) onTargetDown(zone)
+                    }
+                }
+
+                if (fightingBoss && targetHp > 0) {
+                    bossRemainingMillis -= HUNT_TICK_MILLIS
+                    if (bossRemainingMillis <= 0) {
+                        // 시간 안에 못 죽였다. 보스는 도망가고 잡몹부터 다시 모아야 한다.
+                        bossRemainingMillis = 0
+                        bossFailed = true
+                        fightingBoss = false
+                        game = game.copy(adventure = game.adventure.copy(killsInZone = 0))
+                        spawnNext()
+                        persist()
+                    }
+                }
+                _ui.value = render()
+            }
+        }
+    }
+
+    private fun stopHuntLoop() {
+        huntJob?.cancel()
+        huntJob = null
+    }
+
+    private fun renderHunt(): HuntUiState? {
+        val zone = huntZone ?: return null
+        return HuntUiState(
+            zone = zone,
+            targetName = if (fightingBoss) zone.bossName else zone.monsterName,
+            targetHp = targetHp.coerceAtLeast(0),
+            targetMaxHp = targetMaxHp.coerceAtLeast(1),
+            isBoss = fightingBoss,
+            bossRemainingMillis = bossRemainingMillis,
+            killsInZone = game.adventure.killsInZone,
+            killsNeeded = Zone.MONSTERS_BEFORE_BOSS,
+            attackPower = Combat.attackPower(game.sword),
+            combo = combo,
+            lastDamage = lastDamage,
+            lastHits = lastHits,
+            bossFailed = bossFailed,
+            zoneCleared = zoneCleared,
+        )
+    }
+
     /** 다음 강화에 축복서를 쓸지 켜고 끈다. 보유량이 없으면 켜지지 않는다. */
     fun toggleBlessing() {
         if (busy) return
@@ -343,8 +537,12 @@ class ForgeViewModel(
     override fun onCleared() {
         countdownJob?.cancel()
         autoJob?.cancel()
+        huntJob?.cancel()
         super.onCleared()
     }
+
+    /** 사냥 진행을 읽기 전용으로 노출한다. 구역 선택 화면이 쓴다. */
+    fun adventure(): AdventureState = game.adventure
 
     private fun applyBailout() {
         val rescued = Economy.applyBailoutIfNeeded(game)
@@ -362,6 +560,9 @@ class ForgeViewModel(
     private companion object {
         /** 자동강화 한 번과 다음 번 사이의 간격. 화면이 따라올 만큼은 둔다. */
         const val AUTO_FORGE_INTERVAL_MILLIS = 220L
+
+        /** 사냥 루프 주기. 화상 피해와 보스 제한 시간을 이 간격으로 처리한다. */
+        const val HUNT_TICK_MILLIS = 1_000L
     }
 
     private fun render(): ForgeUiState {
@@ -391,6 +592,8 @@ class ForgeViewModel(
             settings = settings,
             autoForging = autoJob != null,
             canAutoForge = ForgeEngine.canAutoForge(game),
+            hunt = renderHunt(),
+            attackPower = Combat.attackPower(game.sword),
             lastResult = lastResult,
             destroyPhase = phase,
             canPrevent = ForgeEngine.canPrevent(game),
