@@ -18,8 +18,10 @@ import com.geomgang.core.RateTable
 import com.geomgang.core.Achievement
 import com.geomgang.core.AdventureState
 import com.geomgang.core.Combat
+import com.geomgang.core.DailyQuests
 import com.geomgang.core.HuntEvent
 import com.geomgang.core.HuntEvents
+import com.geomgang.core.QuestKind
 import com.geomgang.core.Recipes
 import com.geomgang.core.SaveStore
 import com.geomgang.core.Settings
@@ -135,6 +137,12 @@ class ForgeViewModel(
 
     private val _ui = MutableStateFlow(render())
     val ui: StateFlow<ForgeUiState> = _ui.asStateFlow()
+
+    init {
+        // 하루가 지나 있으면 첫 화면부터 새 퀘스트가 보여야 한다.
+        refreshQuests()
+        _ui.value = render()
+    }
 
     /**
      * 세이브를 불러오면서 두 가지를 손본다.
@@ -393,6 +401,7 @@ class ForgeViewModel(
         game = game.copy(adventure = game.adventure.copy(zoneId = zone.id))
         bossFailed = false
         zoneCleared = false
+        refreshQuests() // 자정을 넘겨 계속 켜 둔 경우를 여기서 따라잡는다
         spawnNext()
         startHuntLoop()
         persist()
@@ -874,6 +883,7 @@ class ForgeViewModel(
         }
         // 재료 자리가 사라졌으므로 자동 선택 수를 다시 맞춘다
         materialCount = materialCount.coerceAtMost(game.storage.size)
+        progress = Progress.refresh(Progress.onFusion(progress))
         sound.zoneCleared()
         persist()
         _ui.value = render()
@@ -892,6 +902,7 @@ class ForgeViewModel(
         val result = StarForce.attempt(game, rng)
         game = result.state
         lastStarUp = result is StarForce.Result.Up
+        progress = Progress.refresh(Progress.onStarAttempt(progress))
         if (result is StarForce.Result.Up) {
             sound.forgeSuccess(game.sword?.level ?: 0)
             game.sword?.let {
@@ -900,6 +911,49 @@ class ForgeViewModel(
         } else {
             sound.forgeStay()
         }
+        persist()
+        _ui.value = render()
+    }
+
+    // ---------------- 퀘스트 ----------------
+
+    /**
+     * 날짜가 바뀌었으면 퀘스트를 새로 뽑는다.
+     *
+     * 시계는 여기(앱 계층)가 읽고 :core 는 문자열 키만 받는다.
+     * 별 강화는 +10부터 열리므로 그 전에는 풀에서 뺀다.
+     */
+    private fun refreshQuests() {
+        val cal = java.util.Calendar.getInstance()
+        val dateKey = "%04d%02d%02d".format(
+            cal.get(java.util.Calendar.YEAR),
+            cal.get(java.util.Calendar.MONTH) + 1,
+            cal.get(java.util.Calendar.DAY_OF_MONTH),
+        )
+        val weekKey = "%04d-%02d".format(
+            cal.get(java.util.Calendar.YEAR),
+            cal.get(java.util.Calendar.WEEK_OF_YEAR),
+        )
+        val pool = QuestKind.entries.filter {
+            it != QuestKind.STAR || progress.stats.bestLevelEver >= StarForce.MIN_LEVEL
+        }
+        val refreshed =
+            DailyQuests.refresh(game.quests, progress.stats, dateKey, weekKey, rng, pool)
+        if (refreshed != game.quests) {
+            game = game.copy(quests = refreshed)
+            persist()
+        }
+    }
+
+    /** 완료한 퀘스트의 보상을 받는다. [index] 0..2 = 일일, -1 = 주간. */
+    fun claimQuest(index: Int) {
+        val quests = game.quests
+        val target = if (index < 0) quests.weekly else quests.daily.getOrNull(index)
+        if (target == null || target.claimed || !DailyQuests.isDone(target, progress.stats)) {
+            return
+        }
+        game = DailyQuests.claim(game, progress.stats, index)
+        sound.purchase()
         persist()
         _ui.value = render()
     }
@@ -1002,6 +1056,22 @@ class ForgeViewModel(
             canAutoForge = ForgeEngine.canAutoForge(game),
             hunt = renderHunt(),
             attackPower = Combat.attackPower(game.sword),
+            quests = game.quests,
+            questProgress = game.quests.daily.map {
+                DailyQuests.progressOf(it, progress.stats)
+            },
+            weeklyProgress = game.quests.weekly?.let {
+                DailyQuests.progressOf(it, progress.stats)
+            } ?: 0,
+            questClaimable = run {
+                val dailyReady = game.quests.daily.any {
+                    !it.claimed && DailyQuests.isDone(it, progress.stats)
+                }
+                val weeklyReady = game.quests.weekly?.let {
+                    !it.claimed && DailyQuests.isDone(it, progress.stats)
+                } ?: false
+                dailyReady || weeklyReady
+            },
             lastResult = lastResult,
             destroyPhase = phase,
             canPrevent = ForgeEngine.canPrevent(game),

@@ -3,6 +3,7 @@ package com.geomgang.game
 import com.geomgang.core.Difficulty
 import com.geomgang.core.ForgeResult
 import com.geomgang.core.ProgressState
+import com.geomgang.core.QuestState
 import com.geomgang.core.Settings
 import com.geomgang.core.Sword
 import com.geomgang.core.WeaponFamily
@@ -59,6 +60,13 @@ data class ForgeUiState(
     val hunt: HuntUiState? = null,
     /** 지금 검의 공격력. 사냥터 밖에서도 보여 준다. */
     val attackPower: Long = 0,
+    /** 일일·주간 퀘스트. */
+    val quests: QuestState = QuestState(),
+    /** 일일 3개의 진행도 (quests.daily 와 같은 순서). */
+    val questProgress: List<Int> = emptyList(),
+    val weeklyProgress: Int = 0,
+    /** 수령 가능한 퀘스트가 하나라도 있는지. 강화 화면 배지가 이걸 본다. */
+    val questClaimable: Boolean = false,
 ) {
     /** 방지권이든 줍기든 응답을 기다리는 중인지. */
     val awaitingDestroyChoice: Boolean get() = destroyPhase != DestroyPhase.None
