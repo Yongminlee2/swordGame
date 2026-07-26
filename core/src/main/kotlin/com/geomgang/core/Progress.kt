@@ -1,5 +1,7 @@
 package com.geomgang.core
 
+import kotlinx.serialization.Serializable
+
 /**
  * 업적. 각 업적은 해금되는 칭호를 하나씩 갖는다.
  *
@@ -37,6 +39,7 @@ enum class Achievement(val id: String, val displayName: String, val title: Strin
 }
 
 /** 도감 한 칸의 획득 기록. 같은 계열·티어라도 난이도가 다르면 별개 기록이다. */
+@Serializable
 data class CodexKey(
     val family: WeaponFamily,
     val tier: WeaponTier,
@@ -48,6 +51,7 @@ data class CodexKey(
  *
  * [attemptsByLevel]과 [successesByLevel]이 통계 화면의 "표기 확률 대 실제 확률" 비교표를 만든다.
  */
+@Serializable
 data class Stats(
     val attempts: Long = 0,
     val successes: Long = 0,
@@ -85,6 +89,7 @@ data class Stats(
  * 모드를 초기화해도 이 상태는 지우지 않는다. 수집물이 초기화로 날아가면
  * 아무도 초기화를 누르지 않게 되고, 그러면 재도전이라는 이 장르의 핵심 재미가 막힌다.
  */
+@Serializable
 data class ProgressState(
     val codex: Set<CodexKey> = emptySet(),
     val achievements: Set<Achievement> = emptySet(),
