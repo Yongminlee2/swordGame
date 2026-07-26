@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geomgang.core.Difficulty
 import com.geomgang.core.ForgeResult
+import com.geomgang.core.WeaponCatalog
 import com.geomgang.game.DestroyPhase
 import com.geomgang.game.ForgeUiState
 
@@ -156,13 +157,21 @@ fun ForgeScreen(
                     text = when (state.destroyPhase) {
                         is DestroyPhase.Prevent -> "지금 눌러야 한다"
                         is DestroyPhase.Salvage -> "파편이 흩어진다"
-                        DestroyPhase.None ->
-                            state.sword?.let { "+${it.level} ${it.family.displayName}" }
-                                ?: "검이 없다"
+                        // 검의 이름은 계열이 아니라 티어다. 계열은 형태만 정한다.
+                        DestroyPhase.None -> state.sword?.let {
+                            "+${it.level} ${WeaponCatalog.tierFor(it.level).displayName}"
+                        } ?: "검이 없다"
                     },
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                 )
+                if (state.destroyPhase == DestroyPhase.None && state.sword != null) {
+                    Text(
+                        text = "${state.sword.family.displayName} 계열",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
+                    )
+                }
                 Spacer(Modifier.height(6.dp))
                 ResultBanner(state.lastResult)
             }
