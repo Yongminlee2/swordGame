@@ -14,10 +14,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -56,8 +58,11 @@ fun ForgeScreen(
     onForge: () -> Unit,
     onPrevent: () -> Unit,
     onSalvage: () -> Unit,
-    onSell: () -> Unit,
-    onBuy: () -> Unit,
+    onToggleBlessing: () -> Unit,
+    onToggleLuckCharm: () -> Unit,
+    onOpenShop: () -> Unit,
+    onOpenCraft: () -> Unit,
+    onExit: () -> Unit,
     onAnimationEnd: () -> Unit,
 ) {
     val shake = remember { Animatable(0f) }
@@ -103,10 +108,19 @@ fun ForgeScreen(
             .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
-            text = "${state.difficulty.displayLabel()} · 최고 +${state.bestLevel}",
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            TextButton(onClick = onExit, enabled = !state.busy) {
+                Text("← 모드", color = MaterialTheme.colorScheme.secondary)
+            }
+            Text(
+                text = "${state.difficulty.displayLabel()} · 최고 +${state.bestLevel}",
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+            )
+        }
 
         Box(
             modifier = Modifier
@@ -163,6 +177,30 @@ fun ForgeScreen(
             InfoRow("다음 성공률", "${state.successPercent}%")
             InfoRow("강화 비용", "%,d".format(state.upgradeCost))
             InfoRow("판매가", "%,d".format(state.sellPrice))
+
+            if (!state.awaitingDestroyChoice) {
+                Spacer(Modifier.height(10.dp))
+                // 아이템은 한 번 쓰면 토글이 내려간다. 매번 다시 켜야 한다.
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    FilterChip(
+                        selected = state.useBlessing,
+                        onClick = onToggleBlessing,
+                        enabled = state.blessingScrolls > 0 && !state.busy,
+                        label = { Text("축복서 ${state.blessingScrolls}") },
+                        modifier = Modifier.weight(1f),
+                    )
+                    FilterChip(
+                        selected = state.useLuckCharm,
+                        onClick = onToggleLuckCharm,
+                        enabled = state.luckCharms > 0 && !state.busy,
+                        label = { Text("행운부적 ${state.luckCharms}") },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
         }
 
         Spacer(Modifier.height(16.dp))
@@ -196,15 +234,15 @@ fun ForgeScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 OutlinedButton(
-                    onClick = onSell,
-                    enabled = !state.busy && state.sword != null,
+                    onClick = onOpenShop,
+                    enabled = !state.busy,
                     modifier = Modifier.weight(1f),
-                ) { Text("판매") }
+                ) { Text("상점") }
                 OutlinedButton(
-                    onClick = onBuy,
-                    enabled = state.canBuySword,
+                    onClick = onOpenCraft,
+                    enabled = !state.busy,
                     modifier = Modifier.weight(1f),
-                ) { Text("새 검 구입") }
+                ) { Text("조합소  ${state.shards}") }
             }
         }
     }
