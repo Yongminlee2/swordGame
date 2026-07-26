@@ -136,6 +136,26 @@ class GauntletTest {
         assertFalse(after.cursed)
     }
 
+    @Test
+    fun `10층 최초 돌파는 허검을 주고 두 번째는 안 준다`() {
+        val state = GameState(difficulty = Difficulty.ENDLESS)
+        val first = GauntletEngine.applyMilestones(state, 10)
+        assertEquals(WeaponFamily.VOID, first.storage.single().family)
+        assertEquals(10, first.gauntletBest)
+        val second = GauntletEngine.applyMilestones(first, 11)
+        assertEquals(1, second.storage.size)
+        assertEquals(11, second.gauntletBest)
+    }
+
+    @Test
+    fun `25층 최초 돌파는 회랑의 정령 알을 준다`() {
+        val state = GameState(difficulty = Difficulty.ENDLESS, gauntletBest = 20)
+        val after = GauntletEngine.applyMilestones(state, 25)
+        assertEquals(1, after.pets.counts[PetKind.HALL_WISP.id])
+        // 10층 보상은 이미 지났으므로(gauntletBest 20) 다시 주지 않는다
+        assertTrue(after.storage.isEmpty())
+    }
+
     /** nextInt 만 쓰는 간단 난수. */
     private class ScriptedIntRandom(private val value: Int) : kotlin.random.Random() {
         override fun nextBits(bitCount: Int): Int = 0

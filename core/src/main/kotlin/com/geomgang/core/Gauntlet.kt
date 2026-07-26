@@ -208,4 +208,24 @@ object GauntletEngine {
     fun payout(run: GauntletRun): Pair<Long, Int> =
         (run.bankedGold + (run.pendingGold * LOSS_RATIO).roundToLong()) to
             (run.bankedShards + (run.pendingShards * LOSS_RATIO).toInt())
+
+    /**
+     * 층 돌파 마일스톤을 적용한다.
+     *
+     * 10층 최초 돌파 = 허검 +10 (보관함이 꽉 찼어도 지급한다 - 1회뿐인 보상을 잃게 하지 않는다),
+     * 25층 최초 돌파 = 회랑의 정령 알. 최고 기록도 여기서 갱신한다.
+     */
+    fun applyMilestones(state: GameState, clearedFloor: Int): GameState {
+        var s = state
+        if (state.gauntletBest < VOID_FLOOR && clearedFloor >= VOID_FLOOR) {
+            s = s.copy(storage = s.storage + Sword(WeaponFamily.VOID, 10))
+        }
+        if (state.gauntletBest < WISP_FLOOR && clearedFloor >= WISP_FLOOR) {
+            s = s.copy(pets = Pets.addEgg(s.pets, PetKind.HALL_WISP.id))
+        }
+        if (clearedFloor > s.gauntletBest) {
+            s = s.copy(gauntletBest = clearedFloor)
+        }
+        return s
+    }
 }

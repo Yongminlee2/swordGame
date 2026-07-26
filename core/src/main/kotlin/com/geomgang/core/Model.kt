@@ -143,6 +143,8 @@ data class GameState(
     val essences: Map<String, Int> = emptyMap(),
     /** 펫 보유·장착 상태. */
     val pets: PetState = PetState(),
+    /** 무한 회랑 최고 기록(깬 층). */
+    val gauntletBest: Int = 0,
 ) {
     init {
         require(gold >= 0) { "gold must be >= 0, was $gold" }

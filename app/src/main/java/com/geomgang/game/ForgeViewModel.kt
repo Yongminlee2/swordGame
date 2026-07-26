@@ -7,6 +7,9 @@ import com.geomgang.core.Economy
 import com.geomgang.core.ForgeEngine
 import com.geomgang.core.ForgeResult
 import com.geomgang.core.Fusion
+import com.geomgang.core.GauntletBuff
+import com.geomgang.core.GauntletEngine
+import com.geomgang.core.GauntletRun
 import com.geomgang.core.MaterialBoost
 import com.geomgang.core.StarForce
 import com.geomgang.core.GameState
@@ -611,6 +614,106 @@ class ForgeViewModel(
         lastCrit = false
     }
 
+    // ---------------- 무한 회랑 ----------------
+
+    private var gauntletRun: GauntletRun? = null
+    private var gauntletJob: Job? = null
+    private var gauntletTapAt = 0L
+
+    /** 화산 보스를 잡아야 회랑이 열린다. 중반부터 열려야 컨텐츠로 산다. */
+    fun gauntletUnlocked(): Boolean = Zone.VOLCANO.id in game.adventure.clearedZoneIds
+
+    fun enterGauntlet() {
+        if (busy || autoJob != null || huntZone != null) return
+        if (game.sword == null || !gauntletUnlocked()) return
+        gauntletRun = GauntletEngine.start()
+        gauntletJob?.cancel()
+        gauntletJob = viewModelScope.launch {
+            while (gauntletRun != null && gauntletRun?.over != true) {
+                delay(HUNT_TICK_MILLIS)
+                gauntletRun = gauntletRun?.let { GauntletEngine.tick(it, HUNT_TICK_MILLIS) }
+                _ui.value = render()
+            }
+        }
+        _ui.value = render()
+    }
+
+    fun tapGauntlet() {
+        val run = gauntletRun ?: return
+        if (run.over || run.choosing) return
+        val sword = game.sword ?: return
+        val now = System.currentTimeMillis()
+        if (now - gauntletTapAt < Combat.minTapMillis(sword)) return
+        gauntletTapAt = now
+
+        val critBuff = if (GauntletBuff.CRIT in run.buffs) GauntletEngine.CRIT_BUFF else 0.0
+        val critRoll = rng.nextDouble() - Pets.critBonusOf(game.pets) - critBuff
+        val hit = Combat.hit(sword, 0, run.isBossFloor, critRoll, run.monsterMaxHp)
+        var next = GauntletEngine.damage(run, hit.damage)
+
+        if (next.choosing && next.choices.isEmpty()) {
+            // 층을 깼다 - 갈림길을 굴리고 마일스톤(허검·정령 알·기록)을 적용한다
+            next = next.copy(choices = GauntletEngine.rollChoices(next.floor, rng))
+            game = GauntletEngine.applyMilestones(game, next.floor)
+            sound.zoneCleared()
+            persist()
+        } else if (run.isBossFloor) {
+            sound.bossHit(1)
+        } else {
+            sound.hit(1)
+        }
+        gauntletRun = next
+        _ui.value = render()
+    }
+
+    fun chooseGauntlet(index: Int) {
+        val run = gauntletRun ?: return
+        if (!run.choosing) return
+        gauntletRun = GauntletEngine.choose(run, index)
+        sound.purchase()
+        _ui.value = render()
+    }
+
+    /** 회랑을 나온다. 정산: 확정 전액 + 미확정 70% (회랑의 정령이 배수를 곱한다). */
+    fun leaveGauntlet() {
+        val run = gauntletRun ?: return
+        val (gold, shards) = GauntletEngine.payout(run)
+        val mult = Pets.gauntletMultOf(game.pets)
+        val finalGold = (gold * mult).toLong()
+        val finalShards = (shards * mult).toInt()
+        game = game.copy(gold = game.gold + finalGold, shards = game.shards + finalShards)
+        progress = Progress.refresh(Progress.onSell(progress, finalGold))
+        gauntletJob?.cancel()
+        gauntletJob = null
+        gauntletRun = null
+        refreshQuests()
+        persist()
+        _ui.value = render()
+    }
+
+    private fun renderGauntlet(): GauntletUiState? {
+        val run = gauntletRun ?: return null
+        return GauntletUiState(
+            floor = run.floor,
+            kills = run.killsInFloor,
+            waveSize = run.waveSize,
+            timeLeftMillis = run.timeLeftMillis,
+            monsterHp = run.monsterHp.coerceAtLeast(0),
+            monsterMaxHp = run.monsterMaxHp.coerceAtLeast(1),
+            isBossFloor = run.isBossFloor,
+            cursed = run.cursed,
+            buffs = run.buffs,
+            choosing = run.choosing,
+            choices = run.choices,
+            pendingGold = run.pendingGold,
+            pendingShards = run.pendingShards,
+            bankedGold = run.bankedGold,
+            bankedShards = run.bankedShards,
+            over = run.over,
+            best = game.gauntletBest,
+        )
+    }
+
     /** 이 구역의 펫 알을 준다. */
     private fun grantEgg(zone: Zone) {
         val pet = PetKind.byZone(zone.id) ?: return
@@ -1131,6 +1234,9 @@ class ForgeViewModel(
             essences = game.essences,
             pets = game.pets,
             lastEgg = lastEgg,
+            gauntlet = renderGauntlet(),
+            gauntletUnlocked = gauntletUnlocked(),
+            gauntletBest = game.gauntletBest,
             quests = game.quests,
             questProgress = game.quests.daily.map {
                 DailyQuests.progressOf(it, progress.stats)

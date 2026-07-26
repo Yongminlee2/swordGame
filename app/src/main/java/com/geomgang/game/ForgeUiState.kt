@@ -75,6 +75,11 @@ data class ForgeUiState(
     val pets: PetState = PetState(),
     /** 방금 얻은 펫 알. 화면이 알린 뒤 비운다. */
     val lastEgg: PetKind? = null,
+    /** 무한 회랑 런. 밖에서는 null. */
+    val gauntlet: GauntletUiState? = null,
+    /** 회랑이 열렸는지 (화산 보스 처치). */
+    val gauntletUnlocked: Boolean = false,
+    val gauntletBest: Int = 0,
 ) {
     /** 방지권이든 줍기든 응답을 기다리는 중인지. */
     val awaitingDestroyChoice: Boolean get() = destroyPhase != DestroyPhase.None
