@@ -32,6 +32,28 @@ private fun rememberMonsterSheet(): ImageBitmap {
     }
 }
 
+/** 펫 아이콘. 미소유는 회색 실루엣. */
+@Composable
+fun PetSprite(
+    petId: String,
+    owned: Boolean,
+    modifier: Modifier = Modifier,
+    size: Dp = 40.dp,
+) {
+    val sheet = rememberMonsterSheet()
+    val src = MonsterSheet.offsetOf(MonsterSheet.petCellOf(petId))
+    Canvas(modifier.size(size)) {
+        drawImage(
+            image = sheet,
+            srcOffset = src,
+            srcSize = IntSize(MonsterSheet.CELL, MonsterSheet.CELL),
+            dstSize = IntSize(this.size.width.toInt(), this.size.height.toInt()),
+            filterQuality = FilterQuality.None,
+            colorFilter = if (owned) null else ColorFilter.tint(Color(0xE0333344)),
+        )
+    }
+}
+
 /**
  * 몬스터 한 마리.
  *

@@ -26,7 +26,9 @@ import com.geomgang.core.WeaponCatalog
 @Composable
 fun RecordsMenuScreen(
     progress: ProgressState,
+    ownedPets: Int,
     onOpenCodex: () -> Unit,
+    onOpenPets: () -> Unit,
     onOpenAchievements: () -> Unit,
     onOpenStats: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -45,6 +47,11 @@ fun RecordsMenuScreen(
             title = "도감",
             subtitle = "$codexCount / ${WeaponCatalog.ENTRIES.size} 수집",
             onClick = onOpenCodex,
+        )
+        MenuRow(
+            title = "펫",
+            subtitle = "$ownedPets / ${com.geomgang.core.PetKind.entries.size} 수집 · 장착 효과",
+            onClick = onOpenPets,
         )
         MenuRow(
             title = "업적 · 칭호",

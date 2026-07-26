@@ -19,6 +19,7 @@ import com.geomgang.game.ui.CodexScreen
 import com.geomgang.game.ui.CraftScreen
 import com.geomgang.game.ui.ForgeScreen
 import com.geomgang.game.ui.HuntScreen
+import com.geomgang.game.ui.PetScreen
 import com.geomgang.game.ui.QuestScreen
 import com.geomgang.game.ui.RecordsMenuScreen
 import com.geomgang.game.ui.SettingsScreen
@@ -28,11 +29,12 @@ import com.geomgang.game.ui.StorageScreen
 import com.geomgang.game.ui.SwordForgeTheme
 
 /** 강화 화면 위에 무엇이 올라와 있는지. */
-private enum class Overlay { None, Hunt, Storage, Shop, Craft, Records, Codex, Quests, Achievements, Stats, Settings }
+private enum class Overlay { None, Hunt, Storage, Shop, Craft, Records, Codex, Quests, Pets, Achievements, Stats, Settings }
 
 /** 뒤로 가면 어디로 돌아가는지. 기록 하위 화면들은 메뉴로 돌아간다. */
 private fun Overlay.parent(): Overlay = when (this) {
-    Overlay.Codex, Overlay.Achievements, Overlay.Stats, Overlay.Settings -> Overlay.Records
+    Overlay.Codex, Overlay.Pets, Overlay.Achievements, Overlay.Stats, Overlay.Settings ->
+        Overlay.Records
     else -> Overlay.None
 }
 
@@ -107,6 +109,12 @@ private fun App(store: SaveStore) {
             onBack = { overlay = Overlay.None },
         )
 
+        Overlay.Pets -> PetScreen(
+            state = state,
+            onEquip = vm::equipPet,
+            onBack = { overlay = Overlay.Records },
+        )
+
         Overlay.Storage -> StorageScreen(
             state = state,
             onStore = vm::storeSword,
@@ -133,10 +141,14 @@ private fun App(store: SaveStore) {
 
         Overlay.Records -> RecordsMenuScreen(
             progress = state.progress,
+            ownedPets = com.geomgang.core.PetKind.entries.count {
+                com.geomgang.core.Pets.owns(state.pets, it.id)
+            },
             onOpenCodex = {
                 codexOrigin = Overlay.Records
                 overlay = Overlay.Codex
             },
+            onOpenPets = { overlay = Overlay.Pets },
             onOpenAchievements = { overlay = Overlay.Achievements },
             onOpenStats = { overlay = Overlay.Stats },
             onOpenSettings = { overlay = Overlay.Settings },
