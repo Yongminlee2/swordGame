@@ -26,6 +26,8 @@ object Fusion {
         if (indices.size < MIN_MATERIALS || indices.size > MAX_MATERIALS) return false
         if (indices.distinct().size != indices.size) return false
         if (indices.any { it !in state.storage.indices }) return false
+        // 고유검은 녹일 수 없다. 실수 한 번으로 전설이 사라지면 안 된다.
+        if (indices.any { state.storage[it].uniqueId != null }) return false
         return state.gold >= cost(state, indices)
     }
 
@@ -48,17 +50,27 @@ object Fusion {
     fun preview(state: GameState, indices: List<Int>): Sword? {
         val materials = indices.mapNotNull { state.storage.getOrNull(it) }
         if (materials.size < MIN_MATERIALS) return null
-        return resultOf(materials)
+        return resultOf(materials, state.essences)
     }
 
     /**
      * 재료들로 만들어지는 검.
      *
-     * 계열은 **가장 많이 넣은 계열**이고, 동수면 최고 단계 검의 계열을 따른다.
+     * **숨은 레시피가 먼저다** - 재료·정수가 [UniqueSwords] 레시피와 맞으면 고유검이 나온다.
+     * 아니면 일반 규칙: 계열은 **가장 많이 넣은 계열**이고, 동수면 최고 단계 검의 계열을 따른다.
      * 별은 이어지지 않는다 — 녹여서 새로 만드는 것이므로 0부터다.
      */
-    fun resultOf(materials: List<Sword>): Sword {
+    fun resultOf(materials: List<Sword>, essences: Map<String, Int> = emptyMap()): Sword {
         require(materials.size >= MIN_MATERIALS) { "need at least $MIN_MATERIALS materials" }
+
+        UniqueSwords.match(materials, essences)?.let { recipe ->
+            return Sword(
+                family = recipe.resultFamily,
+                level = materials.maxOf { it.level },
+                stars = 0,
+                uniqueId = recipe.id,
+            )
+        }
 
         val best = materials.maxBy { it.level }
         val sameFamily = materials.all { it.family == best.family }
@@ -79,16 +91,30 @@ object Fusion {
         )
     }
 
-    /** 재료를 소모하고 결과 검을 보관함에 넣는다. */
+    /** 재료를 소모하고 결과 검을 보관함에 넣는다. 고유검이면 정수도 차감한다. */
     fun fuse(state: GameState, indices: List<Int>): GameState {
         check(canFuse(state, indices)) { "cannot fuse with $indices" }
         val materials = indices.map { state.storage[it] }
-        val result = resultOf(materials)
+        val result = resultOf(materials, state.essences)
         val remaining = state.storage.filterIndexed { i, _ -> i !in indices }
+
+        val essencesLeft = if (result.uniqueId != null) {
+            val recipe = checkNotNull(UniqueSwords.byId(result.uniqueId))
+            state.essences.toMutableMap().apply {
+                for ((zoneId, count) in recipe.essences) {
+                    val next = (this[zoneId] ?: 0) - count
+                    if (next > 0) this[zoneId] = next else remove(zoneId)
+                }
+            }
+        } else {
+            state.essences
+        }
+
         return state.copy(
             gold = state.gold - cost(state, indices),
             storage = remaining + result,
             bestLevel = maxOf(state.bestLevel, result.level),
+            essences = essencesLeft,
         )
     }
 }

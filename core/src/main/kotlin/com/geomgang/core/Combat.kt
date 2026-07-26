@@ -149,9 +149,10 @@ object Combat {
         if (sword == null) return Hit(0, 0)
         val style = FamilyStyle.of(sword.family)
         val comboBonus = (style.comboGain * combo).coerceAtMost(MAX_COMBO_BONUS)
-        val bossBonus = if (isBoss) style.bossBonus else 1.0
-        val crit = critRoll < CRIT_CHANCE
-        val maxHpBonus = targetMaxHp * style.maxHpRatio
+        val bossBonus =
+            if (isBoss) style.bossBonus * UniqueSwords.bossBonusOf(sword) else 1.0
+        val crit = critRoll < CRIT_CHANCE + UniqueSwords.critBonusOf(sword)
+        val maxHpBonus = targetMaxHp * (style.maxHpRatio + UniqueSwords.maxHpRatioOf(sword))
         val perHit =
             (attackPower(sword) * (1.0 + comboBonus) * bossBonus + maxHpBonus) / style.hits
         // 치명타 배수는 합산 피해에 곱한다 - 타격 수(쌍검 2연타 등)는 그대로다.
@@ -163,21 +164,27 @@ object Combat {
         )
     }
 
-    /** 탭하지 않는 동안 1초마다 들어가는 피해. 용검만 0이 아니다. */
+    /** 탭하지 않는 동안 1초마다 들어가는 피해. 용검 계열만 0이 아니다. */
     fun burnPerSecond(sword: Sword?): Long {
         if (sword == null) return 0
         val style = FamilyStyle.of(sword.family)
         if (style.burnRatio == 0.0) return 0
-        return (attackPower(sword) * style.burnRatio).roundToLong().coerceAtLeast(1)
+        return (attackPower(sword) * style.burnRatio * UniqueSwords.burnMultOf(sword))
+            .roundToLong().coerceAtLeast(1)
     }
 
     fun minTapMillis(sword: Sword?): Long =
-        sword?.let { FamilyStyle.of(it.family).minTapMillis } ?: 150
+        sword?.let {
+            (FamilyStyle.of(it.family).minTapMillis * UniqueSwords.tapIntervalMultOf(it))
+                .roundToLong()
+        } ?: 150
 
-    /** 잡몹을 잡았을 때 얻는 조각. 계열 보정이 붙는다. */
+    /** 잡몹을 잡았을 때 얻는 조각. 계열·고유검 보정이 붙는다. */
     fun shardReward(sword: Sword?, base: Int): Int {
         if (base == 0) return 0
-        val mult = sword?.let { FamilyStyle.of(it.family).shardBonus } ?: 1.0
+        val mult = sword?.let {
+            FamilyStyle.of(it.family).shardBonus * UniqueSwords.shardMultOf(it)
+        } ?: 1.0
         return (base * mult).roundToLong().toInt().coerceAtLeast(1)
     }
 

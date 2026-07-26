@@ -99,7 +99,8 @@ object ForgeEngine {
         )
 
         val successRate = (
-            RateTable.successRate(state.difficulty, targetLevel, items.blessing) + extraSuccessRate
+            RateTable.successRate(state.difficulty, targetLevel, items.blessing) +
+                extraSuccessRate + UniqueSwords.forgeBonusOf(sword)
             ).coerceAtMost(RateTable.MAX_SUCCESS_RATE)
         if (rng.nextDouble() < successRate) {
             return ForgeResult.Success(
@@ -123,14 +124,28 @@ object ForgeEngine {
 
             FailureBand.DESTROY_OR_DROP ->
                 if (rng.nextDouble() < RateTable.destroyChance(targetLevel)) {
-                    ForgeResult.Destroyed(
-                        state = paid.copy(
-                            sword = null,
-                            pendingDestroy = PendingDestroy(sword.family, sword.level),
-                        ),
-                        lostLevel = sword.level,
-                        preventable = paid.inventory.preventTickets > 0,
-                    )
+                    if (UniqueSwords.canRevive(sword)) {
+                        // 불사조 - 파괴 대신 한 번 되살아난다. 대가로 단계를 잃고
+                        // 고유의 힘도 재가 된다(uniqueId 소멸). 난수 소비는 파괴와 동일.
+                        val revived = sword.copy(
+                            level = (sword.level - UniqueSwords.REVIVE_LEVEL_LOSS)
+                                .coerceAtLeast(0),
+                            uniqueId = null,
+                        )
+                        ForgeResult.Drop(
+                            state = paid.copy(sword = revived),
+                            newLevel = revived.level,
+                        )
+                    } else {
+                        ForgeResult.Destroyed(
+                            state = paid.copy(
+                                sword = null,
+                                pendingDestroy = PendingDestroy(sword.family, sword.level),
+                            ),
+                            lostLevel = sword.level,
+                            preventable = paid.inventory.preventTickets > 0,
+                        )
+                    }
                 } else {
                     drop(paid, sword)
                 }
