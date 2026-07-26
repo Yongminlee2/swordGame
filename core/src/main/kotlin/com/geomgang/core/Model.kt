@@ -43,11 +43,22 @@ enum class WeaponFamily(val id: String, val displayName: String) {
     }
 }
 
-/** 보유 중인 검 한 자루. */
+/**
+ * 보유 중인 검 한 자루.
+ *
+ * [stars] 는 강화 단계와 별개의 계층이다. 단계는 파괴 위험을 안고 올리는 것이고,
+ * 별은 파괴 없이 조각을 태워 올리는 것이다. 자세한 규칙은 [StarForce] 에 있다.
+ * 기본값이 0이라 별이 없던 옛 세이브도 그대로 읽힌다.
+ */
 @Serializable
-data class Sword(val family: WeaponFamily, val level: Int) {
+data class Sword(
+    val family: WeaponFamily,
+    val level: Int,
+    val stars: Int = 0,
+) {
     init {
         require(level >= 0) { "level must be >= 0, was $level" }
+        require(stars >= 0) { "stars must be >= 0, was $stars" }
     }
 }
 

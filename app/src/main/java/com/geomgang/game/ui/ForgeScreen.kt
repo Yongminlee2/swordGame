@@ -68,9 +68,12 @@ fun ForgeScreen(
     onOpenStorage: () -> Unit,
     onOpenShop: () -> Unit,
     onOpenCraft: () -> Unit,
+    onOpenCodex: () -> Unit,
     onOpenMenu: () -> Unit,
     onStartAuto: (Int) -> Unit,
     onStopAuto: () -> Unit,
+    onMaterialCount: (Int) -> Unit,
+    onStarUp: () -> Unit,
     onAnimationEnd: () -> Unit,
 ) {
     val shake = remember { Animatable(0f) }
@@ -257,6 +260,9 @@ fun ForgeScreen(
                 Text("강 화", fontSize = 22.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.height(10.dp))
+            MaterialBar(state, onMaterialCount)
+            StarBar(state, onStarUp)
+            Spacer(Modifier.height(10.dp))
             // 사냥이 강화 비용의 출처다. 강화 버튼 바로 아래에 둬서 왕복이 짧게 한다.
             Button(
                 onClick = onOpenHunt,
@@ -294,12 +300,23 @@ fun ForgeScreen(
                 ) { Text("조합소  ${state.shards}") }
             }
             Spacer(Modifier.height(8.dp))
-            OutlinedButton(
-                onClick = onOpenStorage,
-                enabled = !state.busy && !state.autoForging,
+            Row(
                 modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text("보관함  ${state.storage.size}/${state.storageCapacity}")
+                OutlinedButton(
+                    onClick = onOpenStorage,
+                    enabled = !state.busy && !state.autoForging,
+                    modifier = Modifier.weight(1.4f),
+                ) {
+                    Text("보관함  ${state.storage.size}/${state.storageCapacity}")
+                }
+                // 도감은 기록 메뉴 안에 묻혀 있어 찾지 못했다. 여기에도 입구를 둔다.
+                OutlinedButton(
+                    onClick = onOpenCodex,
+                    enabled = !state.busy && !state.autoForging,
+                    modifier = Modifier.weight(1f),
+                ) { Text("도감") }
             }
         }
     }
@@ -355,6 +372,117 @@ private fun AutoForgeBar(
 
 /** 자동강화 목표로 고를 수 있는 최대 단계. 안전구간의 끝이다. */
 private const val AUTO_FORGE_TARGET_MAX = 5
+
+/**
+ * 재료 강화 막대.
+ *
+ * 어느 검을 태울지 고르게 하지 않는다. 개수만 정하면 보관함의 **낮은 단계부터** 집는다.
+ * 태울 것은 늘 잡템이고, 고르는 화면을 하나 더 두면 강화 리듬이 끊긴다.
+ */
+@Composable
+private fun MaterialBar(state: ForgeUiState, onMaterialCount: (Int) -> Unit) {
+    if (state.sword == null || state.maxMaterials == 0) return
+
+    Column(Modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(
+                text = "재료 강화 (낮은 검부터 태운다)",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+            )
+            if (state.materialCount > 0) {
+                Text(
+                    text = "성공률 +${state.materialBonusPercent}%p",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            (0..state.maxMaterials).forEach { count ->
+                FilterChip(
+                    selected = state.materialCount == count,
+                    onClick = { onMaterialCount(count) },
+                    enabled = !state.busy && !state.autoForging,
+                    label = {
+                        Text(if (count == 0) "안 씀" else "${count}개", fontSize = 12.sp)
+                    },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+    }
+}
+
+/**
+ * 별 강화(특수강화) 막대.
+ *
+ * 강화 단계와 별개의 계층이다. **실패해도 검이 부서지지 않고 별만 하나 줄어든다** —
+ * 그래야 두 계층의 긴장이 겹치지 않는다.
+ */
+@Composable
+private fun StarBar(state: ForgeUiState, onStarUp: () -> Unit) {
+    val star = state.star ?: return
+
+    Column(Modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(
+                text = "특수강화  " + "★".repeat(star.stars) + "☆".repeat(star.maxStars - star.stars),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFFFD24A),
+            )
+            if (star.attackBonusPercent > 0) {
+                Text(
+                    text = "공격력 +${star.attackBonusPercent}%",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
+        star.lastUp?.let {
+            Text(
+                text = if (it) "별이 하나 올랐다" else "실패 — 별 하나를 잃었다 (검은 무사하다)",
+                fontSize = 12.sp,
+                color = if (it) Color(0xFF7FD48A) else Color(0xFFE0906A),
+            )
+        }
+        Spacer(Modifier.height(4.dp))
+        if (star.stars >= star.maxStars) {
+            Text(
+                "더 올릴 별이 없다",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+            )
+        } else {
+            OutlinedButton(
+                onClick = onStarUp,
+                enabled = !state.busy && !state.autoForging && star.affordable,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = "별 올리기  ${star.successPercent}%  ·  조각 ${star.shardCost} · " +
+                        " %,d골드".format(star.goldCost),
+                    fontSize = 13.sp,
+                )
+            }
+            if (!star.affordable) {
+                Text(
+                    "조각이나 골드가 모자라다",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+                )
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+    }
+}
 
 @Composable
 private fun ResultBanner(result: ForgeResult?) {

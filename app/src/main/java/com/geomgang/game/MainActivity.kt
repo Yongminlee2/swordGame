@@ -70,12 +70,15 @@ private fun App(store: SaveStore) {
     }
     val state by vm.ui.collectAsStateWithLifecycle()
     var overlay by remember { mutableStateOf(Overlay.None) }
+    // 도감은 강화 화면과 기록 메뉴 두 곳에서 열린다. 들어온 곳으로 돌아가야 한다.
+    var codexOrigin by remember { mutableStateOf(Overlay.Records) }
 
     BackHandler(enabled = !state.busy) {
         when {
             state.autoForging -> vm.stopAutoForge()
             // 사냥 중이면 먼저 사냥터 목록으로, 거기서 한 번 더 누르면 강화 화면으로
             state.hunt != null -> vm.leaveHunt()
+            overlay == Overlay.Codex -> overlay = codexOrigin
             overlay != Overlay.None -> overlay = overlay.parent()
             else -> Unit
         }
@@ -101,6 +104,7 @@ private fun App(store: SaveStore) {
             onEquip = vm::equipFromStorage,
             onSell = vm::sellFromStorage,
             onScrap = vm::scrapFromStorage,
+            onFuse = vm::fuse,
             onBack = { overlay = Overlay.None },
         )
 
@@ -120,7 +124,10 @@ private fun App(store: SaveStore) {
 
         Overlay.Records -> RecordsMenuScreen(
             progress = state.progress,
-            onOpenCodex = { overlay = Overlay.Codex },
+            onOpenCodex = {
+                codexOrigin = Overlay.Records
+                overlay = Overlay.Codex
+            },
             onOpenAchievements = { overlay = Overlay.Achievements },
             onOpenStats = { overlay = Overlay.Stats },
             onOpenSettings = { overlay = Overlay.Settings },
@@ -129,7 +136,7 @@ private fun App(store: SaveStore) {
 
         Overlay.Codex -> CodexScreen(
             progress = state.progress,
-            onBack = { overlay = Overlay.Records },
+            onBack = { overlay = codexOrigin },
         )
 
         Overlay.Achievements -> AchievementScreen(
@@ -163,9 +170,15 @@ private fun App(store: SaveStore) {
             onOpenStorage = { overlay = Overlay.Storage },
             onOpenShop = { overlay = Overlay.Shop },
             onOpenCraft = { overlay = Overlay.Craft },
+            onOpenCodex = {
+                codexOrigin = Overlay.None
+                overlay = Overlay.Codex
+            },
             onOpenMenu = { overlay = Overlay.Records },
             onStartAuto = vm::startAutoForge,
             onStopAuto = vm::stopAutoForge,
+            onMaterialCount = vm::setMaterialCount,
+            onStarUp = vm::starUp,
             onAnimationEnd = vm::onAnimationFinished,
         )
     }

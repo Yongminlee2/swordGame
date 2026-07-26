@@ -103,11 +103,16 @@ object Combat {
     /** 연속 타격으로 얻을 수 있는 최대 추가 배수. */
     const val MAX_COMBO_BONUS = 0.6
 
-    /** 검이 없으면 사냥할 수 없다. */
+    /**
+     * 검이 없으면 사냥할 수 없다.
+     *
+     * 강화 단계가 기본값을 정하고, 계열이 배수를, 별이 다시 배수를 곱한다.
+     */
     fun attackPower(sword: Sword?): Long {
         if (sword == null) return 0
         val base = POWER_BASE * POWER_GROWTH.pow(sword.level.toDouble())
-        return (base * FamilyStyle.of(sword.family).damage).roundToLong().coerceAtLeast(1)
+        val withFamily = base * FamilyStyle.of(sword.family).damage
+        return (withFamily * StarForce.attackMultiplier(sword)).roundToLong().coerceAtLeast(1)
     }
 
     /**

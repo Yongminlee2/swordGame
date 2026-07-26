@@ -6,6 +6,9 @@ import com.geomgang.core.Difficulty
 import com.geomgang.core.Economy
 import com.geomgang.core.ForgeEngine
 import com.geomgang.core.ForgeResult
+import com.geomgang.core.Fusion
+import com.geomgang.core.MaterialBoost
+import com.geomgang.core.StarForce
 import com.geomgang.core.GameState
 import com.geomgang.core.Item
 import com.geomgang.core.MonsterKind
@@ -93,6 +96,17 @@ class ForgeViewModel(
     private var dropMissed = false
 
     /**
+     * 다음 강화에 태울 재료 수.
+     *
+     * 어느 검을 태울지 고르게 하지 않고 **낮은 단계부터 자동으로** 집는다.
+     * 태울 것은 늘 잡템이고, 고르는 화면을 하나 더 두면 강화 리듬이 끊긴다.
+     */
+    private var materialCount = 0
+
+    /** 마지막 별 강화가 성공했는지. 화면이 알린 뒤 비운다. */
+    private var lastStarUp: Boolean? = null
+
+    /**
      * 마지막 강화 결과. 연출이 끝나거나 파괴 창이 닫힐 때까지 유지한다.
      *
      * 카운트다운이 매 틱마다 화면을 다시 그리는데, 여기서 결과를 들고 있지 않으면
@@ -162,7 +176,15 @@ class ForgeViewModel(
         val targetLevel = sword.level + 1
         val cost = Economy.upgradeCost(sword.level)
 
-        val result = ForgeEngine.attempt(game, items, rng)
+        // 재료는 강화 성패와 무관하게 태워진다. 판정 전에 먼저 소모하고 보정을 넘긴다.
+        val materials = materialIndices()
+        val materialBonus = MaterialBoost.bonusFor(materials.map { game.storage[it] })
+        if (materials.isNotEmpty()) {
+            game = MaterialBoost.consume(game, materials)
+            materialCount = 0
+        }
+
+        val result = ForgeEngine.attempt(game, items, rng, extraSuccessRate = materialBonus)
         // 아이템은 한 번 쓰면 내려간다. 켜 둔 채 잊고 연타하면 순식간에 녹는다.
         pendingItems = UsedItems.NONE
         game = result.state
@@ -680,6 +702,78 @@ class ForgeViewModel(
         _ui.value = render()
     }
 
+    // ---------------- 조합 · 재료 · 별 ----------------
+
+    /** 보관함의 검 여러 자루를 녹여 한 자루로 만든다. */
+    fun fuse(indices: List<Int>) {
+        if (busy || autoJob != null || !Fusion.canFuse(game, indices)) return
+        game = Fusion.fuse(game, indices)
+        game.storage.lastOrNull()?.let {
+            progress = Progress.refresh(Progress.registerSword(progress, game.difficulty, it))
+        }
+        // 재료 자리가 사라졌으므로 자동 선택 수를 다시 맞춘다
+        materialCount = materialCount.coerceAtMost(game.storage.size)
+        sound.zoneCleared()
+        persist()
+        _ui.value = render()
+    }
+
+    /** 다음 강화에 태울 재료 수를 정한다. */
+    fun setMaterialCount(count: Int) {
+        if (busy || autoJob != null) return
+        materialCount = count.coerceIn(0, minOf(MaterialBoost.MAX_MATERIALS, game.storage.size))
+        _ui.value = render()
+    }
+
+    /** 별을 하나 올려 본다. 실패해도 검은 부서지지 않는다. */
+    fun starUp() {
+        if (busy || autoJob != null || !StarForce.canAfford(game)) return
+        val result = StarForce.attempt(game, rng)
+        game = result.state
+        lastStarUp = result is StarForce.Result.Up
+        if (result is StarForce.Result.Up) {
+            sound.forgeSuccess(game.sword?.level ?: 0)
+            game.sword?.let {
+                progress = Progress.refresh(Progress.registerSword(progress, game.difficulty, it))
+            }
+        } else {
+            sound.forgeStay()
+        }
+        persist()
+        _ui.value = render()
+    }
+
+    /** 별 강화 결과 알림을 화면이 읽은 뒤 비운다. */
+    fun clearStarNotice() {
+        if (lastStarUp == null) return
+        lastStarUp = null
+        _ui.value = render()
+    }
+
+    /** 지금 태울 재료로 집힌 보관함 자리. 낮은 단계부터 고른다. */
+    private fun materialIndices(): List<Int> =
+        game.storage
+            .withIndex()
+            .sortedBy { it.value.level }
+            .take(materialCount)
+            .map { it.index }
+
+    private fun renderStar(): StarUiState? {
+        val sword = game.sword ?: return null
+        if (sword.level < StarForce.MIN_LEVEL) return null
+        return StarUiState(
+            stars = sword.stars,
+            maxStars = StarForce.MAX_STARS,
+            successPercent = (StarForce.successRate(sword) * 100).roundToInt(),
+            shardCost = StarForce.shardCost(sword),
+            goldCost = StarForce.goldCost(sword),
+            affordable = StarForce.canAfford(game),
+            attackBonusPercent =
+                ((StarForce.attackMultiplier(sword) - 1.0) * 100).roundToInt(),
+            lastUp = lastStarUp,
+        )
+    }
+
     /** 보관함의 검을 부숴 조각으로 바꾼다. */
     fun scrapFromStorage(index: Int) {
         if (busy || index !in game.storage.indices) return
@@ -737,6 +831,10 @@ class ForgeViewModel(
             storageCapacity = Storage.CAPACITY,
             lastDrop = lastDrop,
             dropMissed = dropMissed,
+            materialCount = materialCount,
+            materialBonusPercent = (MaterialBoost.bonusFor(materialIndices().map { game.storage[it] }) * 100).roundToInt(),
+            maxMaterials = minOf(MaterialBoost.MAX_MATERIALS, game.storage.size),
+            star = renderStar(),
             progress = progress,
             settings = settings,
             autoForging = autoJob != null,

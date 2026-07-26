@@ -74,7 +74,15 @@ object ForgeEngine {
         return canAttempt(state, UsedItems.NONE)
     }
 
-    fun attempt(state: GameState, items: UsedItems, rng: Random): ForgeResult {
+    /**
+     * @param extraSuccessRate 재료 강화 같은 외부 보정(%p). 상한은 [RateTable.MAX_SUCCESS_RATE] 가 지킨다.
+     */
+    fun attempt(
+        state: GameState,
+        items: UsedItems,
+        rng: Random,
+        extraSuccessRate: Double = 0.0,
+    ): ForgeResult {
         check(canAttempt(state, items)) {
             "attempt() called on a state that fails canAttempt()"
         }
@@ -90,7 +98,9 @@ object ForgeEngine {
             inventory = inventory,
         )
 
-        val successRate = RateTable.successRate(state.difficulty, targetLevel, items.blessing)
+        val successRate = (
+            RateTable.successRate(state.difficulty, targetLevel, items.blessing) + extraSuccessRate
+            ).coerceAtMost(RateTable.MAX_SUCCESS_RATE)
         if (rng.nextDouble() < successRate) {
             return ForgeResult.Success(
                 state = paid.copy(
