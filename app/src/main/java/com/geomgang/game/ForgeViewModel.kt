@@ -12,6 +12,8 @@ import com.geomgang.core.StarForce
 import com.geomgang.core.GameState
 import com.geomgang.core.Item
 import com.geomgang.core.MonsterKind
+import com.geomgang.core.PetKind
+import com.geomgang.core.Pets
 import com.geomgang.core.Progress
 import com.geomgang.core.ProgressState
 import com.geomgang.core.RateTable
@@ -110,6 +112,9 @@ class ForgeViewModel(
 
     /** 방금 떨어진 검. 화면이 알린 뒤 비운다. */
     private var lastDrop: Sword? = null
+
+    /** 방금 얻은 펫 알. 화면이 알린 뒤 비운다. */
+    private var lastEgg: PetKind? = null
 
     /** 보관함이 꽉 차서 드롭을 놓쳤는지. */
     private var dropMissed = false
@@ -440,7 +445,9 @@ class ForgeViewModel(
         if (now - lastTapAt < Combat.minTapMillis(sword)) return
         lastTapAt = now
 
-        val hit = Combat.hit(sword, combo, fightingBoss, rng.nextDouble(), targetMaxHp)
+        // 펫 치명타 보너스는 롤 값에서 빼는 방식이다 - 문턱을 넓히는 것과 같다
+        val critRoll = rng.nextDouble() - Pets.critBonusOf(game.pets)
+        val hit = Combat.hit(sword, combo, fightingBoss, critRoll, targetMaxHp)
         combo++
         lastDamage = hit.damage
         lastHits = hit.hits
@@ -480,6 +487,10 @@ class ForgeViewModel(
                 Progress.onMonsterKill(Progress.onSell(progress, bossGold), isBoss = true),
             )
             rollDrop(zone, isBoss = true)
+            // 보스는 낮은 확률로 자기 구역 펫의 알을 떨어뜨린다 (드롭 판정 뒤 난수 1개)
+            if (rng.nextDouble() < Pets.EGG_DROP_CHANCE) {
+                grantEgg(zone)
+            }
             zoneCleared = true
             sound.zoneCleared()
             stopHuntLoop()
@@ -490,11 +501,21 @@ class ForgeViewModel(
             val golden = if (goldenRemainingMillis > 0) HuntEvents.GOLDEN_MULT else 1.0
             val gold = (
                 zone.goldOf(kind) * bonus * eventMult * golden *
-                    UniqueSwords.goldMultOf(sword)
+                    UniqueSwords.goldMultOf(sword) * Pets.goldMultOf(game.pets)
                 ).toLong()
-            val eggShards = if (activeEvent == HuntEvent.STRANGE_EGG) HuntEvents.EGG_SHARDS else 0
-            val shards =
-                Combat.shardReward(sword, (kind.shards * bonus * golden).toInt()) + eggShards
+            // 수상한 알: 낮은 확률로 진짜 펫 알, 아니면 조각 잭팟 (난수 1개)
+            var eggShards = 0
+            if (activeEvent == HuntEvent.STRANGE_EGG) {
+                if (rng.nextDouble() < Pets.EGG_EVENT_CHANCE) {
+                    grantEgg(zone)
+                } else {
+                    eggShards = HuntEvents.EGG_SHARDS
+                }
+            }
+            val shards = (
+                Combat.shardReward(sword, (kind.shards * bonus * golden).toInt()) *
+                    Pets.shardMultOf(game.pets)
+                ).toInt() + eggShards
             lastKillGold = gold
             game = game.copy(
                 gold = game.gold + gold,
@@ -522,7 +543,7 @@ class ForgeViewModel(
         bossFailed = false
         targetMaxHp = zone.bossHp
         targetHp = zone.bossHp
-        bossRemainingMillis = zone.bossSeconds * 1000L
+        bossRemainingMillis = zone.bossSeconds * 1000L + Pets.bossTimeBonusMillis(game.pets)
         combo = 0
         startHuntLoop()
         _ui.value = render()
@@ -534,7 +555,7 @@ class ForgeViewModel(
 
         // 구역마다 몬스터가 여러 종류다. 한 종류만 계속 잡으면 금방 지루해진다.
         val kind = zone.monsterFor(rng.nextInt(1_000))
-        rareTarget = rng.nextDouble() < Zone.RARE_CHANCE
+        rareTarget = rng.nextDouble() < Zone.RARE_CHANCE + Pets.rareBonusOf(game.pets)
 
         // 이벤트. 지속 효과(골든타임·상인·금덩이)가 살아 있으면 새로 굴리지 않는다 -
         // 변수가 겹치면 어느 것도 특별하지 않게 된다.
@@ -544,7 +565,7 @@ class ForgeViewModel(
         val buffActive =
             goldenRemainingMillis > 0 || merchantRemainingMillis > 0 || nuggetsLeft > 0
         if (!buffActive) {
-            val event = if (rng.nextDouble() < HuntEvents.CHANCE) {
+            val event = if (rng.nextDouble() < HuntEvents.CHANCE + Pets.eventBonusOf(game.pets)) {
                 HuntEvents.pick(rng.nextDouble())
             } else {
                 null
@@ -588,6 +609,29 @@ class ForgeViewModel(
         // hitSeq 는 리셋하지 않는다 - 화면이 팝업 키로 쓰므로 되돌리면 충돌한다.
         // lastKillGold 도 리셋하지 않는다 - 처치 직후 스폰되므로 화면이 아직 그리는 중이다.
         lastCrit = false
+    }
+
+    /** 이 구역의 펫 알을 준다. */
+    private fun grantEgg(zone: Zone) {
+        val pet = PetKind.byZone(zone.id) ?: return
+        game = game.copy(pets = Pets.addEgg(game.pets, pet.id))
+        lastEgg = pet
+        sound.purchase()
+    }
+
+    /** 펫 알 알림을 화면이 읽은 뒤 비운다. */
+    fun clearEggNotice() {
+        if (lastEgg == null) return
+        lastEgg = null
+        _ui.value = render()
+    }
+
+    /** 펫을 장착하거나(소유한 것만) 해제한다(null). */
+    fun equipPet(id: String?) {
+        if (busy) return
+        game = game.copy(pets = Pets.equip(game.pets, id))
+        persist()
+        _ui.value = render()
     }
 
     /** 금덩이를 탭한다. 골든타임이면 그것도 2배다. */
@@ -640,6 +684,16 @@ class ForgeViewModel(
                     val burn = Combat.burnPerSecond(game.sword)
                     if (burn > 0) {
                         targetHp -= burn
+                        if (targetHp <= 0) onTargetDown(zone)
+                    }
+                }
+
+                // 펫 자동 타격 (쿼카·아기 용)
+                if (targetHp > 0) {
+                    val petDps =
+                        (Combat.attackPower(game.sword) * Pets.autoTapRatio(game.pets)).toLong()
+                    if (petDps > 0) {
+                        targetHp -= petDps
                         if (targetHp <= 0) onTargetDown(zone)
                     }
                 }
@@ -831,7 +885,7 @@ class ForgeViewModel(
             isBoss = isBoss,
             families = Progress.unlockedFamilies(progress),
             rng = rng,
-            chanceMult = UniqueSwords.dropMultOf(game.sword),
+            chanceMult = UniqueSwords.dropMultOf(game.sword) * Pets.dropMultOf(game.pets),
         ) ?: return
 
         if (Storage.isFull(game)) {
@@ -967,6 +1021,10 @@ class ForgeViewModel(
             return
         }
         game = DailyQuests.claim(game, progress.stats, index)
+        // 주간은 조각에 더해 지금 사냥 중인 구역의 펫 알을 준다
+        if (index < 0) {
+            grantEgg(game.adventure.zone)
+        }
         sound.purchase()
         persist()
         _ui.value = render()
@@ -1071,6 +1129,8 @@ class ForgeViewModel(
             hunt = renderHunt(),
             attackPower = Combat.attackPower(game.sword),
             essences = game.essences,
+            pets = game.pets,
+            lastEgg = lastEgg,
             quests = game.quests,
             questProgress = game.quests.daily.map {
                 DailyQuests.progressOf(it, progress.stats)

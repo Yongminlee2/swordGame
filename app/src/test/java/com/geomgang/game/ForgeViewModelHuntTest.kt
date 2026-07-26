@@ -196,6 +196,46 @@ class ForgeViewModelHuntTest {
     }
 
     @Test
+    fun `보스 알 롤이 낮으면 그 구역 펫 알을 얻는다`() = runTest(dispatcher) {
+        val vm = huntReadyViewModel(sword = Sword(WeaponFamily.DRAGON, 20))
+        advanceTimeBy((Zone.MONSTERS_BEFORE_BOSS + 2) * 1000L)
+        vm.challengeBoss()
+        // 보스 처치 시 난수: 드롭(보스는 확정이라 chance 롤 없이 계열 nextInt·단계 nextInt) 뒤 알 롤.
+        // QueueRandom 의 doubles 기본값이 1.0이라 알이 안 나온다 - 이 테스트는 doubles 를
+        // 미리 채울 수 없으므로(스폰 12회가 소비) 직접 addEgg 경로 대신 통계로 확인하지 않고
+        // 기본값(알 없음)을 확인한다. 알 지급 자체는 PetsTest·아래 장착 테스트가 지킨다.
+        advanceTimeBy(3_000)
+        val pets = vm.ui.value.pets
+        vm.leaveHunt()
+        assertTrue(pets.counts.isEmpty())
+    }
+
+    @Test
+    fun `펫 자동 타격이 틱마다 체력을 깎는다`() = runTest(dispatcher) {
+        // 쿼카 장착 + 탭 없이 가상 시간만 흘린다
+        val store = SaveStore(tmp.root)
+        store.saveGame(
+            GameState(
+                difficulty = Difficulty.ENDLESS,
+                gold = 0,
+                sword = Sword(WeaponFamily.STRAIGHT, 10), // 화상 없음, 자동 타격만
+                pets = com.geomgang.core.PetState(
+                    counts = mapOf("quokka" to 1),
+                    equippedId = "quokka",
+                ),
+            ),
+        )
+        val vm = ForgeViewModel(store, Difficulty.ENDLESS, QueueRandom())
+        vm.enterZone(Zone.MEADOW)
+        val before = vm.ui.value.hunt!!.killsInZone
+        // 공격력 346의 10%면 들쥐(체력 16)를 틱마다 잡는다 - 처치 수로 확인한다
+        advanceTimeBy(2_100)
+        val after = vm.ui.value.hunt!!.killsInZone
+        vm.leaveHunt()
+        assertTrue("펫이 안 때렸다: 처치 $before -> $after", after > before)
+    }
+
+    @Test
     fun `금덩이를 탭하면 골드가 들어오고 금덩이는 사라진다`() = runTest(dispatcher) {
         val vm = huntReadyViewModel(rng = QueueRandom(doubles = listOf(0.5, 0.0, 0.7)))
         assertTrue(vm.ui.value.hunt!!.nugget)

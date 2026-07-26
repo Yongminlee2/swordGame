@@ -2,6 +2,8 @@ package com.geomgang.game
 
 import com.geomgang.core.Difficulty
 import com.geomgang.core.ForgeResult
+import com.geomgang.core.PetKind
+import com.geomgang.core.PetState
 import com.geomgang.core.ProgressState
 import com.geomgang.core.QuestState
 import com.geomgang.core.Settings
@@ -69,6 +71,10 @@ data class ForgeUiState(
     val questClaimable: Boolean = false,
     /** 구역 정수(Zone id → 개수). 고유검 레시피의 재료다. */
     val essences: Map<String, Int> = emptyMap(),
+    /** 펫 보유·장착 상태. */
+    val pets: PetState = PetState(),
+    /** 방금 얻은 펫 알. 화면이 알린 뒤 비운다. */
+    val lastEgg: PetKind? = null,
 ) {
     /** 방지권이든 줍기든 응답을 기다리는 중인지. */
     val awaitingDestroyChoice: Boolean get() = destroyPhase != DestroyPhase.None
