@@ -1,11 +1,13 @@
 package com.geomgang.game.ui
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import android.graphics.BitmapFactory
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -13,26 +15,23 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.geomgang.core.Sword
 import com.geomgang.core.WeaponFamily
-
-/**
- * 아이콘을 세워서 보여 주기 위한 회전 각도.
- *
- * game-icons 의 무기는 대각선으로 그려져 있다. 강화 게임에서는 검이 서 있어야
- * 단계가 오르는 느낌이 나므로 통째로 돌려 세운다.
- */
-private const val UPRIGHT_DEGREES = -45f
+import com.geomgang.game.R
 
 /**
  * 검 그림.
  *
- * 실루엣과 색은 [SwordArt] 가 정한다. 이 파일은 겹쳐 그리기와 연출만 맡는다.
+ * 스프라이트시트에서 해당 칸만 잘라 크게 그린다.
+ * 픽셀아트라 확대할 때 보간을 끄는 것이 중요하다 — 켜 두면 흐물흐물해진다.
  *
  * @param shake 좌우 흔들림(px). 실패·하락 연출에서 준다.
  * @param flash 0~1. 1에 가까울수록 [flashColor] 로 덮인다. 성공·파괴 연출에서 준다.
@@ -51,13 +50,13 @@ fun SwordView(
             .drawWithContent {
                 drawContent()
                 if (flash > 0f) {
-                    drawRect(color = flashColor.copy(alpha = flash * 0.55f))
+                    drawRect(color = flashColor.copy(alpha = flash * 0.5f))
                 }
             },
         contentAlignment = Alignment.Center,
     ) {
         if (sword != null) {
-            SwordLayers(sword.family, sword.level, Modifier.fillMaxSize())
+            SpriteBox(sword.family, sword.level, Modifier.fillMaxSize())
         }
     }
 }
@@ -72,88 +71,77 @@ fun SwordThumb(
     dimmed: Boolean = false,
 ) {
     Box(modifier, contentAlignment = Alignment.Center) {
-        if (dimmed) {
-            // 아직 못 얻은 칸. 같은 실루엣을 어둡게만 보여 준다.
-            Image(
-                painter = painterResource(SwordArt.drawableFor(family, level)),
-                contentDescription = null,
-                colorFilter = ColorFilter.tint(Color(0xFF3E3552)),
-                modifier = Modifier
-                    .size(size)
-                    .graphicsLayer { rotationZ = UPRIGHT_DEGREES },
-            )
-        } else {
-            SwordLayers(family, level, Modifier.size(size))
-        }
+        SpriteBox(
+            family = family,
+            level = level,
+            modifier = Modifier.size(size),
+            withAura = false,
+            dimmed = dimmed,
+        )
     }
 }
 
 @Composable
-private fun SwordLayers(family: WeaponFamily, level: Int, modifier: Modifier) {
-    val palette = SwordArt.paletteFor(level)
-    val painter = painterResource(SwordArt.drawableFor(family, level))
+private fun SpriteBox(
+    family: WeaponFamily,
+    level: Int,
+    modifier: Modifier,
+    withAura: Boolean = true,
+    dimmed: Boolean = false,
+) {
+    val sheet = rememberSheet()
+    val src = SwordSheet.spriteOffset(family, level)
+    val aura = SwordSheet.auraFor(level)
 
-    Box(modifier, contentAlignment = Alignment.Center) {
-        // 뒤에서 번지는 빛. 확대 사본을 겹치는 대신 그라디언트로 깐다 —
-        // 아이콘이 뷰박스 중앙에 있지 않아 중심 확대를 하면 그림자가 어긋나 보인다.
-        if (palette.auraAlpha > 0f) {
-            Canvas(Modifier.fillMaxSize()) {
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            palette.glow.copy(alpha = palette.auraAlpha * 0.55f),
-                            Color.Transparent,
-                        ),
-                        center = Offset(size.width / 2f, size.height / 2f),
-                        radius = size.minDimension * 0.5f,
-                    ),
-                    radius = size.minDimension * 0.5f,
+    Canvas(modifier) {
+        if (withAura && aura.alpha > 0f) {
+            val r = size.minDimension * 0.46f
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(aura.color.copy(alpha = aura.alpha), Color.Transparent),
                     center = Offset(size.width / 2f, size.height / 2f),
-                )
-            }
+                    radius = r,
+                ),
+                radius = r,
+                center = Offset(size.width / 2f, size.height / 2f),
+            )
         }
 
-        // 단색 실루엣은 납작해 보인다. 같은 그림을 위·아래로 나눠 다른 밝기로 칠하면
-        // 위에서 빛이 드는 금속처럼 읽힌다. 아래 두 겹의 그리는 순서가 곧 명암이다.
-        SwordBand(painter, palette.glow, top = 0f, bottom = LIGHT_BAND)
-        SwordBand(painter, palette.blade, top = LIGHT_BAND, bottom = MID_BAND)
-        SwordBand(painter, palette.shade, top = MID_BAND, bottom = 1f)
+        // 정사각형으로 꽉 채우되 가운데 정렬한다
+        val side = size.minDimension
+        val left = ((size.width - side) / 2f).toInt()
+        val top = ((size.height - side) / 2f).toInt()
+
+        drawImage(
+            image = sheet,
+            srcOffset = IntOffset(src.x, src.y),
+            srcSize = SwordSheet.cellSize,
+            dstOffset = IntOffset(left, top),
+            dstSize = IntSize(side.toInt(), side.toInt()),
+            // 픽셀아트는 보간을 끄지 않으면 흐려진다
+            filterQuality = FilterQuality.None,
+            colorFilter = if (dimmed) {
+                ColorFilter.tint(Color(0xFF2E2740))
+            } else {
+                null
+            },
+        )
     }
 }
-
-/** 밝은 부분이 차지하는 높이 비율. */
-private const val LIGHT_BAND = 0.38f
-
-/** 중간 밝기가 끝나는 높이 비율. */
-private const val MID_BAND = 0.72f
 
 /**
- * 검의 일부 높이만 [color] 로 칠해 그린다.
+ * 스프라이트시트를 한 번만 읽어 재사용한다.
  *
- * 벡터를 그라디언트로 채울 수는 없으므로, 같은 그림을 여러 번 그리며
- * 높이 구간을 잘라 다른 색을 입히는 방식으로 명암을 만든다.
+ * 검을 그리는 곳이 여러 군데라 매번 디코딩하면 낭비다.
+ *
+ * `inScaled = false` 가 중요하다. 켜 두면 안드로이드가 화면 밀도에 맞춰 비트맵을 늘려
+ * 48×480 이 몇 배로 커지고, 그러면 16px 격자를 세는 [SwordSheet] 의 좌표가 전부 어긋난다.
  */
 @Composable
-private fun SwordBand(
-    painter: androidx.compose.ui.graphics.painter.Painter,
-    color: Color,
-    top: Float,
-    bottom: Float,
-) {
-    Image(
-        painter = painter,
-        contentDescription = null,
-        colorFilter = ColorFilter.tint(color),
-        modifier = Modifier
-            .fillMaxSize()
-            .graphicsLayer { rotationZ = UPRIGHT_DEGREES }
-            .drawWithContent {
-                clipRect(
-                    top = size.height * top,
-                    bottom = size.height * bottom,
-                ) {
-                    this@drawWithContent.drawContent()
-                }
-            },
-    )
+private fun rememberSheet(): ImageBitmap {
+    val resources = LocalContext.current.resources
+    return remember {
+        val options = BitmapFactory.Options().apply { inScaled = false }
+        BitmapFactory.decodeResource(resources, R.drawable.sword_sheet, options).asImageBitmap()
+    }
 }

@@ -125,11 +125,12 @@ fun SettingsScreen(
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Text(
-                    text = "game-icons.net · CC BY 3.0\n" +
-                        "제작: Lorc, Delapouite, Skoll\n" +
-                        "https://game-icons.net\n" +
-                        "https://creativecommons.org/licenses/by/3.0/\n\n" +
-                        "SVG 경로 데이터만 사용해 벡터로 다시 만들었으며, 색은 앱에서 입혔다.",
+                    text = "The Humble Sword Pack · CC BY 4.0\n" +
+                        "제작: The Wise Hedgehog\n" +
+                        "https://opengameart.org/content/the-humble-sword-pack\n" +
+                        "https://creativecommons.org/licenses/by/4.0/\n\n" +
+                        "16비트 픽셀아트 검 30종 × 낡음 3단계. 스프라이트시트에서 " +
+                        "필요한 칸만 잘라 그린다.",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )
