@@ -101,15 +101,15 @@ private fun CodexCell(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(0.8f),
+                contentAlignment = Alignment.Center,
             ) {
                 // 못 얻은 칸도 형태는 보여 준다. 무엇을 노려야 하는지 알아야 모으고 싶어진다.
-                Canvas(Modifier.fillMaxSize()) {
-                    if (discovered) {
-                        drawSword(entry.family, entry.tier.minLevel)
-                    } else {
-                        drawSilhouette(entry.family, entry.tier.minLevel)
-                    }
-                }
+                SwordThumb(
+                    family = entry.family,
+                    level = entry.tier.minLevel,
+                    dimmed = !discovered,
+                    size = 52.dp,
+                )
             }
 
             Text(
@@ -164,13 +164,3 @@ private fun dotColor(d: Difficulty): Color = when (d) {
     Difficulty.ENDLESS -> Color(0xFFC79BFF)
 }
 
-/**
- * 아직 못 얻은 칸. 형태만 어둡게 남긴다.
- *
- * 색을 흉내 내 따로 그리지 않고, 실제 검을 그린 뒤 배경색을 덮는다.
- * 그래야 실루엣이 실제 검과 정확히 같은 모양이 되고, 아트를 고쳐도 따라온다.
- */
-private fun DrawScope.drawSilhouette(family: WeaponFamily, level: Int) {
-    drawSword(family, level)
-    drawRect(color = Color(0xFF1A1426).copy(alpha = 0.82f))
-}

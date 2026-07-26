@@ -164,7 +164,7 @@ fun ForgeScreen(
 
                     DestroyPhase.None -> SwordView(
                         sword = state.sword,
-                        modifier = Modifier.size(150.dp, 210.dp),
+                        modifier = Modifier.size(210.dp, 210.dp),
                         shake = shake.value,
                         flash = flash.value,
                         flashColor = flashColor,

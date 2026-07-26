@@ -90,12 +90,32 @@ fun SettingsScreen(
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 Text("리소스 라이선스", fontWeight = FontWeight.Medium)
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "이 앱의 검 그림은 전부 코드로 그린다. 외부 이미지 파일을 쓰지 않는다.\n\n" +
-                        "타사 게임의 그래픽·사운드를 사용하지 않았으며, 변형해 사용하지도 않았다. " +
-                        "곡선날·가시·비늘·십자 코등이 같은 요소는 판타지 무기의 일반적 표현 관습이다.\n\n" +
-                        "외부 에셋을 추가하게 되면 그 출처와 라이선스를 이 화면에 표기한다.",
+                    text = "검 아이콘",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = "game-icons.net · CC BY 3.0\n" +
+                        "제작: Lorc, Delapouite, Skoll\n" +
+                        "https://game-icons.net\n" +
+                        "https://creativecommons.org/licenses/by/3.0/\n\n" +
+                        "SVG 경로 데이터만 사용해 벡터로 다시 만들었으며, 색은 앱에서 입혔다.",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = "그 외",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = "타사 게임의 그래픽·사운드를 사용하지 않았으며, 변형해 사용하지도 않았다.\n" +
+                        "비트맵 이미지 파일이 하나도 없다. 전부 벡터다.",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )
