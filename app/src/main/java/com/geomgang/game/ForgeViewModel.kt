@@ -7,9 +7,11 @@ import com.geomgang.core.Economy
 import com.geomgang.core.ForgeEngine
 import com.geomgang.core.ForgeResult
 import com.geomgang.core.GameState
+import com.geomgang.core.Item
 import com.geomgang.core.Progress
 import com.geomgang.core.ProgressState
 import com.geomgang.core.RateTable
+import com.geomgang.core.Recipes
 import com.geomgang.core.SaveStore
 import com.geomgang.core.Timing
 import com.geomgang.core.UsedItems
@@ -56,6 +58,9 @@ class ForgeViewModel(
      */
     private var lastResult: ForgeResult? = null
 
+    /** 다음 강화에 쓸 아이템. 한 번 쓰면 [UsedItems.NONE] 으로 돌아간다. */
+    private var pendingItems: UsedItems = UsedItems.NONE
+
     private val _ui = MutableStateFlow(render())
     val ui: StateFlow<ForgeUiState> = _ui.asStateFlow()
 
@@ -87,12 +92,15 @@ class ForgeViewModel(
     }
 
     fun forge() {
-        if (busy || !ForgeEngine.canAttempt(game, UsedItems.NONE)) return
+        val items = pendingItems
+        if (busy || !ForgeEngine.canAttempt(game, items)) return
         val sword = game.sword ?: return
         val targetLevel = sword.level + 1
         val cost = Economy.upgradeCost(sword.level)
 
-        val result = ForgeEngine.attempt(game, UsedItems.NONE, rng)
+        val result = ForgeEngine.attempt(game, items, rng)
+        // 아이템은 한 번 쓰면 내려간다. 켜 둔 채 잊고 연타하면 순식간에 녹는다.
+        pendingItems = UsedItems.NONE
         game = result.state
         progress = Progress.refresh(
             Progress.onAttempt(progress, game.difficulty, sword.family, targetLevel, cost, result),
@@ -194,6 +202,42 @@ class ForgeViewModel(
         closeDestroyWindow()
     }
 
+    /** 다음 강화에 축복서를 쓸지 켜고 끈다. 보유량이 없으면 켜지지 않는다. */
+    fun toggleBlessing() {
+        if (busy) return
+        val next = !pendingItems.blessing
+        if (next && game.inventory.blessingScrolls <= 0) return
+        pendingItems = pendingItems.copy(blessing = next)
+        _ui.value = render()
+    }
+
+    /** 다음 강화에 행운부적을 쓸지 켜고 끈다. 보유량이 없으면 켜지지 않는다. */
+    fun toggleLuckCharm() {
+        if (busy) return
+        val next = !pendingItems.luckCharm
+        if (next && game.inventory.luckCharms <= 0) return
+        pendingItems = pendingItems.copy(luckCharm = next)
+        _ui.value = render()
+    }
+
+    fun buyItem(item: Item) {
+        if (busy || !Economy.canBuyItem(game, item)) return
+        game = Economy.buyItem(game, item)
+        persist()
+        _ui.value = render()
+    }
+
+    /** 조합소 교환. 검을 주는 교환일 때만 [family] 가 쓰인다. */
+    fun craft(recipeId: String, family: WeaponFamily) {
+        if (busy) return
+        val recipe = Recipes.ALL.firstOrNull { it.id == recipeId } ?: return
+        if (!Recipes.canCraft(game, recipe)) return
+        game = Recipes.craft(game, recipe, family)
+        game.sword?.let { progress = Progress.registerSword(progress, game.difficulty, it) }
+        persist()
+        _ui.value = render()
+    }
+
     fun sellSword() {
         if (busy || !Economy.canSellSword(game)) return
         val price = Economy.sellPrice(game.sword?.level ?: 0)
@@ -258,13 +302,19 @@ class ForgeViewModel(
             gold = game.gold,
             shards = game.shards,
             preventTickets = game.inventory.preventTickets,
+            blessingScrolls = game.inventory.blessingScrolls,
+            luckCharms = game.inventory.luckCharms,
             bestLevel = game.bestLevel,
             upgradeCost = Economy.upgradeCost(level),
             sellPrice = Economy.sellPrice(level),
-            successPercent =
-                (RateTable.successRate(game.difficulty, targetLevel) * 100).roundToInt(),
-            canForge = !busy && ForgeEngine.canAttempt(game, UsedItems.NONE),
+            successPercent = (
+                RateTable.successRate(game.difficulty, targetLevel, pendingItems.blessing) * 100
+                ).roundToInt(),
+            canForge = !busy && ForgeEngine.canAttempt(game, pendingItems),
             canBuySword = !busy && Economy.canBuySword(game),
+            unlockedFamilies = Progress.unlockedFamilies(progress),
+            useBlessing = pendingItems.blessing,
+            useLuckCharm = pendingItems.luckCharm,
             lastResult = lastResult,
             destroyPhase = phase,
             canPrevent = ForgeEngine.canPrevent(game),
