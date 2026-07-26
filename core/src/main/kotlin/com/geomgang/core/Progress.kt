@@ -271,6 +271,8 @@ object Progress {
     /** 지금 고를 수 있는 계열들. 항상 enum 선언 순서를 유지한다. */
     fun unlockedFamilies(p: ProgressState): List<WeaponFamily> =
         WeaponFamily.entries.filter { family ->
+            // 특수 계열(합검·허검)은 상점·드롭에 절대 나오지 않는다.
+            if (family in WeaponFamily.SPECIAL) return@filter false
             val required = FAMILY_UNLOCK[family]
             required == null || required in p.achievements
         }

@@ -8,11 +8,13 @@ import org.junit.Test
 class ModelTest {
 
     @Test
-    fun `계열은 12종이고 기본 해금은 4종이다`() {
-        assertEquals(12, WeaponFamily.entries.size)
+    fun `계열은 14종이고 기본 해금은 4종이다`() {
+        assertEquals(14, WeaponFamily.entries.size)
         assertEquals(4, WeaponFamily.STARTERS.size)
         assertTrue(WeaponFamily.STRAIGHT in WeaponFamily.STARTERS)
         assertTrue(WeaponFamily.DRAGON !in WeaponFamily.STARTERS)
+        // 특수 계열은 시작 계열과 겹치지 않는다
+        assertTrue(WeaponFamily.SPECIAL.none { it in WeaponFamily.STARTERS })
     }
 
     @Test

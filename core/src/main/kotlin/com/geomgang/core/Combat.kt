@@ -28,6 +28,8 @@ enum class FamilyStyle(
     val shardBonus: Double,
     val burnRatio: Double,
     val blurb: String,
+    /** 적 최대체력에 비례해 추가되는 피해 비율. 허검만 0이 아니다. */
+    val maxHpRatio: Double = 0.0,
 ) {
     BALANCED(1.0, 1, 150, 0.0, 1.0, 1.0, 0.0, "기준. 약점도 없다"),
     COMBO(0.9, 1, 140, 0.03, 1.0, 1.0, 0.0, "연속으로 칠수록 세진다"),
@@ -41,6 +43,11 @@ enum class FamilyStyle(
     CLEAVING(2.6, 1, 520, 0.0, 1.0, 1.0, 0.0, "아주 느리지만 한 방이 압도적이다"),
     PIERCING(0.78, 3, 190, 0.0, 1.15, 1.0, 0.0, "한 번에 세 번 찌른다"),
     ELEMENTAL(0.7, 1, 130, 0.04, 1.0, 1.0, 0.12, "연속타격과 화상을 함께 쓴다"),
+    OMNI(0.9, 1, 150, 0.02, 1.25, 1.25, 0.0, "여러 계열의 힘을 조금씩 전부 가졌다"),
+    HOLLOW(
+        0.5, 1, 150, 0.0, 1.0, 1.0, 0.0, "한 방은 가볍지만 거대한 것일수록 깊이 벤다",
+        maxHpRatio = 0.015,
+    ),
     ;
 
     companion object {
@@ -57,6 +64,8 @@ enum class FamilyStyle(
             WeaponFamily.AXE -> CLEAVING
             WeaponFamily.SPEAR -> PIERCING
             WeaponFamily.SPIRIT -> ELEMENTAL
+            WeaponFamily.FUSED -> OMNI
+            WeaponFamily.VOID -> HOLLOW
         }
     }
 }
@@ -124,18 +133,27 @@ object Combat {
     /**
      * 한 번 탭했을 때 들어가는 피해.
      *
-     * @param combo    지금까지 연속으로 몇 번 쳤는지
-     * @param isBoss   보스를 치는 중인지
-     * @param critRoll 치명타 판정용 난수(0~1). 기본 1.0 = 치명타 없음.
-     *                 난수 대신 값을 받는 것은 테스트를 결정적으로 만들기 위해서다.
+     * @param combo       지금까지 연속으로 몇 번 쳤는지
+     * @param isBoss      보스를 치는 중인지
+     * @param critRoll    치명타 판정용 난수(0~1). 기본 1.0 = 치명타 없음.
+     *                    난수 대신 값을 받는 것은 테스트를 결정적으로 만들기 위해서다.
+     * @param targetMaxHp 대상의 최대체력. 허검(최대체력 비례 피해)만 쓴다.
      */
-    fun hit(sword: Sword?, combo: Int, isBoss: Boolean, critRoll: Double = 1.0): Hit {
+    fun hit(
+        sword: Sword?,
+        combo: Int,
+        isBoss: Boolean,
+        critRoll: Double = 1.0,
+        targetMaxHp: Long = 0,
+    ): Hit {
         if (sword == null) return Hit(0, 0)
         val style = FamilyStyle.of(sword.family)
         val comboBonus = (style.comboGain * combo).coerceAtMost(MAX_COMBO_BONUS)
         val bossBonus = if (isBoss) style.bossBonus else 1.0
         val crit = critRoll < CRIT_CHANCE
-        val perHit = attackPower(sword) * (1.0 + comboBonus) * bossBonus / style.hits
+        val maxHpBonus = targetMaxHp * style.maxHpRatio
+        val perHit =
+            (attackPower(sword) * (1.0 + comboBonus) * bossBonus + maxHpBonus) / style.hits
         // 치명타 배수는 합산 피해에 곱한다 - 타격 수(쌍검 2연타 등)는 그대로다.
         val base = perHit.roundToLong().coerceAtLeast(1) * style.hits
         return Hit(

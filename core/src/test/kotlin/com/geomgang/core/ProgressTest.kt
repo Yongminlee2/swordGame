@@ -137,6 +137,15 @@ class ProgressTest {
     }
 
     @Test
+    fun `특수 계열은 어떤 업적으로도 드롭·상점에 풀리지 않는다`() {
+        // 모든 업적을 다 딴 상태를 흉내 낸다
+        val all = empty.copy(achievements = Achievement.entries.toSet())
+        val unlocked = Progress.unlockedFamilies(all)
+        assertTrue(WeaponFamily.FUSED !in unlocked)
+        assertTrue(WeaponFamily.VOID !in unlocked)
+    }
+
+    @Test
     fun `방지권 사용과 놓침이 따로 기록된다`() {
         var p = Progress.onPreventUsed(empty)
         p = Progress.onPreventMissed(p)

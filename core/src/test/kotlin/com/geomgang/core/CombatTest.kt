@@ -43,6 +43,37 @@ class CombatTest {
         assertFalse(Combat.hit(sword(3), 0, false).crit)
     }
 
+    // --- 특수 계열 ---
+
+    @Test
+    fun `허검은 적 최대체력에 비례해 더 아프다`() {
+        val sword = sword(10, WeaponFamily.VOID)
+        val small = Combat.hit(sword, 0, false, targetMaxHp = 1_000)
+        val big = Combat.hit(sword, 0, false, targetMaxHp = 1_000_000)
+        assertTrue(big.damage > small.damage)
+        // 추가 피해 = 최대체력 × 비율이 그대로 실려야 한다
+        assertEquals(
+            (1_000_000 - 1_000) * FamilyStyle.HOLLOW.maxHpRatio,
+            (big.damage - small.damage).toDouble(),
+            1.0,
+        )
+    }
+
+    @Test
+    fun `합검은 보스와 조각 보너스를 함께 가진다`() {
+        val style = FamilyStyle.of(WeaponFamily.FUSED)
+        assertTrue(style.bossBonus > 1.0)
+        assertTrue(style.shardBonus > 1.0)
+        assertTrue(style.comboGain > 0.0)
+    }
+
+    @Test
+    fun `일반 계열은 최대체력 비례 피해가 없다`() {
+        for (family in WeaponFamily.entries.filter { it != WeaponFamily.VOID }) {
+            assertEquals(0.0, FamilyStyle.of(family).maxHpRatio, 0.0)
+        }
+    }
+
     // --- 공격력 ---
 
     @Test
@@ -163,10 +194,10 @@ class CombatTest {
     }
 
     @Test
-    fun `계열 12종이 서로 다른 전투 방식을 갖는다`() {
+    fun `계열 14종이 서로 다른 전투 방식을 갖는다`() {
         val styles = WeaponFamily.entries.map { FamilyStyle.of(it) }
-        assertEquals(12, styles.size)
-        assertEquals("같은 전투 방식을 쓰는 계열이 있다", 12, styles.toSet().size)
+        assertEquals(14, styles.size)
+        assertEquals("같은 전투 방식을 쓰는 계열이 있다", 14, styles.toSet().size)
     }
 
     // --- 보스 문턱 ---

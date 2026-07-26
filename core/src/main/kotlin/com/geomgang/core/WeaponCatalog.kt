@@ -45,7 +45,7 @@ object WeaponCatalog {
     fun difficultiesFor(tier: WeaponTier): List<Difficulty> =
         if (tier.endlessOnly) listOf(Difficulty.ENDLESS) else Difficulty.entries.toList()
 
-    /** 도감 전체 칸. 계열 8종 × 티어 11종 = 88칸. */
+    /** 도감 전체 칸. 계열 수 × 티어 11종 - 계열이 늘면 저절로 따라온다 (현재 14 × 11 = 154). */
     val ENTRIES: List<CodexEntry> =
         WeaponFamily.entries.flatMap { family ->
             WeaponTier.entries.map { tier -> CodexEntry(family, tier) }

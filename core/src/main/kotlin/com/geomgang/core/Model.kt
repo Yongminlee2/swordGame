@@ -31,11 +31,19 @@ enum class WeaponFamily(val id: String, val displayName: String) {
     AXE("axe", "도끼검"),
     SPEAR("spear", "창검"),
     SPIRIT("spirit", "정령검"),
+    FUSED("fused", "합검"),
+    VOID("void", "허검"),
     ;
 
     companion object {
         /** 업적 없이 처음부터 쓸 수 있는 계열. */
         val STARTERS: List<WeaponFamily> = listOf(STRAIGHT, CURVED, GREAT, RAPIER)
+
+        /**
+         * 상점·드롭에 절대 나오지 않는 특수 계열.
+         * 합검은 서로 다른 4계열 조합, 허검은 무한 회랑 보상으로만 얻는다.
+         */
+        val SPECIAL: Set<WeaponFamily> = setOf(FUSED, VOID)
 
         fun fromId(id: String): WeaponFamily =
             entries.firstOrNull { it.id == id }

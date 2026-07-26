@@ -59,8 +59,8 @@ class SwordSheetTest {
     }
 
     @Test
-    fun `계열 12종이 모두 시트 안의 행을 쓴다`() {
-        assertEquals(12, WeaponFamily.entries.size)
+    fun `계열 14종이 모두 시트 안의 행을 쓴다`() {
+        assertEquals(14, WeaponFamily.entries.size)
         WeaponFamily.entries.forEach { family ->
             for (index in 0..SwordSheet.maxIndex()) {
                 val row = SwordSheet.rowOf(family, index)
@@ -70,8 +70,8 @@ class SwordSheetTest {
     }
 
     @Test
-    fun `같은 인덱스에서 열두 계열이 서로 다른 행을 쓴다`() {
-        // 계열 수(12)가 시트 행 수(30)보다 작아야 성립하는 성질이다.
+    fun `같은 인덱스에서 열네 계열이 서로 다른 행을 쓴다`() {
+        // 계열 수(14)가 시트 행 수(30)보다 작아야 성립하는 성질이다.
         for (index in 0..SwordSheet.maxIndex()) {
             val rows = WeaponFamily.entries.map { SwordSheet.rowOf(it, index) }
             assertEquals("인덱스 $index 에서 행이 겹친다", rows.size, rows.toSet().size)

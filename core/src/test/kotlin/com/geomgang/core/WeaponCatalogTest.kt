@@ -78,9 +78,9 @@ class WeaponCatalogTest {
     }
 
     @Test
-    fun `도감 엔트리는 계열 12종 곱하기 티어 11종으로 132개다`() {
-        assertEquals(132, WeaponCatalog.ENTRIES.size)
-        assertEquals(132, WeaponCatalog.ENTRIES.toSet().size)
+    fun `도감 엔트리는 계열 14종 곱하기 티어 11종으로 154개다`() {
+        assertEquals(154, WeaponCatalog.ENTRIES.size)
+        assertEquals(154, WeaponCatalog.ENTRIES.toSet().size)
     }
 
     @Test
