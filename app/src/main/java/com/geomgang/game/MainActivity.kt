@@ -19,6 +19,7 @@ import com.geomgang.game.ui.CodexScreen
 import com.geomgang.game.ui.CraftScreen
 import com.geomgang.game.ui.ForgeScreen
 import com.geomgang.game.ui.HuntScreen
+import com.geomgang.game.ui.QuestScreen
 import com.geomgang.game.ui.RecordsMenuScreen
 import com.geomgang.game.ui.SettingsScreen
 import com.geomgang.game.ui.ShopScreen
@@ -27,7 +28,7 @@ import com.geomgang.game.ui.StorageScreen
 import com.geomgang.game.ui.SwordForgeTheme
 
 /** 강화 화면 위에 무엇이 올라와 있는지. */
-private enum class Overlay { None, Hunt, Storage, Shop, Craft, Records, Codex, Achievements, Stats, Settings }
+private enum class Overlay { None, Hunt, Storage, Shop, Craft, Records, Codex, Quests, Achievements, Stats, Settings }
 
 /** 뒤로 가면 어디로 돌아가는지. 기록 하위 화면들은 메뉴로 돌아간다. */
 private fun Overlay.parent(): Overlay = when (this) {
@@ -91,11 +92,19 @@ private fun App(store: SaveStore) {
             onEnterZone = vm::enterZone,
             onTap = vm::tapTarget,
             onChallengeBoss = vm::challengeBoss,
+            onTapNugget = vm::tapNugget,
+            onBuyMerchant = vm::buyMerchantOffer,
             onLeave = vm::leaveHunt,
             onBack = {
                 vm.leaveHunt()
                 overlay = Overlay.None
             },
+        )
+
+        Overlay.Quests -> QuestScreen(
+            state = state,
+            onClaim = vm::claimQuest,
+            onBack = { overlay = Overlay.None },
         )
 
         Overlay.Storage -> StorageScreen(
@@ -174,6 +183,7 @@ private fun App(store: SaveStore) {
                 codexOrigin = Overlay.None
                 overlay = Overlay.Codex
             },
+            onOpenQuests = { overlay = Overlay.Quests },
             onOpenMenu = { overlay = Overlay.Records },
             onStartAuto = vm::startAutoForge,
             onStopAuto = vm::stopAutoForge,

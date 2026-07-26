@@ -69,6 +69,7 @@ fun ForgeScreen(
     onOpenShop: () -> Unit,
     onOpenCraft: () -> Unit,
     onOpenCodex: () -> Unit,
+    onOpenQuests: () -> Unit,
     onOpenMenu: () -> Unit,
     onStartAuto: (Int) -> Unit,
     onStopAuto: () -> Unit,
@@ -317,6 +318,21 @@ fun ForgeScreen(
                     enabled = !state.busy && !state.autoForging,
                     modifier = Modifier.weight(1f),
                 ) { Text("도감") }
+                OutlinedButton(
+                    onClick = onOpenQuests,
+                    enabled = !state.busy && !state.autoForging,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    // 수령할 것이 있으면 「!」 - 매일 확인할 이유를 눈에 띄게
+                    Text(
+                        text = if (state.questClaimable) "퀘스트 !" else "퀘스트",
+                        color = if (state.questClaimable) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            Color.Unspecified
+                        },
+                    )
+                }
             }
         }
     }

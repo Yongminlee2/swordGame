@@ -23,6 +23,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
@@ -40,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import com.geomgang.core.AdventureState
 import com.geomgang.core.Combat
 import com.geomgang.core.FamilyStyle
+import com.geomgang.core.HuntEvent
 import com.geomgang.core.Sword
 import com.geomgang.core.Zone
 import com.geomgang.game.ForgeUiState
@@ -59,6 +61,8 @@ fun HuntScreen(
     onEnterZone: (Zone) -> Unit,
     onTap: () -> Unit,
     onChallengeBoss: () -> Unit,
+    onTapNugget: () -> Unit,
+    onBuyMerchant: () -> Unit,
     onLeave: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -100,6 +104,46 @@ fun HuntScreen(
             Text("잡은 수 ${hunt.killsInZone}/${hunt.killsNeeded}", fontSize = 12.sp)
         }
 
+        // --- 이벤트 띠 ---
+        if (hunt.goldenRemainingMillis > 0) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "✨ 골든타임! 골드·조각 2배 (${hunt.goldenRemainingMillis / 1000}초)",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFFFD54A),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color(0x33FFD54A))
+                    .padding(vertical = 6.dp, horizontal = 10.dp),
+            )
+        }
+        if (hunt.merchantOffer != null) {
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color(0x3364B5F6))
+                    .padding(vertical = 6.dp, horizontal = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = "떠돌이 상인 — ${hunt.merchantOffer.displayName} 30% 할인",
+                    fontSize = 12.sp,
+                    color = Color(0xFF9BD1FF),
+                )
+                TextButton(
+                    onClick = onBuyMerchant,
+                    enabled = state.gold >= hunt.merchantPrice,
+                ) {
+                    Text("%,d골드".format(hunt.merchantPrice), fontSize = 12.sp)
+                }
+            }
+        }
+
         Spacer(Modifier.height(16.dp))
 
         // --- 대상 ---
@@ -111,16 +155,45 @@ fun HuntScreen(
             contentAlignment = Alignment.Center,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = hunt.targetName,
-                    fontSize = if (hunt.isBoss) 26.sp else 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (hunt.isBoss) {
-                        MaterialTheme.colorScheme.error
-                    } else {
-                        MaterialTheme.colorScheme.onBackground
-                    },
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (hunt.event != null) {
+                        Text(
+                            text = when (hunt.event) {
+                                HuntEvent.TREASURE -> "보물"
+                                HuntEvent.MIMIC -> "미믹"
+                                HuntEvent.ELITE -> "정예"
+                                HuntEvent.STRANGE_EGG -> "알"
+                                else -> hunt.event.displayName
+                            },
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF10222E),
+                            modifier = Modifier
+                                .padding(end = 8.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0xFFFFD54A))
+                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                        )
+                    }
+                    Text(
+                        text = hunt.targetName,
+                        fontSize = if (hunt.isBoss) 26.sp else 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (hunt.isBoss) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.onBackground
+                        },
+                    )
+                }
+                if (hunt.event == HuntEvent.TREASURE && hunt.targetHp > 0) {
+                    Text(
+                        text = "%.1f초 안에 잡아라!".format(hunt.eventRemainingMillis / 1000.0),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFFFD54A),
+                    )
+                }
                 Spacer(Modifier.height(12.dp))
 
                 MonsterSprite(
@@ -177,6 +250,24 @@ fun HuntScreen(
 
             // 데미지 숫자는 몬스터 위 레이어에서 튀어오른다
             DamagePopups(hunt)
+        }
+
+        // --- 금덩이 ---
+        if (hunt.nugget) {
+            Spacer(Modifier.height(8.dp))
+            Button(
+                onClick = onTapNugget,
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFFD54A),
+                    contentColor = Color(0xFF10222E),
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+            ) {
+                Text("금덩이가 떨어졌다! 탭!", fontWeight = FontWeight.Bold)
+            }
         }
 
         // --- 알림과 보스 도전 ---
