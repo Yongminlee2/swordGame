@@ -105,6 +105,8 @@ data class GameState(
     val inventory: Inventory = Inventory(),
     val bestLevel: Int = 0,
     val pendingDestroy: PendingDestroy? = null,
+    /** 사냥 진행. 기본값이 있어 이 필드가 없던 옛 세이브도 그대로 읽힌다. */
+    val adventure: AdventureState = AdventureState(),
 ) {
     init {
         require(gold >= 0) { "gold must be >= 0, was $gold" }
