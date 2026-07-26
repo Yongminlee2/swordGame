@@ -2,6 +2,8 @@ package com.geomgang.game
 
 import com.geomgang.core.Difficulty
 import com.geomgang.core.GameState
+import com.geomgang.core.HuntEvent
+import com.geomgang.core.HuntEvents
 import com.geomgang.core.SaveStore
 import com.geomgang.core.Sword
 import com.geomgang.core.WeaponFamily
@@ -9,12 +11,14 @@ import com.geomgang.core.Zone
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -23,12 +27,14 @@ import org.junit.rules.TemporaryFolder
 import kotlin.random.Random
 
 /**
- * 사냥 타격 배선 - 치명타 롤, hitSeq, 희귀 표시, 처치 골드.
+ * 사냥 타격 배선 - 치명타 롤, hitSeq, 희귀 표시, 처치 골드, 이벤트.
  *
  * 난수 소비 순서가 계약이다:
- * enterZone -> spawnNext: nextInt(몬스터 종류), nextDouble(희귀)
+ * enterZone -> spawnNext: nextInt(몬스터 종류), nextDouble(희귀),
+ *              nextDouble(이벤트 발생), [발생 시 nextDouble(종류), 상인이면 nextInt(아이템)]
  * tapTarget: nextDouble(치명타)
- * 처치 시: nextDouble(검 드롭) -> spawnNext(nextInt, nextDouble)
+ * 처치 시: nextDouble(검 드롭) -> spawnNext(위와 동일)
+ * 기본값(1.0)은 "아무 이벤트도 없음"이라 스크립트가 짧아도 안전하다.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ForgeViewModelHuntTest {
@@ -90,9 +96,9 @@ class ForgeViewModelHuntTest {
     @Test
     fun `치명타 롤이 낮으면 lastCrit이 참이다`() = runTest(dispatcher) {
         // +0 검(공격력 6)은 들쥐(체력 16)를 못 잡는다 - 잡으면 spawnNext 가 lastCrit 을 지운다.
-        // doubles: 희귀 판정 0.5(희귀 아님) -> 치명타 판정 0.0(치명타)
+        // doubles: 희귀 0.5 -> 이벤트 발생 1.0(없음) -> 치명타 0.0(치명타)
         val vm = huntReadyViewModel(
-            rng = QueueRandom(doubles = listOf(0.5, 0.0)),
+            rng = QueueRandom(doubles = listOf(0.5, 1.0, 0.0)),
             sword = Sword(WeaponFamily.STRAIGHT, 0),
         )
         vm.tapTarget()
@@ -104,7 +110,7 @@ class ForgeViewModelHuntTest {
     @Test
     fun `치명타 롤이 높으면 lastCrit이 거짓이다`() = runTest(dispatcher) {
         val vm = huntReadyViewModel(
-            rng = QueueRandom(doubles = listOf(0.5, 0.9)),
+            rng = QueueRandom(doubles = listOf(0.5, 1.0, 0.9)),
             sword = Sword(WeaponFamily.STRAIGHT, 0),
         )
         vm.tapTarget()
@@ -138,5 +144,53 @@ class ForgeViewModelHuntTest {
         vm.leaveHunt()
         assertTrue(hunt.targetName.startsWith("희귀 "))
         assertEquals(Zone.MEADOW.monsters.first().name, hunt.rawTargetName)
+    }
+
+    // --- 이벤트 ---
+    // 종류 추첨 롤: 가중치 누적 [보물 0~12, 골든 12~22, 미믹 22~34, 상인 34~42,
+    // 정예 42~54, 금덩이 54~74, 유성우 74~75, 알 75~83] / 83
+
+    @Test
+    fun `분노한 정예는 체력이 3배다`() = runTest(dispatcher) {
+        val vm = huntReadyViewModel(rng = QueueRandom(doubles = listOf(0.5, 0.0, 0.55)))
+        val hunt = vm.ui.value.hunt!!
+        vm.leaveHunt()
+        assertEquals(HuntEvent.ELITE, hunt.event)
+        val base = Zone.MEADOW.hpOf(Zone.MEADOW.monsters.first())
+        assertEquals((base * HuntEvents.ELITE_HP).toLong(), hunt.targetMaxHp)
+    }
+
+    @Test
+    fun `보물 몬스터는 시간이 지나면 도망간다`() = runTest(dispatcher) {
+        val vm = huntReadyViewModel(rng = QueueRandom(doubles = listOf(0.5, 0.0, 0.05)))
+        assertEquals(HuntEvent.TREASURE, vm.ui.value.hunt!!.event)
+        advanceTimeBy((HuntEvents.TREASURE_SECONDS + 1) * 1000L)
+        val hunt = vm.ui.value.hunt!!
+        vm.leaveHunt()
+        assertNull(hunt.event)
+    }
+
+    @Test
+    fun `골든타임 중에는 처치 골드가 2배다`() = runTest(dispatcher) {
+        val vm = huntReadyViewModel(rng = QueueRandom(doubles = listOf(0.5, 0.0, 0.18)))
+        assertTrue(vm.ui.value.hunt!!.goldenRemainingMillis > 0)
+        vm.tapTarget() // +3 직검이 들쥐를 한 방에 잡는다
+        val hunt = vm.ui.value.hunt!!
+        vm.leaveHunt()
+        val base = Zone.MEADOW.goldOf(Zone.MEADOW.monsters.first())
+        assertEquals((base * HuntEvents.GOLDEN_MULT).toLong(), hunt.lastKillGold)
+    }
+
+    @Test
+    fun `금덩이를 탭하면 골드가 들어오고 금덩이는 사라진다`() = runTest(dispatcher) {
+        val vm = huntReadyViewModel(rng = QueueRandom(doubles = listOf(0.5, 0.0, 0.7)))
+        assertTrue(vm.ui.value.hunt!!.nugget)
+        val before = vm.ui.value.gold
+        vm.tapNugget()
+        val after = vm.ui.value.gold
+        val nuggetGone = !vm.ui.value.hunt!!.nugget
+        vm.leaveHunt()
+        assertEquals(HuntEvents.nuggetGold(Zone.MEADOW), after - before)
+        assertTrue(nuggetGone)
     }
 }

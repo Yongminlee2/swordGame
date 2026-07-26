@@ -18,6 +18,8 @@ import com.geomgang.core.RateTable
 import com.geomgang.core.Achievement
 import com.geomgang.core.AdventureState
 import com.geomgang.core.Combat
+import com.geomgang.core.HuntEvent
+import com.geomgang.core.HuntEvents
 import com.geomgang.core.Recipes
 import com.geomgang.core.SaveStore
 import com.geomgang.core.Settings
@@ -36,6 +38,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 import kotlin.random.Random
 
 /**
@@ -91,6 +94,16 @@ class ForgeViewModel(
 
     /** 지금 대상이 희귀 몬스터인지. 체력은 조금, 보상은 크게 오른다. */
     private var rareTarget = false
+
+    // --- 사냥 이벤트 ---
+    // 판정·수식은 HuntEvents(:core), 시간은 여기서 센다.
+    private var activeEvent: HuntEvent? = null
+    private var eventRemainingMillis = 0L
+    private var goldenRemainingMillis = 0L
+    private var merchantRemainingMillis = 0L
+    private var merchantOffer: Item? = null
+    private var nuggetRemainingMillis = 0L
+    private var nuggetsLeft = 0
 
     /** 방금 떨어진 검. 화면이 알린 뒤 비운다. */
     private var lastDrop: Sword? = null
@@ -386,11 +399,18 @@ class ForgeViewModel(
         _ui.value = render()
     }
 
-    /** 사냥터를 나온다. */
+    /** 사냥터를 나온다. 이벤트·버프는 사냥터에 두고 나온다. */
     fun leaveHunt() {
         stopHuntLoop()
         huntZone = null
         combo = 0
+        activeEvent = null
+        eventRemainingMillis = 0
+        goldenRemainingMillis = 0
+        merchantRemainingMillis = 0
+        merchantOffer = null
+        nuggetRemainingMillis = 0
+        nuggetsLeft = 0
         _ui.value = render()
     }
 
@@ -430,17 +450,21 @@ class ForgeViewModel(
         combo = 0
 
         if (fightingBoss) {
-            val shards = Combat.shardReward(sword, zone.bossShards)
-            lastKillGold = zone.bossGold
+            val golden = if (goldenRemainingMillis > 0) HuntEvents.GOLDEN_MULT else 1.0
+            val bossGold = (zone.bossGold * golden).toLong()
+            val shards = Combat.shardReward(sword, (zone.bossShards * golden).toInt())
+            lastKillGold = bossGold
             game = game.copy(
-                gold = game.gold + zone.bossGold,
+                gold = game.gold + bossGold,
                 shards = game.shards + shards,
                 adventure = game.adventure.copy(
                     killsInZone = 0,
                     clearedZoneIds = game.adventure.clearedZoneIds + zone.id,
                 ),
             )
-            progress = Progress.refresh(Progress.onSell(progress, zone.bossGold))
+            progress = Progress.refresh(
+                Progress.onMonsterKill(Progress.onSell(progress, bossGold), isBoss = true),
+            )
             rollDrop(zone, isBoss = true)
             zoneCleared = true
             sound.zoneCleared()
@@ -448,17 +472,26 @@ class ForgeViewModel(
         } else {
             val kind = targetKind ?: zone.monsters.first()
             val bonus = if (rareTarget) Zone.RARE_REWARD else 1.0
-            val gold = (zone.goldOf(kind) * bonus).toLong()
-            val shards = Combat.shardReward(sword, (kind.shards * bonus).toInt())
+            val eventMult = HuntEvents.rewardMultOf(activeEvent)
+            val golden = if (goldenRemainingMillis > 0) HuntEvents.GOLDEN_MULT else 1.0
+            val gold = (zone.goldOf(kind) * bonus * eventMult * golden).toLong()
+            val eggShards = if (activeEvent == HuntEvent.STRANGE_EGG) HuntEvents.EGG_SHARDS else 0
+            val shards =
+                Combat.shardReward(sword, (kind.shards * bonus * golden).toInt()) + eggShards
             lastKillGold = gold
             game = game.copy(
                 gold = game.gold + gold,
                 shards = game.shards + shards,
                 adventure = game.adventure.copy(killsInZone = game.adventure.killsInZone + 1),
             )
-            progress = Progress.refresh(Progress.onSell(progress, gold))
+            progress = Progress.refresh(
+                Progress.onMonsterKill(Progress.onSell(progress, gold), isBoss = false),
+            )
             sound.monsterDown()
-            rollDrop(zone, isBoss = false)
+            // 미믹은 드롭 확정 + 보스급 단계 보정. "잡을까 말까"의 답이다.
+            rollDrop(zone, isBoss = activeEvent == HuntEvent.MIMIC)
+            activeEvent = null
+            eventRemainingMillis = 0
             if (!game.adventure.bossReady) spawnNext()
         }
         persist()
@@ -485,7 +518,49 @@ class ForgeViewModel(
         // 구역마다 몬스터가 여러 종류다. 한 종류만 계속 잡으면 금방 지루해진다.
         val kind = zone.monsterFor(rng.nextInt(1_000))
         rareTarget = rng.nextDouble() < Zone.RARE_CHANCE
-        val hpMult = if (rareTarget) Zone.RARE_HP else 1.0
+
+        // 이벤트. 지속 효과(골든타임·상인·금덩이)가 살아 있으면 새로 굴리지 않는다 -
+        // 변수가 겹치면 어느 것도 특별하지 않게 된다.
+        // 난수 소비 순서 계약: ①몬스터 ②희귀 ③이벤트 발생 ④종류 (⑤상인이면 아이템)
+        activeEvent = null
+        eventRemainingMillis = 0
+        val buffActive =
+            goldenRemainingMillis > 0 || merchantRemainingMillis > 0 || nuggetsLeft > 0
+        if (!buffActive) {
+            val event = if (rng.nextDouble() < HuntEvents.CHANCE) {
+                HuntEvents.pick(rng.nextDouble())
+            } else {
+                null
+            }
+            if (event != null) {
+                progress = Progress.refresh(Progress.onEventSeen(progress))
+                when {
+                    HuntEvents.isMonsterEvent(event) -> {
+                        activeEvent = event
+                        if (event == HuntEvent.TREASURE) {
+                            eventRemainingMillis = HuntEvents.TREASURE_SECONDS * 1000L
+                        }
+                    }
+                    event == HuntEvent.GOLDEN_TIME ->
+                        goldenRemainingMillis = HuntEvents.GOLDEN_SECONDS * 1000L
+                    event == HuntEvent.MERCHANT -> {
+                        merchantRemainingMillis = HuntEvents.MERCHANT_SECONDS * 1000L
+                        merchantOffer = Item.entries[rng.nextInt(Item.entries.size)]
+                    }
+                    event == HuntEvent.GOLD_NUGGET -> {
+                        nuggetsLeft = 1
+                        nuggetRemainingMillis = HuntEvents.NUGGET_SECONDS * 1000L
+                    }
+                    event == HuntEvent.METEOR_SHOWER -> {
+                        nuggetsLeft = HuntEvents.METEOR_COUNT
+                        nuggetRemainingMillis = HuntEvents.NUGGET_SECONDS * 1000L
+                    }
+                }
+            }
+        }
+
+        val hpMult =
+            (if (rareTarget) Zone.RARE_HP else 1.0) * HuntEvents.hpMultOf(activeEvent)
 
         targetKind = kind
         targetMaxHp = (zone.hpOf(kind) * hpMult).toLong().coerceAtLeast(1)
@@ -496,6 +571,40 @@ class ForgeViewModel(
         // hitSeq 는 리셋하지 않는다 - 화면이 팝업 키로 쓰므로 되돌리면 충돌한다.
         // lastKillGold 도 리셋하지 않는다 - 처치 직후 스폰되므로 화면이 아직 그리는 중이다.
         lastCrit = false
+    }
+
+    /** 금덩이를 탭한다. 골든타임이면 그것도 2배다. */
+    fun tapNugget() {
+        val zone = huntZone ?: return
+        if (nuggetsLeft <= 0) return
+        val golden = if (goldenRemainingMillis > 0) HuntEvents.GOLDEN_MULT else 1.0
+        val gold = (HuntEvents.nuggetGold(zone) * golden).toLong()
+        game = game.copy(gold = game.gold + gold)
+        progress = Progress.refresh(Progress.onSell(progress, gold))
+        nuggetsLeft--
+        nuggetRemainingMillis =
+            if (nuggetsLeft > 0) HuntEvents.NUGGET_SECONDS * 1000L else 0
+        sound.purchase()
+        persist()
+        _ui.value = render()
+    }
+
+    /** 떠돌이 상인에게서 할인가로 산다. 한 번 사면 상인은 떠난다. */
+    fun buyMerchantOffer() {
+        val offer = merchantOffer ?: return
+        if (merchantRemainingMillis <= 0) return
+        val price = (Economy.priceOf(offer) * (1.0 - HuntEvents.MERCHANT_DISCOUNT))
+            .roundToLong()
+        if (game.gold < price) return
+        game = game.copy(
+            gold = game.gold - price,
+            inventory = game.inventory.plus(offer, 1),
+        )
+        merchantOffer = null
+        merchantRemainingMillis = 0
+        sound.purchase()
+        persist()
+        _ui.value = render()
     }
 
     /**
@@ -515,6 +624,35 @@ class ForgeViewModel(
                     if (burn > 0) {
                         targetHp -= burn
                         if (targetHp <= 0) onTargetDown(zone)
+                    }
+                }
+
+                // --- 이벤트 타이머 ---
+                if (goldenRemainingMillis > 0) {
+                    goldenRemainingMillis =
+                        (goldenRemainingMillis - HUNT_TICK_MILLIS).coerceAtLeast(0)
+                }
+                if (merchantRemainingMillis > 0) {
+                    merchantRemainingMillis =
+                        (merchantRemainingMillis - HUNT_TICK_MILLIS).coerceAtLeast(0)
+                    if (merchantRemainingMillis <= 0) merchantOffer = null
+                }
+                if (nuggetsLeft > 0) {
+                    nuggetRemainingMillis -= HUNT_TICK_MILLIS
+                    if (nuggetRemainingMillis <= 0) {
+                        // 못 누른 금덩이는 사라진다. 유성우면 다음 금덩이가 떨어진다.
+                        nuggetsLeft--
+                        nuggetRemainingMillis =
+                            if (nuggetsLeft > 0) HuntEvents.NUGGET_SECONDS * 1000L else 0
+                    }
+                }
+                if (activeEvent == HuntEvent.TREASURE && targetHp > 0) {
+                    eventRemainingMillis -= HUNT_TICK_MILLIS
+                    if (eventRemainingMillis <= 0) {
+                        // 시간 안에 못 잡았다. 보물 몬스터는 도망간다.
+                        activeEvent = null
+                        eventRemainingMillis = 0
+                        spawnNext()
                     }
                 }
 
@@ -567,6 +705,14 @@ class ForgeViewModel(
             lastKillGold = lastKillGold,
             bossFailed = bossFailed,
             zoneCleared = zoneCleared,
+            event = activeEvent,
+            eventRemainingMillis = eventRemainingMillis,
+            goldenRemainingMillis = goldenRemainingMillis,
+            merchantOffer = if (merchantRemainingMillis > 0) merchantOffer else null,
+            merchantPrice = merchantOffer?.let {
+                (Economy.priceOf(it) * (1.0 - HuntEvents.MERCHANT_DISCOUNT)).roundToLong()
+            } ?: 0,
+            nugget = nuggetsLeft > 0,
         )
     }
 

@@ -1,5 +1,7 @@
 package com.geomgang.game
 
+import com.geomgang.core.HuntEvent
+import com.geomgang.core.Item
 import com.geomgang.core.Zone
 
 /** 사냥 중일 때 화면이 그리는 것. 사냥터 밖에서는 null 이다. */
@@ -33,6 +35,18 @@ data class HuntUiState(
     val bossFailed: Boolean,
     /** 방금 구역을 깼는지. */
     val zoneCleared: Boolean,
+    /** 지금 몬스터에 붙은 이벤트(보물·미믹·정예·알). 없으면 null. */
+    val event: HuntEvent? = null,
+    /** 보물 몬스터의 남은 밀리초. 보물이 아니면 0. */
+    val eventRemainingMillis: Long = 0,
+    /** 골든타임 남은 밀리초. 0이면 꺼진 상태. */
+    val goldenRemainingMillis: Long = 0,
+    /** 떠돌이 상인이 파는 물건. null 이면 상인 없음. */
+    val merchantOffer: Item? = null,
+    /** 상인의 할인가. */
+    val merchantPrice: Long = 0,
+    /** 화면에 금덩이가 떠 있는지. */
+    val nugget: Boolean = false,
 ) {
     val hpRatio: Float get() = (targetHp.toFloat() / targetMaxHp).coerceIn(0f, 1f)
 
