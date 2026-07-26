@@ -18,6 +18,7 @@ import com.geomgang.game.ui.AchievementScreen
 import com.geomgang.game.ui.CodexScreen
 import com.geomgang.game.ui.CraftScreen
 import com.geomgang.game.ui.ForgeScreen
+import com.geomgang.game.ui.GauntletScreen
 import com.geomgang.game.ui.HuntScreen
 import com.geomgang.game.ui.PetScreen
 import com.geomgang.game.ui.QuestScreen
@@ -29,7 +30,7 @@ import com.geomgang.game.ui.StorageScreen
 import com.geomgang.game.ui.SwordForgeTheme
 
 /** 강화 화면 위에 무엇이 올라와 있는지. */
-private enum class Overlay { None, Hunt, Storage, Shop, Craft, Records, Codex, Quests, Pets, Achievements, Stats, Settings }
+private enum class Overlay { None, Hunt, Gauntlet, Storage, Shop, Craft, Records, Codex, Quests, Pets, Achievements, Stats, Settings }
 
 /** 뒤로 가면 어디로 돌아가는지. 기록 하위 화면들은 메뉴로 돌아간다. */
 private fun Overlay.parent(): Overlay = when (this) {
@@ -107,6 +108,16 @@ private fun App(store: SaveStore) {
             state = state,
             onClaim = vm::claimQuest,
             onBack = { overlay = Overlay.None },
+        )
+
+        Overlay.Gauntlet -> GauntletScreen(
+            state = state,
+            onTap = vm::tapGauntlet,
+            onChoose = vm::chooseGauntlet,
+            onLeave = {
+                vm.leaveGauntlet()
+                overlay = Overlay.None
+            },
         )
 
         Overlay.Pets -> PetScreen(
@@ -188,6 +199,10 @@ private fun App(store: SaveStore) {
             onToggleBlessing = vm::toggleBlessing,
             onToggleLuckCharm = vm::toggleLuckCharm,
             onOpenHunt = { overlay = Overlay.Hunt },
+            onOpenGauntlet = {
+                vm.enterGauntlet()
+                overlay = Overlay.Gauntlet
+            },
             onOpenStorage = { overlay = Overlay.Storage },
             onOpenShop = { overlay = Overlay.Shop },
             onOpenCraft = { overlay = Overlay.Craft },

@@ -65,6 +65,7 @@ fun ForgeScreen(
     onToggleBlessing: () -> Unit,
     onToggleLuckCharm: () -> Unit,
     onOpenHunt: () -> Unit,
+    onOpenGauntlet: () -> Unit,
     onOpenStorage: () -> Unit,
     onOpenShop: () -> Unit,
     onOpenCraft: () -> Unit,
@@ -288,6 +289,27 @@ fun ForgeScreen(
                 Text(
                     text = "사냥터  ·  공격력 %,d".format(state.attackPower),
                     fontWeight = FontWeight.Bold,
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            // 무한 회랑 - 중반(화산 클리어)부터 열리는 엔드컨텐츠
+            OutlinedButton(
+                onClick = onOpenGauntlet,
+                enabled = !state.busy && !state.autoForging &&
+                    state.sword != null && state.gauntletUnlocked,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = if (state.gauntletUnlocked) {
+                        "무한 회랑" + if (state.gauntletBest > 0) {
+                            "  ·  최고 ${state.gauntletBest}층"
+                        } else {
+                            ""
+                        }
+                    } else {
+                        "무한 회랑 — 화산의 군주를 잡으면 열린다"
+                    },
+                    color = if (state.gauntletUnlocked) Color(0xFFC79BFF) else Color.Unspecified,
                 )
             }
             Spacer(Modifier.height(10.dp))
