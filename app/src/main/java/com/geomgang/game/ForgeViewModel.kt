@@ -18,6 +18,9 @@ import com.geomgang.core.Combat
 import com.geomgang.core.Recipes
 import com.geomgang.core.SaveStore
 import com.geomgang.core.Settings
+import com.geomgang.core.Storage
+import com.geomgang.core.Sword
+import com.geomgang.core.SwordDrop
 import com.geomgang.core.Timing
 import com.geomgang.core.UsedItems
 import com.geomgang.core.WeaponFamily
@@ -82,6 +85,12 @@ class ForgeViewModel(
 
     /** 지금 대상이 희귀 몬스터인지. 체력은 조금, 보상은 크게 오른다. */
     private var rareTarget = false
+
+    /** 방금 떨어진 검. 화면이 알린 뒤 비운다. */
+    private var lastDrop: Sword? = null
+
+    /** 보관함이 꽉 차서 드롭을 놓쳤는지. */
+    private var dropMissed = false
 
     /**
      * 마지막 강화 결과. 연출이 끝나거나 파괴 창이 닫힐 때까지 유지한다.
@@ -404,6 +413,7 @@ class ForgeViewModel(
                 ),
             )
             progress = Progress.refresh(Progress.onSell(progress, zone.bossGold))
+            rollDrop(zone, isBoss = true)
             zoneCleared = true
             sound.zoneCleared()
             stopHuntLoop()
@@ -419,6 +429,7 @@ class ForgeViewModel(
             )
             progress = Progress.refresh(Progress.onSell(progress, gold))
             sound.monsterDown()
+            rollDrop(zone, isBoss = false)
             if (!game.adventure.bossReady) spawnNext()
         }
         persist()
@@ -605,6 +616,79 @@ class ForgeViewModel(
     /** 사냥 진행을 읽기 전용으로 노출한다. 구역 선택 화면이 쓴다. */
     fun adventure(): AdventureState = game.adventure
 
+    // ---------------- 보관함 ----------------
+
+    /**
+     * 사냥에서 검이 떨어지는지 굴린다.
+     *
+     * 보관함이 꽉 차 있으면 조용히 버리지 않고 [dropMissed] 로 알린다.
+     * 모르는 사이에 손해를 보는 것이 가장 나쁘다.
+     */
+    private fun rollDrop(zone: Zone, isBoss: Boolean) {
+        val drop = SwordDrop.roll(
+            zone = zone,
+            isRare = rareTarget,
+            isBoss = isBoss,
+            families = Progress.unlockedFamilies(progress),
+            rng = rng,
+        ) ?: return
+
+        if (Storage.isFull(game)) {
+            dropMissed = true
+            return
+        }
+        game = game.copy(storage = game.storage + drop)
+        progress = Progress.refresh(Progress.registerSword(progress, game.difficulty, drop))
+        lastDrop = drop
+        dropMissed = false
+        sound.purchase()
+    }
+
+    /** 드롭 알림을 화면이 읽은 뒤 비운다. */
+    fun clearDropNotice() {
+        if (lastDrop == null && !dropMissed) return
+        lastDrop = null
+        dropMissed = false
+        _ui.value = render()
+    }
+
+    /** 들고 있는 검을 보관함에 넣는다. */
+    fun storeSword() {
+        if (busy || autoJob != null || !Storage.canStore(game)) return
+        game = Storage.store(game)
+        persist()
+        _ui.value = render()
+    }
+
+    /** 보관함의 검을 든다. 들고 있던 검은 보관함으로 들어간다. */
+    fun equipFromStorage(index: Int) {
+        if (busy || autoJob != null) return
+        if (index !in game.storage.indices || game.pendingDestroy != null) return
+        game = Storage.equip(game, index)
+        persist()
+        _ui.value = render()
+    }
+
+    /** 보관함의 검을 판다. */
+    fun sellFromStorage(index: Int) {
+        if (busy || index !in game.storage.indices) return
+        val price = Economy.sellPrice(game.storage[index].level)
+        game = Storage.sell(game, index)
+        progress = Progress.refresh(Progress.onSell(progress, price))
+        sound.purchase()
+        persist()
+        _ui.value = render()
+    }
+
+    /** 보관함의 검을 부숴 조각으로 바꾼다. */
+    fun scrapFromStorage(index: Int) {
+        if (busy || index !in game.storage.indices) return
+        game = Storage.scrap(game, index)
+        sound.salvage()
+        persist()
+        _ui.value = render()
+    }
+
     private fun applyBailout() {
         val rescued = Economy.applyBailoutIfNeeded(game)
         if (rescued !== game) {
@@ -649,6 +733,10 @@ class ForgeViewModel(
             unlockedFamilies = Progress.unlockedFamilies(progress),
             useBlessing = pendingItems.blessing,
             useLuckCharm = pendingItems.luckCharm,
+            storage = game.storage,
+            storageCapacity = Storage.CAPACITY,
+            lastDrop = lastDrop,
+            dropMissed = dropMissed,
             progress = progress,
             settings = settings,
             autoForging = autoJob != null,

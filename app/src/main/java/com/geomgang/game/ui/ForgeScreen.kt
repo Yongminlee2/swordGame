@@ -65,6 +65,7 @@ fun ForgeScreen(
     onToggleBlessing: () -> Unit,
     onToggleLuckCharm: () -> Unit,
     onOpenHunt: () -> Unit,
+    onOpenStorage: () -> Unit,
     onOpenShop: () -> Unit,
     onOpenCraft: () -> Unit,
     onOpenMenu: () -> Unit,
@@ -291,6 +292,14 @@ fun ForgeScreen(
                     enabled = !state.busy && !state.autoForging,
                     modifier = Modifier.weight(1f),
                 ) { Text("조합소  ${state.shards}") }
+            }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = onOpenStorage,
+                enabled = !state.busy && !state.autoForging,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("보관함  ${state.storage.size}/${state.storageCapacity}")
             }
         }
     }

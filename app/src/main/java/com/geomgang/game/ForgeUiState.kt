@@ -42,6 +42,13 @@ data class ForgeUiState(
     val autoForging: Boolean = false,
     /** 자동강화를 켤 수 있는 상태인지 (안전구간 + 비용 충족). */
     val canAutoForge: Boolean = false,
+    /** 보관함에 든 검. 조합과 재료 강화가 여기서 꺼내 쓴다. */
+    val storage: List<Sword> = emptyList(),
+    val storageCapacity: Int = 0,
+    /** 방금 사냥에서 떨어진 검. 화면에 알린 뒤 비운다. */
+    val lastDrop: Sword? = null,
+    /** 보관함이 꽉 차서 드롭을 놓쳤는지. */
+    val dropMissed: Boolean = false,
     /** 사냥 중일 때만 채워진다. */
     val hunt: HuntUiState? = null,
     /** 지금 검의 공격력. 사냥터 밖에서도 보여 준다. */

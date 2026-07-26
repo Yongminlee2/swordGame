@@ -111,6 +111,8 @@ data class GameState(
     val pendingDestroy: PendingDestroy? = null,
     /** 사냥 진행. 기본값이 있어 이 필드가 없던 옛 세이브도 그대로 읽힌다. */
     val adventure: AdventureState = AdventureState(),
+    /** 보관함. 조합과 재료 강화가 여기서 검을 꺼내 쓴다. */
+    val storage: List<Sword> = emptyList(),
 ) {
     init {
         require(gold >= 0) { "gold must be >= 0, was $gold" }
