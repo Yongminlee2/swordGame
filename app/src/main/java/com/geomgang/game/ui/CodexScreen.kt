@@ -30,6 +30,7 @@ import com.geomgang.core.CodexEntry
 import com.geomgang.core.CodexKey
 import com.geomgang.core.Difficulty
 import com.geomgang.core.ProgressState
+import com.geomgang.core.SwordNames
 import com.geomgang.core.WeaponCatalog
 import com.geomgang.core.WeaponFamily
 
@@ -113,7 +114,8 @@ private fun CodexCell(
             }
 
             Text(
-                text = if (discovered) entry.tier.displayName else "???",
+                // 도감도 단계 이름을 쓴다. 이름 체계를 두 벌 두면 헷갈린다.
+                text = if (discovered) SwordNames.nameFor(entry.tier.minLevel) else "???",
                 fontSize = 10.sp,
                 maxLines = 1,
                 color = if (discovered) {
