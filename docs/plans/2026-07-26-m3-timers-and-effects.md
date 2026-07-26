@@ -1,6 +1,5 @@
 # M3: 방지권 · 줍기 · 강화 연출 구현 계획
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 손맛을 완성한다. 파괴가 나면 작은 원이 뜨고 2.5초 안에 눌러야 검을 살리며, 놓치면 파편이 흩어져 3초 안에 주워야 한다. 강화 결과가 흔들림과 번쩍임으로 몸에 전달된다.
 

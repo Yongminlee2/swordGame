@@ -1,6 +1,5 @@
 # M4: 상점 · 조합소 · 모드 4종 구현 계획
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 경제 루프를 닫는다. 검을 팔아 번 돈으로 아이템을 사고, 주운 조각을 바꾸고, 그 아이템을 실제로 강화에 쓴다. 모드 4종을 각각 독립 세이브로 오간다.
 

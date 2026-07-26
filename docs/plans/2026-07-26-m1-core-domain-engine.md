@@ -1,6 +1,5 @@
 # M1: `:core` 도메인 엔진 구현 계획
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 안드로이드 의존성이 전혀 없는 순수 Kotlin 모듈 `:core`에 검 강화 게임의 규칙 전부(확률·경제·판정·진행도)를 구현하고, 밸런스 시뮬레이션으로 확률표를 1차 확정한다.
 

@@ -1,6 +1,5 @@
 # M2: 강화 화면과 저장 구현 계획
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 일반 모드 하나를 실제로 플레이할 수 있게 만든다. 검을 강화하고, 성공·유지·하락·파괴를 보고, 앱을 껐다 켜도 진행이 남는다.
 
