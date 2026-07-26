@@ -41,7 +41,15 @@ class SaveStore(private val dir: File) {
         write(File(dir, PROGRESS_FILE), json.encodeToString(ProgressState.serializer(), p))
     }
 
-    /** 해당 모드의 진행만 지운다. 도감·업적·통계는 남는다. */
+    fun loadSettings(): Settings =
+        read(File(dir, SETTINGS_FILE)) { json.decodeFromString(Settings.serializer(), it) }
+            ?: Settings()
+
+    fun saveSettings(settings: Settings) {
+        write(File(dir, SETTINGS_FILE), json.encodeToString(Settings.serializer(), settings))
+    }
+
+    /** 해당 모드의 진행만 지운다. 도감·업적·통계·설정은 남는다. */
     fun resetGame(difficulty: Difficulty) {
         val file = gameFile(difficulty)
         file.delete()
@@ -84,5 +92,6 @@ class SaveStore(private val dir: File) {
 
     companion object {
         const val PROGRESS_FILE = "collection.json"
+        const val SETTINGS_FILE = "settings.json"
     }
 }

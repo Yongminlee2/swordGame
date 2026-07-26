@@ -2,6 +2,8 @@ package com.geomgang.game
 
 import com.geomgang.core.Difficulty
 import com.geomgang.core.ForgeResult
+import com.geomgang.core.ProgressState
+import com.geomgang.core.Settings
 import com.geomgang.core.Sword
 import com.geomgang.core.WeaponFamily
 
@@ -33,6 +35,13 @@ data class ForgeUiState(
     val canPrevent: Boolean = false,
     /** 연출 재생 중이거나 제한 시간 창이 열려 있으면 입력을 받지 않는다. */
     val busy: Boolean = false,
+    /** 도감·업적·칭호·통계. 모드와 무관한 전역 진행도다. */
+    val progress: ProgressState = ProgressState(),
+    val settings: Settings = Settings(),
+    /** 자동강화가 도는 중인지. */
+    val autoForging: Boolean = false,
+    /** 자동강화를 켤 수 있는 상태인지 (안전구간 + 비용 충족). */
+    val canAutoForge: Boolean = false,
 ) {
     /** 방지권이든 줍기든 응답을 기다리는 중인지. */
     val awaitingDestroyChoice: Boolean get() = destroyPhase != DestroyPhase.None

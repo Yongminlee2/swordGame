@@ -11,8 +11,10 @@ import com.geomgang.core.Item
 import com.geomgang.core.Progress
 import com.geomgang.core.ProgressState
 import com.geomgang.core.RateTable
+import com.geomgang.core.Achievement
 import com.geomgang.core.Recipes
 import com.geomgang.core.SaveStore
+import com.geomgang.core.Settings
 import com.geomgang.core.Timing
 import com.geomgang.core.UsedItems
 import com.geomgang.core.WeaponFamily
@@ -42,6 +44,8 @@ class ForgeViewModel(
 
     private var progress: ProgressState = store.loadProgress()
 
+    private var settings: Settings = store.loadSettings()
+
     private var game: GameState = loadAndRepair(difficulty)
 
     private var busy = false
@@ -49,6 +53,8 @@ class ForgeViewModel(
     private var phase: DestroyPhase = DestroyPhase.None
 
     private var countdownJob: Job? = null
+
+    private var autoJob: Job? = null
 
     /**
      * 마지막 강화 결과. 연출이 끝나거나 파괴 창이 닫힐 때까지 유지한다.
@@ -92,9 +98,24 @@ class ForgeViewModel(
     }
 
     fun forge() {
-        val items = pendingItems
-        if (busy || !ForgeEngine.canAttempt(game, items)) return
-        val sword = game.sword ?: return
+        if (busy || autoJob != null) return
+        val result = runAttempt(pendingItems) ?: return
+        busy = true
+        lastResult = result
+        _ui.value = render()
+
+        if (result is ForgeResult.Destroyed) openDestroyWindow()
+    }
+
+    /**
+     * 강화 한 번을 실행하고 상태·통계·저장까지 마친다.
+     *
+     * 잠금과 연출은 건드리지 않는다. 손으로 누르는 [forge] 와 자동강화 루프가 함께 쓰기 때문이다.
+     * 자동강화는 안전구간에서만 돌아 파괴가 나지 않으므로 창 처리도 필요 없다.
+     */
+    private fun runAttempt(items: UsedItems): ForgeResult? {
+        if (!ForgeEngine.canAttempt(game, items)) return null
+        val sword = game.sword ?: return null
         val targetLevel = sword.level + 1
         val cost = Economy.upgradeCost(sword.level)
 
@@ -105,12 +126,8 @@ class ForgeViewModel(
         progress = Progress.refresh(
             Progress.onAttempt(progress, game.difficulty, sword.family, targetLevel, cost, result),
         )
-        busy = true
-        lastResult = result
         persist()
-        _ui.value = render()
-
-        if (result is ForgeResult.Destroyed) openDestroyWindow()
+        return result
     }
 
     /**
@@ -119,6 +136,13 @@ class ForgeViewModel(
      * 방지권이 있으면 먼저 되살릴 기회를 주고, 없거나 놓치면 줍기로 넘어간다.
      */
     private fun openDestroyWindow() {
+        // 자동사용이 켜져 있으면 창을 열지 않고 즉시 되살린다.
+        if (settings.autoPrevent && ForgeEngine.canPrevent(game)) {
+            game = ForgeEngine.applyPrevent(game)
+            progress = Progress.refresh(Progress.onPreventUsed(progress))
+            closeDestroyWindow()
+            return
+        }
         if (ForgeEngine.canPrevent(game)) {
             runWindow(Timing.PREVENT_WINDOW_MILLIS) { remaining, total ->
                 DestroyPhase.Prevent(remaining, total)
@@ -202,6 +226,48 @@ class ForgeViewModel(
         closeDestroyWindow()
     }
 
+    /**
+     * 자동강화를 시작한다.
+     *
+     * 안전구간을 벗어나거나 골드가 부족하면 스스로 멈춘다. 판정 조건은
+     * [ForgeEngine.canAutoForge] 가 갖고 있다 — 화면도 여기도 단계를 직접 비교하지 않는다.
+     */
+    fun startAutoForge(targetLevel: Int) {
+        if (autoJob != null || busy) return
+        autoJob = viewModelScope.launch {
+            while (
+                ForgeEngine.canAutoForge(game) &&
+                (game.sword?.level ?: 0) < targetLevel
+            ) {
+                runAttempt(UsedItems.NONE)
+                _ui.value = render()
+                delay(AUTO_FORGE_INTERVAL_MILLIS)
+            }
+            autoJob = null
+            _ui.value = render()
+        }
+        _ui.value = render()
+    }
+
+    fun stopAutoForge() {
+        autoJob?.cancel()
+        autoJob = null
+        _ui.value = render()
+    }
+
+    fun setAutoPrevent(on: Boolean) {
+        settings = settings.copy(autoPrevent = on)
+        store.saveSettings(settings)
+        _ui.value = render()
+    }
+
+    /** 달성한 업적의 칭호만 고를 수 있다. null 이면 해제. */
+    fun selectTitle(achievement: Achievement?) {
+        progress = Progress.selectTitle(progress, achievement)
+        store.saveProgress(progress)
+        _ui.value = render()
+    }
+
     /** 다음 강화에 축복서를 쓸지 켜고 끈다. 보유량이 없으면 켜지지 않는다. */
     fun toggleBlessing() {
         if (busy) return
@@ -276,6 +342,7 @@ class ForgeViewModel(
 
     override fun onCleared() {
         countdownJob?.cancel()
+        autoJob?.cancel()
         super.onCleared()
     }
 
@@ -290,6 +357,11 @@ class ForgeViewModel(
     private fun persist() {
         store.saveGame(game)
         store.saveProgress(progress)
+    }
+
+    private companion object {
+        /** 자동강화 한 번과 다음 번 사이의 간격. 화면이 따라올 만큼은 둔다. */
+        const val AUTO_FORGE_INTERVAL_MILLIS = 220L
     }
 
     private fun render(): ForgeUiState {
@@ -315,6 +387,10 @@ class ForgeViewModel(
             unlockedFamilies = Progress.unlockedFamilies(progress),
             useBlessing = pendingItems.blessing,
             useLuckCharm = pendingItems.luckCharm,
+            progress = progress,
+            settings = settings,
+            autoForging = autoJob != null,
+            canAutoForge = ForgeEngine.canAutoForge(game),
             lastResult = lastResult,
             destroyPhase = phase,
             canPrevent = ForgeEngine.canPrevent(game),
