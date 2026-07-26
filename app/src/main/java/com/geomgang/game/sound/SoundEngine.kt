@@ -105,6 +105,36 @@ class SoundEngine(private val enabled: () -> Boolean) {
         at(0.08) { tone(1_320.0, 0.12, decay = 20.0, gain = 0.22) }
     }
 
+    /** 사냥 이벤트가 나타났다. 물음표 같은 두 음. */
+    fun eventAppear() = play {
+        tone(990.0, 0.10, decay = 18.0, gain = 0.28)
+        at(0.12) { sweep(from = 660.0, to = 1_100.0, seconds = 0.14, gain = 0.24) }
+    }
+
+    /** 고유검이 태어났다. 가장 긴 팡파르 - 발견은 사건이어야 한다. */
+    fun uniqueBorn() = play {
+        tone(523.0, 0.18, decay = 8.0, gain = 0.32)
+        at(0.14) { tone(659.0, 0.18, decay = 8.0, gain = 0.32) }
+        at(0.28) { tone(784.0, 0.18, decay = 8.0, gain = 0.34) }
+        at(0.42) { tone(1_046.0, 0.42, decay = 4.0, gain = 0.40) }
+        at(0.42) { tone(1_318.0, 0.42, decay = 4.0, gain = 0.20) }
+    }
+
+    /** 펫 알을 얻었다. 통통 튀는 두 음. */
+    fun eggGet() = play {
+        tone(740.0, 0.08, decay = 24.0, gain = 0.26)
+        at(0.10) { tone(1_180.0, 0.10, decay = 18.0, gain = 0.28) }
+        at(0.22) { tone(1_480.0, 0.12, decay = 16.0, gain = 0.22) }
+    }
+
+    /** 회랑 체크포인트 - 보상이 확정됐다. 묵직한 화음. */
+    fun gauntletCheckpoint() = play {
+        tone(392.0, 0.30, decay = 6.0, gain = 0.30)
+        tone(494.0, 0.30, decay = 6.0, gain = 0.24)
+        tone(587.0, 0.30, decay = 6.0, gain = 0.24)
+        at(0.24) { tone(784.0, 0.34, decay = 5.0, gain = 0.34) }
+    }
+
     private fun play(build: Mixer.() -> Unit) {
         if (!enabled()) return
         try {

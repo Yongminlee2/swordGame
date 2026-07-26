@@ -575,6 +575,7 @@ class ForgeViewModel(
             }
             if (event != null) {
                 progress = Progress.refresh(Progress.onEventSeen(progress))
+                sound.eventAppear()
                 when {
                     HuntEvents.isMonsterEvent(event) -> {
                         activeEvent = event
@@ -655,7 +656,8 @@ class ForgeViewModel(
             // 층을 깼다 - 갈림길을 굴리고 마일스톤(허검·정령 알·기록)을 적용한다
             next = next.copy(choices = GauntletEngine.rollChoices(next.floor, rng))
             game = GauntletEngine.applyMilestones(game, next.floor)
-            sound.zoneCleared()
+            // 보스 층은 체크포인트 - 보상 확정을 소리로 알린다
+            if (run.isBossFloor) sound.gauntletCheckpoint() else sound.zoneCleared()
             persist()
         } else if (run.isBossFloor) {
             sound.bossHit(1)
@@ -719,7 +721,7 @@ class ForgeViewModel(
         val pet = PetKind.byZone(zone.id) ?: return
         game = game.copy(pets = Pets.addEgg(game.pets, pet.id))
         lastEgg = pet
-        sound.purchase()
+        sound.eggGet()
     }
 
     /** 펫 알 알림을 화면이 읽은 뒤 비운다. */
@@ -1049,7 +1051,7 @@ class ForgeViewModel(
                 Progress.refresh(Progress.registerSword(progress, game.difficulty, result))
             result.uniqueId?.let { uniqueId ->
                 progress = Progress.onUniqueFound(progress, uniqueId)
-                sound.forgeSuccess(result.level) // 고유검 탄생은 크게 울린다
+                sound.uniqueBorn() // 발견은 사건이어야 한다
             }
         }
         // 재료 자리가 사라졌으므로 자동 선택 수를 다시 맞춘다
