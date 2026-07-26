@@ -73,6 +73,12 @@ data class Stats(
     val bailouts: Long = 0,
     val bestLevelEver: Int = 0,
     val bestEndlessLevel: Int = 0,
+    // v1.3 확장. 전부 기본값이라 옛 세이브가 그대로 열린다.
+    val monsterKills: Long = 0,
+    val bossKills: Long = 0,
+    val fusions: Long = 0,
+    val starAttempts: Long = 0,
+    val eventsSeen: Long = 0,
 ) {
     /** 이 단계에서 실제로 관측된 성공률. 시도한 적이 없으면 null. */
     fun observedRate(targetLevel: Int): Double? {
@@ -199,6 +205,24 @@ object Progress {
 
     fun onSell(p: ProgressState, gold: Long): ProgressState =
         p.copy(stats = p.stats.copy(goldEarned = p.stats.goldEarned + gold))
+
+    fun onMonsterKill(p: ProgressState, isBoss: Boolean): ProgressState =
+        p.copy(
+            stats = if (isBoss) {
+                p.stats.copy(bossKills = p.stats.bossKills + 1)
+            } else {
+                p.stats.copy(monsterKills = p.stats.monsterKills + 1)
+            },
+        )
+
+    fun onFusion(p: ProgressState): ProgressState =
+        p.copy(stats = p.stats.copy(fusions = p.stats.fusions + 1))
+
+    fun onStarAttempt(p: ProgressState): ProgressState =
+        p.copy(stats = p.stats.copy(starAttempts = p.stats.starAttempts + 1))
+
+    fun onEventSeen(p: ProgressState): ProgressState =
+        p.copy(stats = p.stats.copy(eventsSeen = p.stats.eventsSeen + 1))
 
     fun onBailout(p: ProgressState): ProgressState =
         p.copy(stats = p.stats.copy(bailouts = p.stats.bailouts + 1))

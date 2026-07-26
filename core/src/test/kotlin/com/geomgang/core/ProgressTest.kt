@@ -108,6 +108,35 @@ class ProgressTest {
     }
 
     @Test
+    fun `잡몹 처치는 monsterKills만 올린다`() {
+        val p = Progress.onMonsterKill(empty, isBoss = false)
+        assertEquals(1L, p.stats.monsterKills)
+        assertEquals(0L, p.stats.bossKills)
+    }
+
+    @Test
+    fun `보스 처치는 bossKills만 올린다`() {
+        val p = Progress.onMonsterKill(empty, isBoss = true)
+        assertEquals(0L, p.stats.monsterKills)
+        assertEquals(1L, p.stats.bossKills)
+    }
+
+    @Test
+    fun `조합과 별 강화가 따로 기록된다`() {
+        var p = Progress.onFusion(empty)
+        p = Progress.onStarAttempt(p)
+        p = Progress.onStarAttempt(p)
+        assertEquals(1L, p.stats.fusions)
+        assertEquals(2L, p.stats.starAttempts)
+    }
+
+    @Test
+    fun `이벤트 조우가 기록된다`() {
+        val p = Progress.onEventSeen(empty)
+        assertEquals(1L, p.stats.eventsSeen)
+    }
+
+    @Test
     fun `방지권 사용과 놓침이 따로 기록된다`() {
         var p = Progress.onPreventUsed(empty)
         p = Progress.onPreventMissed(p)
