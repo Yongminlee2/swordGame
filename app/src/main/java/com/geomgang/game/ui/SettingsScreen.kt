@@ -33,6 +33,8 @@ import com.geomgang.core.Timing
 fun SettingsScreen(
     settings: Settings,
     onAutoPreventChange: (Boolean) -> Unit,
+    onSoundChange: (Boolean) -> Unit,
+    onReset: () -> Unit,
     onBack: () -> Unit,
 ) {
     Column(
@@ -42,6 +44,29 @@ fun SettingsScreen(
             .padding(20.dp),
     ) {
         ScreenHeader(title = "설정", onBack = onBack)
+
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("효과음", fontWeight = FontWeight.Medium)
+                        Text(
+                            text = "강화 성공·실패·파괴, 방지권, 줍기, 사냥 타격에 소리가 붙는다. " +
+                                "성공음은 단계가 높을수록 높은 음이 난다.",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        )
+                    }
+                    Switch(checked = settings.soundOn, onCheckedChange = onSoundChange)
+                }
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
 
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
@@ -75,13 +100,15 @@ fun SettingsScreen(
 
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
-                Text("데이터 초기화", fontWeight = FontWeight.Medium)
+                Text("진행 초기화", fontWeight = FontWeight.Medium)
                 Text(
-                    text = "모드 선택 화면에서 해당 모드를 5초 길게 눌러 초기화한다. " +
-                        "도감과 업적은 지워지지 않는다.",
+                    text = "검·골드·조각·아이템·사냥 진행을 지운다. " +
+                        "도감·업적·통계·설정은 지워지지 않는다.",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )
+                Spacer(Modifier.height(10.dp))
+                HoldToReset(label = "5초 길게 눌러 초기화", onComplete = onReset)
             }
         }
 

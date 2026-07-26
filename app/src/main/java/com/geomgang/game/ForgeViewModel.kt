@@ -21,6 +21,7 @@ import com.geomgang.core.Timing
 import com.geomgang.core.UsedItems
 import com.geomgang.core.WeaponFamily
 import com.geomgang.core.Zone
+import com.geomgang.game.sound.SoundEngine
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,6 +44,8 @@ class ForgeViewModel(
     private val store: SaveStore,
     difficulty: Difficulty,
     private val rng: Random = Random.Default,
+    /** 소리. 테스트에서는 넘기지 않으므로 아무 일도 하지 않는 기본값을 둔다. */
+    private val sound: SoundEngine = SoundEngine { false },
 ) : ViewModel() {
 
     private var progress: ProgressState = store.loadProgress()
@@ -122,6 +125,13 @@ class ForgeViewModel(
         busy = true
         lastResult = result
         _ui.value = render()
+
+        when (result) {
+            is ForgeResult.Success -> sound.forgeSuccess(result.newLevel)
+            is ForgeResult.Stay -> sound.forgeStay()
+            is ForgeResult.Drop -> sound.forgeDrop()
+            is ForgeResult.Destroyed -> sound.forgeDestroy()
+        }
 
         if (result is ForgeResult.Destroyed) openDestroyWindow()
     }
@@ -232,6 +242,7 @@ class ForgeViewModel(
         countdownJob?.cancel()
         game = ForgeEngine.applyPrevent(game)
         progress = Progress.refresh(Progress.onPreventUsed(progress))
+        sound.preventUsed()
         closeDestroyWindow()
     }
 
@@ -242,6 +253,7 @@ class ForgeViewModel(
         val before = game.shards
         game = ForgeEngine.applySalvage(game, rng)
         progress = Progress.refresh(Progress.onSalvage(progress, game.shards - before))
+        sound.salvage()
         closeDestroyWindow()
     }
 
@@ -277,6 +289,30 @@ class ForgeViewModel(
     fun setAutoPrevent(on: Boolean) {
         settings = settings.copy(autoPrevent = on)
         store.saveSettings(settings)
+        _ui.value = render()
+    }
+
+    fun setSoundOn(on: Boolean) {
+        settings = settings.copy(soundOn = on)
+        store.saveSettings(settings)
+        _ui.value = render()
+        if (on) sound.purchase()
+    }
+
+    /** 소리를 켤지 판단할 때 쓴다. 설정이 바뀌면 즉시 반영된다. */
+    fun soundEnabled(): Boolean = settings.soundOn
+
+    /** 이 모드의 진행을 지운다. 도감·업적·통계·설정은 남는다. */
+    fun resetProgress() {
+        stopHuntLoop()
+        stopAutoForge()
+        countdownJob?.cancel()
+        store.resetGame(game.difficulty)
+        game = store.loadGame(game.difficulty)
+        huntZone = null
+        phase = DestroyPhase.None
+        lastResult = null
+        busy = false
         _ui.value = render()
     }
 
@@ -341,6 +377,8 @@ class ForgeViewModel(
         lastHits = hit.hits
         targetHp -= hit.damage
 
+        if (fightingBoss) sound.bossHit(combo) else sound.hit(combo)
+
         if (targetHp <= 0) onTargetDown(zone)
         _ui.value = render()
     }
@@ -362,6 +400,7 @@ class ForgeViewModel(
             )
             progress = Progress.refresh(Progress.onSell(progress, zone.bossGold))
             zoneCleared = true
+            sound.zoneCleared()
             stopHuntLoop()
         } else {
             val shards = Combat.shardReward(sword, zone.monsterShards)
@@ -371,6 +410,7 @@ class ForgeViewModel(
                 adventure = game.adventure.copy(killsInZone = game.adventure.killsInZone + 1),
             )
             progress = Progress.refresh(Progress.onSell(progress, zone.monsterGold))
+            sound.monsterDown()
             if (!game.adventure.bossReady) spawnNext()
         }
         persist()
@@ -427,6 +467,7 @@ class ForgeViewModel(
                         bossRemainingMillis = 0
                         bossFailed = true
                         fightingBoss = false
+                        sound.bossFailed()
                         game = game.copy(adventure = game.adventure.copy(killsInZone = 0))
                         spawnNext()
                         persist()
@@ -483,6 +524,7 @@ class ForgeViewModel(
     fun buyItem(item: Item) {
         if (busy || !Economy.canBuyItem(game, item)) return
         game = Economy.buyItem(game, item)
+        sound.purchase()
         persist()
         _ui.value = render()
     }

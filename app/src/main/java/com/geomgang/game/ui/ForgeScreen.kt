@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -69,7 +70,6 @@ fun ForgeScreen(
     onOpenMenu: () -> Unit,
     onStartAuto: (Int) -> Unit,
     onStopAuto: () -> Unit,
-    onExit: () -> Unit,
     onAnimationEnd: () -> Unit,
 ) {
     val shake = remember { Animatable(0f) }
@@ -120,12 +120,10 @@ fun ForgeScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            TextButton(onClick = onExit, enabled = !state.busy && !state.autoForging) {
-                Text("← 모드", color = MaterialTheme.colorScheme.secondary)
-            }
+            Spacer(Modifier.width(64.dp))
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "${state.difficulty.displayLabel()} · 최고 +${state.bestLevel}",
+                    text = "최고 +${state.bestLevel}",
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                     fontSize = 13.sp,
                 )

@@ -7,20 +7,18 @@ import androidx.activity.compose.setContent
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geomgang.core.Difficulty
 import com.geomgang.core.SaveStore
+import com.geomgang.game.sound.SoundEngine
 import com.geomgang.game.ui.AchievementScreen
 import com.geomgang.game.ui.CodexScreen
 import com.geomgang.game.ui.CraftScreen
 import com.geomgang.game.ui.ForgeScreen
 import com.geomgang.game.ui.HuntScreen
-import com.geomgang.game.ui.ModeSelectScreen
-import com.geomgang.game.ui.ModeSummary
 import com.geomgang.game.ui.RecordsMenuScreen
 import com.geomgang.game.ui.SettingsScreen
 import com.geomgang.game.ui.ShopScreen
@@ -37,9 +35,16 @@ private fun Overlay.parent(): Overlay = when (this) {
 }
 
 /**
- * 화면이 여럿이지만 딥링크가 없어 내비게이션 라이브러리를 쓰지 않는다.
- * 모드를 고르면 그 모드의 ViewModel 이 만들어지고, 나머지 화면은 같은 인스턴스를 조작한다.
+ * 모드는 하나다.
+ *
+ * 쉬움·일반·지옥을 없애고 상한 없는 무한 모드만 남겼다. 덕분에 모드 선택 화면이
+ * 사라져 앱을 켜면 곧바로 강화 화면이다 — "시작까지 길다"는 문제가 같이 풀렸다.
+ *
+ * [Difficulty] 는 지우지 않았다. 확률표에 배수를 곱하는 장치는 그대로 쓸모가 있고
+ * 테스트가 그 계산을 지키고 있다. 다만 게임이 쓰는 것은 [Difficulty.ENDLESS] 하나뿐이다.
  */
+private val ONLY_MODE = Difficulty.ENDLESS
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,37 +60,15 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun App(store: SaveStore) {
-    var difficulty by remember { mutableStateOf<Difficulty?>(null) }
-    // 모드를 초기화하면 요약을 다시 읽어야 한다.
-    var summaryVersion by remember { mutableIntStateOf(0) }
-
-    val current = difficulty
-    if (current == null) {
-        val summaries = remember(summaryVersion) {
-            Difficulty.entries.map { d ->
-                val game = store.loadGame(d)
-                ModeSummary(
-                    difficulty = d,
-                    bestLevel = game.bestLevel,
-                    gold = game.gold,
-                    started = game.bestLevel > 0 || game.sword != null || game.gold > 0,
-                )
-            }
-        }
-        ModeSelectScreen(
-            summaries = summaries,
-            onEnter = { difficulty = it },
-            onReset = {
-                store.resetGame(it)
-                summaryVersion++
-            },
-        )
-        return
+    // 소리를 켤지는 ViewModel 의 설정을 그때그때 읽는다. 설정을 바꾸면 즉시 반영된다.
+    val vm = remember {
+        lateinit var holder: ForgeViewModel
+        val engine = SoundEngine { holder.soundEnabled() }
+        holder = ForgeViewModel(store, ONLY_MODE, sound = engine)
+        holder
     }
-
-    val vm = remember(current) { ForgeViewModel(store, current) }
     val state by vm.ui.collectAsStateWithLifecycle()
-    var overlay by remember(current) { mutableStateOf(Overlay.None) }
+    var overlay by remember { mutableStateOf(Overlay.None) }
 
     BackHandler(enabled = !state.busy) {
         when {
@@ -93,7 +76,7 @@ private fun App(store: SaveStore) {
             // 사냥 중이면 먼저 사냥터 목록으로, 거기서 한 번 더 누르면 강화 화면으로
             state.hunt != null -> vm.leaveHunt()
             overlay != Overlay.None -> overlay = overlay.parent()
-            else -> difficulty = null
+            else -> Unit
         }
     }
 
@@ -154,6 +137,8 @@ private fun App(store: SaveStore) {
         Overlay.Settings -> SettingsScreen(
             settings = state.settings,
             onAutoPreventChange = vm::setAutoPrevent,
+            onSoundChange = vm::setSoundOn,
+            onReset = vm::resetProgress,
             onBack = { overlay = Overlay.Records },
         )
 
@@ -170,7 +155,6 @@ private fun App(store: SaveStore) {
             onOpenMenu = { overlay = Overlay.Records },
             onStartAuto = vm::startAutoForge,
             onStopAuto = vm::stopAutoForge,
-            onExit = { difficulty = null },
             onAnimationEnd = vm::onAnimationFinished,
         )
     }

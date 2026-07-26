@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 /**
  * 모드와 무관한 전역 설정.
  *
- * 세이브가 아니라 취향이므로 모드 초기화의 영향을 받지 않는다.
+ * 세이브가 아니라 취향이므로 초기화의 영향을 받지 않는다.
  */
 @Serializable
 data class Settings(
@@ -16,4 +16,7 @@ data class Settings(
      * 편의를 원하는 사람만 켜게 한다.
      */
     val autoPrevent: Boolean = false,
+
+    /** 효과음. 강화 게임 손맛의 절반이 소리라서 기본값은 켜짐이다. */
+    val soundOn: Boolean = true,
 )
