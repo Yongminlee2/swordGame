@@ -3,9 +3,11 @@ package com.geomgang.game.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import com.geomgang.core.Sword
 import com.geomgang.core.WeaponCatalog
 
@@ -14,14 +16,32 @@ import com.geomgang.core.WeaponCatalog
  *
  * M5 에서 벡터 레이어 조립(날·코등이·손잡이·보석·오라)으로 교체할 때
  * 이 파일만 갈아 끼우면 되도록, 검을 그리는 지식을 여기 한 곳에 가둔다.
+ *
+ * @param shake 좌우 흔들림(px). 실패·하락 연출에서 준다.
+ * @param flash 0~1. 1에 가까울수록 [flashColor] 로 덮인다. 성공·파괴 연출에서 준다.
  */
 @Composable
-fun SwordView(sword: Sword?, modifier: Modifier = Modifier) {
+fun SwordView(
+    sword: Sword?,
+    modifier: Modifier = Modifier,
+    shake: Float = 0f,
+    flash: Float = 0f,
+    flashColor: Color = Color.White,
+) {
     val tierIndex = sword?.let { WeaponCatalog.tierFor(it.level).ordinal } ?: 0
     val bladeColor = TIER_COLORS[tierIndex.coerceIn(TIER_COLORS.indices)]
     val hasAura = (sword?.level ?: 0) >= WeaponCatalog.AURA_MIN_LEVEL
 
-    Canvas(modifier) {
+    Canvas(
+        modifier
+            .graphicsLayer { translationX = shake }
+            .drawWithContent {
+                drawContent()
+                if (flash > 0f) {
+                    drawRect(color = flashColor.copy(alpha = flash * 0.6f))
+                }
+            },
+    ) {
         if (sword == null) return@Canvas
 
         val w = size.width

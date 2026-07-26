@@ -1,6 +1,7 @@
 package com.geomgang.game
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.geomgang.core.Difficulty
 import com.geomgang.core.Economy
 import com.geomgang.core.ForgeEngine
@@ -10,11 +11,15 @@ import com.geomgang.core.Progress
 import com.geomgang.core.ProgressState
 import com.geomgang.core.RateTable
 import com.geomgang.core.SaveStore
+import com.geomgang.core.Timing
 import com.geomgang.core.UsedItems
 import com.geomgang.core.WeaponFamily
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -39,7 +44,19 @@ class ForgeViewModel(
 
     private var busy = false
 
-    private val _ui = MutableStateFlow(render(null))
+    private var phase: DestroyPhase = DestroyPhase.None
+
+    private var countdownJob: Job? = null
+
+    /**
+     * 마지막 강화 결과. 연출이 끝나거나 파괴 창이 닫힐 때까지 유지한다.
+     *
+     * 카운트다운이 매 틱마다 화면을 다시 그리는데, 여기서 결과를 들고 있지 않으면
+     * "파괴!!" 배너가 첫 틱에 사라져 버린다.
+     */
+    private var lastResult: ForgeResult? = null
+
+    private val _ui = MutableStateFlow(render())
     val ui: StateFlow<ForgeUiState> = _ui.asStateFlow()
 
     /**
@@ -81,25 +98,100 @@ class ForgeViewModel(
             Progress.onAttempt(progress, game.difficulty, sword.family, targetLevel, cost, result),
         )
         busy = true
+        lastResult = result
         persist()
-        _ui.value = render(result)
+        _ui.value = render()
+
+        if (result is ForgeResult.Destroyed) openDestroyWindow()
+    }
+
+    /**
+     * 파괴 직후 제한 시간 창을 연다.
+     *
+     * 방지권이 있으면 먼저 되살릴 기회를 주고, 없거나 놓치면 줍기로 넘어간다.
+     */
+    private fun openDestroyWindow() {
+        if (ForgeEngine.canPrevent(game)) {
+            runWindow(Timing.PREVENT_WINDOW_MILLIS) { remaining, total ->
+                DestroyPhase.Prevent(remaining, total)
+            }
+        } else {
+            openSalvageWindow()
+        }
+    }
+
+    private fun openSalvageWindow() {
+        runWindow(Timing.SALVAGE_WINDOW_MILLIS) { remaining, total ->
+            DestroyPhase.Salvage(remaining, total)
+        }
+    }
+
+    /**
+     * 제한 시간을 재며 [make] 로 만든 단계를 화면에 흘려보낸다. 만료되면 [onWindowExpired].
+     *
+     * 시간을 화면이 아니라 여기서 재는 이유: 화면이 재구성될 때마다 타이머가 흔들리면 안 되고,
+     * 가상 시간으로 테스트할 수 있어야 하기 때문이다.
+     */
+    private fun runWindow(
+        totalMillis: Long,
+        make: (remaining: Long, total: Long) -> DestroyPhase,
+    ) {
+        countdownJob?.cancel()
+        busy = true
+
+        // 창은 코루틴 스케줄을 기다리지 않고 즉시 연다.
+        // 한 프레임이라도 늦게 뜨면 그만큼 반응 시간을 빼앗는 셈이다.
+        phase = make(totalMillis, totalMillis)
+        _ui.value = render()
+
+        countdownJob = viewModelScope.launch {
+            var remaining = totalMillis
+            while (remaining > 0) {
+                delay(Timing.TICK_MILLIS)
+                remaining -= Timing.TICK_MILLIS
+                phase = make(remaining.coerceAtLeast(0), totalMillis)
+                _ui.value = render()
+            }
+            onWindowExpired()
+        }
+    }
+
+    private fun onWindowExpired() {
+        when (phase) {
+            is DestroyPhase.Prevent -> {
+                // 놓쳤을 뿐이므로 방지권은 소모하지 않는다. 기회만 사라진다.
+                progress = Progress.refresh(Progress.onPreventMissed(progress))
+                persist()
+                openSalvageWindow()
+            }
+
+            is DestroyPhase.Salvage -> {
+                progress = Progress.refresh(Progress.onSalvageMissed(progress))
+                game = ForgeEngine.confirmDestroy(game)
+                closeDestroyWindow()
+            }
+
+            DestroyPhase.None -> Unit
+        }
     }
 
     /** 파괴된 검을 방지권으로 되살린다. */
     fun usePrevent() {
         if (!ForgeEngine.canPrevent(game)) return
+        countdownJob?.cancel()
         game = ForgeEngine.applyPrevent(game)
         progress = Progress.refresh(Progress.onPreventUsed(progress))
-        finishDestroyChoice()
+        closeDestroyWindow()
     }
 
     /** 파편을 주워 조각을 얻는다. */
     fun salvage() {
         if (game.pendingDestroy == null) return
+        countdownJob?.cancel()
         val before = game.shards
         game = ForgeEngine.applySalvage(game, rng)
         progress = Progress.refresh(Progress.onSalvage(progress, game.shards - before))
-        finishDestroyChoice()
+        closeDestroyWindow()
     }
 
     fun sellSword() {
@@ -109,7 +201,7 @@ class ForgeViewModel(
         progress = Progress.refresh(Progress.onSell(progress, price))
         applyBailout()
         persist()
-        _ui.value = render(null)
+        _ui.value = render()
     }
 
     fun buySword(family: WeaponFamily) {
@@ -117,21 +209,30 @@ class ForgeViewModel(
         game = Economy.buySword(game, family)
         game.sword?.let { progress = Progress.registerSword(progress, game.difficulty, it) }
         persist()
-        _ui.value = render(null)
+        _ui.value = render()
     }
 
     /** 결과 연출이 끝났다고 화면이 알려 준다. 입력 잠금을 푼다. */
     fun onAnimationFinished() {
         if (!busy) return
         busy = false
-        _ui.value = render(null)
+        lastResult = null
+        _ui.value = render()
     }
 
-    private fun finishDestroyChoice() {
+    private fun closeDestroyWindow() {
+        countdownJob = null
+        phase = DestroyPhase.None
         busy = false
+        lastResult = null
         applyBailout()
         persist()
-        _ui.value = render(null)
+        _ui.value = render()
+    }
+
+    override fun onCleared() {
+        countdownJob?.cancel()
+        super.onCleared()
     }
 
     private fun applyBailout() {
@@ -147,11 +248,10 @@ class ForgeViewModel(
         store.saveProgress(progress)
     }
 
-    private fun render(result: ForgeResult?): ForgeUiState {
+    private fun render(): ForgeUiState {
         val sword = game.sword
         val level = sword?.level ?: 0
         val targetLevel = level + 1
-        val awaiting = game.pendingDestroy != null
         return ForgeUiState(
             difficulty = game.difficulty,
             sword = sword,
@@ -165,8 +265,8 @@ class ForgeViewModel(
                 (RateTable.successRate(game.difficulty, targetLevel) * 100).roundToInt(),
             canForge = !busy && ForgeEngine.canAttempt(game, UsedItems.NONE),
             canBuySword = !busy && Economy.canBuySword(game),
-            lastResult = result,
-            awaitingDestroyChoice = awaiting,
+            lastResult = lastResult,
+            destroyPhase = phase,
             canPrevent = ForgeEngine.canPrevent(game),
             busy = busy,
         )

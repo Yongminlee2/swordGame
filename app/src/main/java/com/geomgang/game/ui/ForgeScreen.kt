@@ -1,5 +1,7 @@
 package com.geomgang.game.ui
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.keyframes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +20,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,11 +32,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geomgang.core.Difficulty
 import com.geomgang.core.ForgeResult
+import com.geomgang.game.DestroyPhase
 import com.geomgang.game.ForgeUiState
-import kotlinx.coroutines.delay
 
-/** 결과 배너를 띄워 두는 시간. M3 에서 진짜 연출로 대체한다. */
-private const val RESULT_BANNER_MILLIS = 450L
+/**
+ * 결과별 연출 길이(ms).
+ *
+ * 결과가 몸에 남을 만큼만, 진행을 막지 않을 만큼 짧게. 이 값이 커지면
+ * 연타로 굴리는 맛이 사라지고 게임이 답답해진다.
+ */
+private const val SUCCESS_MILLIS = 350
+private const val STAY_MILLIS = 250
+private const val DROP_MILLIS = 400
+private const val DESTROY_MILLIS = 300
+
+/** 흔들림 진폭(px). 하락이 유지보다 크게 흔들려야 손해를 체감한다. */
+private const val STAY_SHAKE = 12f
+private const val DROP_SHAKE = 26f
 
 @Composable
 fun ForgeScreen(
@@ -42,11 +60,40 @@ fun ForgeScreen(
     onBuy: () -> Unit,
     onAnimationEnd: () -> Unit,
 ) {
+    val shake = remember { Animatable(0f) }
+    val flash = remember { Animatable(0f) }
+    var flashColor by remember { mutableStateOf(Color.White) }
+
     // 파괴는 사용자의 응답을 기다려야 하므로 잠금을 자동으로 풀지 않는다.
-    LaunchedEffect(state.lastResult, state.awaitingDestroyChoice) {
-        if (state.lastResult != null && !state.awaitingDestroyChoice) {
-            delay(RESULT_BANNER_MILLIS)
-            onAnimationEnd()
+    LaunchedEffect(state.lastResult) {
+        when (val result = state.lastResult) {
+            null -> {
+                shake.snapTo(0f)
+                flash.snapTo(0f)
+            }
+
+            is ForgeResult.Success -> {
+                flashColor = Color(0xFFFFF3D0)
+                flash.flashOnce(SUCCESS_MILLIS)
+                onAnimationEnd()
+            }
+
+            is ForgeResult.Stay -> {
+                shake.shakeOnce(STAY_SHAKE, STAY_MILLIS)
+                onAnimationEnd()
+            }
+
+            is ForgeResult.Drop -> {
+                shake.shakeOnce(DROP_SHAKE, DROP_MILLIS)
+                onAnimationEnd()
+            }
+
+            is ForgeResult.Destroyed -> {
+                flashColor = Color(0xFFE05A5A)
+                flash.flashOnce(DESTROY_MILLIS)
+                // 여기서 onAnimationEnd 를 부르지 않는다.
+                // 제한 시간 창이 열려 있고, 그 잠금은 ViewModel 이 푼다.
+            }
         }
     }
 
@@ -68,11 +115,37 @@ fun ForgeScreen(
             contentAlignment = Alignment.Center,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                SwordView(state.sword, Modifier.size(150.dp, 210.dp))
+                // 제한 시간 창이 열려 있으면 검이 있던 자리를 원이나 파편이 차지한다.
+                when (val phase = state.destroyPhase) {
+                    is DestroyPhase.Prevent -> PreventRing(
+                        progress = phase.progress,
+                        enabled = state.canPrevent,
+                        onTap = onPrevent,
+                    )
+
+                    is DestroyPhase.Salvage -> SalvageShards(
+                        progress = phase.progress,
+                        onTap = onSalvage,
+                    )
+
+                    DestroyPhase.None -> SwordView(
+                        sword = state.sword,
+                        modifier = Modifier.size(150.dp, 210.dp),
+                        shake = shake.value,
+                        flash = flash.value,
+                        flashColor = flashColor,
+                    )
+                }
+
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = state.sword?.let { "+${it.level} ${it.family.displayName}" }
-                        ?: "검이 없다",
+                    text = when (state.destroyPhase) {
+                        is DestroyPhase.Prevent -> "지금 눌러야 한다"
+                        is DestroyPhase.Salvage -> "파편이 흩어진다"
+                        DestroyPhase.None ->
+                            state.sword?.let { "+${it.level} ${it.family.displayName}" }
+                                ?: "검이 없다"
+                    },
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                 )
@@ -94,30 +167,18 @@ fun ForgeScreen(
 
         Spacer(Modifier.height(16.dp))
 
+        // 창이 열려 있으면 하단 버튼을 감춘다. 원과 파편을 눌러야 하기 때문이다.
         if (state.awaitingDestroyChoice) {
             Text(
-                text = if (state.canPrevent) "방지권으로 되살리거나 조각을 주울 수 있다" else "파편이라도 줍자",
+                text = when (state.destroyPhase) {
+                    is DestroyPhase.Prevent ->
+                        if (state.canPrevent) "원을 눌러 검을 살려라" else "방지권이 없다"
+
+                    else -> "파편을 눌러 조각을 회수한다"
+                },
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
             )
-            Spacer(Modifier.height(10.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Button(
-                    onClick = onPrevent,
-                    enabled = state.canPrevent,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),
-                ) { Text("방지권 사용") }
-                OutlinedButton(
-                    onClick = onSalvage,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),
-                ) { Text("줍기") }
-            }
+            Spacer(Modifier.height(64.dp))
         } else {
             Button(
                 onClick = onForge,
@@ -170,6 +231,38 @@ private fun InfoRow(label: String, value: String) {
         Text(label, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
         Text(value, fontWeight = FontWeight.Medium)
     }
+}
+
+/** 좌우로 몇 번 흔들리다 제자리로 돌아온다. */
+private suspend fun Animatable<Float, *>.shakeOnce(amplitude: Float, durationMillis: Int) {
+    snapTo(0f)
+    animateTo(
+        targetValue = 0f,
+        animationSpec = keyframes {
+            this.durationMillis = durationMillis
+            0f at 0
+            amplitude at durationMillis / 6
+            -amplitude at durationMillis * 2 / 6
+            amplitude * 0.6f at durationMillis * 3 / 6
+            -amplitude * 0.35f at durationMillis * 4 / 6
+            amplitude * 0.15f at durationMillis * 5 / 6
+            0f at durationMillis
+        },
+    )
+}
+
+/** 확 밝아졌다가 가라앉는다. */
+private suspend fun Animatable<Float, *>.flashOnce(durationMillis: Int) {
+    snapTo(0f)
+    animateTo(
+        targetValue = 0f,
+        animationSpec = keyframes {
+            this.durationMillis = durationMillis
+            0f at 0
+            1f at durationMillis / 5
+            0f at durationMillis
+        },
+    )
 }
 
 private fun Difficulty.displayLabel(): String = when (this) {
