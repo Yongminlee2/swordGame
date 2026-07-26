@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.keyframes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -63,6 +65,9 @@ fun ForgeScreen(
     onToggleLuckCharm: () -> Unit,
     onOpenShop: () -> Unit,
     onOpenCraft: () -> Unit,
+    onOpenMenu: () -> Unit,
+    onStartAuto: (Int) -> Unit,
+    onStopAuto: () -> Unit,
     onExit: () -> Unit,
     onAnimationEnd: () -> Unit,
 ) {
@@ -114,13 +119,27 @@ fun ForgeScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            TextButton(onClick = onExit, enabled = !state.busy) {
+            TextButton(onClick = onExit, enabled = !state.busy && !state.autoForging) {
                 Text("← 모드", color = MaterialTheme.colorScheme.secondary)
             }
-            Text(
-                text = "${state.difficulty.displayLabel()} · 최고 +${state.bestLevel}",
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "${state.difficulty.displayLabel()} · 최고 +${state.bestLevel}",
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                    fontSize = 13.sp,
+                )
+                state.progress.selectedTitle?.let {
+                    Text(
+                        text = it.title,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+            TextButton(onClick = onOpenMenu, enabled = !state.busy && !state.autoForging) {
+                Text("기록", color = MaterialTheme.colorScheme.secondary)
+            }
         }
 
         Box(
@@ -238,24 +257,77 @@ fun ForgeScreen(
                 Text("강 화", fontSize = 22.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.height(10.dp))
+            AutoForgeBar(state, onStartAuto, onStopAuto)
+            Spacer(Modifier.height(10.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 OutlinedButton(
                     onClick = onOpenShop,
-                    enabled = !state.busy,
+                    enabled = !state.busy && !state.autoForging,
                     modifier = Modifier.weight(1f),
                 ) { Text("상점") }
                 OutlinedButton(
                     onClick = onOpenCraft,
-                    enabled = !state.busy,
+                    enabled = !state.busy && !state.autoForging,
                     modifier = Modifier.weight(1f),
                 ) { Text("조합소  ${state.shards}") }
             }
         }
     }
 }
+
+/**
+ * 자동강화 막대.
+ *
+ * 안전구간에서만 뜬다. 하락·파괴가 걸린 구간을 자동화하면 그 구간의 긴장이 사라져
+ * 게임이 남지 않기 때문이다. 멈춤 조건 판정은 전부 도메인이 한다.
+ */
+@Composable
+private fun AutoForgeBar(
+    state: ForgeUiState,
+    onStartAuto: (Int) -> Unit,
+    onStopAuto: () -> Unit,
+) {
+    if (state.autoForging) {
+        Button(
+            onClick = onStopAuto,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.error,
+            ),
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text("자동강화 중지") }
+        return
+    }
+
+    if (!state.canAutoForge) return
+
+    Column(Modifier.fillMaxWidth()) {
+        Text(
+            text = "자동강화 (안전구간까지만)",
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+        )
+        Spacer(Modifier.height(4.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            val current = state.sword?.level ?: 0
+            (current + 1..AUTO_FORGE_TARGET_MAX).forEach { target ->
+                OutlinedButton(
+                    onClick = { onStartAuto(target) },
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(vertical = 6.dp),
+                ) { Text("+$target", fontSize = 13.sp) }
+            }
+        }
+    }
+}
+
+/** 자동강화 목표로 고를 수 있는 최대 단계. 안전구간의 끝이다. */
+private const val AUTO_FORGE_TARGET_MAX = 5
 
 @Composable
 private fun ResultBanner(result: ForgeResult?) {
