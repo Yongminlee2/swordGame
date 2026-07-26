@@ -124,6 +124,8 @@ data class GameState(
     val adventure: AdventureState = AdventureState(),
     /** 보관함. 조합과 재료 강화가 여기서 검을 꺼내 쓴다. */
     val storage: List<Sword> = emptyList(),
+    /** 일일·주간 퀘스트. 날짜 키가 바뀌면 새로 뽑힌다. */
+    val quests: QuestState = QuestState(),
 ) {
     init {
         require(gold >= 0) { "gold must be >= 0, was $gold" }
