@@ -28,9 +28,10 @@ import com.geomgang.core.WeaponFamily
 import com.geomgang.game.R
 
 /**
- * 검 그림.
+ * 검 그림 (강화 화면의 큰 검).
  *
- * 스프라이트시트에서 해당 칸만 잘라 크게 그린다.
+ * 큰 화면은 64px 시트2(계열×티어 큐레이션)를 쓴다. 고유검은 전용 칸이 있다.
+ * 오라는 초창기 벡터 아트에서 살아남은 유산 - 시트 위에 그대로 얹는다.
  * 픽셀아트라 확대할 때 보간을 끄는 것이 중요하다 — 켜 두면 흐물흐물해진다.
  *
  * @param shake 좌우 흔들림(px). 실패·하락 연출에서 준다.
@@ -56,8 +57,87 @@ fun SwordView(
         contentAlignment = Alignment.Center,
     ) {
         if (sword != null) {
-            SpriteBox(sword.family, sword.level, Modifier.fillMaxSize())
+            Sprite2Box(sword, Modifier.fillMaxSize())
         }
+    }
+}
+
+/** 시트2에서 검 한 자루를 그린다. 오라 포함. */
+@Composable
+private fun Sprite2Box(sword: Sword, modifier: Modifier) {
+    val sheet = rememberSheet2()
+    val src = SwordSheet2.offsetOf(SwordSheet2.cellFor(sword))
+    val aura = SwordSheet.auraFor(sword.level)
+
+    Canvas(modifier) {
+        if (aura.alpha > 0f) {
+            val r = size.minDimension * 0.46f
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(aura.color.copy(alpha = aura.alpha), Color.Transparent),
+                    center = Offset(size.width / 2f, size.height / 2f),
+                    radius = r,
+                ),
+                radius = r,
+                center = Offset(size.width / 2f, size.height / 2f),
+            )
+        }
+        val side = size.minDimension
+        val left = ((size.width - side) / 2f).toInt()
+        val top = ((size.height - side) / 2f).toInt()
+        drawImage(
+            image = sheet,
+            srcOffset = IntOffset(src.x, src.y),
+            srcSize = IntSize(SwordSheet2.CELL, SwordSheet2.CELL),
+            dstOffset = IntOffset(left, top),
+            dstSize = IntSize(side.toInt(), side.toInt()),
+            filterQuality = FilterQuality.None,
+        )
+    }
+}
+
+/** 도감 칸용 - 시트2의 계열×티어 그림. 미발견은 어둡게. */
+@Composable
+fun TierThumb(
+    family: WeaponFamily,
+    tier: com.geomgang.core.WeaponTier,
+    modifier: Modifier = Modifier,
+    size: Dp = 52.dp,
+    dimmed: Boolean = false,
+) {
+    val sheet = rememberSheet2()
+    val src = SwordSheet2.offsetOf(SwordSheet2.cellOf(family, tier))
+    Canvas(modifier.size(size)) {
+        drawImage(
+            image = sheet,
+            srcOffset = IntOffset(src.x, src.y),
+            srcSize = IntSize(SwordSheet2.CELL, SwordSheet2.CELL),
+            dstSize = IntSize(this.size.width.toInt(), this.size.height.toInt()),
+            filterQuality = FilterQuality.None,
+            colorFilter = if (dimmed) ColorFilter.tint(Color(0xFF2E2740)) else null,
+        )
+    }
+}
+
+/** 도감 고유검 칸용. */
+@Composable
+fun UniqueThumb(
+    uniqueId: String,
+    modifier: Modifier = Modifier,
+    size: Dp = 52.dp,
+    dimmed: Boolean = false,
+) {
+    val sheet = rememberSheet2()
+    val src = SwordSheet2.offsetOf(SwordSheet2.uniqueCellOf(uniqueId))
+    Canvas(modifier.size(size)) {
+        drawImage(
+            image = sheet,
+            srcOffset = IntOffset(src.x, src.y),
+            srcSize = IntSize(SwordSheet2.CELL, SwordSheet2.CELL),
+            dstSize = IntSize(this.size.width.toInt(), this.size.height.toInt()),
+            filterQuality = FilterQuality.None,
+            colorFilter = if (dimmed) ColorFilter.tint(Color(0xFF2E2740)) else null,
+        )
     }
 }
 
@@ -143,5 +223,14 @@ private fun rememberSheet(): ImageBitmap {
     return remember {
         val options = BitmapFactory.Options().apply { inScaled = false }
         BitmapFactory.decodeResource(resources, R.drawable.sword_sheet, options).asImageBitmap()
+    }
+}
+
+@Composable
+private fun rememberSheet2(): ImageBitmap {
+    val resources = LocalContext.current.resources
+    return remember {
+        val options = BitmapFactory.Options().apply { inScaled = false }
+        BitmapFactory.decodeResource(resources, R.drawable.sword_sheet2, options).asImageBitmap()
     }
 }

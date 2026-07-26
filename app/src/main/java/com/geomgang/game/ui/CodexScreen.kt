@@ -116,23 +116,30 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
 @Composable
 private fun UniqueRow(recipe: com.geomgang.core.UniqueRecipe, found: Boolean) {
     Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(10.dp)) {
-            Text(
-                text = if (found) "✦ ${recipe.name}" else "???",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (found) {
-                    Color(0xFFFFD54A)
-                } else {
-                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                },
-            )
-            Text(
-                // 발견하면 패시브가, 못 했으면 힌트가 보인다. 힌트가 곧 콘텐츠다.
-                text = if (found) recipe.blurb else recipe.hint,
-                fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-            )
+        Row(
+            modifier = Modifier.padding(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // 미발견도 실루엣은 보여 준다 - 목표가 보여야 모으고 싶어진다
+            UniqueThumb(uniqueId = recipe.id, size = 44.dp, dimmed = !found)
+            Column(Modifier.padding(start = 10.dp)) {
+                Text(
+                    text = if (found) "✦ ${recipe.name}" else "???",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (found) {
+                        Color(0xFFFFD54A)
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    },
+                )
+                Text(
+                    // 발견하면 패시브가, 못 했으면 힌트가 보인다. 힌트가 곧 콘텐츠다.
+                    text = if (found) recipe.blurb else recipe.hint,
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+            }
         }
     }
 }
@@ -155,9 +162,9 @@ private fun CodexCell(
                 contentAlignment = Alignment.Center,
             ) {
                 // 못 얻은 칸도 형태는 보여 준다. 무엇을 노려야 하는지 알아야 모으고 싶어진다.
-                SwordThumb(
+                TierThumb(
                     family = entry.family,
-                    level = entry.tier.minLevel,
+                    tier = entry.tier,
                     dimmed = !discovered,
                     size = 52.dp,
                 )
