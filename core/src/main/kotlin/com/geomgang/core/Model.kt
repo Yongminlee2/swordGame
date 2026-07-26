@@ -63,6 +63,11 @@ data class Sword(
     val family: WeaponFamily,
     val level: Int,
     val stars: Int = 0,
+    /**
+     * 고유검 id. 숨은 레시피 조합으로만 채워진다. null = 평범한 검.
+     * 이름·패시브 정의는 [UniqueSwords] 에 있다. 기본값이라 옛 세이브 호환.
+     */
+    val uniqueId: String? = null,
 ) {
     init {
         require(level >= 0) { "level must be >= 0, was $level" }
@@ -134,6 +139,8 @@ data class GameState(
     val storage: List<Sword> = emptyList(),
     /** 일일·주간 퀘스트. 날짜 키가 바뀌면 새로 뽑힌다. */
     val quests: QuestState = QuestState(),
+    /** 구역 정수(Zone id → 개수). 보스가 주고 고유검 레시피가 먹는다. */
+    val essences: Map<String, Int> = emptyMap(),
 ) {
     init {
         require(gold >= 0) { "gold must be >= 0, was $gold" }

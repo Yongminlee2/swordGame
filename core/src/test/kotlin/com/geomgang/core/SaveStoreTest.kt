@@ -41,6 +41,35 @@ class SaveStoreTest {
     }
 
     @Test
+    fun `uniqueId와 정수가 없던 옛 세이브도 그대로 열린다`() {
+        // v1.2 이전 형식의 JSON 을 직접 심는다 - 새 필드(uniqueId·essences·quests)가 없다.
+        val old = """
+            {"difficulty":"NORMAL","gold":500,"shards":3,
+             "sword":{"family":"STRAIGHT","level":7},
+             "inventory":{},"bestLevel":7}
+        """.trimIndent()
+        File(tmp.root, "save_normal.json").writeText(old)
+        val loaded = store().loadGame(Difficulty.NORMAL)
+        assertEquals(500L, loaded.gold)
+        assertEquals(Sword(WeaponFamily.STRAIGHT, 7), loaded.sword)
+        assertNull(loaded.sword!!.uniqueId)
+        assertTrue(loaded.essences.isEmpty())
+    }
+
+    @Test
+    fun `고유검과 정수가 저장되고 복원된다`() {
+        val s = store()
+        val state = sample().copy(
+            sword = Sword(WeaponFamily.HOLY, 12, stars = 1, uniqueId = "trinity"),
+            essences = mapOf("volcano" to 3),
+        )
+        s.saveGame(state)
+        val loaded = s.loadGame(Difficulty.NORMAL)
+        assertEquals("trinity", loaded.sword!!.uniqueId)
+        assertEquals(3, loaded.essences["volcano"])
+    }
+
+    @Test
     fun `파괴 대기 상태도 저장되고 복원된다`() {
         val s = store()
         val pending = sample().copy(
