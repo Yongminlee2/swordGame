@@ -1,5 +1,7 @@
 package com.geomgang.core
 
+import kotlinx.serialization.Serializable
+
 /** 소비 아이템. */
 enum class Item(val id: String, val displayName: String) {
     /** 파괴를 1회 무효화한다. 파괴 판정 직후 제한 시간 안에 눌러야 한다. */
@@ -38,6 +40,7 @@ enum class WeaponFamily(val id: String, val displayName: String) {
 }
 
 /** 보유 중인 검 한 자루. */
+@Serializable
 data class Sword(val family: WeaponFamily, val level: Int) {
     init {
         require(level >= 0) { "level must be >= 0, was $level" }
@@ -45,6 +48,7 @@ data class Sword(val family: WeaponFamily, val level: Int) {
 }
 
 /** 소비 아이템 보유량. */
+@Serializable
 data class Inventory(
     val preventTickets: Int = 0,
     val blessingScrolls: Int = 0,
@@ -88,9 +92,11 @@ data class Inventory(
  * 이 값이 세이브에 남아 있는 채로 앱이 다시 켜지면 파괴를 확정 처리한다.
  * 그렇게 하지 않으면 방지권 대기 중 강제 종료로 파괴를 무효화할 수 있다.
  */
+@Serializable
 data class PendingDestroy(val family: WeaponFamily, val level: Int)
 
 /** 한 모드의 전체 진행 상태. */
+@Serializable
 data class GameState(
     val difficulty: Difficulty,
     val gold: Long = 0,
