@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color
 import com.geomgang.core.Combat
 import com.geomgang.core.Economy
 import com.geomgang.core.FamilyStyle
@@ -35,6 +36,8 @@ import com.geomgang.core.Fusion
 import com.geomgang.core.Storage
 import com.geomgang.core.Sword
 import com.geomgang.core.SwordNames
+import com.geomgang.core.UniqueSwords
+import com.geomgang.core.Zone
 import com.geomgang.game.ForgeUiState
 
 /**
@@ -157,7 +160,15 @@ private fun HeldSwordCard(state: ForgeUiState, onStore: () -> Unit) {
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.primary,
                         )
-                        Text(SwordNames.nameFor(held.level), fontWeight = FontWeight.Bold)
+                        Text(
+                            text = SwordNames.nameFor(held),
+                            fontWeight = FontWeight.Bold,
+                            color = if (held.uniqueId != null) {
+                                Color(0xFFFFD54A)
+                            } else {
+                                Color.Unspecified
+                            },
+                        )
                         Text(
                             text = swordLine(held),
                             fontSize = 11.sp,
@@ -193,8 +204,10 @@ private fun FusionPanel(
     }
 
     val materials = picked.sorted().mapNotNull { state.storage.getOrNull(it) }
-    val preview = if (materials.size in Fusion.MIN_MATERIALS..Fusion.MAX_MATERIALS) {
-        Fusion.resultOf(materials)
+    val preview = if (materials.size in Fusion.MIN_MATERIALS..Fusion.MAX_MATERIALS &&
+        materials.none { it.uniqueId != null }
+    ) {
+        Fusion.resultOf(materials, state.essences)
     } else {
         null
     }
@@ -209,14 +222,36 @@ private fun FusionPanel(
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
             )
+            if (state.essences.isNotEmpty()) {
+                Text(
+                    text = "보유 정수: " + state.essences.entries.joinToString(" · ") {
+                        "${Zone.fromId(it.key).displayName} ${it.value}"
+                    },
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                )
+            }
             if (preview != null) {
                 Spacer(Modifier.height(6.dp))
-                Text(
-                    text = "결과 → ${SwordNames.nameFor(preview.level)} " +
-                        "(+${preview.level} ${preview.family.displayName})",
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                )
+                if (preview.uniqueId != null) {
+                    Text(
+                        text = "결과 → ✦ ${SwordNames.nameFor(preview)} ✦",
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFFFD54A),
+                    )
+                    Text(
+                        text = UniqueSwords.byId(preview.uniqueId!!)?.blurb ?: "",
+                        fontSize = 11.sp,
+                        color = Color(0xFFFFD54A).copy(alpha = 0.8f),
+                    )
+                } else {
+                    Text(
+                        text = "결과 → ${SwordNames.nameFor(preview)} " +
+                            "(+${preview.level} ${preview.family.displayName})",
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
                 Text(
                     text = "비용 %,d골드 · 계열을 맞추면 한 단계 더".format(cost),
                     fontSize = 11.sp,
@@ -277,16 +312,29 @@ private fun StorageRow(
                 }
                 SwordThumb(sword.family, sword.level, size = 38.dp)
                 Column(Modifier.padding(start = 10.dp)) {
-                    Text(SwordNames.nameFor(sword.level), fontWeight = FontWeight.Bold)
+                    Text(
+                        text = SwordNames.nameFor(sword),
+                        fontWeight = FontWeight.Bold,
+                        color = if (sword.uniqueId != null) {
+                            Color(0xFFFFD54A)
+                        } else {
+                            Color.Unspecified
+                        },
+                    )
                     Text(
                         text = swordLine(sword),
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     )
                     Text(
-                        text = FamilyStyle.of(sword.family).blurb,
+                        text = sword.uniqueId?.let { UniqueSwords.byId(it)?.blurb }
+                            ?: FamilyStyle.of(sword.family).blurb,
                         fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                        color = if (sword.uniqueId != null) {
+                            Color(0xFFFFD54A).copy(alpha = 0.8f)
+                        } else {
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        },
                     )
                 }
             }

@@ -100,13 +100,15 @@ object SwordDrop {
         isBoss: Boolean,
         families: List<WeaponFamily>,
         rng: Random,
+        /** 드롭률 배수. 행운아(고유검) 같은 보정이 들어온다. */
+        chanceMult: Double = 1.0,
     ): Sword? {
         if (families.isEmpty()) return null
         val chance = when {
             isBoss -> 1.0
             isRare -> RARE_CHANCE
             else -> NORMAL_CHANCE
-        }
+        } * chanceMult
         if (rng.nextDouble() >= chance) return null
 
         val family = families[rng.nextInt(families.size)]

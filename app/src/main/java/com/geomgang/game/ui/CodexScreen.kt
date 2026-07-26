@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Card
@@ -31,6 +32,7 @@ import com.geomgang.core.CodexKey
 import com.geomgang.core.Difficulty
 import com.geomgang.core.ProgressState
 import com.geomgang.core.SwordNames
+import com.geomgang.core.UniqueSwords
 import com.geomgang.core.WeaponCatalog
 import com.geomgang.core.WeaponFamily
 
@@ -83,6 +85,54 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
                         .toSet(),
                 )
             }
+
+            // --- 고유검 ---
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Column {
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        text = "고유검  ${progress.uniqueFound.size} / ${UniqueSwords.RECIPES.size}",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFFFD54A),
+                    )
+                    Text(
+                        text = "특별한 조합이 특별한 검을 만든다. 힌트를 읽고 재료를 찾아라.",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
+                    )
+                }
+            }
+            items(
+                items = UniqueSwords.RECIPES,
+                span = { GridItemSpan(maxLineSpan) },
+            ) { recipe ->
+                UniqueRow(recipe = recipe, found = recipe.id in progress.uniqueFound)
+            }
+        }
+    }
+}
+
+@Composable
+private fun UniqueRow(recipe: com.geomgang.core.UniqueRecipe, found: Boolean) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(10.dp)) {
+            Text(
+                text = if (found) "✦ ${recipe.name}" else "???",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (found) {
+                    Color(0xFFFFD54A)
+                } else {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                },
+            )
+            Text(
+                // 발견하면 패시브가, 못 했으면 힌트가 보인다. 힌트가 곧 콘텐츠다.
+                text = if (found) recipe.blurb else recipe.hint,
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            )
         }
     }
 }

@@ -29,6 +29,7 @@ import com.geomgang.core.Storage
 import com.geomgang.core.Sword
 import com.geomgang.core.SwordDrop
 import com.geomgang.core.Timing
+import com.geomgang.core.UniqueSwords
 import com.geomgang.core.UsedItems
 import com.geomgang.core.WeaponFamily
 import com.geomgang.core.Zone
@@ -439,7 +440,7 @@ class ForgeViewModel(
         if (now - lastTapAt < Combat.minTapMillis(sword)) return
         lastTapAt = now
 
-        val hit = Combat.hit(sword, combo, fightingBoss, rng.nextDouble())
+        val hit = Combat.hit(sword, combo, fightingBoss, rng.nextDouble(), targetMaxHp)
         combo++
         lastDamage = hit.damage
         lastHits = hit.hits
@@ -460,7 +461,8 @@ class ForgeViewModel(
 
         if (fightingBoss) {
             val golden = if (goldenRemainingMillis > 0) HuntEvents.GOLDEN_MULT else 1.0
-            val bossGold = (zone.bossGold * golden).toLong()
+            val bossGold =
+                (zone.bossGold * golden * UniqueSwords.goldMultOf(sword)).toLong()
             val shards = Combat.shardReward(sword, (zone.bossShards * golden).toInt())
             lastKillGold = bossGold
             game = game.copy(
@@ -470,6 +472,9 @@ class ForgeViewModel(
                     killsInZone = 0,
                     clearedZoneIds = game.adventure.clearedZoneIds + zone.id,
                 ),
+                // 보스는 자기 구역의 정수를 남긴다. 고유검 레시피의 재료다.
+                essences = game.essences +
+                    (zone.id to (game.essences[zone.id] ?: 0) + 1),
             )
             progress = Progress.refresh(
                 Progress.onMonsterKill(Progress.onSell(progress, bossGold), isBoss = true),
@@ -483,7 +488,10 @@ class ForgeViewModel(
             val bonus = if (rareTarget) Zone.RARE_REWARD else 1.0
             val eventMult = HuntEvents.rewardMultOf(activeEvent)
             val golden = if (goldenRemainingMillis > 0) HuntEvents.GOLDEN_MULT else 1.0
-            val gold = (zone.goldOf(kind) * bonus * eventMult * golden).toLong()
+            val gold = (
+                zone.goldOf(kind) * bonus * eventMult * golden *
+                    UniqueSwords.goldMultOf(sword)
+                ).toLong()
             val eggShards = if (activeEvent == HuntEvent.STRANGE_EGG) HuntEvents.EGG_SHARDS else 0
             val shards =
                 Combat.shardReward(sword, (kind.shards * bonus * golden).toInt()) + eggShards
@@ -823,6 +831,7 @@ class ForgeViewModel(
             isBoss = isBoss,
             families = Progress.unlockedFamilies(progress),
             rng = rng,
+            chanceMult = UniqueSwords.dropMultOf(game.sword),
         ) ?: return
 
         if (Storage.isFull(game)) {
@@ -874,12 +883,17 @@ class ForgeViewModel(
 
     // ---------------- 조합 · 재료 · 별 ----------------
 
-    /** 보관함의 검 여러 자루를 녹여 한 자루로 만든다. */
+    /** 보관함의 검 여러 자루를 녹여 한 자루로 만든다. 레시피와 맞으면 고유검이다. */
     fun fuse(indices: List<Int>) {
         if (busy || autoJob != null || !Fusion.canFuse(game, indices)) return
         game = Fusion.fuse(game, indices)
-        game.storage.lastOrNull()?.let {
-            progress = Progress.refresh(Progress.registerSword(progress, game.difficulty, it))
+        game.storage.lastOrNull()?.let { result ->
+            progress =
+                Progress.refresh(Progress.registerSword(progress, game.difficulty, result))
+            result.uniqueId?.let { uniqueId ->
+                progress = Progress.onUniqueFound(progress, uniqueId)
+                sound.forgeSuccess(result.level) // 고유검 탄생은 크게 울린다
+            }
         }
         // 재료 자리가 사라졌으므로 자동 선택 수를 다시 맞춘다
         materialCount = materialCount.coerceAtMost(game.storage.size)
@@ -1056,6 +1070,7 @@ class ForgeViewModel(
             canAutoForge = ForgeEngine.canAutoForge(game),
             hunt = renderHunt(),
             attackPower = Combat.attackPower(game.sword),
+            essences = game.essences,
             quests = game.quests,
             questProgress = game.quests.daily.map {
                 DailyQuests.progressOf(it, progress.stats)

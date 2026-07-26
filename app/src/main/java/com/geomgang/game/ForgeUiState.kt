@@ -67,6 +67,8 @@ data class ForgeUiState(
     val weeklyProgress: Int = 0,
     /** 수령 가능한 퀘스트가 하나라도 있는지. 강화 화면 배지가 이걸 본다. */
     val questClaimable: Boolean = false,
+    /** 구역 정수(Zone id → 개수). 고유검 레시피의 재료다. */
+    val essences: Map<String, Int> = emptyMap(),
 ) {
     /** 방지권이든 줍기든 응답을 기다리는 중인지. */
     val awaitingDestroyChoice: Boolean get() = destroyPhase != DestroyPhase.None

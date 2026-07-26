@@ -181,12 +181,20 @@ fun ForgeScreen(
                         is DestroyPhase.Prevent -> "지금 눌러야 한다"
                         is DestroyPhase.Salvage -> "파편이 흩어진다"
                         // 이름은 단계마다 다르다. 계열은 형태만 정하고 부제로 내려간다.
+                        // 고유검은 고유 이름을 금색으로.
                         DestroyPhase.None -> state.sword?.let {
-                            SwordNames.nameFor(it.level)
+                            SwordNames.nameFor(it)
                         } ?: "검이 없다"
                     },
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
+                    color = if (state.destroyPhase == DestroyPhase.None &&
+                        state.sword?.uniqueId != null
+                    ) {
+                        Color(0xFFFFD54A)
+                    } else {
+                        Color.Unspecified
+                    },
                 )
                 if (state.destroyPhase == DestroyPhase.None && state.sword != null) {
                     Text(

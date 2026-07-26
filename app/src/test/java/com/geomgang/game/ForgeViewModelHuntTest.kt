@@ -182,6 +182,20 @@ class ForgeViewModelHuntTest {
     }
 
     @Test
+    fun `보스를 잡으면 그 구역 정수가 1 오른다`() = runTest(dispatcher) {
+        // 용검 +20의 화상이 가상 시간만으로 잡몹 12마리와 보스를 잡는다 -
+        // 탭 연타 가드(실제 시각)를 피하는 방법이다.
+        val vm = huntReadyViewModel(sword = Sword(WeaponFamily.DRAGON, 20))
+        advanceTimeBy((Zone.MONSTERS_BEFORE_BOSS + 2) * 1000L)
+        assertTrue(vm.ui.value.hunt!!.killsInZone >= Zone.MONSTERS_BEFORE_BOSS)
+        vm.challengeBoss()
+        advanceTimeBy(3_000)
+        val essences = vm.ui.value.essences
+        vm.leaveHunt()
+        assertEquals(1, essences[Zone.MEADOW.id])
+    }
+
+    @Test
     fun `금덩이를 탭하면 골드가 들어오고 금덩이는 사라진다`() = runTest(dispatcher) {
         val vm = huntReadyViewModel(rng = QueueRandom(doubles = listOf(0.5, 0.0, 0.7)))
         assertTrue(vm.ui.value.hunt!!.nugget)

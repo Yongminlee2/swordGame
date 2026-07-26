@@ -101,6 +101,8 @@ data class ProgressState(
     val achievements: Set<Achievement> = emptySet(),
     val selectedTitle: Achievement? = null,
     val stats: Stats = Stats(),
+    /** 발견한 고유검 id. 도감 고유검 페이지가 이걸 본다. */
+    val uniqueFound: Set<String> = emptySet(),
 )
 
 /** 진행도 누적 규칙. */
@@ -223,6 +225,10 @@ object Progress {
 
     fun onEventSeen(p: ProgressState): ProgressState =
         p.copy(stats = p.stats.copy(eventsSeen = p.stats.eventsSeen + 1))
+
+    /** 고유검을 발견했다. 도감의 "???"가 이름으로 바뀐다. */
+    fun onUniqueFound(p: ProgressState, uniqueId: String): ProgressState =
+        if (uniqueId in p.uniqueFound) p else p.copy(uniqueFound = p.uniqueFound + uniqueId)
 
     fun onBailout(p: ProgressState): ProgressState =
         p.copy(stats = p.stats.copy(bailouts = p.stats.bailouts + 1))

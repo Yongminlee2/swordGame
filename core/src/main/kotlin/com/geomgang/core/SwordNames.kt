@@ -55,6 +55,10 @@ object SwordNames {
         return ENDLESS[step.coerceAtMost(ENDLESS.lastIndex)]
     }
 
+    /** 검 한 자루의 표시 이름. 고유검은 단계 이름 대신 고유 이름을 쓴다. */
+    fun nameFor(sword: Sword): String =
+        sword.uniqueId?.let { UniqueSwords.byId(it)?.name } ?: nameFor(sword.level)
+
     /** 테스트가 쓰는 값. */
     internal fun namedLevels(): Array<String> = BY_LEVEL
 
