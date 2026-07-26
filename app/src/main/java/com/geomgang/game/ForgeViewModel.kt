@@ -81,6 +81,9 @@ class ForgeViewModel(
     private var lastTapAt = 0L
     private var lastDamage = 0L
     private var lastHits = 0
+    private var lastCrit = false
+    private var hitSeq = 0L
+    private var lastKillGold = 0L
     private var bossFailed = false
     private var zoneCleared = false
     private var huntJob: Job? = null
@@ -407,10 +410,12 @@ class ForgeViewModel(
         if (now - lastTapAt < Combat.minTapMillis(sword)) return
         lastTapAt = now
 
-        val hit = Combat.hit(sword, combo, fightingBoss)
+        val hit = Combat.hit(sword, combo, fightingBoss, rng.nextDouble())
         combo++
         lastDamage = hit.damage
         lastHits = hit.hits
+        lastCrit = hit.crit
+        hitSeq++
         targetHp -= hit.damage
 
         if (fightingBoss) sound.bossHit(combo) else sound.hit(combo)
@@ -426,6 +431,7 @@ class ForgeViewModel(
 
         if (fightingBoss) {
             val shards = Combat.shardReward(sword, zone.bossShards)
+            lastKillGold = zone.bossGold
             game = game.copy(
                 gold = game.gold + zone.bossGold,
                 shards = game.shards + shards,
@@ -444,6 +450,7 @@ class ForgeViewModel(
             val bonus = if (rareTarget) Zone.RARE_REWARD else 1.0
             val gold = (zone.goldOf(kind) * bonus).toLong()
             val shards = Combat.shardReward(sword, (kind.shards * bonus).toInt())
+            lastKillGold = gold
             game = game.copy(
                 gold = game.gold + gold,
                 shards = game.shards + shards,
@@ -486,6 +493,9 @@ class ForgeViewModel(
         bossRemainingMillis = 0
         lastDamage = 0
         lastHits = 0
+        // hitSeq 는 리셋하지 않는다 - 화면이 팝업 키로 쓰므로 되돌리면 충돌한다.
+        // lastKillGold 도 리셋하지 않는다 - 처치 직후 스폰되므로 화면이 아직 그리는 중이다.
+        lastCrit = false
     }
 
     /**
@@ -533,13 +543,14 @@ class ForgeViewModel(
 
     private fun renderHunt(): HuntUiState? {
         val zone = huntZone ?: return null
+        val rawName = when {
+            fightingBoss -> zone.bossName
+            else -> targetKind?.name ?: zone.monsters.first().name
+        }
         return HuntUiState(
             zone = zone,
-            targetName = when {
-                fightingBoss -> zone.bossName
-                rareTarget -> "희귀 " + (targetKind?.name ?: zone.monsters.first().name)
-                else -> targetKind?.name ?: zone.monsters.first().name
-            },
+            targetName = if (rareTarget && !fightingBoss) "희귀 $rawName" else rawName,
+            rawTargetName = rawName,
             targetHp = targetHp.coerceAtLeast(0),
             targetMaxHp = targetMaxHp.coerceAtLeast(1),
             isBoss = fightingBoss,
@@ -550,6 +561,10 @@ class ForgeViewModel(
             combo = combo,
             lastDamage = lastDamage,
             lastHits = lastHits,
+            lastCrit = lastCrit,
+            hitSeq = hitSeq,
+            isRare = rareTarget && !fightingBoss,
+            lastKillGold = lastKillGold,
             bossFailed = bossFailed,
             zoneCleared = zoneCleared,
         )

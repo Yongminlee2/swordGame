@@ -6,6 +6,8 @@ import com.geomgang.core.Zone
 data class HuntUiState(
     val zone: Zone,
     val targetName: String,
+    /** 접두어("희귀 ") 없는 원본 이름. 스프라이트 시트 매핑에 쓴다. */
+    val rawTargetName: String,
     val targetHp: Long,
     val targetMaxHp: Long,
     val isBoss: Boolean,
@@ -19,6 +21,14 @@ data class HuntUiState(
     val lastDamage: Long,
     /** 마지막 타격이 몇 번 들어갔는지. 쌍검은 2다. */
     val lastHits: Int,
+    /** 마지막 타격이 치명타였는지. */
+    val lastCrit: Boolean,
+    /** 타격마다 1씩 오르는 일련번호. 화면이 팝업 애니메이션 트리거로 쓴다. */
+    val hitSeq: Long,
+    /** 지금 대상이 희귀 몬스터인지. 금색 틴트를 입힌다. */
+    val isRare: Boolean,
+    /** 방금 처치로 번 골드. 처치 직후가 아니면 0. */
+    val lastKillGold: Long,
     /** 보스 제한 시간을 넘겨 실패했는지. */
     val bossFailed: Boolean,
     /** 방금 구역을 깼는지. */
@@ -29,4 +39,8 @@ data class HuntUiState(
     val bossTimeRatio: Float
         get() = if (!isBoss) 0f
         else (bossRemainingMillis.toFloat() / (zone.bossSeconds * 1000f)).coerceIn(0f, 1f)
+
+    /** 보스가 급해졌는지 - 남은 시간 25% 이하. 붉은 틴트 + 흔들림. */
+    val enraged: Boolean
+        get() = isBoss && targetHp > 0 && bossTimeRatio <= 0.25f
 }

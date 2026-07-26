@@ -136,6 +136,22 @@ fun SettingsScreen(
                 )
                 Spacer(Modifier.height(12.dp))
                 Text(
+                    text = "몬스터 아이콘",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    // CC0 은 표기 의무가 없지만 출처를 남기는 것이 이 프로젝트의 방침이다.
+                    text = "Dungeon Crawl 32x32 tiles · CC0 (퍼블릭 도메인)\n" +
+                        "제작: Dungeon Crawl Stone Soup 팀 외 다수\n" +
+                        "https://opengameart.org/content/dungeon-crawl-32x32-tiles\n\n" +
+                        "몬스터·보스 40종을 선별해 스프라이트시트로 합쳤다.",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
                     text = "그 외",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,

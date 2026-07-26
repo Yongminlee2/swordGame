@@ -1,5 +1,7 @@
 package com.geomgang.game.ui
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,11 +24,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geomgang.core.AdventureState
@@ -34,6 +43,8 @@ import com.geomgang.core.FamilyStyle
 import com.geomgang.core.Sword
 import com.geomgang.core.Zone
 import com.geomgang.game.ForgeUiState
+import com.geomgang.game.HuntUiState
+import kotlin.random.Random
 
 /**
  * 사냥터.
@@ -60,6 +71,7 @@ fun HuntScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(zoneBrush(hunt.zone))
             .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -111,7 +123,21 @@ fun HuntScreen(
                 )
                 Spacer(Modifier.height(12.dp))
 
-                MonsterBlob(hunt.hpRatio, hunt.isBoss)
+                MonsterSprite(
+                    name = hunt.rawTargetName,
+                    hpRatio = hunt.hpRatio,
+                    isBoss = hunt.isBoss,
+                    isRare = hunt.isRare,
+                    enraged = hunt.enraged,
+                    hitSeq = hunt.hitSeq,
+                )
+                if (hunt.targetHp <= 0) {
+                    Text(
+                        text = "쓰러짐",
+                        fontSize = 13.sp,
+                        color = Color.White.copy(alpha = 0.75f),
+                    )
+                }
 
                 Spacer(Modifier.height(14.dp))
                 HpBar(hunt.hpRatio, hunt.isBoss)
@@ -128,20 +154,6 @@ fun HuntScreen(
                         text = "남은 시간 %.1f초".format(hunt.bossRemainingMillis / 1000.0),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.error,
-                    )
-                }
-
-                if (hunt.lastDamage > 0 && hunt.targetHp > 0) {
-                    Spacer(Modifier.height(10.dp))
-                    Text(
-                        text = if (hunt.lastHits > 1) {
-                            "-%,d  (%d연타)".format(hunt.lastDamage, hunt.lastHits)
-                        } else {
-                            "-%,d".format(hunt.lastDamage)
-                        },
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFFFD48A),
                     )
                 }
 
@@ -162,6 +174,9 @@ fun HuntScreen(
                     )
                 }
             }
+
+            // 데미지 숫자는 몬스터 위 레이어에서 튀어오른다
+            DamagePopups(hunt)
         }
 
         // --- 알림과 보스 도전 ---
@@ -327,26 +342,56 @@ private fun ZoneCard(
     }
 }
 
-/** 몬스터 자리. 체력이 줄면 쪼그라든다. */
+/** 화면에 떠 있는 숫자 하나. 음수 id 는 처치 골드 팝업이다. */
+private data class DamagePop(val id: Long, val text: String, val strong: Boolean, val xJitter: Int)
+
+/**
+ * 데미지 숫자 팝업.
+ *
+ * hitSeq 가 바뀔 때마다 숫자가 튀어올라 사라진다. 치명타와 처치 골드는 크고 노랗게.
+ * 연타 시 화면이 숫자로 뒤덮이지 않게 동시에 6개까지만 띄운다.
+ */
 @Composable
-private fun MonsterBlob(hpRatio: Float, isBoss: Boolean) {
-    val base = if (isBoss) 150 else 110
-    val side = (base * (0.55f + hpRatio * 0.45f)).dp
-    Box(
-        modifier = Modifier
-            .size(side)
-            .clip(RoundedCornerShape(percent = 45))
-            .background(
-                if (isBoss) Color(0xFF7A2436) else Color(0xFF3A3350),
-            ),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = if (hpRatio <= 0f) "쓰러짐" else if (isBoss) "보스" else "",
-            fontSize = 13.sp,
-            color = Color.White.copy(alpha = 0.75f),
-        )
+private fun DamagePopups(hunt: HuntUiState, modifier: Modifier = Modifier) {
+    val pops = remember { mutableStateListOf<DamagePop>() }
+    LaunchedEffect(hunt.hitSeq) {
+        if (hunt.hitSeq == 0L || hunt.lastDamage <= 0) return@LaunchedEffect
+        val text = if (hunt.lastHits > 1) {
+            "-%,d ×${hunt.lastHits}".format(hunt.lastDamage / hunt.lastHits)
+        } else {
+            "-%,d".format(hunt.lastDamage)
+        }
+        pops += DamagePop(hunt.hitSeq, text, hunt.lastCrit, Random.nextInt(-40, 41))
+        if (hunt.targetHp <= 0 && hunt.lastKillGold > 0) {
+            pops += DamagePop(-hunt.hitSeq, "+%,d".format(hunt.lastKillGold), true, 0)
+        }
+        while (pops.size > 6) pops.removeAt(0)
     }
+    Box(modifier) {
+        pops.forEach { pop ->
+            key(pop.id) {
+                PopText(pop) { pops.remove(pop) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PopText(pop: DamagePop, onDone: () -> Unit) {
+    val progress = remember { Animatable(0f) }
+    LaunchedEffect(pop.id) {
+        progress.animateTo(1f, tween(durationMillis = if (pop.strong) 900 else 650))
+        onDone()
+    }
+    Text(
+        text = if (pop.strong && pop.id > 0) "치명타! ${pop.text}" else pop.text,
+        fontSize = if (pop.strong) 24.sp else 16.sp,
+        fontWeight = FontWeight.Bold,
+        color = if (pop.strong) Color(0xFFFFD54A) else Color(0xFFEEEEEE),
+        modifier = Modifier
+            .offset { IntOffset(pop.xJitter, (-90 * progress.value).toInt()) }
+            .graphicsLayer { alpha = 1f - progress.value * progress.value },
+    )
 }
 
 @Composable
