@@ -1203,10 +1203,10 @@ class EconomyTest {
     fun `강화 비용이 스펙 표와 일치한다`() {
         // round(30 * 1.45^currentLevel)
         assertEquals(30L, Economy.upgradeCost(0))
-        assertEquals(130L, Economy.upgradeCost(4))
-        assertEquals(973L, Economy.upgradeCost(9))
-        assertEquals(6405L, Economy.upgradeCost(14))
-        assertEquals(42113L, Economy.upgradeCost(19))
+        assertEquals(133L, Economy.upgradeCost(4))
+        assertEquals(850L, Economy.upgradeCost(9))
+        assertEquals(5448L, Economy.upgradeCost(14))
+        assertEquals(34923L, Economy.upgradeCost(19))
     }
 
     @Test
@@ -1215,9 +1215,9 @@ class EconomyTest {
         assertEquals(60L, Economy.sellPrice(0))
         assertEquals(96L, Economy.sellPrice(1))
         assertEquals(629L, Economy.sellPrice(5))
-        assertEquals(6605L, Economy.sellPrice(10))
-        assertEquals(69272L, Economy.sellPrice(15))
-        assertEquals(726838L, Economy.sellPrice(20))
+        assertEquals(6597L, Economy.sellPrice(10))
+        assertEquals(69175L, Economy.sellPrice(15))
+        assertEquals(725355L, Economy.sellPrice(20))
     }
 
     @Test
@@ -1274,7 +1274,7 @@ class EconomyTest {
     fun `검 판매는 골드를 주고 검을 없앤다`() {
         val before = state(gold = 0, sword = Sword(WeaponFamily.STRAIGHT, 10))
         val after = Economy.sellSword(before)
-        assertEquals(6605L, after.gold)
+        assertEquals(6597L, after.gold)
         assertNull(after.sword)
     }
 
@@ -2142,7 +2142,7 @@ Expected: 컴파일 실패. `Unresolved reference: canPrevent`.
      * 제한 시간 안에 눌렀을 때만 호출된다. 시간을 넘겼으면 [confirmDestroy]를 부른다.
      */
     fun applyPrevent(state: GameState): GameState {
-        val pending = requireNotNull(state.pendingDestroy) { "no pending destroy to prevent" }
+        val pending = checkNotNull(state.pendingDestroy) { "no pending destroy to prevent" }
         check(state.inventory.preventTickets > 0) { "no prevent ticket" }
         return state.copy(
             sword = Sword(pending.family, pending.level),
@@ -2161,7 +2161,7 @@ Expected: 컴파일 실패. `Unresolved reference: canPrevent`.
 
     /** 파편을 주워 조각을 얻고 파괴를 마무리한다. */
     fun applySalvage(state: GameState, rng: Random): GameState {
-        val pending = requireNotNull(state.pendingDestroy) { "no pending destroy to salvage" }
+        val pending = checkNotNull(state.pendingDestroy) { "no pending destroy to salvage" }
         return state.copy(
             shards = state.shards + salvageAmount(pending.level, rng),
             pendingDestroy = null,
