@@ -141,6 +141,8 @@ data class GameState(
     val quests: QuestState = QuestState(),
     /** 구역 정수(Zone id → 개수). 보스가 주고 고유검 레시피가 먹는다. */
     val essences: Map<String, Int> = emptyMap(),
+    /** 펫 보유·장착 상태. */
+    val pets: PetState = PetState(),
 ) {
     init {
         require(gold >= 0) { "gold must be >= 0, was $gold" }
