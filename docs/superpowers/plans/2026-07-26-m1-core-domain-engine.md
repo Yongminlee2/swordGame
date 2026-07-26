@@ -2142,7 +2142,7 @@ Expected: 컴파일 실패. `Unresolved reference: canPrevent`.
      * 제한 시간 안에 눌렀을 때만 호출된다. 시간을 넘겼으면 [confirmDestroy]를 부른다.
      */
     fun applyPrevent(state: GameState): GameState {
-        val pending = requireNotNull(state.pendingDestroy) { "no pending destroy to prevent" }
+        val pending = checkNotNull(state.pendingDestroy) { "no pending destroy to prevent" }
         check(state.inventory.preventTickets > 0) { "no prevent ticket" }
         return state.copy(
             sword = Sword(pending.family, pending.level),
@@ -2161,7 +2161,7 @@ Expected: 컴파일 실패. `Unresolved reference: canPrevent`.
 
     /** 파편을 주워 조각을 얻고 파괴를 마무리한다. */
     fun applySalvage(state: GameState, rng: Random): GameState {
-        val pending = requireNotNull(state.pendingDestroy) { "no pending destroy to salvage" }
+        val pending = checkNotNull(state.pendingDestroy) { "no pending destroy to salvage" }
         return state.copy(
             shards = state.shards + salvageAmount(pending.level, rng),
             pendingDestroy = null,

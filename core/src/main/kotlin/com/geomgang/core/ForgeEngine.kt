@@ -1,5 +1,6 @@
 package com.geomgang.core
 
+import kotlin.math.floor
 import kotlin.random.Random
 
 /**
@@ -125,6 +126,59 @@ object ForgeEngine {
                 }
         }
     }
+
+    /** 조각 회수량 = 단계 × 이 값 × 흔들림. */
+    const val SALVAGE_MULTIPLIER: Int = 2
+
+    private const val SALVAGE_JITTER_MIN = 0.7
+    private const val SALVAGE_JITTER_MAX = 1.3
+
+    fun canPrevent(state: GameState): Boolean =
+        state.pendingDestroy != null && state.inventory.preventTickets > 0
+
+    /**
+     * 방지권을 태워 파괴 직전 상태로 되돌린다.
+     *
+     * 제한 시간 안에 눌렀을 때만 호출된다. 시간을 넘겼으면 [confirmDestroy]를 부른다.
+     */
+    fun applyPrevent(state: GameState): GameState {
+        // 파괴 대기 여부는 인자 검증이 아니라 상태 전제조건이므로 checkNotNull 을 쓴다.
+        val pending = checkNotNull(state.pendingDestroy) { "no pending destroy to prevent" }
+        check(state.inventory.preventTickets > 0) { "no prevent ticket" }
+        return state.copy(
+            sword = Sword(pending.family, pending.level),
+            inventory = state.inventory.minus(Item.PREVENT_TICKET, 1),
+            pendingDestroy = null,
+        )
+    }
+
+    /** 파괴된 검에서 나오는 조각 수. 최소 1개는 나온다. */
+    fun salvageAmount(level: Int, rng: Random): Int {
+        require(level >= 0) { "level must be >= 0, was $level" }
+        val jitter =
+            SALVAGE_JITTER_MIN + rng.nextDouble() * (SALVAGE_JITTER_MAX - SALVAGE_JITTER_MIN)
+        val raw = floor(level * SALVAGE_MULTIPLIER * jitter).toInt()
+        return maxOf(1, raw)
+    }
+
+    /** 파편을 주워 조각을 얻고 파괴를 마무리한다. */
+    fun applySalvage(state: GameState, rng: Random): GameState {
+        val pending = checkNotNull(state.pendingDestroy) { "no pending destroy to salvage" }
+        return state.copy(
+            shards = state.shards + salvageAmount(pending.level, rng),
+            pendingDestroy = null,
+        )
+    }
+
+    /**
+     * 파괴를 확정한다. 아무것도 주지 않는다.
+     *
+     * 방지권·줍기 제한 시간을 넘겼을 때, 그리고 **파괴 대기 상태가 저장된 채로
+     * 앱이 다시 켜졌을 때** 호출한다. 후자를 처리하지 않으면 방지권 대기 중
+     * 강제 종료로 파괴를 무효화할 수 있다.
+     */
+    fun confirmDestroy(state: GameState): GameState =
+        if (state.pendingDestroy == null) state else state.copy(pendingDestroy = null)
 
     private fun drop(paid: GameState, sword: Sword): ForgeResult.Drop {
         val dropped = maxOf(0, sword.level - 1)
