@@ -8,6 +8,7 @@ import com.geomgang.core.ForgeEngine
 import com.geomgang.core.ForgeResult
 import com.geomgang.core.GameState
 import com.geomgang.core.Item
+import com.geomgang.core.MonsterKind
 import com.geomgang.core.Progress
 import com.geomgang.core.ProgressState
 import com.geomgang.core.RateTable
@@ -77,6 +78,10 @@ class ForgeViewModel(
     private var bossFailed = false
     private var zoneCleared = false
     private var huntJob: Job? = null
+    private var targetKind: MonsterKind? = null
+
+    /** 지금 대상이 희귀 몬스터인지. 체력은 조금, 보상은 크게 오른다. */
+    private var rareTarget = false
 
     /**
      * 마지막 강화 결과. 연출이 끝나거나 파괴 창이 닫힐 때까지 유지한다.
@@ -403,13 +408,16 @@ class ForgeViewModel(
             sound.zoneCleared()
             stopHuntLoop()
         } else {
-            val shards = Combat.shardReward(sword, zone.monsterShards)
+            val kind = targetKind ?: zone.monsters.first()
+            val bonus = if (rareTarget) Zone.RARE_REWARD else 1.0
+            val gold = (zone.goldOf(kind) * bonus).toLong()
+            val shards = Combat.shardReward(sword, (kind.shards * bonus).toInt())
             game = game.copy(
-                gold = game.gold + zone.monsterGold,
+                gold = game.gold + gold,
                 shards = game.shards + shards,
                 adventure = game.adventure.copy(killsInZone = game.adventure.killsInZone + 1),
             )
-            progress = Progress.refresh(Progress.onSell(progress, zone.monsterGold))
+            progress = Progress.refresh(Progress.onSell(progress, gold))
             sound.monsterDown()
             if (!game.adventure.bossReady) spawnNext()
         }
@@ -433,8 +441,15 @@ class ForgeViewModel(
     private fun spawnNext() {
         val zone = huntZone ?: return
         fightingBoss = false
-        targetMaxHp = zone.monsterHp
-        targetHp = zone.monsterHp
+
+        // 구역마다 몬스터가 여러 종류다. 한 종류만 계속 잡으면 금방 지루해진다.
+        val kind = zone.monsterFor(rng.nextInt(1_000))
+        rareTarget = rng.nextDouble() < Zone.RARE_CHANCE
+        val hpMult = if (rareTarget) Zone.RARE_HP else 1.0
+
+        targetKind = kind
+        targetMaxHp = (zone.hpOf(kind) * hpMult).toLong().coerceAtLeast(1)
+        targetHp = targetMaxHp
         bossRemainingMillis = 0
         lastDamage = 0
         lastHits = 0
@@ -487,7 +502,11 @@ class ForgeViewModel(
         val zone = huntZone ?: return null
         return HuntUiState(
             zone = zone,
-            targetName = if (fightingBoss) zone.bossName else zone.monsterName,
+            targetName = when {
+                fightingBoss -> zone.bossName
+                rareTarget -> "희귀 " + (targetKind?.name ?: zone.monsters.first().name)
+                else -> targetKind?.name ?: zone.monsters.first().name
+            },
             targetHp = targetHp.coerceAtLeast(0),
             targetMaxHp = targetMaxHp.coerceAtLeast(1),
             isBoss = fightingBoss,

@@ -59,13 +59,22 @@ class SwordSheetTest {
     }
 
     @Test
-    fun `계열마다 열 개짜리 묶음을 갖는다`() {
-        val sets = SwordSheet.rowsByFamily()
-        assertEquals(8, sets.size)
-        sets.forEach { (family, rows) ->
-            assertEquals("${family.id} 묶음 크기", 10, rows.size)
-            assertTrue("${family.id} 에 시트 밖 행이 있다", rows.all { it in 0 until SwordSheet.rows() })
-            assertEquals("${family.id} 묶음에 중복이 있다", rows.size, rows.toSet().size)
+    fun `계열 12종이 모두 시트 안의 행을 쓴다`() {
+        assertEquals(12, WeaponFamily.entries.size)
+        WeaponFamily.entries.forEach { family ->
+            for (index in 0..SwordSheet.maxIndex()) {
+                val row = SwordSheet.rowOf(family, index)
+                assertTrue("${family.id} 인덱스 $index 행=$row", row in 0 until SwordSheet.rows())
+            }
+        }
+    }
+
+    @Test
+    fun `같은 인덱스에서 열두 계열이 서로 다른 행을 쓴다`() {
+        // 계열 수(12)가 시트 행 수(30)보다 작아야 성립하는 성질이다.
+        for (index in 0..SwordSheet.maxIndex()) {
+            val rows = WeaponFamily.entries.map { SwordSheet.rowOf(it, index) }
+            assertEquals("인덱스 $index 에서 행이 겹친다", rows.size, rows.toSet().size)
         }
     }
 

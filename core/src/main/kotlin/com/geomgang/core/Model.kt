@@ -27,6 +27,10 @@ enum class WeaponFamily(val id: String, val displayName: String) {
     DEMON("demon", "마검"),
     HOLY("holy", "성검"),
     DRAGON("dragon", "용검"),
+    SCYTHE("scythe", "낫검"),
+    AXE("axe", "도끼검"),
+    SPEAR("spear", "창검"),
+    SPIRIT("spirit", "정령검"),
     ;
 
     companion object {

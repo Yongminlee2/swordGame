@@ -97,11 +97,22 @@ class CombatTest {
     }
 
     @Test
-    fun `용검만 화상 피해가 있다`() {
-        assertTrue(Combat.burnPerSecond(sword(10, WeaponFamily.DRAGON)) > 0)
-        WeaponFamily.entries.filter { it != WeaponFamily.DRAGON }.forEach {
+    fun `용검과 정령검만 화상 피해가 있다`() {
+        val burning = setOf(WeaponFamily.DRAGON, WeaponFamily.SPIRIT)
+        burning.forEach {
+            assertTrue("${it.id} 는 화상이 있어야 한다", Combat.burnPerSecond(sword(10, it)) > 0)
+        }
+        WeaponFamily.entries.filter { it !in burning }.forEach {
             assertEquals("${it.id} 화상", 0L, Combat.burnPerSecond(sword(10, it)))
         }
+    }
+
+    @Test
+    fun `용검이 정령검보다 화상이 세다`() {
+        assertTrue(
+            Combat.burnPerSecond(sword(10, WeaponFamily.DRAGON)) >
+                Combat.burnPerSecond(sword(10, WeaponFamily.SPIRIT)),
+        )
     }
 
     @Test
@@ -119,10 +130,10 @@ class CombatTest {
     }
 
     @Test
-    fun `계열 8종이 서로 다른 전투 방식을 갖는다`() {
+    fun `계열 12종이 서로 다른 전투 방식을 갖는다`() {
         val styles = WeaponFamily.entries.map { FamilyStyle.of(it) }
-        assertEquals(8, styles.size)
-        assertEquals("같은 전투 방식을 쓰는 계열이 있다", 8, styles.toSet().size)
+        assertEquals(12, styles.size)
+        assertEquals("같은 전투 방식을 쓰는 계열이 있다", 12, styles.toSet().size)
     }
 
     // --- 보스 문턱 ---
@@ -169,9 +180,52 @@ class CombatTest {
 
     @Test
     fun `앞 구역을 깨면 다음 구역이 열린다`() {
-        val state = AdventureState(clearedZoneIds = setOf(Zone.MEADOW.id))
-        assertTrue(state.isUnlocked(Zone.CAVE))
-        assertFalse(state.isUnlocked(Zone.VOLCANO))
+        // 구역 순서에 의존하지 않고 '바로 앞 구역'만 확인한다.
+        // 구역을 중간에 끼워 넣어도 이 테스트는 그대로 유효해야 한다.
+        val zones = Zone.entries
+        for (i in 1 until zones.size) {
+            val state = AdventureState(clearedZoneIds = setOf(zones[i - 1].id))
+            assertTrue("${zones[i].displayName} 이 열려야 한다", state.isUnlocked(zones[i]))
+            if (i + 1 < zones.size) {
+                assertFalse(
+                    "${zones[i + 1].displayName} 은 아직 잠겨 있어야 한다",
+                    state.isUnlocked(zones[i + 1]),
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `구역이 열 개이고 각 구역에 몬스터가 여러 종류다`() {
+        assertEquals(10, Zone.entries.size)
+        Zone.entries.forEach { zone ->
+            assertTrue("${zone.displayName} 몬스터 수", zone.monsters.size >= 3)
+            assertEquals(
+                "${zone.displayName} 몬스터 이름이 겹친다",
+                zone.monsters.size,
+                zone.monsters.map { it.name }.toSet().size,
+            )
+        }
+    }
+
+    @Test
+    fun `구역이 뒤로 갈수록 잡몹이 세지고 보상도 커진다`() {
+        val zones = Zone.entries
+        for (i in 1 until zones.size) {
+            assertTrue("${zones[i].displayName} 체력", zones[i].baseHp > zones[i - 1].baseHp)
+            assertTrue("${zones[i].displayName} 보상", zones[i].baseGold > zones[i - 1].baseGold)
+        }
+    }
+
+    @Test
+    fun `몬스터 추첨은 항상 그 구역의 몬스터를 고른다`() {
+        Zone.entries.forEach { zone ->
+            for (roll in 0..40) {
+                assertTrue(zone.monsterFor(roll) in zone.monsters)
+            }
+            // 음수가 들어와도 죽지 않는다
+            assertTrue(zone.monsterFor(-7) in zone.monsters)
+        }
     }
 
     @Test

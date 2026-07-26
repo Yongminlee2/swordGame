@@ -110,6 +110,10 @@ object Progress {
         WeaponFamily.DEMON to Achievement.DESTROY_50,
         WeaponFamily.HOLY to Achievement.REACH_15,
         WeaponFamily.DRAGON to Achievement.REACH_18,
+        WeaponFamily.SCYTHE to Achievement.REACH_10,
+        WeaponFamily.AXE to Achievement.DESTROY_100,
+        WeaponFamily.SPEAR to Achievement.SALVAGE_10,
+        WeaponFamily.SPIRIT to Achievement.REACH_20,
     )
 
     /** 검을 손에 넣었을 때 도감에 등록한다. 구매·조합·강화 성공 모두 여기를 지난다. */

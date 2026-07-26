@@ -281,12 +281,20 @@ private fun ZoneCard(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha),
                 )
                 Text(
-                    text = "${zone.monsterName} · 권장 +${zone.recommendedLevel}",
+                    text = "권장 +${zone.recommendedLevel} · 몬스터 ${zone.monsters.size}종",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha * 0.6f),
                 )
                 Text(
-                    text = "마리당 %,d골드".format(zone.monsterGold),
+                    text = zone.monsters.joinToString(" · ") { it.name },
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha * 0.5f),
+                )
+                Text(
+                    text = "마리당 %,d~%,d골드".format(
+                        zone.monsters.minOf { zone.goldOf(it) },
+                        zone.monsters.maxOf { zone.goldOf(it) },
+                    ),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha * 0.6f),
                 )

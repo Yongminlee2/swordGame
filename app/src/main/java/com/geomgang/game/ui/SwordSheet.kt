@@ -30,24 +30,28 @@ object SwordSheet {
 
     val cellSize = IntSize(CELL, CELL)
 
+    /** 인덱스 하나가 덮는 강화 단계 수. */
+    private const val LEVELS_PER_INDEX = 2
+
     /**
-     * 계열마다 쓰는 검 종류(행)의 묶음. 인덱스는 `단계 / 2` 다.
+     * 계열마다 쓰는 검 종류(행)를 뽑는다. 인덱스는 `단계 / 2` 다.
      *
-     * 손으로 고르지 않고 `(인덱스 × 8 + 계열번호) % 30` 으로 뽑았다.
-     * 계열이 8종이고 시트가 30행이라, 이렇게 두면 **같은 인덱스에서 여덟 계열이
+     * 손으로 고르지 않고 `(인덱스 × 계열수 + 계열번호) % 30` 으로 계산한다.
+     * 계열이 12종이고 시트가 30행이라, 이렇게 두면 **같은 인덱스에서 열두 계열이
      * 연속된 서로 다른 행**을 쓰게 되어 겹칠 수가 없다.
      * 손으로 골랐을 때는 실제로 겹쳐서 테스트가 잡아냈다.
      */
-    private val ROWS_BY_FAMILY: Map<WeaponFamily, IntArray> = mapOf(
-        WeaponFamily.STRAIGHT to intArrayOf(0, 8, 16, 24, 2, 10, 18, 26, 4, 12),
-        WeaponFamily.CURVED to intArrayOf(1, 9, 17, 25, 3, 11, 19, 27, 5, 13),
-        WeaponFamily.GREAT to intArrayOf(2, 10, 18, 26, 4, 12, 20, 28, 6, 14),
-        WeaponFamily.RAPIER to intArrayOf(3, 11, 19, 27, 5, 13, 21, 29, 7, 15),
-        WeaponFamily.TWIN to intArrayOf(4, 12, 20, 28, 6, 14, 22, 0, 8, 16),
-        WeaponFamily.DEMON to intArrayOf(5, 13, 21, 29, 7, 15, 23, 1, 9, 17),
-        WeaponFamily.HOLY to intArrayOf(6, 14, 22, 0, 8, 16, 24, 2, 10, 18),
-        WeaponFamily.DRAGON to intArrayOf(7, 15, 23, 1, 9, 17, 25, 3, 11, 19),
-    )
+    private fun rowFor(family: WeaponFamily, index: Int): Int =
+        (index * INDEX_STRIDE + family.ordinal) % ROWS
+
+    /**
+     * 단계가 오를 때 행이 얼마씩 건너뛰는지.
+     *
+     * 행 수(30)와 **서로소**여야 한다. 계열 수(12)를 그대로 쓰면 12와 30의 최대공약수가 6이라
+     * 한 계열이 다섯 종류만 돌려쓰게 된다 — 실제로 그렇게 만들었다가 테스트가 잡아냈다.
+     * 7은 30과 서로소라 30단계를 다 돌기 전까지 같은 행이 다시 나오지 않는다.
+     */
+    private const val INDEX_STRIDE = 7
 
     /**
      * 이 계열·단계에 해당하는 칸의 좌상단 좌표(px).
@@ -56,8 +60,8 @@ object SwordSheet {
      */
     fun spriteOffset(family: WeaponFamily, level: Int): IntOffset {
         require(level >= 0) { "level must be >= 0, was $level" }
-        val set = ROWS_BY_FAMILY.getValue(family)
-        val row = set[(level / 2).coerceAtMost(set.lastIndex)] % ROWS
+        val index = (level / LEVELS_PER_INDEX).coerceAtMost(MAX_INDEX)
+        val row = rowFor(family, index)
         val column = when (level) {
             0 -> 2 // 낡은 것
             1, 2 -> 1 // 쓴 것
@@ -83,12 +87,17 @@ object SwordSheet {
         else -> SwordAura(Color.White, 0.88f)
     }
 
-    /** 테스트가 쓰는 값. */
-    internal fun rowsByFamily(): Map<WeaponFamily, IntArray> = ROWS_BY_FAMILY
+    /** 인덱스 상한. 이 위로는 같은 그림을 쓴다. */
+    private const val MAX_INDEX = 12
 
+    /** 테스트가 쓰는 값. */
     internal fun rows(): Int = ROWS
 
     internal fun columns(): Int = COLUMNS
+
+    internal fun maxIndex(): Int = MAX_INDEX
+
+    internal fun rowOf(family: WeaponFamily, index: Int): Int = rowFor(family, index)
 }
 
 /** 검 뒤에 깔리는 빛. */

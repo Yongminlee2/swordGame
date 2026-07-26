@@ -4,61 +4,6 @@ import kotlinx.serialization.Serializable
 import kotlin.math.pow
 import kotlin.math.roundToLong
 
-/**
- * 사냥터. 구역을 깨 나가며 앞으로 간다.
- *
- * [recommendedLevel] 은 이 구역을 편히 돌 수 있는 강화 단계다.
- * 보스는 제한 시간이 있어 공격력이 부족하면 시간 안에 죽지 않는다.
- * 그것이 "이 보스 잡으려면 +N 은 돼야 한다"는 목표를 만든다.
- */
-enum class Zone(
-    val id: String,
-    val displayName: String,
-    val recommendedLevel: Int,
-    val monsterName: String,
-    val monsterHp: Long,
-    val monsterGold: Long,
-    val monsterShards: Int,
-    val bossName: String,
-    val bossHp: Long,
-    val bossSeconds: Int,
-    val bossGold: Long,
-    val bossShards: Int,
-) {
-    MEADOW(
-        id = "meadow", displayName = "초원", recommendedLevel = 0,
-        monsterName = "들개", monsterHp = 24, monsterGold = 14, monsterShards = 0,
-        bossName = "들개 우두머리", bossHp = 420, bossSeconds = 20,
-        bossGold = 900, bossShards = 6,
-    ),
-    CAVE(
-        id = "cave", displayName = "동굴", recommendedLevel = 5,
-        monsterName = "동굴 박쥐", monsterHp = 210, monsterGold = 120, monsterShards = 1,
-        bossName = "굴의 파수꾼", bossHp = 4_200, bossSeconds = 20,
-        bossGold = 7_500, bossShards = 14,
-    ),
-    VOLCANO(
-        id = "volcano", displayName = "화산", recommendedLevel = 10,
-        monsterName = "용암 도마뱀", monsterHp = 1_900, monsterGold = 1_400, monsterShards = 2,
-        bossName = "화산의 군주", bossHp = 38_000, bossSeconds = 22,
-        bossGold = 70_000, bossShards = 30,
-    ),
-    DRAGON_NEST(
-        id = "dragon_nest", displayName = "용의 둥지", recommendedLevel = 15,
-        monsterName = "새끼 용", monsterHp = 16_000, monsterGold = 12_000, monsterShards = 4,
-        bossName = "늙은 흑룡", bossHp = 320_000, bossSeconds = 25,
-        bossGold = 600_000, bossShards = 60,
-    ),
-    ;
-
-    companion object {
-        fun fromId(id: String): Zone =
-            entries.firstOrNull { it.id == id } ?: MEADOW
-
-        /** 구역 하나에서 보스가 나오기까지 잡아야 하는 잡몹 수. */
-        const val MONSTERS_BEFORE_BOSS = 10
-    }
-}
 
 /**
  * 계열이 싸우는 방식.
@@ -92,6 +37,10 @@ enum class FamilyStyle(
     GREEDY(0.95, 1, 150, 0.0, 1.0, 1.6, 0.0, "조각을 더 많이 챙긴다"),
     SACRED(1.0, 1, 150, 0.0, 1.6, 1.0, 0.0, "보스에게 강하다"),
     BURNING(0.85, 1, 150, 0.0, 1.0, 1.0, 0.22, "화상을 입혀 계속 태운다"),
+    REAPING(1.35, 1, 240, 0.02, 1.0, 1.2, 0.0, "크게 베고 조각도 챙긴다"),
+    CLEAVING(2.6, 1, 520, 0.0, 1.0, 1.0, 0.0, "아주 느리지만 한 방이 압도적이다"),
+    PIERCING(0.78, 3, 190, 0.0, 1.15, 1.0, 0.0, "한 번에 세 번 찌른다"),
+    ELEMENTAL(0.7, 1, 130, 0.04, 1.0, 1.0, 0.12, "연속타격과 화상을 함께 쓴다"),
     ;
 
     companion object {
@@ -104,6 +53,10 @@ enum class FamilyStyle(
             WeaponFamily.DEMON -> GREEDY
             WeaponFamily.HOLY -> SACRED
             WeaponFamily.DRAGON -> BURNING
+            WeaponFamily.SCYTHE -> REAPING
+            WeaponFamily.AXE -> CLEAVING
+            WeaponFamily.SPEAR -> PIERCING
+            WeaponFamily.SPIRIT -> ELEMENTAL
         }
     }
 }
