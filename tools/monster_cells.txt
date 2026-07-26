@@ -38,3 +38,13 @@ C:\workAndroid\_monster_pack\ice_dragon.png
 C:\workAndroid\_monster_pack\shadow_dragon.png
 C:\workAndroid\_monster_pack\demons\pit_fiend.png
 C:\workAndroid\_monster_pack\demons\shadow_fiend.png
+C:\workAndroid\_monster_pack\animals\quokka.png
+C:\workAndroid\_monster_pack\spriggan\spriggan.png
+C:\workAndroid\_monster_pack\animals\jumping_spider.png
+C:\workAndroid\_monster_pack\nonliving\clay_golem.png
+C:\workAndroid\_monster_pack\animals\blink_frog.png
+C:\workAndroid\_monster_pack\animals\lava_snake.png
+C:\workAndroid\_monster_pack\animals\polar_bear.png
+C:\workAndroid\_monster_pack\swamp_drake.png
+C:\workAndroid\_monster_pack\demons\shadow_imp.png
+C:\workAndroid\_monster_pack\nonliving\insubstantial_wisp.png

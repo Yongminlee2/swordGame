@@ -52,6 +52,13 @@ class MonsterSheetTest {
     }
 
     @Test
+    fun `펫은 40-49 칸을 쓰고 겹치지 않는다`() {
+        val cells = com.geomgang.core.PetKind.entries.map { MonsterSheet.petCellOf(it.id) }
+        assertEquals(cells.size, cells.toSet().size)
+        assertTrue(cells.all { it in 40..49 })
+    }
+
+    @Test
     fun `모르는 이름은 예외를 던진다`() {
         var thrown = false
         try {
