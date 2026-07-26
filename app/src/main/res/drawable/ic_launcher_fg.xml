@@ -1,0 +1,18 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 날 -->
+    <path
+        android:fillColor="#C9D4E4"
+        android:pathData="M54,24 L58,32 L58,64 L50,64 L50,32 Z" />
+    <!-- 코등이 -->
+    <path
+        android:fillColor="#8A6A3B"
+        android:pathData="M42,64 L66,64 L66,69 L42,69 Z" />
+    <!-- 손잡이 -->
+    <path
+        android:fillColor="#5A4A32"
+        android:pathData="M51,69 L57,69 L57,84 L51,84 Z" />
+</vector>

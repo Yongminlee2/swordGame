@@ -354,11 +354,21 @@ cd /c/workAndroid/SwordForge && ./gradlew :app:assembleDebug
 
 Expected: BUILD SUCCESSFUL, `app/build/outputs/apk/debug/app-debug.apk` 생성.
 
-실패하면 여기서 멈추고 원인을 해결한다. 흔한 원인 둘:
-- AGP 9의 내장 Kotlin과 `kotlin-android` 플러그인 충돌 → 오류 메시지가 지시하는 쪽을 따른다. `kotlin-android`를 빼고 AGP 내장 Kotlin만 쓰는 형태가 될 수 있다.
-- Compose BOM 버전과 Kotlin 2.4.0 컴파일러 불일치 → BOM 버전을 올린다.
+**실제로 겪은 것과 해결 (실행 후 기록)**
 
-**어느 쪽으로 해결했든 그 조합을 이 계획서에 반영해 기록한다.**
+1. **`org.jetbrains.kotlin.android` 적용 실패.**
+   `The 'org.jetbrains.kotlin.android' plugin is no longer required for Kotlin support since AGP 9.0`
+   → 루트와 `:app` 양쪽에서 `kotlin-android`를 제거했다. AGP 9의 내장 Kotlin이 처리한다.
+   `org.jetbrains.kotlin.plugin.compose`는 그대로 두어도 문제없이 동작한다.
+
+2. **`SDK location not found`.**
+   → `local.properties`가 없었다. WordChain의 파일을 복사했다
+   (`sdk.dir=C\:\\Users\\사용자\\AppData\\Local\\Android\\Sdk`, UTF-8).
+   직접 `printf`로 만들면 백슬래시 이스케이프가 먹혀 경로가 깨진다. 복사가 안전하다.
+   이 파일은 `.gitignore`에 있어 커밋되지 않는다 — **다른 PC에서 클론하면 직접 만들어야 한다.**
+
+Compose BOM 2024.09.03과 Kotlin 2.4.0 컴파일러는 충돌 없이 동작했다.
+확정된 조합: **AGP 9.2.1 (내장 Kotlin) + `kotlin.plugin.compose` 2.4.0 + Compose BOM 2024.09.03**.
 
 - [ ] **Step 7: `:core` 테스트가 여전히 통과하는지 확인한다**
 

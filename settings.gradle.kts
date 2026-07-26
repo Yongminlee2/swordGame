@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "SwordForge"
 include(":core")
+include(":app")
