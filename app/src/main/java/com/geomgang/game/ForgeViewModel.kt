@@ -48,7 +48,15 @@ class ForgeViewModel(
 
     private var countdownJob: Job? = null
 
-    private val _ui = MutableStateFlow(render(null))
+    /**
+     * 마지막 강화 결과. 연출이 끝나거나 파괴 창이 닫힐 때까지 유지한다.
+     *
+     * 카운트다운이 매 틱마다 화면을 다시 그리는데, 여기서 결과를 들고 있지 않으면
+     * "파괴!!" 배너가 첫 틱에 사라져 버린다.
+     */
+    private var lastResult: ForgeResult? = null
+
+    private val _ui = MutableStateFlow(render())
     val ui: StateFlow<ForgeUiState> = _ui.asStateFlow()
 
     /**
@@ -90,8 +98,9 @@ class ForgeViewModel(
             Progress.onAttempt(progress, game.difficulty, sword.family, targetLevel, cost, result),
         )
         busy = true
+        lastResult = result
         persist()
-        _ui.value = render(result)
+        _ui.value = render()
 
         if (result is ForgeResult.Destroyed) openDestroyWindow()
     }
@@ -133,7 +142,7 @@ class ForgeViewModel(
         // 창은 코루틴 스케줄을 기다리지 않고 즉시 연다.
         // 한 프레임이라도 늦게 뜨면 그만큼 반응 시간을 빼앗는 셈이다.
         phase = make(totalMillis, totalMillis)
-        _ui.value = render(null)
+        _ui.value = render()
 
         countdownJob = viewModelScope.launch {
             var remaining = totalMillis
@@ -141,7 +150,7 @@ class ForgeViewModel(
                 delay(Timing.TICK_MILLIS)
                 remaining -= Timing.TICK_MILLIS
                 phase = make(remaining.coerceAtLeast(0), totalMillis)
-                _ui.value = render(null)
+                _ui.value = render()
             }
             onWindowExpired()
         }
@@ -192,7 +201,7 @@ class ForgeViewModel(
         progress = Progress.refresh(Progress.onSell(progress, price))
         applyBailout()
         persist()
-        _ui.value = render(null)
+        _ui.value = render()
     }
 
     fun buySword(family: WeaponFamily) {
@@ -200,23 +209,25 @@ class ForgeViewModel(
         game = Economy.buySword(game, family)
         game.sword?.let { progress = Progress.registerSword(progress, game.difficulty, it) }
         persist()
-        _ui.value = render(null)
+        _ui.value = render()
     }
 
     /** 결과 연출이 끝났다고 화면이 알려 준다. 입력 잠금을 푼다. */
     fun onAnimationFinished() {
         if (!busy) return
         busy = false
-        _ui.value = render(null)
+        lastResult = null
+        _ui.value = render()
     }
 
     private fun closeDestroyWindow() {
         countdownJob = null
         phase = DestroyPhase.None
         busy = false
+        lastResult = null
         applyBailout()
         persist()
-        _ui.value = render(null)
+        _ui.value = render()
     }
 
     override fun onCleared() {
@@ -237,7 +248,7 @@ class ForgeViewModel(
         store.saveProgress(progress)
     }
 
-    private fun render(result: ForgeResult?): ForgeUiState {
+    private fun render(): ForgeUiState {
         val sword = game.sword
         val level = sword?.level ?: 0
         val targetLevel = level + 1
@@ -254,7 +265,7 @@ class ForgeViewModel(
                 (RateTable.successRate(game.difficulty, targetLevel) * 100).roundToInt(),
             canForge = !busy && ForgeEngine.canAttempt(game, UsedItems.NONE),
             canBuySword = !busy && Economy.canBuySword(game),
-            lastResult = result,
+            lastResult = lastResult,
             destroyPhase = phase,
             canPrevent = ForgeEngine.canPrevent(game),
             busy = busy,
