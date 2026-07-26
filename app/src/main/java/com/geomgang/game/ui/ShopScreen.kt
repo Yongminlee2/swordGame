@@ -76,6 +76,17 @@ fun ShopScreen(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     )
                     Spacer(Modifier.height(6.dp))
+                    // 초창기 벡터 아트의 귀환 - 계열의 형태를 미리 보여 준다
+                    androidx.compose.foundation.Canvas(
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(vertical = 4.dp)
+                            .height(96.dp)
+                            .fillMaxWidth(0.4f),
+                    ) {
+                        drawSword(family, level = 0)
+                    }
+                    Spacer(Modifier.height(6.dp))
                     FamilyPicker(
                         families = state.unlockedFamilies,
                         selected = family,
