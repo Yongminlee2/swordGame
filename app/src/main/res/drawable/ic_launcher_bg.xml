@@ -3,7 +3,19 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- 대장간의 어두운 바탕 -->
     <path
-        android:fillColor="#1A1426"
+        android:fillColor="#14101F"
         android:pathData="M0,0h108v108h-108z" />
+
+    <!-- 화로의 불빛. 원 두 겹으로 번짐을 흉내 낸다 (그라디언트보다 안전하다) -->
+    <path
+        android:fillAlpha="0.55"
+        android:fillColor="#2A1C3A"
+        android:pathData="M54,52m-42,0a42,42 0,1 1,84 0a42,42 0,1 1,-84 0" />
+    <path
+        android:fillAlpha="0.55"
+        android:fillColor="#3A2140"
+        android:pathData="M54,52m-26,0a26,26 0,1 1,52 0a26,26 0,1 1,-52 0" />
 </vector>

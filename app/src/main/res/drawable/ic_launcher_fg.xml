@@ -1,18 +1,49 @@
+<!--
+  적응형 아이콘 전경. 108x108 중 가운데 66x66 만 항상 보이므로
+  검을 그 안에 담는다. 색은 SwordArt 의 흑룡참 티어와 맞췄다.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- 오라 -->
+    <path
+        android:fillAlpha="0.35"
+        android:fillColor="#A05CFF"
+        android:pathData="M54,54m-25,0a25,25 0,1 1,50 0a25,25 0,1 1,-50 0" />
+
     <!-- 날 -->
     <path
-        android:fillColor="#C9D4E4"
-        android:pathData="M54,24 L58,32 L58,64 L50,64 L50,32 Z" />
+        android:fillColor="#8B5BC9"
+        android:pathData="M54,25 L59,34 L59,63 L49,63 L49,34 Z" />
+
+    <!-- 날끝 하이라이트 -->
+    <path
+        android:fillColor="#D6B4FF"
+        android:pathData="M54,25 L56,34 L56,63 L52,63 L52,34 Z" />
+
     <!-- 코등이 -->
     <path
-        android:fillColor="#8A6A3B"
-        android:pathData="M42,64 L66,64 L66,69 L42,69 Z" />
+        android:fillColor="#3A2456"
+        android:pathData="M39,63 L69,63 L69,68 L39,68 Z" />
+
+    <!-- 날개형 장식 -->
+    <path
+        android:fillColor="#3A2456"
+        android:pathData="M39,68 L31,60 L39,63 Z" />
+    <path
+        android:fillColor="#3A2456"
+        android:pathData="M69,68 L77,60 L69,63 Z" />
+
     <!-- 손잡이 -->
     <path
-        android:fillColor="#5A4A32"
-        android:pathData="M51,69 L57,69 L57,84 L51,84 Z" />
+        android:fillColor="#4A3A28"
+        android:pathData="M50,68 L58,68 L58,82 L50,82 Z" />
+
+    <!-- 손잡이 끝 보석 -->
+    <path
+        android:fillColor="#A05CFF"
+        android:pathData="M54,85m-4.5,0a4.5,4.5 0,1 1,9 0a4.5,4.5 0,1 1,-9 0" />
 </vector>
