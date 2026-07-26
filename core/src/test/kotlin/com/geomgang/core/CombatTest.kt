@@ -10,6 +10,39 @@ class CombatTest {
     private fun sword(level: Int, family: WeaponFamily = WeaponFamily.STRAIGHT) =
         Sword(family, level)
 
+    // --- 치명타 ---
+
+    @Test
+    fun `치명타 롤이 기준 미만이면 피해가 배수로 커진다`() {
+        val sword = sword(10)
+        val normal = Combat.hit(sword, combo = 0, isBoss = false, critRoll = 1.0)
+        val crit = Combat.hit(sword, combo = 0, isBoss = false, critRoll = 0.0)
+        assertFalse(normal.crit)
+        assertTrue(crit.crit)
+        assertEquals(
+            Math.round(normal.damage * Combat.CRIT_MULTIPLIER),
+            crit.damage,
+        )
+    }
+
+    @Test
+    fun `치명타 경계값 - 기준과 같으면 치명타가 아니다`() {
+        val sword = sword(5)
+        assertFalse(Combat.hit(sword, 0, false, critRoll = Combat.CRIT_CHANCE).crit)
+        assertTrue(Combat.hit(sword, 0, false, critRoll = Combat.CRIT_CHANCE - 0.001).crit)
+    }
+
+    @Test
+    fun `치명타는 쌍검의 타격 수를 바꾸지 않는다`() {
+        val sword = sword(8, WeaponFamily.TWIN)
+        assertEquals(2, Combat.hit(sword, 0, false, critRoll = 0.0).hits)
+    }
+
+    @Test
+    fun `critRoll 기본값이면 치명타가 없다 - 기존 호출 호환`() {
+        assertFalse(Combat.hit(sword(3), 0, false).crit)
+    }
+
     // --- 공격력 ---
 
     @Test

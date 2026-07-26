@@ -66,6 +66,8 @@ data class Hit(
     val damage: Long,
     /** 화면에 몇 번 튀어야 하는지. 쌍검은 2다. */
     val hits: Int,
+    /** 치명타였는지. 화면이 크고 노랗게 띄운다. */
+    val crit: Boolean = false,
 )
 
 /** 사냥 진행 상황. 모드별 세이브에 함께 저장된다. */
@@ -103,6 +105,10 @@ object Combat {
     /** 연속 타격으로 얻을 수 있는 최대 추가 배수. */
     const val MAX_COMBO_BONUS = 0.6
 
+    /** 치명타 확률과 배수. 판정은 [hit] 에 난수 값을 넣어서 한다. */
+    const val CRIT_CHANCE = 0.05
+    const val CRIT_MULTIPLIER = 1.8
+
     /**
      * 검이 없으면 사냥할 수 없다.
      *
@@ -118,18 +124,24 @@ object Combat {
     /**
      * 한 번 탭했을 때 들어가는 피해.
      *
-     * @param combo  지금까지 연속으로 몇 번 쳤는지
-     * @param isBoss 보스를 치는 중인지
+     * @param combo    지금까지 연속으로 몇 번 쳤는지
+     * @param isBoss   보스를 치는 중인지
+     * @param critRoll 치명타 판정용 난수(0~1). 기본 1.0 = 치명타 없음.
+     *                 난수 대신 값을 받는 것은 테스트를 결정적으로 만들기 위해서다.
      */
-    fun hit(sword: Sword?, combo: Int, isBoss: Boolean): Hit {
+    fun hit(sword: Sword?, combo: Int, isBoss: Boolean, critRoll: Double = 1.0): Hit {
         if (sword == null) return Hit(0, 0)
         val style = FamilyStyle.of(sword.family)
         val comboBonus = (style.comboGain * combo).coerceAtMost(MAX_COMBO_BONUS)
         val bossBonus = if (isBoss) style.bossBonus else 1.0
+        val crit = critRoll < CRIT_CHANCE
         val perHit = attackPower(sword) * (1.0 + comboBonus) * bossBonus / style.hits
+        // 치명타 배수는 합산 피해에 곱한다 - 타격 수(쌍검 2연타 등)는 그대로다.
+        val base = perHit.roundToLong().coerceAtLeast(1) * style.hits
         return Hit(
-            damage = perHit.roundToLong().coerceAtLeast(1) * style.hits,
+            damage = if (crit) (base * CRIT_MULTIPLIER).roundToLong() else base,
             hits = style.hits,
+            crit = crit,
         )
     }
 
