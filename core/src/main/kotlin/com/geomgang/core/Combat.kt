@@ -77,6 +77,8 @@ data class Hit(
     val hits: Int,
     /** 치명타였는지. 화면이 크고 노랗게 띄운다. */
     val crit: Boolean = false,
+    /** 이 탭에 터진 계열 스킬. 없으면 null. 화면이 이름을 크게 띄운다. */
+    val skill: Skill? = null,
 )
 
 /** 사냥 진행 상황. 모드별 세이브에 함께 저장된다. */
@@ -145,6 +147,7 @@ object Combat {
         isBoss: Boolean,
         critRoll: Double = 1.0,
         targetMaxHp: Long = 0,
+        skillRoll: Double = 1.0,
     ): Hit {
         if (sword == null) return Hit(0, 0)
         val style = FamilyStyle.of(sword.family)
@@ -153,14 +156,27 @@ object Combat {
             if (isBoss) style.bossBonus * UniqueSwords.bossBonusOf(sword) else 1.0
         val crit = critRoll < CRIT_CHANCE + UniqueSwords.critBonusOf(sword)
         val maxHpBonus = targetMaxHp * (style.maxHpRatio + UniqueSwords.maxHpRatioOf(sword))
-        val perHit =
-            (attackPower(sword) * (1.0 + comboBonus) * bossBonus + maxHpBonus) / style.hits
+        val plain = attackPower(sword) * (1.0 + comboBonus) * bossBonus + maxHpBonus
+
+        // 스킬은 계열 특성 위에 곱해진다. 치명타와도 겹친다 - 둘이 함께 터지면
+        // 그 판이 뒤집히고, 5초 보스전에서 그 순간이 승패를 가른다.
+        val skill = Skills.roll(sword, skillRoll)
+        val withSkill = if (skill == null) {
+            plain
+        } else {
+            val skillBoss = if (isBoss) skill.bossMult else 1.0
+            plain * skill.damageMult * skillBoss + targetMaxHp * skill.maxHpRatio
+        }
+
+        val hits = skill?.hits ?: style.hits
+        val perHit = withSkill / hits
         // 치명타 배수는 합산 피해에 곱한다 - 타격 수(쌍검 2연타 등)는 그대로다.
-        val base = perHit.roundToLong().coerceAtLeast(1) * style.hits
+        val base = perHit.roundToLong().coerceAtLeast(1) * hits
         return Hit(
             damage = if (crit) (base * CRIT_MULTIPLIER).roundToLong() else base,
-            hits = style.hits,
+            hits = hits,
             crit = crit,
+            skill = skill,
         )
     }
 
