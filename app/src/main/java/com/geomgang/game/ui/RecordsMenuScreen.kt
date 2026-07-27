@@ -31,6 +31,7 @@ fun RecordsMenuScreen(
     onOpenPets: () -> Unit,
     onOpenAchievements: () -> Unit,
     onOpenStats: () -> Unit,
+    onOpenHelp: () -> Unit,
     onOpenSettings: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -66,6 +67,12 @@ fun RecordsMenuScreen(
             title = "통계",
             subtitle = "확률 비교",
             onClick = onOpenStats,
+        )
+        MenuRow(
+            icon = "❓",
+            title = "도움말",
+            subtitle = "재료·계열·조합·스킬 규칙",
+            onClick = onOpenHelp,
         )
         MenuRow(
             icon = "⚙️",

@@ -19,6 +19,7 @@ import com.geomgang.game.ui.CodexScreen
 import com.geomgang.game.ui.CraftScreen
 import com.geomgang.game.ui.ForgeScreen
 import com.geomgang.game.ui.GauntletScreen
+import com.geomgang.game.ui.HelpScreen
 import com.geomgang.game.ui.HuntScreen
 import com.geomgang.game.ui.PetScreen
 import com.geomgang.game.ui.QuestScreen
@@ -30,12 +31,13 @@ import com.geomgang.game.ui.StorageScreen
 import com.geomgang.game.ui.SwordForgeTheme
 
 /** 강화 화면 위에 무엇이 올라와 있는지. */
-private enum class Overlay { None, Hunt, Gauntlet, Storage, Shop, Craft, Records, Codex, Quests, Pets, Achievements, Stats, Settings }
+private enum class Overlay { None, Hunt, Gauntlet, Storage, Shop, Craft, Records, Codex, Quests, Pets, Achievements, Stats, Help, Settings }
 
 /** 뒤로 가면 어디로 돌아가는지. 기록 하위 화면들은 메뉴로 돌아간다. */
 private fun Overlay.parent(): Overlay = when (this) {
-    Overlay.Codex, Overlay.Pets, Overlay.Achievements, Overlay.Stats, Overlay.Settings ->
-        Overlay.Records
+    Overlay.Codex, Overlay.Pets, Overlay.Achievements, Overlay.Stats,
+    Overlay.Help, Overlay.Settings,
+    -> Overlay.Records
     else -> Overlay.None
 }
 
@@ -159,6 +161,7 @@ private fun App(store: SaveStore) {
             },
             onOpenPets = { overlay = Overlay.Pets },
             onOpenAchievements = { overlay = Overlay.Achievements },
+            onOpenHelp = { overlay = Overlay.Help },
             onOpenStats = { overlay = Overlay.Stats },
             onOpenSettings = { overlay = Overlay.Settings },
             onBack = { overlay = Overlay.None },
@@ -180,6 +183,8 @@ private fun App(store: SaveStore) {
             progress = state.progress,
             onBack = { overlay = Overlay.Records },
         )
+
+        Overlay.Help -> HelpScreen(onBack = { overlay = Overlay.Records })
 
         Overlay.Settings -> SettingsScreen(
             settings = state.settings,
