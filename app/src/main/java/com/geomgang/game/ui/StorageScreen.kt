@@ -153,7 +153,7 @@ private fun HeldSwordCard(state: ForgeUiState, onStore: () -> Unit) {
                 )
             } else {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    SwordThumb(held.family, held.level, size = 40.dp)
+                    SwordThumb(held, size = 40.dp)
                     Column(Modifier.padding(start = 10.dp)) {
                         Text(
                             "장착 중",
@@ -310,7 +310,7 @@ private fun StorageRow(
                         },
                     )
                 }
-                SwordThumb(sword.family, sword.level, size = 38.dp)
+                SwordThumb(sword, size = 38.dp)
                 Column(Modifier.padding(start = 10.dp)) {
                     Text(
                         text = SwordNames.nameFor(sword),

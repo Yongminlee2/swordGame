@@ -76,16 +76,14 @@ fun ShopScreen(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     )
                     Spacer(Modifier.height(6.dp))
-                    // 초창기 벡터 아트의 귀환 - 계열의 형태를 미리 보여 준다
-                    androidx.compose.foundation.Canvas(
+                    // 미리보기도 게임 전체와 같은 그림이다 - 사는 검이 곧 보이는 검
+                    SwordThumb(
+                        sword = com.geomgang.core.Sword(family, 0),
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
-                            .padding(vertical = 4.dp)
-                            .height(96.dp)
-                            .fillMaxWidth(0.4f),
-                    ) {
-                        drawSword(family, level = 0)
-                    }
+                            .padding(vertical = 4.dp),
+                        size = 96.dp,
+                    )
                     Spacer(Modifier.height(6.dp))
                     FamilyPicker(
                         families = state.unlockedFamilies,

@@ -79,13 +79,50 @@ $g = [System.Drawing.Graphics]::FromImage($sheet)
 $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::NearestNeighbor
 $g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::Half
 
+# Content size normalization: source tiles use wildly different portions of
+# their canvas (a dagger is tiny, a greatsword fills the tile). Trim to the
+# opaque bounding box and scale every sword so its longest side is TARGET px,
+# centered in the cell. This is what makes all swords look the same size.
+$TARGET = 58
+
+function Get-Bounds([System.Drawing.Bitmap]$bmp) {
+    $rect = New-Object System.Drawing.Rectangle(0, 0, $bmp.Width, $bmp.Height)
+    $fmt = [System.Drawing.Imaging.PixelFormat]::Format32bppArgb
+    $data = $bmp.LockBits($rect, [System.Drawing.Imaging.ImageLockMode]::ReadOnly, $fmt)
+    $bytes = New-Object byte[] ($data.Stride * $bmp.Height)
+    [System.Runtime.InteropServices.Marshal]::Copy($data.Scan0, $bytes, 0, $bytes.Length)
+    $bmp.UnlockBits($data)
+    $minX = $bmp.Width; $minY = $bmp.Height; $maxX = -1; $maxY = -1
+    for ($y = 0; $y -lt $bmp.Height; $y++) {
+        $rowOff = $y * $data.Stride
+        for ($x = 0; $x -lt $bmp.Width; $x++) {
+            if ($bytes[$rowOff + $x * 4 + 3] -gt 16) {
+                if ($x -lt $minX) { $minX = $x }
+                if ($x -gt $maxX) { $maxX = $x }
+                if ($y -lt $minY) { $minY = $y }
+                if ($y -gt $maxY) { $maxY = $y }
+            }
+        }
+    }
+    if ($maxX -lt 0) { return $null }
+    return @($minX, $minY, ($maxX - $minX + 1), ($maxY - $minY + 1))
+}
+
 function Draw-Cell([string]$path, [int]$col, [int]$row, $attrs) {
     $src = [System.Drawing.Bitmap]::FromFile($path)
-    $dest = New-Object System.Drawing.Rectangle(($col * $cell), ($row * $cell), $cell, $cell)
+    $b = Get-Bounds $src
+    if ($null -eq $b) { $src.Dispose(); throw "empty tile: $path" }
+    $bx = $b[0]; $by = $b[1]; $bw = $b[2]; $bh = $b[3]
+    $scale = $TARGET / [double][Math]::Max($bw, $bh)
+    $dw = [int][Math]::Round($bw * $scale)
+    $dh = [int][Math]::Round($bh * $scale)
+    $dx = $col * $cell + [int](($cell - $dw) / 2)
+    $dy = $row * $cell + [int](($cell - $dh) / 2)
+    $dest = New-Object System.Drawing.Rectangle($dx, $dy, $dw, $dh)
     if ($null -eq $attrs) {
-        $g.DrawImage($src, $dest)
+        $g.DrawImage($src, $dest, $bx, $by, $bw, $bh, [System.Drawing.GraphicsUnit]::Pixel)
     } else {
-        $g.DrawImage($src, $dest, 0, 0, $src.Width, $src.Height,
+        $g.DrawImage($src, $dest, $bx, $by, $bw, $bh,
             [System.Drawing.GraphicsUnit]::Pixel, $attrs)
     }
     $src.Dispose()

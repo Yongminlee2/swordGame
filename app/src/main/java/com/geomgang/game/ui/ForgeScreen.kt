@@ -5,6 +5,8 @@ import androidx.compose.animation.core.keyframes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -167,9 +169,14 @@ fun ForgeScreen(
                         onTap = onSalvage,
                     )
 
+                    // 검은 남는 세로 공간에 맞춰 줄어든다(최대 210dp). 고정 크기로 두면
+                    // 화면이 좁을 때 검이 아래의 이름·강화 단계 표시를 밀어내 잘라먹는다.
                     DestroyPhase.None -> SwordView(
                         sword = state.sword,
-                        modifier = Modifier.size(210.dp, 210.dp),
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .sizeIn(maxWidth = 210.dp, maxHeight = 210.dp)
+                            .aspectRatio(1f),
                         shake = shake.value,
                         flash = flash.value,
                         flashColor = flashColor,
