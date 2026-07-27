@@ -13,10 +13,13 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -72,10 +75,13 @@ fun HuntScreen(
         return
     }
 
+    // 강화 화면과 같은 이유로 스크롤된다 - 이벤트 배너·금덩이 버튼·보스 도전이
+    // 한꺼번에 뜨면 짧은 화면에서 아래가 잘린다. 탭 공격은 스크롤과 충돌하지 않는다.
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(zoneBrush(hunt.zone))
+            .verticalScroll(rememberScrollState())
             .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -147,9 +153,10 @@ fun HuntScreen(
         Spacer(Modifier.height(16.dp))
 
         // --- 대상 ---
+        // 스크롤되는 열 안에서는 weight 를 쓸 수 없다(높이가 무한대다). 최소 높이로 잡는다.
         Box(
             modifier = Modifier
-                .weight(1f)
+                .heightIn(min = 260.dp)
                 .fillMaxWidth()
                 .clickable(enabled = hunt.targetHp > 0, onClick = onTap),
             contentAlignment = Alignment.Center,

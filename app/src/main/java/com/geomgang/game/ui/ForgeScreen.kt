@@ -17,7 +17,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
@@ -120,9 +122,13 @@ fun ForgeScreen(
         }
     }
 
+    // 세로로 스크롤된다. 이 화면은 판이 갈수록 줄이 늘어나는데(요구량·스킬·재료·별·
+    // 회랑·아이콘) 고정 높이로 두면 짧은 화면이나 큰 글꼴에서 아래가 잘려 나간다.
+    // v1.3에서 실제로 검 이름이 그렇게 사라졌다.
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -152,13 +158,12 @@ fun ForgeScreen(
             }
         }
 
-        // 검과 이름은 항상 이만큼은 확보한다. weight 만 주면 하단 요소가 늘어날 때
-        // 이 영역이 0까지 눌려 이름이 잘려 나간다 (v1.3에서 실제로 그랬다).
-        // 가변 영역에는 **그림만** 둔다. 이름·강화 단계를 여기 넣으면 아래 요소가
-        // 늘어날 때 이 영역이 눌리면서 가운데 정렬 탓에 위아래로 잘려 사라진다.
+        // 그림 영역. 스크롤되는 열 안에서는 weight 를 쓸 수 없으므로(높이가 무한대다)
+        // 최소 높이로 자리를 잡는다. 이름·강화 단계는 이 밖에 둔다 — 안에 넣으면
+        // 가운데 정렬 탓에 위아래로 잘린다.
         Box(
             modifier = Modifier
-                .weight(1f)
+                .heightIn(min = 170.dp)
                 .fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
