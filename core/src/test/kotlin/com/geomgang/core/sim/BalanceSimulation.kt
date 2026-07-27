@@ -2,11 +2,13 @@ package com.geomgang.core.sim
 
 import com.geomgang.core.Difficulty
 import com.geomgang.core.Economy
+import com.geomgang.core.ForgeCost
 import com.geomgang.core.ForgeEngine
 import com.geomgang.core.ForgeResult
 import com.geomgang.core.GameState
 import com.geomgang.core.Item
 import com.geomgang.core.Recipes
+import com.geomgang.core.Sword
 import com.geomgang.core.UsedItems
 import com.geomgang.core.WeaponFamily
 import kotlin.random.Random
@@ -84,6 +86,17 @@ object BalanceSimulation {
     /** 강화 없이 준비 동작만 반복하는 상황을 끊는 안전장치. */
     private const val MAX_SPINS_WITHOUT_ATTEMPT = 100
 
+    /**
+     * 재료 검 한 자루를 구하는 데 드는 골드.
+     *
+     * 실제 게임에서는 사냥 드롭으로 얻지만, 시뮬레이터는 사냥을 모형화하지 않는다.
+     * 골드와 재료가 **같은 출처(사냥)** 에서 나오므로 골드 환산이 타당하다.
+     */
+    private const val MATERIAL_SWORD_PRICE = Economy.BASE_SWORD_PRICE
+
+    /** 강화석 하나를 구하는 데 드는 골드 환산값. 조각 20개 교환에 상응한다. */
+    private const val STONE_PRICE = 240L
+
     fun simulateRun(difficulty: Difficulty, rng: Random, maxAttempts: Int): RunOutcome {
         var state = GameState(difficulty, gold = START_GOLD)
         var attempts = 0
@@ -151,7 +164,38 @@ object BalanceSimulation {
                 }
             }
 
-            // 7. 비용을 못 내면 검을 판다
+            // 7. 재료 확보. +13부터 검, +16부터 강화석이 필수다(ForgeCost).
+            val req = ForgeCost.requirementFor(sword.level)
+            if (state.storage.size < req.swords) {
+                if (state.gold < MATERIAL_SWORD_PRICE) {
+                    if (Economy.canSellSword(state)) {
+                        state = Economy.sellSword(state)
+                        continue
+                    }
+                    break
+                }
+                state = state.copy(
+                    gold = state.gold - MATERIAL_SWORD_PRICE,
+                    storage = state.storage + Sword(WeaponFamily.STRAIGHT, 0),
+                )
+                continue
+            }
+            if (state.forgeStones < req.stones) {
+                if (state.gold < STONE_PRICE) {
+                    if (Economy.canSellSword(state)) {
+                        state = Economy.sellSword(state)
+                        continue
+                    }
+                    break
+                }
+                state = state.copy(
+                    gold = state.gold - STONE_PRICE,
+                    forgeStones = state.forgeStones + 1,
+                )
+                continue
+            }
+
+            // 8. 비용을 못 내면 검을 판다
             if (!ForgeEngine.canAttempt(state, UsedItems.NONE)) {
                 if (Economy.canSellSword(state)) {
                     state = Economy.sellSword(state)
@@ -160,7 +204,7 @@ object BalanceSimulation {
                 break
             }
 
-            // 8. 강화. 밀어붙이는 국면에서는 아이템을 아끼지 않는다.
+            // 9. 강화. 밀어붙이는 국면에서는 아이템을 아끼지 않는다.
             val targetLevel = sword.level + 1
             val items = UsedItems(
                 blessing = pushing &&

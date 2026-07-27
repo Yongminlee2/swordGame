@@ -133,6 +133,9 @@ class UniqueIntegrationTest {
             difficulty = Difficulty.ENDLESS,
             gold = 1_000_000,
             sword = Sword(WeaponFamily.STRAIGHT, level, uniqueId = "origin"),
+            // +15 목표는 재료 검이 필수다 (ForgeCost)
+            storage = List(2) { Sword(WeaponFamily.STRAIGHT, 1) },
+            forgeStones = 50,
         )
         val result = ForgeEngine.attempt(origin, UsedItems.NONE, ScriptedRandom(roll))
         assertTrue(result is ForgeResult.Success)
@@ -145,6 +148,9 @@ class UniqueIntegrationTest {
             difficulty = Difficulty.ENDLESS,
             gold = 10_000_000,
             sword = Sword(WeaponFamily.HOLY, level, uniqueId = "phoenix"),
+            // +18 목표는 재료 검 2자루와 강화석이 필수다 (ForgeCost)
+            storage = List(2) { Sword(WeaponFamily.STRAIGHT, 1) },
+            forgeStones = 50,
         )
         // 난수: 성공 판정 실패(1.0) -> 파괴 판정 성공(0.0)
         val result = ForgeEngine.attempt(state, UsedItems.NONE, ScriptedRandom(1.0, 0.0))

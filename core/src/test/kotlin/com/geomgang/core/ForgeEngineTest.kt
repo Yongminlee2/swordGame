@@ -8,6 +8,12 @@ import org.junit.Test
 
 class ForgeEngineTest {
 
+    /**
+     * 강화 판정 테스트용 상태.
+     *
+     * 재료 검·강화석을 넉넉히 채워 둔다 — 이 클래스의 관심사는 파괴·하락 판정이고,
+     * 재료 요구는 [ForgeCostTest] 와 위의 "재료 요구" 절이 따로 지킨다.
+     */
     private fun state(
         level: Int,
         gold: Long = 1_000_000,
@@ -20,7 +26,56 @@ class ForgeEngineTest {
         sword = Sword(family, level),
         inventory = inventory,
         bestLevel = level,
+        storage = List(4) { Sword(WeaponFamily.STRAIGHT, 1) },
+        forgeStones = 100,
     )
+
+    // --- 재료 요구 (v1.4) ---
+
+    private fun materialState(level: Int, stones: Int, storage: Int) = GameState(
+        difficulty = Difficulty.ENDLESS,
+        gold = 1_000_000_000,
+        sword = Sword(WeaponFamily.STRAIGHT, level),
+        storage = List(storage) { Sword(WeaponFamily.STRAIGHT, 1) },
+        forgeStones = stones,
+    )
+
+    @Test
+    fun `16단계 목표는 강화석이 없으면 시도할 수 없다`() {
+        assertFalse(
+            ForgeEngine.canAttempt(
+                materialState(level = 15, stones = 0, storage = 3),
+                UsedItems.NONE,
+            ),
+        )
+    }
+
+    @Test
+    fun `16단계 목표는 재료가 갖춰지면 시도할 수 있다`() {
+        assertTrue(
+            ForgeEngine.canAttempt(
+                materialState(level = 15, stones = 50, storage = 3),
+                UsedItems.NONE,
+            ),
+        )
+    }
+
+    @Test
+    fun `추가 재료를 요구하면 보관함이 그만큼 있어야 한다`() {
+        val state = materialState(level = 15, stones = 50, storage = 2)
+        assertTrue(ForgeEngine.canAttempt(state, UsedItems.NONE))
+        assertFalse(ForgeEngine.canAttempt(state, UsedItems.NONE, extraSwords = 1))
+    }
+
+    @Test
+    fun `저단계는 재료 없이도 시도할 수 있다`() {
+        assertTrue(
+            ForgeEngine.canAttempt(
+                materialState(level = 3, stones = 0, storage = 0),
+                UsedItems.NONE,
+            ),
+        )
+    }
 
     // --- canAttempt ---
 

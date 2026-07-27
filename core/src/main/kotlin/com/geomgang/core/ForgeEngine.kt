@@ -54,7 +54,10 @@ object ForgeEngine {
      */
     const val AUTO_FORGE_MAX_LEVEL: Int = RateTable.SAFE_BAND_END - 1
 
-    fun canAttempt(state: GameState, items: UsedItems): Boolean {
+    /**
+     * @param extraSwords 성공률 보너스로 더 태울 검 수. 필수 재료 위에 얹힌다.
+     */
+    fun canAttempt(state: GameState, items: UsedItems, extraSwords: Int = 0): Boolean {
         val sword = state.sword ?: return false
         if (state.pendingDestroy != null) return false
 
@@ -64,7 +67,8 @@ object ForgeEngine {
         if (items.blessing && state.inventory.blessingScrolls <= 0) return false
         if (items.luckCharm && state.inventory.luckCharms <= 0) return false
 
-        return state.gold >= Economy.upgradeCost(sword.level)
+        // 골드·재료 검·강화석 요구는 ForgeCost 가 단일 출처다.
+        return ForgeCost.canPay(state, extraSwords)
     }
 
     /** 자동 강화 루프가 한 번 더 돌아도 되는지. 안전구간을 벗어나면 멈춘다. */
