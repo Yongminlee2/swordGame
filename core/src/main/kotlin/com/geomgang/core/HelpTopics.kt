@@ -71,6 +71,14 @@ object HelpTopics {
                 "${(GauntletEngine.LOSS_RATIO * 100).toInt()}%만 들고 나온다.",
         ),
         HelpTopic(
+            "🌙", "자리비움",
+            "앱을 꺼 둔 사이에도 조금씩 쌓인다. 깬 구역 중 가장 깊은 곳이 기준이고, " +
+                "1분마다 그 구역 잡몹 ${IdleRewards.KILLS_PER_MINUTE}마리 값이 붙는다.\n" +
+                "${IdleRewards.durationText(IdleRewards.MAX_SECONDS)}까지만 쌓이고, " +
+                "한 시간마다 강화석 ${IdleRewards.STONES_PER_HOUR}개가 함께 온다.\n" +
+                "손으로 잡는 편이 훨씬 빠르다 — 자리비움은 덤이다.",
+        ),
+        HelpTopic(
             "🐾", "펫과 퀘스트",
             "보스가 낮은 확률로 펫 알을 떨어뜨린다. 같은 알을 또 얻으면 레벨이 오르고, " +
                 "장착한 한 마리가 사냥을 돕는다.\n" +

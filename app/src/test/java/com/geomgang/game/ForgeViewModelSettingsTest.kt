@@ -26,7 +26,7 @@ import org.junit.rules.TemporaryFolder
 import kotlin.random.Random
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ForgeViewModelAutoTest {
+class ForgeViewModelSettingsTest {
 
     @get:Rule
     val tmp = TemporaryFolder()
@@ -75,71 +75,32 @@ class ForgeViewModelAutoTest {
         return ForgeViewModel(store, Difficulty.NORMAL, rng)
     }
 
-    // --- 자동강화 ---
+    /**
+     * 손으로 [times] 번 굴린다.
+     *
+     * 강화 한 번은 연출 잠금을 건다. 화면이 연출을 끝내면서 그 잠금을 푸는데,
+     * 테스트에는 화면이 없으므로 여기서 대신 풀어 준다.
+     */
+    private fun ForgeViewModel.forgeTimes(times: Int) {
+        repeat(times) {
+            forge()
+            onAnimationFinished()
+        }
+    }
+
+    // --- 연출 잠금 ---
 
     @Test
-    fun `자동강화가 목표 단계에서 멈춘다`() = runTest(dispatcher) {
+    fun `연출이 끝나기 전에는 다음 강화가 먹히지 않는다`() = runTest(dispatcher) {
         val vm = vm(level = 0)
-        vm.startAutoForge(targetLevel = 4)
-        advanceUntilIdle()
-        assertEquals(4, vm.ui.value.sword?.level)
-        assertFalse(vm.ui.value.autoForging)
-    }
-
-    @Test
-    fun `자동강화는 안전구간을 벗어나면 스스로 멈춘다`() = runTest(dispatcher) {
-        // 목표를 +20 으로 걸어도 안전구간 끝(+5)에서 멈춰야 한다
-        val vm = vm(level = 0)
-        vm.startAutoForge(targetLevel = 20)
-        advanceUntilIdle()
-        assertEquals(5, vm.ui.value.sword?.level)
-        assertFalse(vm.ui.value.autoForging)
-    }
-
-    @Test
-    fun `골드가 부족하면 자동강화가 멈춘다`() = runTest(dispatcher) {
-        // +0 강화 비용이 30, +1 은 44 다. 70골드로는 목표 +5 에 닿을 수 없다.
-        val vm = vm(level = 0, gold = 70)
-        vm.startAutoForge(targetLevel = 5)
-        advanceUntilIdle()
-
-        assertFalse(vm.ui.value.autoForging)
-        assertTrue("목표에 닿지 못하고 멈춰야 한다", (vm.ui.value.sword?.level ?: 0) < 5)
-        // 다음 시도 비용을 못 내는 상태로 멈춰 있어야 한다
-        assertTrue(
-            "gold=${vm.ui.value.gold} cost=${vm.ui.value.upgradeCost}",
-            vm.ui.value.gold < vm.ui.value.upgradeCost,
-        )
-    }
-
-    @Test
-    fun `이미 안전구간을 벗어나 있으면 자동강화를 켤 수 없다`() = runTest(dispatcher) {
-        val vm = vm(level = 8)
-        assertFalse(vm.ui.value.canAutoForge)
-        vm.startAutoForge(targetLevel = 12)
-        advanceUntilIdle()
-        assertEquals(8, vm.ui.value.sword?.level)
-    }
-
-    @Test
-    fun `자동강화를 멈출 수 있다`() = runTest(dispatcher) {
-        val vm = vm(level = 0)
-        vm.startAutoForge(targetLevel = 5)
-        advanceTimeBy(250)
-        vm.stopAutoForge()
-        val stopped = vm.ui.value.sword?.level ?: 0
-        advanceUntilIdle()
-        assertFalse(vm.ui.value.autoForging)
-        assertEquals(stopped, vm.ui.value.sword?.level)
-    }
-
-    @Test
-    fun `자동강화 중에는 손으로 강화할 수 없다`() = runTest(dispatcher) {
-        val vm = vm(level = 0)
-        vm.startAutoForge(targetLevel = 5)
-        val before = vm.ui.value.sword?.level
         vm.forge()
-        assertEquals(before, vm.ui.value.sword?.level)
+        val locked = vm.ui.value.sword?.level
+        vm.forge()
+        assertEquals("연출 중에는 잠겨 있어야 한다", locked, vm.ui.value.sword?.level)
+
+        vm.onAnimationFinished()
+        vm.forge()
+        assertEquals((locked ?: 0) + 1, vm.ui.value.sword?.level)
     }
 
     // --- 방지권 자동사용 ---
@@ -189,8 +150,7 @@ class ForgeViewModelAutoTest {
     @Test
     fun `달성한 업적의 칭호를 고를 수 있다`() = runTest(dispatcher) {
         val vm = vm(level = 4)
-        vm.startAutoForge(targetLevel = 5)
-        advanceUntilIdle()
+        vm.forgeTimes(1)
         val earned = vm.ui.value.progress.achievements.first()
         vm.selectTitle(earned)
         assertEquals(earned, vm.ui.value.progress.selectedTitle)
@@ -199,8 +159,7 @@ class ForgeViewModelAutoTest {
     @Test
     fun `진행도가 화면 상태에 노출된다`() = runTest(dispatcher) {
         val vm = vm(level = 0)
-        vm.startAutoForge(targetLevel = 3)
-        advanceUntilIdle()
+        vm.forgeTimes(3)
         assertTrue(vm.ui.value.progress.stats.attempts > 0)
         assertTrue(vm.ui.value.progress.codex.isNotEmpty())
     }

@@ -121,31 +121,6 @@ class ForgeEngineTest {
         assertFalse(ForgeEngine.canAttempt(pending, UsedItems.NONE))
     }
 
-    // --- canAutoForge ---
-
-    @Test
-    fun `자동 강화는 안전구간에서만 허용된다`() {
-        // +0~+4 에서 시도하면 목표가 +1~+5 라 실패해도 단계가 유지된다
-        for (level in 0..4) {
-            assertTrue("level=$level", ForgeEngine.canAutoForge(state(level = level)))
-        }
-        // +5 부터는 실패 시 하락하므로 자동화하지 않는다
-        assertFalse(ForgeEngine.canAutoForge(state(level = 5)))
-        assertFalse(ForgeEngine.canAutoForge(state(level = 12)))
-    }
-
-    @Test
-    fun `자동 강화 한계는 안전구간의 끝과 맞물려 있다`() {
-        // 이 둘이 어긋나면 자동 강화가 하락 구간을 건드리게 된다
-        assertEquals(RateTable.SAFE_BAND_END - 1, ForgeEngine.AUTO_FORGE_MAX_LEVEL)
-    }
-
-    @Test
-    fun `강화 자체가 불가능하면 자동 강화도 불가능하다`() {
-        assertFalse(ForgeEngine.canAutoForge(state(level = 0, gold = 0)))
-        assertFalse(ForgeEngine.canAutoForge(GameState(Difficulty.NORMAL, gold = 1_000_000)))
-    }
-
     // --- 성공 ---
 
     @Test

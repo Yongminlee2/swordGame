@@ -79,6 +79,13 @@ class HelpTopicsTest {
     }
 
     @Test
+    fun `자리비움 설명이 실제 상한을 말한다`() {
+        val body = HelpTopics.ALL.first { it.title == "자리비움" }.body
+        assertTrue(body.contains(IdleRewards.durationText(IdleRewards.MAX_SECONDS)))
+        assertTrue(body.contains("${IdleRewards.STONES_PER_HOUR}"))
+    }
+
+    @Test
     fun `옛 규칙을 말하지 않는다`() {
         // v1.3까지 쓰던 20초 보스, 4계열 시작 같은 표현이 남아 있으면 안 된다.
         val all = HelpTopics.ALL.joinToString("\n") { it.body }

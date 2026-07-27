@@ -46,15 +46,6 @@ sealed interface ForgeResult {
 object ForgeEngine {
 
     /**
-     * 자동 강화가 허용되는 최대 현재 단계.
-     *
-     * 이 단계에서 시도하면 목표가 안전구간의 끝([RateTable.SAFE_BAND_END])이라
-     * 실패해도 단계가 유지된다. 하락·파괴가 걸린 구간을 자동화하면
-     * 그 구간의 긴장이 사라지고 게임이 남지 않는다.
-     */
-    const val AUTO_FORGE_MAX_LEVEL: Int = RateTable.SAFE_BAND_END - 1
-
-    /**
      * @param extraSwords 성공률 보너스로 더 태울 검 수. 필수 재료 위에 얹힌다.
      */
     fun canAttempt(state: GameState, items: UsedItems, extraSwords: Int = 0): Boolean {
@@ -69,13 +60,6 @@ object ForgeEngine {
 
         // 골드·재료 검·강화석 요구는 ForgeCost 가 단일 출처다.
         return ForgeCost.canPay(state, extraSwords)
-    }
-
-    /** 자동 강화 루프가 한 번 더 돌아도 되는지. 안전구간을 벗어나면 멈춘다. */
-    fun canAutoForge(state: GameState): Boolean {
-        val sword = state.sword ?: return false
-        if (sword.level > AUTO_FORGE_MAX_LEVEL) return false
-        return canAttempt(state, UsedItems.NONE)
     }
 
     /**

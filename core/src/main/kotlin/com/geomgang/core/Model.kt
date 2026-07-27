@@ -156,6 +156,13 @@ data class GameState(
     val gauntletBest: Int = 0,
     /** 강화석. 고단계 강화만 먹는 자원이다 - 조각과 수요가 겹치지 않게 분리했다. */
     val forgeStones: Int = 0,
+    /**
+     * 마지막으로 저장된 시각(epoch ms). 자리비움 보상이 이 값과 지금을 견준다.
+     *
+     * 0 은 "모른다"는 뜻이다 — 이 필드가 없던 옛 세이브가 0 으로 읽히고,
+     * 그때는 보상을 주지 않는다. 처음 저장되는 순간부터 시계가 돈다.
+     */
+    val lastSeenMillis: Long = 0,
 ) {
     init {
         require(gold >= 0) { "gold must be >= 0, was $gold" }

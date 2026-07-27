@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
@@ -44,6 +44,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geomgang.core.Difficulty
 import com.geomgang.core.ForgeResult
+import com.geomgang.core.IdleReward
+import com.geomgang.core.IdleRewards
 import com.geomgang.core.SwordNames
 import com.geomgang.game.DestroyPhase
 import com.geomgang.game.ForgeUiState
@@ -79,8 +81,7 @@ fun ForgeScreen(
     onOpenCodex: () -> Unit,
     onOpenQuests: () -> Unit,
     onOpenMenu: () -> Unit,
-    onStartAuto: (Int) -> Unit,
-    onStopAuto: () -> Unit,
+    onDismissIdle: () -> Unit,
     onMaterialCount: (Int) -> Unit,
     onStarUp: () -> Unit,
     onAnimationEnd: () -> Unit,
@@ -122,6 +123,9 @@ fun ForgeScreen(
         }
     }
 
+    // 자리비움 보상은 창으로 알린다. 화면에 자리를 만들어 두면 평소에는 빈 칸이다.
+    state.idleReward?.let { IdleRewardDialog(it, onDismissIdle) }
+
     // 세로로 스크롤된다. 이 화면은 판이 갈수록 줄이 늘어나는데(요구량·스킬·재료·별·
     // 회랑·아이콘) 고정 높이로 두면 짧은 화면이나 큰 글꼴에서 아래가 잘려 나간다.
     // v1.3에서 실제로 검 이름이 그렇게 사라졌다.
@@ -153,7 +157,7 @@ fun ForgeScreen(
                     )
                 }
             }
-            TextButton(onClick = onOpenMenu, enabled = !state.busy && !state.autoForging) {
+            TextButton(onClick = onOpenMenu, enabled = !state.busy) {
                 Text("🏅", fontSize = 22.sp)
             }
         }
@@ -342,7 +346,7 @@ fun ForgeScreen(
             // 사냥이 강화 비용의 출처다. 강화 버튼 바로 아래에 둬서 왕복이 짧게 한다.
             Button(
                 onClick = onOpenHunt,
-                enabled = !state.busy && !state.autoForging && state.sword != null,
+                enabled = !state.busy && state.sword != null,
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.secondary,
@@ -361,8 +365,7 @@ fun ForgeScreen(
             // 무한 회랑 - 중반(화산 클리어)부터 열리는 엔드컨텐츠
             OutlinedButton(
                 onClick = onOpenGauntlet,
-                enabled = !state.busy && !state.autoForging &&
-                    state.sword != null && state.gauntletUnlocked,
+                enabled = !state.busy && state.sword != null && state.gauntletUnlocked,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
@@ -375,14 +378,12 @@ fun ForgeScreen(
                 )
             }
             Spacer(Modifier.height(10.dp))
-            AutoForgeBar(state, onStartAuto, onStopAuto)
-            Spacer(Modifier.height(10.dp))
             // 글자 버튼 다섯 개 대신 아이콘 줄 하나 - 화면의 글자를 줄인다
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                val enabled = !state.busy && !state.autoForging
+                val enabled = !state.busy
                 IconEntry("🛒", "상점", enabled, Modifier.weight(1f), onOpenShop)
                 IconEntry("⚗️", "조합소", enabled, Modifier.weight(1f), onOpenCraft)
                 IconEntry(
@@ -407,11 +408,46 @@ fun ForgeScreen(
 }
 
 /**
- * 자동강화 막대.
+ * 자리비움 보상 알림.
  *
- * 안전구간에서만 뜬다. 하락·파괴가 걸린 구간을 자동화하면 그 구간의 긴장이 사라져
- * 게임이 남지 않기 때문이다. 멈춤 조건 판정은 전부 도메인이 한다.
+ * 보상은 이미 들어가 있다. 이 창은 "얼마가 들어왔는지" 만 알린다 —
+ * 받기를 눌러야 들어오게 하면 창을 놓쳤을 때 보상이 사라진다.
  */
+@Composable
+private fun IdleRewardDialog(reward: IdleReward, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("자리를 비운 사이", fontWeight = FontWeight.Bold) },
+        text = {
+            Column {
+                Text(
+                    text = "${IdleRewards.durationText(reward.seconds)} 동안 " +
+                        "${reward.zone.displayName}에서 벌어 두었다.",
+                    fontSize = 14.sp,
+                )
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    text = "💰 %,d".format(reward.gold),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFFFD24A),
+                )
+                if (reward.stones > 0) {
+                    Text(
+                        text = "🪨 강화석 ${reward.stones}",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.secondary,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("확인") }
+        },
+    )
+}
+
 /** 아이콘 + 값 한 쌍. 라벨 글자 없이 뜻이 통하는 것만 아이콘으로 쓴다. */
 @Composable
 private fun Stat(icon: String, value: String, color: Color = Color.Unspecified) {
@@ -484,51 +520,6 @@ private fun IconEntry(
     }
 }
 
-@Composable
-private fun AutoForgeBar(
-    state: ForgeUiState,
-    onStartAuto: (Int) -> Unit,
-    onStopAuto: () -> Unit,
-) {
-    if (state.autoForging) {
-        Button(
-            onClick = onStopAuto,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.error,
-            ),
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text("자동강화 중지") }
-        return
-    }
-
-    if (!state.canAutoForge) return
-
-    Column(Modifier.fillMaxWidth()) {
-        Text(
-            text = "자동강화 (안전구간까지만)",
-            fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-        )
-        Spacer(Modifier.height(4.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            val current = state.sword?.level ?: 0
-            (current + 1..AUTO_FORGE_TARGET_MAX).forEach { target ->
-                OutlinedButton(
-                    onClick = { onStartAuto(target) },
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(vertical = 6.dp),
-                ) { Text("+$target", fontSize = 13.sp) }
-            }
-        }
-    }
-}
-
-/** 자동강화 목표로 고를 수 있는 최대 단계. 안전구간의 끝이다. */
-private const val AUTO_FORGE_TARGET_MAX = 5
-
 /**
  * 재료 강화 막대.
  *
@@ -564,7 +555,7 @@ private fun MaterialBar(state: ForgeUiState, onMaterialCount: (Int) -> Unit) {
                 FilterChip(
                     selected = state.materialCount == count,
                     onClick = { onMaterialCount(count) },
-                    enabled = !state.busy && !state.autoForging,
+                    enabled = !state.busy,
                     label = {
                         Text(if (count == 0) "안 씀" else "${count}개", fontSize = 12.sp)
                     },
@@ -619,7 +610,7 @@ private fun StarBar(state: ForgeUiState, onStarUp: () -> Unit) {
         } else {
             OutlinedButton(
                 onClick = onStarUp,
-                enabled = !state.busy && !state.autoForging && star.affordable,
+                enabled = !state.busy && star.affordable,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(

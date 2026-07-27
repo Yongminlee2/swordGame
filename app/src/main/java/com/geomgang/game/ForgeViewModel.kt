@@ -27,6 +27,8 @@ import com.geomgang.core.Combat
 import com.geomgang.core.DailyQuests
 import com.geomgang.core.HuntEvent
 import com.geomgang.core.HuntEvents
+import com.geomgang.core.IdleReward
+import com.geomgang.core.IdleRewards
 import com.geomgang.core.QuestKind
 import com.geomgang.core.Recipes
 import com.geomgang.core.SaveStore
@@ -67,11 +69,16 @@ class ForgeViewModel(
     private val rng: Random = Random.Default,
     /** 소리. 테스트에서는 넘기지 않으므로 아무 일도 하지 않는 기본값을 둔다. */
     private val sound: SoundEngine = SoundEngine { false },
+    /** 지금 시각. 자리비움 보상만 쓴다 — 테스트가 시계를 직접 쥐어야 해서 밖에서 넣는다. */
+    private val now: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
 
     private var progress: ProgressState = store.loadProgress()
 
     private var settings: Settings = store.loadSettings()
+
+    /** 이번에 켜면서 받은 자리비움 보상. 화면이 알리고 나면 비운다. */
+    private var idleReward: IdleReward? = null
 
     private var game: GameState = loadAndRepair(difficulty)
 
@@ -80,8 +87,6 @@ class ForgeViewModel(
     private var phase: DestroyPhase = DestroyPhase.None
 
     private var countdownJob: Job? = null
-
-    private var autoJob: Job? = null
 
     // --- 사냥 상태 ---
     // 지금 잡고 있는 대상만 메모리에 둔다. 저장되는 것은 구역과 잡은 수뿐이다.
@@ -165,6 +170,7 @@ class ForgeViewModel(
      * 1. 파괴 대기 상태가 남아 있으면 확정 처리한다. 방지권 원이 떠 있는 동안 앱을 죽여
      *    파괴를 무효화하는 악용을 막는 지점이다. 기회를 놓친 것으로 통계에 남긴다.
      * 2. 아무것도 할 수 없는 상태면 파산 구제를 적용한다.
+     * 3. 자리를 비운 사이 쌓인 보상을 넣는다.
      */
     private fun loadAndRepair(difficulty: Difficulty): GameState {
         var loaded = store.loadGame(difficulty)
@@ -181,13 +187,40 @@ class ForgeViewModel(
             progress = Progress.refresh(Progress.onBailout(progress))
             store.saveGame(rescued)
             store.saveProgress(progress)
-            return rescued
+            loaded = rescued
         }
+
+        idleReward = idleRewardFor(loaded)
+        idleReward?.let { loaded = IdleRewards.apply(loaded, it) }
+
+        // 여기서 곧바로 저장한다. 보상을 넣어 놓고 저장을 미루면 앱이 죽었을 때
+        // 같은 시간을 두 번 받는다.
+        loaded = loaded.copy(lastSeenMillis = now())
+        store.saveGame(loaded)
         return loaded
     }
 
+    /**
+     * 자리를 비운 시간만큼의 보상. 받을 게 없으면 null.
+     *
+     * 시각이 남아 있지 않은 세이브(이 기능이 없던 시절 것)에는 주지 않는다 —
+     * 얼마나 비웠는지 알 수 없는데 그걸 "오래 비웠다"로 읽으면 공짜 보상이 된다.
+     */
+    private fun idleRewardFor(state: GameState): IdleReward? {
+        if (state.lastSeenMillis <= 0) return null
+        val elapsedSeconds = (now() - state.lastSeenMillis) / 1000
+        return IdleRewards.rewardFor(state, elapsedSeconds)
+    }
+
+    /** 자리비움 안내를 닫는다. 보상은 이미 들어가 있고 이 호출은 알림만 끈다. */
+    fun dismissIdleReward() {
+        if (idleReward == null) return
+        idleReward = null
+        _ui.value = render()
+    }
+
     fun forge() {
-        if (busy || autoJob != null) return
+        if (busy) return
         val result = runAttempt(pendingItems) ?: return
         busy = true
         lastResult = result
@@ -206,8 +239,8 @@ class ForgeViewModel(
     /**
      * 강화 한 번을 실행하고 상태·통계·저장까지 마친다.
      *
-     * 잠금과 연출은 건드리지 않는다. 손으로 누르는 [forge] 와 자동강화 루프가 함께 쓰기 때문이다.
-     * 자동강화는 안전구간에서만 돌아 파괴가 나지 않으므로 창 처리도 필요 없다.
+     * 잠금과 연출은 건드리지 않는다 — 그 둘은 [forge] 의 몫이다. 이 함수는
+     * "한 번 굴린 결과"만 만들어 상태·통계·저장에 반영한다.
      */
     private fun runAttempt(items: UsedItems): ForgeResult? {
         if (!ForgeEngine.canAttempt(game, items, materialCount)) return null
@@ -343,35 +376,6 @@ class ForgeViewModel(
         closeDestroyWindow()
     }
 
-    /**
-     * 자동강화를 시작한다.
-     *
-     * 안전구간을 벗어나거나 골드가 부족하면 스스로 멈춘다. 판정 조건은
-     * [ForgeEngine.canAutoForge] 가 갖고 있다 — 화면도 여기도 단계를 직접 비교하지 않는다.
-     */
-    fun startAutoForge(targetLevel: Int) {
-        if (autoJob != null || busy) return
-        autoJob = viewModelScope.launch {
-            while (
-                ForgeEngine.canAutoForge(game) &&
-                (game.sword?.level ?: 0) < targetLevel
-            ) {
-                runAttempt(UsedItems.NONE)
-                _ui.value = render()
-                delay(AUTO_FORGE_INTERVAL_MILLIS)
-            }
-            autoJob = null
-            _ui.value = render()
-        }
-        _ui.value = render()
-    }
-
-    fun stopAutoForge() {
-        autoJob?.cancel()
-        autoJob = null
-        _ui.value = render()
-    }
-
     fun setAutoPrevent(on: Boolean) {
         settings = settings.copy(autoPrevent = on)
         store.saveSettings(settings)
@@ -391,7 +395,6 @@ class ForgeViewModel(
     /** 이 모드의 진행을 지운다. 도감·업적·통계·설정은 남는다. */
     fun resetProgress() {
         stopHuntLoop()
-        stopAutoForge()
         countdownJob?.cancel()
         store.resetGame(game.difficulty)
         game = store.loadGame(game.difficulty)
@@ -418,7 +421,7 @@ class ForgeViewModel(
      * 파괴의 무게가 커지고 방지권의 값어치가 오른다.
      */
     fun enterZone(zone: Zone) {
-        if (busy || autoJob != null) return
+        if (busy) return
         if (game.sword == null) return
         if (!game.adventure.isUnlocked(zone)) return
 
@@ -675,7 +678,7 @@ class ForgeViewModel(
     fun gauntletUnlocked(): Boolean = Zone.VOLCANO.id in game.adventure.clearedZoneIds
 
     fun enterGauntlet() {
-        if (busy || autoJob != null || huntZone != null) return
+        if (busy || huntZone != null) return
         if (game.sword == null || !gauntletUnlocked()) return
         gauntletRun = GauntletEngine.start()
         gauntletJob?.cancel()
@@ -1028,7 +1031,6 @@ class ForgeViewModel(
 
     override fun onCleared() {
         countdownJob?.cancel()
-        autoJob?.cancel()
         huntJob?.cancel()
         super.onCleared()
     }
@@ -1075,7 +1077,7 @@ class ForgeViewModel(
 
     /** 들고 있는 검을 보관함에 넣는다. */
     fun storeSword() {
-        if (busy || autoJob != null || !Storage.canStore(game)) return
+        if (busy || !Storage.canStore(game)) return
         game = Storage.store(game)
         persist()
         _ui.value = render()
@@ -1083,7 +1085,7 @@ class ForgeViewModel(
 
     /** 보관함의 검을 든다. 들고 있던 검은 보관함으로 들어간다. */
     fun equipFromStorage(index: Int) {
-        if (busy || autoJob != null) return
+        if (busy) return
         if (index !in game.storage.indices || game.pendingDestroy != null) return
         game = Storage.equip(game, index)
         persist()
@@ -1105,7 +1107,7 @@ class ForgeViewModel(
 
     /** 보관함의 검 여러 자루를 녹여 한 자루로 만든다. 레시피와 맞으면 고유검이다. */
     fun fuse(indices: List<Int>) {
-        if (busy || autoJob != null || !Fusion.canFuse(game, indices)) return
+        if (busy || !Fusion.canFuse(game, indices)) return
         game = Fusion.fuse(game, indices)
         game.storage.lastOrNull()?.let { result ->
             progress =
@@ -1125,7 +1127,7 @@ class ForgeViewModel(
 
     /** 다음 강화에 태울 **추가** 재료 수를 정한다. 필수분과 별개다. */
     fun setMaterialCount(count: Int) {
-        if (busy || autoJob != null) return
+        if (busy) return
         materialCount = count.coerceIn(0, spareMaterials())
         _ui.value = render()
     }
@@ -1139,7 +1141,7 @@ class ForgeViewModel(
 
     /** 별을 하나 올려 본다. 실패해도 검은 부서지지 않는다. */
     fun starUp() {
-        if (busy || autoJob != null || !StarForce.canAfford(game)) return
+        if (busy || !StarForce.canAfford(game)) return
         val result = StarForce.attempt(game, rng)
         game = result.state
         lastStarUp = result is StarForce.Result.Up
@@ -1265,14 +1267,13 @@ class ForgeViewModel(
     }
 
     private fun persist() {
+        // 저장할 때마다 시각을 새로 찍는다. 이 값이 다음 실행의 자리비움 기준이다.
+        game = game.copy(lastSeenMillis = now())
         store.saveGame(game)
         store.saveProgress(progress)
     }
 
     private companion object {
-        /** 자동강화 한 번과 다음 번 사이의 간격. 화면이 따라올 만큼은 둔다. */
-        const val AUTO_FORGE_INTERVAL_MILLIS = 220L
-
         /** 사냥 루프 주기. 화상 피해와 보스 제한 시간을 이 간격으로 처리한다. */
         const val HUNT_TICK_MILLIS = 1_000L
 
@@ -1317,8 +1318,7 @@ class ForgeViewModel(
             star = renderStar(),
             progress = progress,
             settings = settings,
-            autoForging = autoJob != null,
-            canAutoForge = ForgeEngine.canAutoForge(game),
+            idleReward = idleReward,
             hunt = renderHunt(),
             attackPower = Combat.attackPower(game.sword),
             essences = game.essences,

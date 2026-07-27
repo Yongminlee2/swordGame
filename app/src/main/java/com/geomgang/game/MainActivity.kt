@@ -81,7 +81,6 @@ private fun App(store: SaveStore) {
 
     BackHandler(enabled = !state.busy) {
         when {
-            state.autoForging -> vm.stopAutoForge()
             // 사냥 중이면 먼저 사냥터 목록으로, 거기서 한 번 더 누르면 강화 화면으로
             state.hunt != null -> vm.leaveHunt()
             overlay == Overlay.Codex -> overlay = codexOrigin
@@ -215,8 +214,7 @@ private fun App(store: SaveStore) {
             },
             onOpenQuests = { overlay = Overlay.Quests },
             onOpenMenu = { overlay = Overlay.Records },
-            onStartAuto = vm::startAutoForge,
-            onStopAuto = vm::stopAutoForge,
+            onDismissIdle = vm::dismissIdleReward,
             onMaterialCount = vm::setMaterialCount,
             onStarUp = vm::starUp,
             onAnimationEnd = vm::onAnimationFinished,
