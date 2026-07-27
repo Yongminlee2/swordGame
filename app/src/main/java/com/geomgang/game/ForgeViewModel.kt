@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.geomgang.core.Difficulty
 import com.geomgang.core.Economy
+import com.geomgang.core.ForgeCost
 import com.geomgang.core.ForgeEngine
 import com.geomgang.core.ForgeResult
 import com.geomgang.core.Fusion
@@ -204,17 +205,28 @@ class ForgeViewModel(
      * 자동강화는 안전구간에서만 돌아 파괴가 나지 않으므로 창 처리도 필요 없다.
      */
     private fun runAttempt(items: UsedItems): ForgeResult? {
-        if (!ForgeEngine.canAttempt(game, items)) return null
+        if (!ForgeEngine.canAttempt(game, items, materialCount)) return null
         val sword = game.sword ?: return null
         val targetLevel = sword.level + 1
         val cost = Economy.upgradeCost(sword.level)
+        val req = ForgeCost.requirementFor(sword.level)
 
         // 재료는 강화 성패와 무관하게 태워진다. 판정 전에 먼저 소모하고 보정을 넘긴다.
-        val materials = materialIndices()
-        val materialBonus = MaterialBoost.bonusFor(materials.map { game.storage[it] })
-        if (materials.isNotEmpty()) {
-            game = MaterialBoost.consume(game, materials)
+        // 필수분과 추가분을 한 번에 집되(낮은 단계부터), **성공률 보너스는 추가분에만** 붙는다 —
+        // 필수분은 입장료이므로 보너스까지 주면 고단계가 오히려 쉬워진다.
+        val burnIndices = game.storage
+            .withIndex()
+            .sortedBy { it.value.level }
+            .take(req.swords + materialCount)
+            .map { it.index }
+        val bonusMaterials = burnIndices.drop(req.swords).map { game.storage[it] }
+        val materialBonus = MaterialBoost.bonusFor(bonusMaterials)
+        if (burnIndices.isNotEmpty()) {
+            game = MaterialBoost.consume(game, burnIndices)
             materialCount = 0
+        }
+        if (req.stones > 0) {
+            game = game.copy(forgeStones = game.forgeStones - req.stones)
         }
 
         val result = ForgeEngine.attempt(game, items, rng, extraSuccessRate = materialBonus)
@@ -485,6 +497,8 @@ class ForgeViewModel(
                 // 보스는 자기 구역의 정수를 남긴다. 고유검 레시피의 재료다.
                 essences = game.essences +
                     (zone.id to (game.essences[zone.id] ?: 0) + 1),
+                // 강화석도 확정으로 준다 - 고단계 강화의 화폐라 보스가 주 공급원이다.
+                forgeStones = game.forgeStones + zone.bossStones,
             )
             progress = Progress.refresh(
                 Progress.onMonsterKill(Progress.onSell(progress, bossGold), isBoss = true),
@@ -531,6 +545,10 @@ class ForgeViewModel(
             sound.monsterDown()
             // 미믹은 드롭 확정 + 보스급 단계 보정. "잡을까 말까"의 답이다.
             rollDrop(zone, isBoss = activeEvent == HuntEvent.MIMIC)
+            // 강화석은 검 드롭 판정 뒤에 굴린다 (난수 소비 순서 계약)
+            if (rng.nextDouble() < MOB_STONE_CHANCE) {
+                game = game.copy(forgeStones = game.forgeStones + 1)
+            }
             activeEvent = null
             eventRemainingMillis = 0
             if (!game.adventure.bossReady) spawnNext()
@@ -1062,11 +1080,18 @@ class ForgeViewModel(
         _ui.value = render()
     }
 
-    /** 다음 강화에 태울 재료 수를 정한다. */
+    /** 다음 강화에 태울 **추가** 재료 수를 정한다. 필수분과 별개다. */
     fun setMaterialCount(count: Int) {
         if (busy || autoJob != null) return
-        materialCount = count.coerceIn(0, minOf(MaterialBoost.MAX_MATERIALS, game.storage.size))
+        materialCount = count.coerceIn(0, spareMaterials())
         _ui.value = render()
+    }
+
+    /** 필수 재료를 빼고 성공률 보너스로 더 태울 수 있는 자루 수. */
+    private fun spareMaterials(): Int {
+        val required = game.sword?.let { ForgeCost.requirementFor(it.level).swords } ?: 0
+        val spare = (game.storage.size - required).coerceAtLeast(0)
+        return minOf(MaterialBoost.MAX_MATERIALS, spare)
     }
 
     /** 별을 하나 올려 본다. 실패해도 검은 부서지지 않는다. */
@@ -1142,13 +1167,21 @@ class ForgeViewModel(
         _ui.value = render()
     }
 
-    /** 지금 태울 재료로 집힌 보관함 자리. 낮은 단계부터 고른다. */
-    private fun materialIndices(): List<Int> =
-        game.storage
+    /**
+     * 성공률 보너스를 주는 **추가** 재료. 낮은 단계부터 필수분을 먼저 채우고 그 다음이다.
+     *
+     * 화면에 보여 주는 보너스와 실제 판정에 쓰는 보너스가 같아야 하므로
+     * [runAttempt] 와 같은 순서로 집는다.
+     */
+    private fun materialIndices(): List<Int> {
+        val required = game.sword?.let { ForgeCost.requirementFor(it.level).swords } ?: 0
+        return game.storage
             .withIndex()
             .sortedBy { it.value.level }
-            .take(materialCount)
+            .take(required + materialCount)
+            .drop(required)
             .map { it.index }
+    }
 
     private fun renderStar(): StarUiState? {
         val sword = game.sword ?: return null
@@ -1194,6 +1227,9 @@ class ForgeViewModel(
 
         /** 사냥 루프 주기. 화상 피해와 보스 제한 시간을 이 간격으로 처리한다. */
         const val HUNT_TICK_MILLIS = 1_000L
+
+        /** 잡몹이 강화석을 떨어뜨릴 확률. */
+        const val MOB_STONE_CHANCE = 0.05
     }
 
     private fun render(): ForgeUiState {
@@ -1214,7 +1250,7 @@ class ForgeViewModel(
             successPercent = (
                 RateTable.successRate(game.difficulty, targetLevel, pendingItems.blessing) * 100
                 ).roundToInt(),
-            canForge = !busy && ForgeEngine.canAttempt(game, pendingItems),
+            canForge = !busy && ForgeEngine.canAttempt(game, pendingItems, materialCount),
             canBuySword = !busy && Economy.canBuySword(game),
             unlockedFamilies = Progress.unlockedFamilies(progress),
             useBlessing = pendingItems.blessing,
@@ -1225,7 +1261,11 @@ class ForgeViewModel(
             dropMissed = dropMissed,
             materialCount = materialCount,
             materialBonusPercent = (MaterialBoost.bonusFor(materialIndices().map { game.storage[it] }) * 100).roundToInt(),
-            maxMaterials = minOf(MaterialBoost.MAX_MATERIALS, game.storage.size),
+            maxMaterials = spareMaterials(),
+            forgeStones = game.forgeStones,
+            requiredSwords = game.sword?.let { ForgeCost.requirementFor(it.level).swords } ?: 0,
+            requiredStones = game.sword?.let { ForgeCost.requirementFor(it.level).stones } ?: 0,
+            forgeBlockedReason = if (busy) null else ForgeCost.missingText(game),
             star = renderStar(),
             progress = progress,
             settings = settings,

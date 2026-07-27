@@ -60,6 +60,10 @@ class ForgeViewModelTimerTest {
                 sword = Sword(WeaponFamily.STRAIGHT, 19),
                 inventory = Inventory(preventTickets = tickets),
                 bestLevel = 19,
+                // +20 목표는 재료 검 2자루와 강화석이 필수다(ForgeCost).
+                // 이 클래스의 관심사는 제한 시간 창이므로 넉넉히 채워 둔다.
+                storage = List(4) { Sword(WeaponFamily.STRAIGHT, 1) },
+                forgeStones = 100,
             ),
         )
         return ForgeViewModel(store, Difficulty.NORMAL, alwaysDestroy())

@@ -80,6 +80,14 @@ data class ForgeUiState(
     /** 회랑이 열렸는지 (화산 보스 처치). */
     val gauntletUnlocked: Boolean = false,
     val gauntletBest: Int = 0,
+    /** 강화석 보유량. 고단계 강화의 화폐다. */
+    val forgeStones: Int = 0,
+    /** 다음 강화에 필수인 재료 검 자루 수. */
+    val requiredSwords: Int = 0,
+    /** 다음 강화에 필수인 강화석. */
+    val requiredStones: Int = 0,
+    /** 강화할 수 없는 이유 한 줄. 가능하면 null. */
+    val forgeBlockedReason: String? = null,
 ) {
     /** 방지권이든 줍기든 응답을 기다리는 중인지. */
     val awaitingDestroyChoice: Boolean get() = destroyPhase != DestroyPhase.None

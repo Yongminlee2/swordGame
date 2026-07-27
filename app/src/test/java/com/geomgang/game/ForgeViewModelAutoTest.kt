@@ -67,6 +67,9 @@ class ForgeViewModelAutoTest {
                 sword = Sword(WeaponFamily.STRAIGHT, level),
                 inventory = Inventory(preventTickets = tickets),
                 bestLevel = level,
+                // 고단계 테스트는 재료 검·강화석이 필수다(ForgeCost). 넉넉히 채워 둔다.
+                storage = List(4) { Sword(WeaponFamily.STRAIGHT, 1) },
+                forgeStones = 100,
             ),
         )
         return ForgeViewModel(store, Difficulty.NORMAL, rng)
