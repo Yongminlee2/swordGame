@@ -21,6 +21,8 @@ enum class PetKind(
     DRAKELING("drakeling", "아기 용", "dragon_nest", "작지만 화력이 진짜다"),
     SHADOW_IMP("shadow_imp", "그림자 임프", "abyss", "희귀한 것을 끌어들인다"),
     HALL_WISP("hall_wisp", "회랑의 정령", "endless_hall", "회랑의 보상을 늘린다"),
+    SKY_HAWK("sky_hawk", "천공 매", "sky_gallery", "강화석을 더 잘 찾아낸다"),
+    CAPITAL_WRAITH("capital_wraith", "왕도의 유령", "ruined_capital", "검의 스킬을 자주 끌어낸다"),
     ;
 
     companion object {
@@ -134,6 +136,18 @@ object Pets {
         return if (kind == PetKind.HALL_WISP) 1.0 + scaled(level, 0.10, 0.30) else 1.0
     }
 
+    /** 잡몹이 강화석을 떨어뜨릴 확률에 더해지는 값(%p). */
+    fun stoneBonusOf(state: PetState): Double {
+        val (kind, level) = equipped(state) ?: return 0.0
+        return if (kind == PetKind.SKY_HAWK) scaled(level, 0.02, 0.06) else 0.0
+    }
+
+    /** 계열 스킬 발동 확률에 더해지는 값(%p). */
+    fun skillBonusOf(state: PetState): Double {
+        val (kind, level) = equipped(state) ?: return 0.0
+        return if (kind == PetKind.CAPITAL_WRAITH) scaled(level, 0.02, 0.06) else 0.0
+    }
+
     /** 화면용 효과 설명 한 줄. */
     fun effectLine(kind: PetKind, level: Int): String {
         val lv = level.coerceIn(1, MAX_LEVEL)
@@ -148,6 +162,8 @@ object Pets {
             PetKind.DRAKELING -> "자동 타격 공격력의 ${(scaled(lv, 0.16, 0.40) * 100).toInt()}%"
             PetKind.SHADOW_IMP -> "희귀 몬스터 +${(scaled(lv, 0.02, 0.06) * 100).toInt()}%p"
             PetKind.HALL_WISP -> "회랑 보상 +${(scaled(lv, 0.10, 0.30) * 100).toInt()}%"
+            PetKind.SKY_HAWK -> "강화석 확률 +${(scaled(lv, 0.02, 0.06) * 100).toInt()}%p"
+            PetKind.CAPITAL_WRAITH -> "스킬 확률 +${(scaled(lv, 0.02, 0.06) * 100).toInt()}%p"
         }
     }
 }

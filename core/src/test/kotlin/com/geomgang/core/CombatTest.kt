@@ -260,10 +260,10 @@ class CombatTest {
     }
 
     @Test
-    fun `구역이 열 개이고 각 구역에 몬스터가 여러 종류다`() {
-        assertEquals(10, Zone.entries.size)
+    fun `구역이 열두 개이고 각 구역에 몬스터가 다섯 종류다`() {
+        assertEquals(12, Zone.entries.size)
         Zone.entries.forEach { zone ->
-            assertTrue("${zone.displayName} 몬스터 수", zone.monsters.size >= 3)
+            assertEquals("${zone.displayName} 몬스터 수", 5, zone.monsters.size)
             assertEquals(
                 "${zone.displayName} 몬스터 이름이 겹친다",
                 zone.monsters.size,

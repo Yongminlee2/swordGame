@@ -468,7 +468,12 @@ class ForgeViewModel(
         // 펫 치명타 보너스는 롤 값에서 빼는 방식이다 - 문턱을 넓히는 것과 같다
         val critRoll = rng.nextDouble() - Pets.critBonusOf(game.pets)
         // 난수 소비 순서 계약: 치명타 -> 스킬
-        val skillRoll = if (Skills.unlocked(sword)) rng.nextDouble() else 1.0
+        // 펫 스킬 보너스도 롤 값에서 뺀다 - 발동 문턱을 넓히는 것과 같다
+        val skillRoll = if (Skills.unlocked(sword)) {
+            rng.nextDouble() - Pets.skillBonusOf(game.pets)
+        } else {
+            1.0
+        }
         val hit = Combat.hit(sword, combo, fightingBoss, critRoll, targetMaxHp, skillRoll)
         combo++
         lastDamage = hit.damage
@@ -567,7 +572,7 @@ class ForgeViewModel(
             // 미믹은 드롭 확정 + 보스급 단계 보정. "잡을까 말까"의 답이다.
             rollDrop(zone, isBoss = activeEvent == HuntEvent.MIMIC)
             // 강화석은 검 드롭 판정 뒤에 굴린다 (난수 소비 순서 계약)
-            if (rng.nextDouble() < MOB_STONE_CHANCE) {
+            if (rng.nextDouble() < MOB_STONE_CHANCE + Pets.stoneBonusOf(game.pets)) {
                 game = game.copy(forgeStones = game.forgeStones + 1)
             }
             activeEvent = null
@@ -689,7 +694,12 @@ class ForgeViewModel(
 
         val critBuff = if (GauntletBuff.CRIT in run.buffs) GauntletEngine.CRIT_BUFF else 0.0
         val critRoll = rng.nextDouble() - Pets.critBonusOf(game.pets) - critBuff
-        val skillRoll = if (Skills.unlocked(sword)) rng.nextDouble() else 1.0
+        // 펫 스킬 보너스도 롤 값에서 뺀다 - 발동 문턱을 넓히는 것과 같다
+        val skillRoll = if (Skills.unlocked(sword)) {
+            rng.nextDouble() - Pets.skillBonusOf(game.pets)
+        } else {
+            1.0
+        }
         val hit = Combat.hit(sword, 0, run.isBossFloor, critRoll, run.monsterMaxHp, skillRoll)
         lastSkill = hit.skill
         var next = GauntletEngine.damage(run, hit.damage)

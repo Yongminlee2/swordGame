@@ -22,6 +22,8 @@ fun zoneBrush(zone: Zone): Brush {
         Zone.DRAGON_NEST -> Color(0xFF221520) to Color(0xFF120D12)
         Zone.ABYSS -> Color(0xFF151226) to Color(0xFF0C0A16)
         Zone.ENDLESS_HALL -> Color(0xFF1F1A26) to Color(0xFF120F16)
+        Zone.SKY_GALLERY -> Color(0xFF16202C) to Color(0xFF0B1018)
+        Zone.RUINED_CAPITAL -> Color(0xFF241E1A) to Color(0xFF130F0D)
     }
     return Brush.verticalGradient(listOf(top, bottom))
 }

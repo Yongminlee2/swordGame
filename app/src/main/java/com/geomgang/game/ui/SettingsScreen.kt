@@ -146,9 +146,9 @@ fun SettingsScreen(
                     text = "Dungeon Crawl 32x32 tiles · CC0 (퍼블릭 도메인)\n" +
                         "제작: Dungeon Crawl Stone Soup 팀 외 다수\n" +
                         "https://opengameart.org/content/dungeon-crawl-32x32-tiles\n\n" +
-                        "몬스터·보스 40종 + 펫 10종을 선별해 스프라이트시트로 합쳤다.\n" +
-                        "큰 검 그림(계열 14 × 티어 11 + 고유검 10)도 같은 팩의 무기 타일을 " +
-                        "계열·티어별로 선별·배치한 것이다.",
+                        "몬스터 60종 + 보스 12종 + 펫 12종을 선별해 스프라이트시트로 합쳤다.\n" +
+                        "검 그림도 같은 팩의 무기 타일이다 — 계열 14 × 강화 단계 21 = 294칸에\n" +
+                        "무한 구간 전설 20칸, 고유검 10칸을 더해 배치했다.",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )
