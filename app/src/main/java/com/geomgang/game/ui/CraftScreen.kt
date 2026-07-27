@@ -53,14 +53,8 @@ fun CraftScreen(
             .verticalScroll(rememberScrollState())
             .padding(20.dp),
     ) {
-        ScreenHeader(title = "조합소", onBack = onBack)
+        ScreenHeader(title = "조합소", onBack = onBack, wallet = state.wallet())
 
-        Text(
-            text = "보유 조각  ${state.shards}",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-        )
         Text(
             text = "파괴된 검에서 주운 조각으로 바꾼다",
             fontSize = 12.sp,

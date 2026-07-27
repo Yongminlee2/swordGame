@@ -112,9 +112,37 @@ class EconomyTest {
     }
 
     @Test
-    fun `검을 들고 있으면 또 살 수 없다`() {
+    fun `검을 들고 있으면 또 손에 들 수 없다`() {
         val holding = state(gold = 999, sword = Sword(WeaponFamily.STRAIGHT, 1))
         assertFalse(Economy.canBuySword(holding))
+    }
+
+    // --- 가방으로 바로 구매 ---
+
+    @Test
+    fun `검을 들고 있어도 가방으로는 살 수 있다`() {
+        // 고단계 강화는 재료 검을 먹는다. 그때마다 들고 있던 검을 넣었다 뺐다 하지 않아도 된다.
+        val holding = state(gold = 999, sword = Sword(WeaponFamily.STRAIGHT, 1))
+        assertTrue(Economy.canBuyToStorage(holding))
+
+        val after = Economy.buyToStorage(holding, WeaponFamily.CURVED)
+        assertEquals(999L - Economy.BASE_SWORD_PRICE, after.gold)
+        assertEquals(listOf(Sword(WeaponFamily.CURVED, 0)), after.storage)
+        assertEquals("손에 든 검은 그대로다", holding.sword, after.sword)
+    }
+
+    @Test
+    fun `가방이 가득 차면 가방으로 살 수 없다`() {
+        val full = state(gold = 999).copy(
+            storage = List(Storage.CAPACITY) { Sword(WeaponFamily.STRAIGHT, 0) },
+        )
+        assertFalse(Economy.canBuyToStorage(full))
+    }
+
+    @Test
+    fun `골드가 모자라면 가방으로도 살 수 없다`() {
+        assertFalse(Economy.canBuyToStorage(state(gold = Economy.BASE_SWORD_PRICE - 1)))
+        assertTrue(Economy.canBuyToStorage(state(gold = Economy.BASE_SWORD_PRICE)))
     }
 
     @Test

@@ -41,6 +41,7 @@ import com.geomgang.game.ForgeUiState
 fun ShopScreen(
     state: ForgeUiState,
     onBuySword: (WeaponFamily) -> Unit,
+    onBuySwordToStorage: (WeaponFamily) -> Unit,
     onSellSword: () -> Unit,
     onBuyItem: (Item) -> Unit,
     onBack: () -> Unit,
@@ -53,16 +54,8 @@ fun ShopScreen(
             .verticalScroll(rememberScrollState())
             .padding(20.dp),
     ) {
-        ScreenHeader(title = "상점", onBack = onBack)
-
-        Text(
-            text = "보유 골드  %,d".format(state.gold),
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-        )
-
-        Spacer(Modifier.height(16.dp))
+        // 재화는 머리의 지갑 줄이 전부 보여 준다 - 화면마다 따로 쓰지 않는다.
+        ScreenHeader(title = "상점", onBack = onBack, wallet = state.wallet())
 
         // --- 검 ---
         Card(Modifier.fillMaxWidth()) {
@@ -70,60 +63,91 @@ fun ShopScreen(
                 Text("검", fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(10.dp))
 
-                if (state.sword == null) {
-                    Text(
-                        "기본 검을 살 계열을 고른다",
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    )
+                Text(
+                    "살 계열을 고른다",
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+                Spacer(Modifier.height(6.dp))
+                // 미리보기도 게임 전체와 같은 그림이다 - 사는 검이 곧 보이는 검
+                SwordThumb(
+                    sword = com.geomgang.core.Sword(family, 0),
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(vertical = 4.dp),
+                    size = 96.dp,
+                )
+                Spacer(Modifier.height(6.dp))
+                FamilyPicker(
+                    families = state.unlockedFamilies,
+                    selected = family,
+                    onSelect = { family = it },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                // 아직 잠긴 기본 계열의 조건을 알려 준다. 나머지 10계열은 조합 전용이라
+                // 상점에 나올 일이 없으므로 여기 쓰지 않는다.
+                val locked = com.geomgang.core.WeaponFamily.BASICS
+                    .filterNot { it in state.unlockedFamilies }
+                if (locked.isNotEmpty()) {
                     Spacer(Modifier.height(6.dp))
-                    // 미리보기도 게임 전체와 같은 그림이다 - 사는 검이 곧 보이는 검
-                    SwordThumb(
-                        sword = com.geomgang.core.Sword(family, 0),
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .padding(vertical = 4.dp),
-                        size = 96.dp,
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    FamilyPicker(
-                        families = state.unlockedFamilies,
-                        selected = family,
-                        onSelect = { family = it },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    // 아직 잠긴 기본 계열의 조건을 알려 준다. 나머지 10계열은 조합 전용이라
-                    // 상점에 나올 일이 없으므로 여기 쓰지 않는다.
-                    val locked = com.geomgang.core.WeaponFamily.BASICS
-                        .filterNot { it in state.unlockedFamilies }
-                    if (locked.isNotEmpty()) {
-                        Spacer(Modifier.height(6.dp))
-                        locked.forEach { f ->
-                            com.geomgang.core.Progress
-                                .basicFamilyHint(state.progress, f)
-                                ?.let { hint ->
-                                    Text(
-                                        text = "🔒 ${f.displayName} — $hint",
-                                        fontSize = 11.sp,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                            .copy(alpha = 0.5f),
-                                    )
-                                }
-                        }
+                    locked.forEach { f ->
+                        com.geomgang.core.Progress
+                            .basicFamilyHint(state.progress, f)
+                            ?.let { hint ->
+                                Text(
+                                    text = "🔒 ${f.displayName} — $hint",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                        .copy(alpha = 0.5f),
+                                )
+                            }
                     }
-                    Spacer(Modifier.height(10.dp))
+                }
+
+                Spacer(Modifier.height(10.dp))
+                if (state.sword == null) {
                     Button(
                         onClick = { onBuySword(family) },
                         enabled = state.canBuySword,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text("${family.displayName} 구입  ·  %,d".format(Economy.BASE_SWORD_PRICE))
+                        Text("손에 들기  ·  %,d".format(Economy.BASE_SWORD_PRICE))
                     }
                     if (!state.canBuySword) {
                         Reason("골드가 모자란다")
                     }
-                } else {
-                    Text("+${state.sword.level} ${state.sword.family.displayName}")
+                    Spacer(Modifier.height(8.dp))
+                }
+
+                // 재료 검을 모으는 길. 손에 든 검을 팔거나 넣었다 뺐다 하지 않아도 된다.
+                OutlinedButton(
+                    onClick = { onBuySwordToStorage(family) },
+                    enabled = state.canBuyToStorage,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        "가방에 넣기  ·  %,d  (%d/%d)".format(
+                            Economy.BASE_SWORD_PRICE,
+                            state.storage.size,
+                            state.storageCapacity,
+                        ),
+                    )
+                }
+                if (!state.canBuyToStorage) {
+                    Reason(
+                        if (state.storage.size >= state.storageCapacity) {
+                            "가방이 가득 찼다"
+                        } else {
+                            "골드가 모자란다"
+                        },
+                    )
+                }
+
+                if (state.sword != null) {
+                    Spacer(Modifier.height(12.dp))
+                    HorizontalDivider()
                     Spacer(Modifier.height(10.dp))
+                    Text("들고 있는 검  ·  +${state.sword.level} ${state.sword.family.displayName}")
+                    Spacer(Modifier.height(8.dp))
                     OutlinedButton(
                         onClick = onSellSword,
                         enabled = !state.busy,
@@ -131,7 +155,6 @@ fun ShopScreen(
                     ) {
                         Text("판매  ·  %,d".format(state.sellPrice))
                     }
-                    Reason("검을 들고 있는 동안에는 새 검을 살 수 없다")
                 }
             }
         }

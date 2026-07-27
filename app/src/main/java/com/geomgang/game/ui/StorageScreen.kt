@@ -68,7 +68,7 @@ fun StorageScreen(
             .fillMaxSize()
             .padding(20.dp),
     ) {
-        ScreenHeader(title = "보관함", onBack = onBack)
+        ScreenHeader(title = "보관함", onBack = onBack, wallet = state.wallet())
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(

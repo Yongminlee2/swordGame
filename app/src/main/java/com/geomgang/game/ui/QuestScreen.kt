@@ -45,7 +45,7 @@ fun QuestScreen(
             .fillMaxSize()
             .padding(20.dp),
     ) {
-        ScreenHeader(title = "퀘스트", onBack = onBack)
+        ScreenHeader(title = "퀘스트", onBack = onBack, wallet = state.wallet())
 
         Text(
             text = "자정에 새 일일 퀘스트가 온다",

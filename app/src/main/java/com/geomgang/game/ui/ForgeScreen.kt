@@ -490,18 +490,6 @@ private fun Stat(icon: String, label: String, value: String, color: Color = Colo
     }
 }
 
-/**
- * 큰 수를 짧게. 26억을 자릿수로 다 쓰면 한 줄을 통째로 먹는다.
- *
- * 조(兆) 이상은 소수 첫째 자리까지만 보여 준다 — 정확한 값이 필요한 순간은
- * 강화 비용을 낼 수 있는지뿐이고, 그건 버튼 활성화가 알려 준다.
- */
-private fun compactGold(value: Long): String = when {
-    value >= 1_000_000_000_000L -> "%.1f조".format(value / 1_000_000_000_000.0)
-    value >= 100_000_000L -> "%.1f억".format(value / 100_000_000.0)
-    value >= 10_000L -> "%,d만".format(value / 10_000L)
-    else -> "%,d".format(value)
-}
 
 /**
  * 아이콘 입구 하나. 큰 아이콘 + 아주 작은 라벨.

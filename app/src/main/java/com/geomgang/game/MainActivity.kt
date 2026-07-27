@@ -140,6 +140,7 @@ private fun App(store: SaveStore) {
         Overlay.Shop -> ShopScreen(
             state = state,
             onBuySword = vm::buySword,
+            onBuySwordToStorage = vm::buySwordToStorage,
             onSellSword = vm::sellSword,
             onBuyItem = vm::buyItem,
             onBack = { overlay = Overlay.None },

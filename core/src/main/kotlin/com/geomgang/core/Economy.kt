@@ -78,6 +78,25 @@ object Economy {
         )
     }
 
+    /**
+     * 검을 **보관함으로 바로** 살 수 있는지.
+     *
+     * 손에 든 검이 있어도 된다. 고단계 강화는 재료 검을 요구하는데,
+     * 그때마다 들고 있던 검을 팔거나 넣었다 빼야 한다면 준비가 일이 된다.
+     */
+    fun canBuyToStorage(state: GameState): Boolean =
+        state.pendingDestroy == null &&
+            state.gold >= BASE_SWORD_PRICE &&
+            !Storage.isFull(state)
+
+    fun buyToStorage(state: GameState, family: WeaponFamily): GameState {
+        check(canBuyToStorage(state)) { "cannot buy into storage in this state" }
+        return state.copy(
+            gold = state.gold - BASE_SWORD_PRICE,
+            storage = state.storage + Sword(family, 0),
+        )
+    }
+
     fun canSellSword(state: GameState): Boolean =
         state.sword != null && state.pendingDestroy == null
 

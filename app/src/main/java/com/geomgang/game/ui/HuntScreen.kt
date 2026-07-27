@@ -325,7 +325,7 @@ private fun ZonePicker(
             .verticalScroll(rememberScrollState())
             .padding(20.dp),
     ) {
-        ScreenHeader(title = "사냥터", onBack = onBack)
+        ScreenHeader(title = "사냥터", onBack = onBack, wallet = state.wallet())
 
         if (state.sword == null) {
             Card(Modifier.fillMaxWidth()) {

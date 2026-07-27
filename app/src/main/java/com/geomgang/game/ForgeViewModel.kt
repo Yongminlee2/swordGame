@@ -999,6 +999,19 @@ class ForgeViewModel(
         _ui.value = render()
     }
 
+    /**
+     * 검을 보관함으로 바로 산다. 손에 든 검은 그대로다.
+     *
+     * 재료 검을 모으려고 상점과 보관함을 오가며 넣었다 뺐다 하는 일을 없앤다.
+     */
+    fun buySwordToStorage(family: WeaponFamily) {
+        if (busy || !Economy.canBuyToStorage(game)) return
+        game = Economy.buyToStorage(game, family)
+        progress = Progress.registerSword(progress, game.difficulty, Sword(family, 0))
+        persist()
+        _ui.value = render()
+    }
+
     /** 결과 연출이 끝났다고 화면이 알려 준다. 입력 잠금을 푼다. */
     fun onAnimationFinished() {
         if (!busy) return
@@ -1273,6 +1286,7 @@ class ForgeViewModel(
                 ).roundToInt(),
             canForge = !busy && ForgeEngine.canAttempt(game, pendingItems),
             canBuySword = !busy && Economy.canBuySword(game),
+            canBuyToStorage = !busy && Economy.canBuyToStorage(game),
             unlockedFamilies = Progress.unlockedFamilies(progress),
             useBlessing = pendingItems.blessing,
             useLuckCharm = pendingItems.luckCharm,

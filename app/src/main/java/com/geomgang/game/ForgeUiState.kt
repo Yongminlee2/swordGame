@@ -26,6 +26,8 @@ data class ForgeUiState(
     val successPercent: Int,
     val canForge: Boolean,
     val canBuySword: Boolean,
+    /** 손에 든 검과 무관하게 보관함으로 바로 살 수 있는지. */
+    val canBuyToStorage: Boolean = false,
     /** 지금 검을 살 때 고를 수 있는 계열. 업적으로 늘어난다. */
     val unlockedFamilies: List<WeaponFamily>,
     /** 다음 강화에 축복서를 쓸지. 한 번 쓰면 자동으로 내려간다. */
