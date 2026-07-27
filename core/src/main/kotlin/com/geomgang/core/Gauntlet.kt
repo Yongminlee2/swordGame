@@ -59,8 +59,14 @@ data class GauntletRun(
  */
 object GauntletEngine {
 
-    const val WAVE_SIZE = 5
-    const val FLOOR_SECONDS = 25
+    /**
+     * 한 층의 잡몹 수와 제한 시간.
+     *
+     * 5초에 5마리는 물리적으로 불가능하다. 마리당 체력은 그대로 두고 마리 수를 줄여
+     * "짧고 굵은 한 판"이 되게 했다.
+     */
+    const val WAVE_SIZE = 2
+    const val FLOOR_SECONDS = 5
     const val BOSS_EVERY = 5
     const val HP_GROWTH = 1.35
     const val BASE_HP = 60.0

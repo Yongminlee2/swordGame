@@ -38,9 +38,9 @@ class GauntletTest {
     }
 
     @Test
-    fun `잡몹 5마리를 잡으면 갈림길이 열린다`() {
+    fun `웨이브를 다 잡으면 갈림길이 열린다`() {
         var run = GauntletEngine.start()
-        repeat(4) {
+        repeat(GauntletEngine.WAVE_SIZE - 1) {
             run = killOne(run)
             assertFalse(run.choosing)
         }
