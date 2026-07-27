@@ -215,7 +215,6 @@ private fun App(store: SaveStore) {
             onOpenQuests = { overlay = Overlay.Quests },
             onOpenMenu = { overlay = Overlay.Records },
             onDismissIdle = vm::dismissIdleReward,
-            onMaterialCount = vm::setMaterialCount,
             onStarUp = vm::starUp,
             onAnimationEnd = vm::onAnimationFinished,
         )

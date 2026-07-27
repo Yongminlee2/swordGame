@@ -133,14 +133,6 @@ class ForgeViewModel(
     /** 보관함이 꽉 차서 드롭을 놓쳤는지. */
     private var dropMissed = false
 
-    /**
-     * 다음 강화에 태울 재료 수.
-     *
-     * 어느 검을 태울지 고르게 하지 않고 **낮은 단계부터 자동으로** 집는다.
-     * 태울 것은 늘 잡템이고, 고르는 화면을 하나 더 두면 강화 리듬이 끊긴다.
-     */
-    private var materialCount = 0
-
     /** 마지막 별 강화가 성공했는지. 화면이 알린 뒤 비운다. */
     private var lastStarUp: Boolean? = null
 
@@ -243,31 +235,23 @@ class ForgeViewModel(
      * "한 번 굴린 결과"만 만들어 상태·통계·저장에 반영한다.
      */
     private fun runAttempt(items: UsedItems): ForgeResult? {
-        if (!ForgeEngine.canAttempt(game, items, materialCount)) return null
+        if (!ForgeEngine.canAttempt(game, items)) return null
         val sword = game.sword ?: return null
         val targetLevel = sword.level + 1
         val cost = Economy.upgradeCost(sword.level)
         val req = ForgeCost.requirementFor(sword.level)
 
-        // 재료는 강화 성패와 무관하게 태워진다. 판정 전에 먼저 소모하고 보정을 넘긴다.
-        // 필수분과 추가분을 한 번에 집되(낮은 단계부터), **성공률 보너스는 추가분에만** 붙는다 —
-        // 필수분은 입장료이므로 보너스까지 주면 고단계가 오히려 쉬워진다.
-        val burnIndices = game.storage
-            .withIndex()
-            .sortedBy { it.value.level }
-            .take(req.swords + materialCount)
-            .map { it.index }
-        val bonusMaterials = burnIndices.drop(req.swords).map { game.storage[it] }
-        val materialBonus = MaterialBoost.bonusFor(bonusMaterials)
+        // 재료는 강화 성패와 무관하게 태워진다. 판정 전에 먼저 소모한다.
+        // 무엇이 타는지는 화면이 미리 알려 주므로([materialIndices]) 여기서도 같은 순서로 집는다.
+        val burnIndices = materialIndices()
         if (burnIndices.isNotEmpty()) {
             game = MaterialBoost.consume(game, burnIndices)
-            materialCount = 0
         }
         if (req.stones > 0) {
             game = game.copy(forgeStones = game.forgeStones - req.stones)
         }
 
-        val result = ForgeEngine.attempt(game, items, rng, extraSuccessRate = materialBonus)
+        val result = ForgeEngine.attempt(game, items, rng)
         // 아이템은 한 번 쓰면 내려간다. 켜 둔 채 잊고 연타하면 순식간에 녹는다.
         pendingItems = UsedItems.NONE
         game = result.state
@@ -1121,26 +1105,10 @@ class ForgeViewModel(
                 sound.uniqueBorn() // 발견은 사건이어야 한다
             }
         }
-        // 재료 자리가 사라졌으므로 자동 선택 수를 다시 맞춘다
-        materialCount = materialCount.coerceAtMost(game.storage.size)
         progress = Progress.refresh(Progress.onFusion(progress))
         sound.zoneCleared()
         persist()
         _ui.value = render()
-    }
-
-    /** 다음 강화에 태울 **추가** 재료 수를 정한다. 필수분과 별개다. */
-    fun setMaterialCount(count: Int) {
-        if (busy) return
-        materialCount = count.coerceIn(0, spareMaterials())
-        _ui.value = render()
-    }
-
-    /** 필수 재료를 빼고 성공률 보너스로 더 태울 수 있는 자루 수. */
-    private fun spareMaterials(): Int {
-        val required = game.sword?.let { ForgeCost.requirementFor(it.level).swords } ?: 0
-        val spare = (game.storage.size - required).coerceAtLeast(0)
-        return minOf(MaterialBoost.MAX_MATERIALS, spare)
     }
 
     /** 별을 하나 올려 본다. 실패해도 검은 부서지지 않는다. */
@@ -1222,18 +1190,18 @@ class ForgeViewModel(
     }
 
     /**
-     * 성공률 보너스를 주는 **추가** 재료. 낮은 단계부터 필수분을 먼저 채우고 그 다음이다.
+     * 이번 강화에 **사라질** 재료 검을 낮은 단계부터 집는다.
      *
-     * 화면에 보여 주는 보너스와 실제 판정에 쓰는 보너스가 같아야 하므로
-     * [runAttempt] 와 같은 순서로 집는다.
+     * [runAttempt] 가 태우는 것과 같은 순서여야 한다. 화면이 "직검 +3" 이라고 알려 준
+     * 검과 실제로 타는 검이 다르면 그건 거짓말이다.
      */
     private fun materialIndices(): List<Int> {
         val required = game.sword?.let { ForgeCost.requirementFor(it.level).swords } ?: 0
+        if (required == 0) return emptyList()
         return game.storage
             .withIndex()
             .sortedBy { it.value.level }
-            .take(required + materialCount)
-            .drop(required)
+            .take(required)
             .map { it.index }
     }
 
@@ -1303,7 +1271,7 @@ class ForgeViewModel(
             successPercent = (
                 RateTable.successRate(game.difficulty, targetLevel, pendingItems.blessing) * 100
                 ).roundToInt(),
-            canForge = !busy && ForgeEngine.canAttempt(game, pendingItems, materialCount),
+            canForge = !busy && ForgeEngine.canAttempt(game, pendingItems),
             canBuySword = !busy && Economy.canBuySword(game),
             unlockedFamilies = Progress.unlockedFamilies(progress),
             useBlessing = pendingItems.blessing,
@@ -1312,9 +1280,11 @@ class ForgeViewModel(
             storageCapacity = Storage.CAPACITY,
             lastDrop = lastDrop,
             dropMissed = dropMissed,
-            materialCount = materialCount,
-            materialBonusPercent = (MaterialBoost.bonusFor(materialIndices().map { game.storage[it] }) * 100).roundToInt(),
-            maxMaterials = spareMaterials(),
+            // 「🗡 2자루」가 아니라 "직검 +3" 처럼 무엇이 사라지는지 이름으로 알린다.
+            materialNames = materialIndices().map { i ->
+                val s = game.storage[i]
+                "${s.family.displayName} +${s.level}"
+            },
             forgeStones = game.forgeStones,
             requiredSwords = game.sword?.let { ForgeCost.requirementFor(it.level).swords } ?: 0,
             requiredStones = game.sword?.let { ForgeCost.requirementFor(it.level).stones } ?: 0,

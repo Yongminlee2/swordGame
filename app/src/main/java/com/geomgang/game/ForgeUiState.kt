@@ -51,10 +51,13 @@ data class ForgeUiState(
     val lastDrop: Sword? = null,
     /** 보관함이 꽉 차서 드롭을 놓쳤는지. */
     val dropMissed: Boolean = false,
-    /** 다음 강화에 태울 재료 수. 보관함의 낮은 검부터 자동으로 고른다. */
-    val materialCount: Int = 0,
-    val materialBonusPercent: Int = 0,
-    val maxMaterials: Int = 0,
+    /**
+     * 이번 강화에 사라질 재료 검의 이름("직검 +3").
+     *
+     * 수량만 알려 주면 보관함의 무엇이 타는지 알 수 없어 누르기가 무섭다.
+     * 보관함의 **낮은 단계부터** 자동으로 집으므로 고르는 화면은 두지 않는다.
+     */
+    val materialNames: List<String> = emptyList(),
     /** 별 강화 정보. 검이 조건을 못 갖추면 null. */
     val star: StarUiState? = null,
     /** 사냥 중일 때만 채워진다. */

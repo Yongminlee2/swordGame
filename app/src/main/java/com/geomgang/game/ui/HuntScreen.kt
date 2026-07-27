@@ -317,9 +317,12 @@ private fun ZonePicker(
     onEnterZone: (Zone) -> Unit,
     onBack: () -> Unit,
 ) {
+    // 구역이 24곳이라 한 화면에 다 들어가지 않는다. 스크롤이 없으면 화면 높이만큼만
+    // 보이고 나머지는 없는 것이 된다 - 실제로 "늪지밖에 없다"는 말을 들었다.
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(20.dp),
     ) {
         ScreenHeader(title = "사냥터", onBack = onBack)

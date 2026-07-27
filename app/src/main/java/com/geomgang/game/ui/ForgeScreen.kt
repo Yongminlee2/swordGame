@@ -82,7 +82,6 @@ fun ForgeScreen(
     onOpenQuests: () -> Unit,
     onOpenMenu: () -> Unit,
     onDismissIdle: () -> Unit,
-    onMaterialCount: (Int) -> Unit,
     onStarUp: () -> Unit,
     onAnimationEnd: () -> Unit,
 ) {
@@ -244,16 +243,16 @@ fun ForgeScreen(
         ResultBanner(state.lastResult)
         Spacer(Modifier.height(6.dp))
 
-        // 자원은 한 줄에 아이콘으로. 세 줄 라벨-값 표는 세로 공간을 먹어
-        // 가운데 검 자리를 눌러 이름이 잘려 나갔다.
+        // 자원은 한 줄에 아이콘으로. 다만 **아이콘만 두면 무슨 값인지 알 수 없다** —
+        // 아래에 작은 이름을 붙여 둔다. 세 줄짜리 라벨-값 표보다는 여전히 짧다.
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
-            Stat("💰", compactGold(state.gold))
-            Stat("💎", "${state.shards}")
-            Stat("🪨", "${state.forgeStones}")
-            Stat("🛡", "${state.preventTickets}")
+            Stat("💰", "골드", compactGold(state.gold))
+            Stat("💎", "조각", "${state.shards}")
+            Stat("🪨", "강화석", "${state.forgeStones}")
+            Stat("🛡", "방지권", "${state.preventTickets}")
         }
 
         if (state.sword != null) {
@@ -262,9 +261,9 @@ fun ForgeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                Stat("🎯", "${state.successPercent}%", MaterialTheme.colorScheme.primary)
-                Stat("🔥", compactGold(state.upgradeCost))
-                Stat("🏷", compactGold(state.sellPrice))
+                Stat("🎯", "성공률", "${state.successPercent}%", MaterialTheme.colorScheme.primary)
+                Stat("🔥", "강화 비용", compactGold(state.upgradeCost))
+                Stat("🏷", "판매가", compactGold(state.sellPrice))
             }
 
             if (!state.awaitingDestroyChoice) {
@@ -278,14 +277,18 @@ fun ForgeScreen(
                         selected = state.useBlessing,
                         onClick = onToggleBlessing,
                         enabled = state.blessingScrolls > 0 && !state.busy,
-                        label = { Text("📜 ${state.blessingScrolls}") },
+                        label = {
+                            Text("📜 축복서 ${state.blessingScrolls}", fontSize = 12.sp)
+                        },
                         modifier = Modifier.weight(1f),
                     )
                     FilterChip(
                         selected = state.useLuckCharm,
                         onClick = onToggleLuckCharm,
                         enabled = state.luckCharms > 0 && !state.busy,
-                        label = { Text("🍀 ${state.luckCharms}") },
+                        label = {
+                            Text("🍀 행운부적 ${state.luckCharms}", fontSize = 12.sp)
+                        },
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -309,20 +312,33 @@ fun ForgeScreen(
         } else {
             // 고단계는 골드가 아니라 재료가 화폐다. 무엇이 드는지 버튼 위에 먼저 알린다.
             if (state.requiredSwords > 0 || state.requiredStones > 0) {
+                val lineColor = if (state.canForge) {
+                    MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                } else {
+                    MaterialTheme.colorScheme.error
+                }
                 Text(
                     text = buildString {
-                        append("필요  ")
-                        if (state.requiredSwords > 0) append("🗡 ${state.requiredSwords}자루  ")
-                        if (state.requiredStones > 0) append("🪨 ${state.requiredStones}")
+                        append("이번 강화에 들어가는 것")
+                        if (state.requiredStones > 0) append("  ·  🪨 강화석 ${state.requiredStones}")
                     },
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (state.canForge) {
-                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                    } else {
-                        MaterialTheme.colorScheme.error
-                    },
+                    color = lineColor,
                 )
+                // 몇 자루가 아니라 **어느 검**이 사라지는지 이름으로 보여 준다.
+                // 「🗡 2자루」로는 보관함의 무엇이 타는지 알 수 없어 누르기가 무섭다.
+                if (state.requiredSwords > 0) {
+                    Text(
+                        text = if (state.materialNames.isEmpty()) {
+                            "🗡 재료 검 ${state.requiredSwords}자루 (보관함이 비었다)"
+                        } else {
+                            "🗡 " + state.materialNames.joinToString(" · ")
+                        },
+                        fontSize = 12.sp,
+                        color = lineColor,
+                    )
+                }
                 Spacer(Modifier.height(4.dp))
             }
             Button(
@@ -340,7 +356,6 @@ fun ForgeScreen(
                 Text(it, fontSize = 12.sp, color = MaterialTheme.colorScheme.error)
             }
             Spacer(Modifier.height(10.dp))
-            MaterialBar(state, onMaterialCount)
             StarBar(state, onStarUp)
             Spacer(Modifier.height(10.dp))
             // 사냥이 강화 비용의 출처다. 강화 버튼 바로 아래에 둬서 왕복이 짧게 한다.
@@ -448,17 +463,29 @@ private fun IdleRewardDialog(reward: IdleReward, onDismiss: () -> Unit) {
     )
 }
 
-/** 아이콘 + 값 한 쌍. 라벨 글자 없이 뜻이 통하는 것만 아이콘으로 쓴다. */
+/**
+ * 아이콘 + 값 + 이름.
+ *
+ * 아이콘만으로는 무슨 숫자인지 알 수 없다는 말을 들었다. 이름을 아주 작게 아래 붙인다 —
+ * 값은 자주 보고 이름은 한 번만 확인하면 되므로 크기를 다르게 준다.
+ */
 @Composable
-private fun Stat(icon: String, value: String, color: Color = Color.Unspecified) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(icon, fontSize = 15.sp)
-        Spacer(Modifier.width(4.dp))
+private fun Stat(icon: String, label: String, value: String, color: Color = Color.Unspecified) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(icon, fontSize = 15.sp)
+            Spacer(Modifier.width(4.dp))
+            Text(
+                text = value,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = color,
+            )
+        }
         Text(
-            text = value,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-            color = color,
+            text = label,
+            fontSize = 10.sp,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f),
         )
     }
 }
@@ -517,53 +544,6 @@ private fun IconEntry(
                 MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             },
         )
-    }
-}
-
-/**
- * 재료 강화 막대.
- *
- * 어느 검을 태울지 고르게 하지 않는다. 개수만 정하면 보관함의 **낮은 단계부터** 집는다.
- * 태울 것은 늘 잡템이고, 고르는 화면을 하나 더 두면 강화 리듬이 끊긴다.
- */
-@Composable
-private fun MaterialBar(state: ForgeUiState, onMaterialCount: (Int) -> Unit) {
-    if (state.sword == null || state.maxMaterials == 0) return
-
-    Column(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(
-                text = "재료 강화 (낮은 검부터 태운다)",
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-            )
-            if (state.materialCount > 0) {
-                Text(
-                    text = "성공률 +${state.materialBonusPercent}%p",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-        }
-        Spacer(Modifier.height(4.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            (0..state.maxMaterials).forEach { count ->
-                FilterChip(
-                    selected = state.materialCount == count,
-                    onClick = { onMaterialCount(count) },
-                    enabled = !state.busy,
-                    label = {
-                        Text(if (count == 0) "안 씀" else "${count}개", fontSize = 12.sp)
-                    },
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        }
-        Spacer(Modifier.height(10.dp))
     }
 }
 

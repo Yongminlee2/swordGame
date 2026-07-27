@@ -107,12 +107,22 @@ class ForgeViewModelStoneTest {
     }
 
     @Test
-    fun `추가 재료 상한은 필수분을 뺀 여유다`() {
-        // +16 목표는 필수 2자루. 보관함 4자루면 여유는 2자루뿐이다.
+    fun `무엇이 재료로 사라지는지 이름으로 알려 준다`() {
+        // +16 목표는 필수 2자루. 보관함에서 **낮은 단계부터** 두 자루를 집는다.
+        // 수량만 알려 주면 무엇이 타는지 알 수 없어 강화 버튼을 누르기가 무섭다.
         val v = vm(level = 15, stones = 50, storage = 4)
-        assertEquals(2, v.ui.value.maxMaterials)
-        v.setMaterialCount(3)
-        assertEquals(2, v.ui.value.materialCount)
+        val names = v.ui.value.materialNames
+        assertEquals(2, names.size)
+        assertEquals("직검 +1", names[0])
+    }
+
+    @Test
+    fun `화면이 알린 재료가 실제로 타는 재료다`() = runTest(dispatcher) {
+        val v = vm(level = 15, stones = 50, storage = 4)
+        val announced = v.ui.value.materialNames
+        v.forge()
+        val left = v.ui.value.storage.map { "${it.family.displayName} +${it.level}" }
+        assertEquals("알린 만큼만 사라져야 한다", 4 - announced.size, left.size)
     }
 
     @Test
