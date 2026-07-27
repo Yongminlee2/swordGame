@@ -62,11 +62,22 @@ fun SwordView(
     }
 }
 
-/** 시트2에서 검 한 자루를 그린다. 오라 포함. */
+/**
+ * 검 한 자루를 그린다. 오라 포함.
+ *
+ * 단계마다 다른 그림을 쓰므로 시트3이 기본이고, 고유검만 시트2의 전용 칸을 쓴다.
+ * 어느 시트인지는 [SwordSheet3.sourceFor] 가 정한다.
+ */
 @Composable
 private fun Sprite2Box(sword: Sword, modifier: Modifier) {
-    val sheet = rememberSheet2()
-    val src = SwordSheet2.offsetOf(SwordSheet2.cellFor(sword))
+    val source = SwordSheet3.sourceFor(sword)
+    val sheet = if (source.useSheet3) rememberSheet3() else rememberSheet2()
+    val src = if (source.useSheet3) {
+        SwordSheet3.offsetOf(source.cell)
+    } else {
+        SwordSheet2.offsetOf(source.cell)
+    }
+    val cellSize = if (source.useSheet3) SwordSheet3.CELL else SwordSheet2.CELL
     val aura = SwordSheet.auraFor(sword.level)
 
     Canvas(modifier) {
@@ -88,7 +99,7 @@ private fun Sprite2Box(sword: Sword, modifier: Modifier) {
         drawImage(
             image = sheet,
             srcOffset = IntOffset(src.x, src.y),
-            srcSize = IntSize(SwordSheet2.CELL, SwordSheet2.CELL),
+            srcSize = IntSize(cellSize, cellSize),
             dstOffset = IntOffset(left, top),
             dstSize = IntSize(side.toInt(), side.toInt()),
             filterQuality = FilterQuality.None,
@@ -96,7 +107,12 @@ private fun Sprite2Box(sword: Sword, modifier: Modifier) {
     }
 }
 
-/** 도감 칸용 - 시트2의 계열×티어 그림. 미발견은 어둡게. */
+/**
+ * 도감 칸용 — 계열×티어 그림. 미발견은 어둡게.
+ *
+ * 티어의 대표 단계(minLevel) 그림을 시트3에서 가져온다. 강화 화면에서 본 그림과
+ * 같아야 "그 검"으로 읽힌다.
+ */
 @Composable
 fun TierThumb(
     family: WeaponFamily,
@@ -105,13 +121,13 @@ fun TierThumb(
     size: Dp = 52.dp,
     dimmed: Boolean = false,
 ) {
-    val sheet = rememberSheet2()
-    val src = SwordSheet2.offsetOf(SwordSheet2.cellOf(family, tier))
+    val sheet = rememberSheet3()
+    val src = SwordSheet3.offsetOf(SwordSheet3.cellOf(family, tier.minLevel))
     Canvas(modifier.size(size)) {
         drawImage(
             image = sheet,
             srcOffset = IntOffset(src.x, src.y),
-            srcSize = IntSize(SwordSheet2.CELL, SwordSheet2.CELL),
+            srcSize = IntSize(SwordSheet3.CELL, SwordSheet3.CELL),
             dstSize = IntSize(this.size.width.toInt(), this.size.height.toInt()),
             filterQuality = FilterQuality.None,
             colorFilter = if (dimmed) ColorFilter.tint(Color(0xFF2E2740)) else null,
@@ -180,5 +196,14 @@ private fun rememberSheet2(): ImageBitmap {
     return remember {
         val options = BitmapFactory.Options().apply { inScaled = false }
         BitmapFactory.decodeResource(resources, R.drawable.sword_sheet2, options).asImageBitmap()
+    }
+}
+
+@Composable
+private fun rememberSheet3(): ImageBitmap {
+    val resources = LocalContext.current.resources
+    return remember {
+        val options = BitmapFactory.Options().apply { inScaled = false }
+        BitmapFactory.decodeResource(resources, R.drawable.sword_sheet3, options).asImageBitmap()
     }
 }
