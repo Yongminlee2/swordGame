@@ -280,27 +280,24 @@ class ProgressTest {
         assertEquals(WeaponFamily.STARTERS, Progress.unlockedFamilies(empty))
     }
 
+    // v1.4: 계열 해금이 업적에서 진행도 조건으로 바뀌었다.
+    // 쌍검·마검·용검 등 10계열은 이제 조합 전용이라 상점에 나오지 않는다.
+    // 해금 규칙 자체는 FamilyUnlockTest 가 지킨다.
+
     @Test
-    fun `12단계를 달성하면 쌍검이 열린다`() {
-        var p = forge(empty, 12, successAt(12))
+    fun `10단계를 달성하면 곡도가 열린다`() {
+        var p = forge(empty, 10, successAt(10))
         p = Progress.refresh(p)
-        assertTrue(WeaponFamily.TWIN in Progress.unlockedFamilies(p))
-        assertFalse(WeaponFamily.DRAGON in Progress.unlockedFamilies(p))
+        assertTrue(WeaponFamily.CURVED in Progress.unlockedFamilies(p))
     }
 
     @Test
-    fun `파괴 50회를 하면 마검이 열린다`() {
-        var p = empty
-        repeat(50) { p = forge(p, 14, destroyedAt(14)) }
-        p = Progress.refresh(p)
-        assertTrue(WeaponFamily.DEMON in Progress.unlockedFamilies(p))
-    }
-
-    @Test
-    fun `18단계를 달성하면 용검이 열린다`() {
+    fun `강화만 해서는 조합 전용 계열이 열리지 않는다`() {
         var p = forge(empty, 18, successAt(18))
         p = Progress.refresh(p)
-        assertTrue(WeaponFamily.DRAGON in Progress.unlockedFamilies(p))
+        assertFalse(WeaponFamily.TWIN in Progress.unlockedFamilies(p))
+        assertFalse(WeaponFamily.DRAGON in Progress.unlockedFamilies(p))
+        assertFalse(WeaponFamily.DEMON in Progress.unlockedFamilies(p))
     }
 
     // --- 칭호 ---

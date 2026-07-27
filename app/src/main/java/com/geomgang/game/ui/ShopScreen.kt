@@ -91,6 +91,25 @@ fun ShopScreen(
                         onSelect = { family = it },
                         modifier = Modifier.fillMaxWidth(),
                     )
+                    // 아직 잠긴 기본 계열의 조건을 알려 준다. 나머지 10계열은 조합 전용이라
+                    // 상점에 나올 일이 없으므로 여기 쓰지 않는다.
+                    val locked = com.geomgang.core.WeaponFamily.BASICS
+                        .filterNot { it in state.unlockedFamilies }
+                    if (locked.isNotEmpty()) {
+                        Spacer(Modifier.height(6.dp))
+                        locked.forEach { f ->
+                            com.geomgang.core.Progress
+                                .basicFamilyHint(state.progress, f)
+                                ?.let { hint ->
+                                    Text(
+                                        text = "🔒 ${f.displayName} — $hint",
+                                        fontSize = 11.sp,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                            .copy(alpha = 0.5f),
+                                    )
+                                }
+                        }
+                    }
                     Spacer(Modifier.height(10.dp))
                     Button(
                         onClick = { onBuySword(family) },

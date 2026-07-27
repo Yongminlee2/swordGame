@@ -103,26 +103,50 @@ data class ProgressState(
     val stats: Stats = Stats(),
     /** 발견한 고유검 id. 도감 고유검 페이지가 이걸 본다. */
     val uniqueFound: Set<String> = emptySet(),
+    /**
+     * 보스를 깬 구역 id. 모드 초기화로도 지워지지 않는 전역 기록이다.
+     * 계열 해금 조건(대검)이 이걸 본다.
+     */
+    val clearedZones: Set<String> = emptySet(),
 )
 
 /** 진행도 누적 규칙. */
 object Progress {
 
-    /** 계열별 해금 조건. null 이면 처음부터 열려 있다. */
-    private val FAMILY_UNLOCK: Map<WeaponFamily, Achievement?> = mapOf(
-        WeaponFamily.STRAIGHT to null,
-        WeaponFamily.CURVED to null,
-        WeaponFamily.GREAT to null,
-        WeaponFamily.RAPIER to null,
-        WeaponFamily.TWIN to Achievement.REACH_12,
-        WeaponFamily.DEMON to Achievement.DESTROY_50,
-        WeaponFamily.HOLY to Achievement.REACH_15,
-        WeaponFamily.DRAGON to Achievement.REACH_18,
-        WeaponFamily.SCYTHE to Achievement.REACH_10,
-        WeaponFamily.AXE to Achievement.DESTROY_100,
-        WeaponFamily.SPEAR to Achievement.SALVAGE_10,
-        WeaponFamily.SPIRIT to Achievement.REACH_20,
-    )
+    /** 곡도가 열리는 최고 단계. */
+    const val CURVED_UNLOCK_LEVEL = 10
+
+    /** 대검이 열리는 데 필요한 서로 다른 구역 클리어 수. */
+    const val GREAT_UNLOCK_ZONES = 3
+
+    /**
+     * 기본 계열의 해금 조건.
+     *
+     * 시작은 직검 하나뿐이다. 계열이 열리는 것 자체가 진행의 이정표가 되고,
+     * 조건이 서로 다른 활동(강화·사냥·조합)을 가리켜 한 갈래만 파도 다 열리지 않는다.
+     * 조건 판정은 전역 진행도만 본다 — 그래서 **이미 달성한 세이브는 소급 적용**된다.
+     */
+    fun basicFamilyUnlocked(p: ProgressState, family: WeaponFamily): Boolean = when (family) {
+        WeaponFamily.STRAIGHT -> true
+        WeaponFamily.CURVED -> p.stats.bestLevelEver >= CURVED_UNLOCK_LEVEL
+        WeaponFamily.GREAT -> p.clearedZones.size >= GREAT_UNLOCK_ZONES
+        WeaponFamily.RAPIER -> p.uniqueFound.isNotEmpty()
+        else -> false
+    }
+
+    /** 아직 잠긴 기본 계열의 해금 조건 설명. 열려 있으면 null. */
+    fun basicFamilyHint(p: ProgressState, family: WeaponFamily): String? {
+        if (basicFamilyUnlocked(p, family)) return null
+        return when (family) {
+            WeaponFamily.CURVED -> "아무 검 +$CURVED_UNLOCK_LEVEL 달성"
+            WeaponFamily.GREAT ->
+                "구역 ${GREAT_UNLOCK_ZONES}곳 클리어 " +
+                    "(${p.clearedZones.size}/$GREAT_UNLOCK_ZONES)"
+
+            WeaponFamily.RAPIER -> "고유검 1개 발견"
+            else -> null
+        }
+    }
 
     /** 검을 손에 넣었을 때 도감에 등록한다. 구매·조합·강화 성공 모두 여기를 지난다. */
     fun registerSword(p: ProgressState, difficulty: Difficulty, sword: Sword): ProgressState {
@@ -274,14 +298,18 @@ object Progress {
         return if (earned == p.achievements) p else p.copy(achievements = earned)
     }
 
-    /** 지금 고를 수 있는 계열들. 항상 enum 선언 순서를 유지한다. */
+    /**
+     * 상점·드롭에 나올 수 있는 계열들. 항상 enum 선언 순서를 유지한다.
+     *
+     * 기본 4계열 중 조건을 채운 것만이다. 나머지 10계열은 조합·회랑 전용이라
+     * 여기 절대 들어오지 않는다.
+     */
     fun unlockedFamilies(p: ProgressState): List<WeaponFamily> =
-        WeaponFamily.entries.filter { family ->
-            // 특수 계열(합검·허검)은 상점·드롭에 절대 나오지 않는다.
-            if (family in WeaponFamily.SPECIAL) return@filter false
-            val required = FAMILY_UNLOCK[family]
-            required == null || required in p.achievements
-        }
+        WeaponFamily.BASICS.filter { basicFamilyUnlocked(p, it) }
+
+    /** 보스를 깬 구역을 기록한다. 대검 해금 조건이 이걸 센다. */
+    fun onZoneCleared(p: ProgressState, zoneId: String): ProgressState =
+        if (zoneId in p.clearedZones) p else p.copy(clearedZones = p.clearedZones + zoneId)
 
     /** 칭호를 고르거나(달성한 업적만) 해제한다(null). */
     fun selectTitle(p: ProgressState, achievement: Achievement?): ProgressState {

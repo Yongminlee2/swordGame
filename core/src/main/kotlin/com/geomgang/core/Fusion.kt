@@ -56,9 +56,12 @@ object Fusion {
     /**
      * 재료들로 만들어지는 검.
      *
-     * **숨은 레시피가 먼저다** - 재료·정수가 [UniqueSwords] 레시피와 맞으면 고유검이 나온다.
-     * 아니면 일반 규칙: 계열은 **가장 많이 넣은 계열**이고, 동수면 최고 단계 검의 계열을 따른다.
-     * 별은 이어지지 않는다 — 녹여서 새로 만드는 것이므로 0부터다.
+     * 우선순위가 셋이다.
+     * 1. **숨은 고유검 레시피** — 재료·정수가 [UniqueSwords] 와 맞으면 전설검
+     * 2. **조합표**([FusionTable]) — 계열 집합이 표에 있으면 그 계열. 조합 전용 10계열의 출처다
+     * 3. 일반 규칙 — 계열은 가장 많이 넣은 계열, 동수면 최고 단계 검의 계열
+     *
+     * 별은 어느 경우에도 이어지지 않는다 — 녹여서 새로 만드는 것이므로 0부터다.
      */
     fun resultOf(materials: List<Sword>, essences: Map<String, Int> = emptyMap()): Sword {
         require(materials.size >= MIN_MATERIALS) { "need at least $MIN_MATERIALS materials" }
@@ -73,6 +76,17 @@ object Fusion {
         }
 
         val best = materials.maxBy { it.level }
+
+        // 조합표. 고유검이 아니면 여기가 계열을 정한다.
+        FusionTable.resultFor(materials.map { it.family }.toSet())?.let { family ->
+            val sameFamily = materials.all { it.family == best.family }
+            val bonus = (materials.size - 1) + if (sameFamily) SAME_FAMILY_BONUS else 0
+            return Sword(
+                family = family,
+                level = (best.level + bonus).coerceAtMost(RateTable.MAX_FINITE_LEVEL),
+                stars = 0,
+            )
+        }
         val sameFamily = materials.all { it.family == best.family }
         val bonus = (materials.size - 1) + if (sameFamily) SAME_FAMILY_BONUS else 0
 

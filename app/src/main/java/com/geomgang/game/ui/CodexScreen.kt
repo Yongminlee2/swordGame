@@ -86,6 +86,99 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
                 )
             }
 
+            // --- 조합표 ---
+            // 숨기지 않는다. 계열을 모으는 길이 보여야 조합소에 갈 이유가 생긴다.
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Column {
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        text = "조합표",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.secondary,
+                    )
+                    Text(
+                        text = "기본 4계열(직검·곡도·대검·세검)만 상점에 나온다. " +
+                            "나머지는 조합으로 얻는다.",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
+                    )
+                }
+            }
+            items(
+                items = com.geomgang.core.FusionTable.ALL,
+                span = { GridItemSpan(maxLineSpan) },
+            ) { entry ->
+                Card(Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        TierThumb(
+                            family = entry.result,
+                            tier = com.geomgang.core.WeaponTier.SILVER,
+                            size = 36.dp,
+                        )
+                        Column(Modifier.padding(start = 10.dp)) {
+                            Text(
+                                text = entry.result.displayName,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Text(
+                                text = entry.hint,
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            )
+                        }
+                    }
+                }
+            }
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Card(Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        TierThumb(
+                            family = WeaponFamily.FUSED,
+                            tier = com.geomgang.core.WeaponTier.SILVER,
+                            size = 36.dp,
+                        )
+                        Column(Modifier.padding(start = 10.dp)) {
+                            Text("합검", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = "서로 다른 4계열",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            )
+                        }
+                    }
+                }
+            }
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Card(Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        TierThumb(
+                            family = WeaponFamily.VOID,
+                            tier = com.geomgang.core.WeaponTier.SILVER,
+                            size = 36.dp,
+                        )
+                        Column(Modifier.padding(start = 10.dp)) {
+                            Text("허검", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = "무한 회랑 10층 돌파",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            )
+                        }
+                    }
+                }
+            }
+
             // --- 고유검 ---
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Column {

@@ -501,7 +501,10 @@ class ForgeViewModel(
                 forgeStones = game.forgeStones + zone.bossStones,
             )
             progress = Progress.refresh(
-                Progress.onMonsterKill(Progress.onSell(progress, bossGold), isBoss = true),
+                Progress.onZoneCleared(
+                    Progress.onMonsterKill(Progress.onSell(progress, bossGold), isBoss = true),
+                    zone.id,
+                ),
             )
             rollDrop(zone, isBoss = true)
             // 보스는 낮은 확률로 자기 구역 펫의 알을 떨어뜨린다 (드롭 판정 뒤 난수 1개)

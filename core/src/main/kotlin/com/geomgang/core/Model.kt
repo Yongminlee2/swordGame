@@ -36,8 +36,17 @@ enum class WeaponFamily(val id: String, val displayName: String) {
     ;
 
     companion object {
-        /** 업적 없이 처음부터 쓸 수 있는 계열. */
-        val STARTERS: List<WeaponFamily> = listOf(STRAIGHT, CURVED, GREAT, RAPIER)
+        /** 처음부터 쓸 수 있는 계열. 직검 하나뿐이다 - 나머지는 조건으로 열린다. */
+        val STARTERS: List<WeaponFamily> = listOf(STRAIGHT)
+
+        /**
+         * 상점·드롭에 나올 수 있는 기본 계열 4종.
+         *
+         * 직검만 처음부터고 나머지 셋은 진행도 조건으로 열린다([Progress.unlockedFamilies]).
+         * 이 넷을 뺀 10계열은 **조합이나 회랑 보상으로만** 얻는다 -
+         * 계열이 열리는 것 자체가 진행의 이정표가 되게 한 설계다.
+         */
+        val BASICS: List<WeaponFamily> = listOf(STRAIGHT, CURVED, GREAT, RAPIER)
 
         /**
          * 상점·드롭에 절대 나오지 않는 특수 계열.

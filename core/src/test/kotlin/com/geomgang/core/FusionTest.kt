@@ -112,8 +112,9 @@ class FusionTest {
         val s = state(storage = listOf(sw(5, WeaponFamily.CURVED), sw(4, WeaponFamily.CURVED)))
         val after = Fusion.fuse(s, listOf(0, 1))
         assertEquals(1, after.storage.size)
+        // 곡도 둘은 조합표에 따라 낫검이 된다 (v1.4)
+        assertEquals(WeaponFamily.SCYTHE, after.storage.first().family)
         assertEquals(7, after.storage.first().level) // 5 + 1(자루수) + 1(계열)
-        assertEquals(WeaponFamily.CURVED, after.storage.first().family)
     }
 
     @Test
