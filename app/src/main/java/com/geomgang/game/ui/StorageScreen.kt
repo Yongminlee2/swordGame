@@ -347,20 +347,20 @@ private fun StorageRow(
                         onClick = onEquip,
                         enabled = !state.busy && !state.awaitingDestroyChoice,
                         modifier = Modifier.weight(1f),
-                    ) { Text("장착", fontSize = 13.sp) }
+                    ) { Text("🗡 장착", fontSize = 13.sp) }
                     OutlinedButton(
                         onClick = onSell,
                         enabled = !state.busy,
                         modifier = Modifier.weight(1f),
                     ) {
-                        Text("%,d".format(Economy.sellPrice(sword.level)), fontSize = 12.sp)
+                        Text("💰 %,d".format(Economy.sellPrice(sword.level)), fontSize = 12.sp)
                     }
                     TextButton(
                         onClick = onScrap,
                         enabled = !state.busy,
                         modifier = Modifier.weight(1f),
                     ) {
-                        Text("조각 ${Storage.scrapShards(sword)}", fontSize = 12.sp)
+                        Text("🔨 ${Storage.scrapShards(sword)}", fontSize = 12.sp)
                     }
                 }
             }

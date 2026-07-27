@@ -44,35 +44,40 @@ fun RecordsMenuScreen(
         ScreenHeader(title = "기록", onBack = onBack)
 
         MenuRow(
+            icon = "📖",
             title = "도감",
-            subtitle = "$codexCount / ${WeaponCatalog.ENTRIES.size} 수집",
+            subtitle = "$codexCount / ${WeaponCatalog.ENTRIES.size}",
             onClick = onOpenCodex,
         )
         MenuRow(
+            icon = "🐾",
             title = "펫",
-            subtitle = "$ownedPets / ${com.geomgang.core.PetKind.entries.size} 수집 · 장착 효과",
+            subtitle = "$ownedPets / ${com.geomgang.core.PetKind.entries.size}",
             onClick = onOpenPets,
         )
         MenuRow(
+            icon = "🏆",
             title = "업적 · 칭호",
-            subtitle = "${progress.achievements.size} / ${Achievement.entries.size} 달성",
+            subtitle = "${progress.achievements.size} / ${Achievement.entries.size}",
             onClick = onOpenAchievements,
         )
         MenuRow(
+            icon = "📊",
             title = "통계",
-            subtitle = "표기 확률 대 실제 확률",
+            subtitle = "확률 비교",
             onClick = onOpenStats,
         )
         MenuRow(
+            icon = "⚙️",
             title = "설정",
-            subtitle = "방지권 자동 사용, 라이선스",
+            subtitle = "소리 · 라이선스",
             onClick = onOpenSettings,
         )
     }
 }
 
 @Composable
-private fun MenuRow(title: String, subtitle: String, onClick: () -> Unit) {
+private fun MenuRow(icon: String, title: String, subtitle: String, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -86,13 +91,16 @@ private fun MenuRow(title: String, subtitle: String, onClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Column {
-                Text(title, fontWeight = FontWeight.Bold)
-                Text(
-                    text = subtitle,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(icon, fontSize = 26.sp, modifier = Modifier.padding(end = 12.dp))
+                Column {
+                    Text(title, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = subtitle,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    )
+                }
             }
             Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.secondary)
         }

@@ -2,17 +2,18 @@ package com.geomgang.game.ui
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.keyframes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -32,6 +33,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -145,89 +148,101 @@ fun ForgeScreen(
                 }
             }
             TextButton(onClick = onOpenMenu, enabled = !state.busy && !state.autoForging) {
-                Text("기록", color = MaterialTheme.colorScheme.secondary)
+                Text("🏅", fontSize = 22.sp)
             }
         }
 
+        // 검과 이름은 항상 이만큼은 확보한다. weight 만 주면 하단 요소가 늘어날 때
+        // 이 영역이 0까지 눌려 이름이 잘려 나간다 (v1.3에서 실제로 그랬다).
+        // 가변 영역에는 **그림만** 둔다. 이름·강화 단계를 여기 넣으면 아래 요소가
+        // 늘어날 때 이 영역이 눌리면서 가운데 정렬 탓에 위아래로 잘려 사라진다.
         Box(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                // 제한 시간 창이 열려 있으면 검이 있던 자리를 원이나 파편이 차지한다.
-                when (val phase = state.destroyPhase) {
-                    is DestroyPhase.Prevent -> PreventRing(
-                        progress = phase.progress,
-                        enabled = state.canPrevent,
-                        onTap = onPrevent,
-                    )
-
-                    is DestroyPhase.Salvage -> SalvageShards(
-                        progress = phase.progress,
-                        onTap = onSalvage,
-                    )
-
-                    // 검은 남는 세로 공간에 맞춰 줄어든다(최대 210dp). 고정 크기로 두면
-                    // 화면이 좁을 때 검이 아래의 이름·강화 단계 표시를 밀어내 잘라먹는다.
-                    DestroyPhase.None -> SwordView(
-                        sword = state.sword,
-                        modifier = Modifier
-                            .weight(1f, fill = false)
-                            .sizeIn(maxWidth = 210.dp, maxHeight = 210.dp)
-                            .aspectRatio(1f),
-                        shake = shake.value,
-                        flash = flash.value,
-                        flashColor = flashColor,
-                    )
-                }
-
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = when (state.destroyPhase) {
-                        is DestroyPhase.Prevent -> "지금 눌러야 한다"
-                        is DestroyPhase.Salvage -> "파편이 흩어진다"
-                        // 이름은 단계마다 다르다. 계열은 형태만 정하고 부제로 내려간다.
-                        // 고유검은 고유 이름을 금색으로.
-                        DestroyPhase.None -> state.sword?.let {
-                            SwordNames.nameFor(it)
-                        } ?: "검이 없다"
-                    },
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (state.destroyPhase == DestroyPhase.None &&
-                        state.sword?.uniqueId != null
-                    ) {
-                        Color(0xFFFFD54A)
-                    } else {
-                        Color.Unspecified
-                    },
+            when (val phase = state.destroyPhase) {
+                is DestroyPhase.Prevent -> PreventRing(
+                    progress = phase.progress,
+                    enabled = state.canPrevent,
+                    onTap = onPrevent,
                 )
-                if (state.destroyPhase == DestroyPhase.None && state.sword != null) {
-                    Text(
-                        text = "+${state.sword.level} · ${state.sword.family.displayName} 계열",
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
-                    )
-                }
-                Spacer(Modifier.height(6.dp))
-                ResultBanner(state.lastResult)
+
+                is DestroyPhase.Salvage -> SalvageShards(
+                    progress = phase.progress,
+                    onTap = onSalvage,
+                )
+
+                // 표시 크기는 고정이다. 가변으로 두면 주변 UI(별 강화 바 등)가 나타날
+                // 때마다 검이 커졌다 작아졌다 해서 들쭉날쭉해 보인다.
+                DestroyPhase.None -> SwordView(
+                    sword = state.sword,
+                    modifier = Modifier.size(140.dp),
+                    shake = shake.value,
+                    flash = flash.value,
+                    flashColor = flashColor,
+                )
             }
         }
 
-        InfoRow("골드", "%,d".format(state.gold))
-        InfoRow("조각", "${state.shards}")
-        InfoRow("방지권", "${state.preventTickets}장")
+        // 이름·강화 단계는 가변 영역 밖이라 어떤 화면에서도 잘리지 않는다.
+        Text(
+            text = when (state.destroyPhase) {
+                is DestroyPhase.Prevent -> "지금 눌러야 한다"
+                is DestroyPhase.Salvage -> "파편이 흩어진다"
+                // 이름은 단계마다 다르다. 계열은 형태만 정하고 부제로 내려간다.
+                // 고유검은 고유 이름을 금색으로.
+                DestroyPhase.None -> state.sword?.let {
+                    SwordNames.nameFor(it)
+                } ?: "검이 없다"
+            },
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = if (state.destroyPhase == DestroyPhase.None &&
+                state.sword?.uniqueId != null
+            ) {
+                Color(0xFFFFD54A)
+            } else {
+                Color.Unspecified
+            },
+        )
+        if (state.destroyPhase == DestroyPhase.None && state.sword != null) {
+            Text(
+                text = "+${state.sword.level} · ${state.sword.family.displayName} 계열" +
+                    if (state.sword.stars > 0) "  ${"★".repeat(state.sword.stars)}" else "",
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
+            )
+        }
+        Spacer(Modifier.height(4.dp))
+        ResultBanner(state.lastResult)
+        Spacer(Modifier.height(6.dp))
+
+        // 자원은 한 줄에 아이콘으로. 세 줄 라벨-값 표는 세로 공간을 먹어
+        // 가운데 검 자리를 눌러 이름이 잘려 나갔다.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+        ) {
+            Stat("💰", compactGold(state.gold))
+            Stat("💎", "${state.shards}")
+            Stat("🛡", "${state.preventTickets}")
+        }
 
         if (state.sword != null) {
-            HorizontalDivider(Modifier.padding(vertical = 8.dp))
-            InfoRow("다음 성공률", "${state.successPercent}%")
-            InfoRow("강화 비용", "%,d".format(state.upgradeCost))
-            InfoRow("판매가", "%,d".format(state.sellPrice))
+            Spacer(Modifier.height(6.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                Stat("🎯", "${state.successPercent}%", MaterialTheme.colorScheme.primary)
+                Stat("🔥", compactGold(state.upgradeCost))
+                Stat("🏷", compactGold(state.sellPrice))
+            }
 
             if (!state.awaitingDestroyChoice) {
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(8.dp))
                 // 아이템은 한 번 쓰면 토글이 내려간다. 매번 다시 켜야 한다.
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -237,21 +252,21 @@ fun ForgeScreen(
                         selected = state.useBlessing,
                         onClick = onToggleBlessing,
                         enabled = state.blessingScrolls > 0 && !state.busy,
-                        label = { Text("축복서 ${state.blessingScrolls}") },
+                        label = { Text("📜 ${state.blessingScrolls}") },
                         modifier = Modifier.weight(1f),
                     )
                     FilterChip(
                         selected = state.useLuckCharm,
                         onClick = onToggleLuckCharm,
                         enabled = state.luckCharms > 0 && !state.busy,
-                        label = { Text("행운부적 ${state.luckCharms}") },
+                        label = { Text("🍀 ${state.luckCharms}") },
                         modifier = Modifier.weight(1f),
                     )
                 }
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(10.dp))
 
         // 창이 열려 있으면 하단 버튼을 감춘다. 원과 파편을 눌러야 하기 때문이다.
         if (state.awaitingDestroyChoice) {
@@ -294,7 +309,7 @@ fun ForgeScreen(
                     .height(52.dp),
             ) {
                 Text(
-                    text = "사냥터  ·  공격력 %,d".format(state.attackPower),
+                    text = "⚔ 사냥터  %,d".format(state.attackPower),
                     fontWeight = FontWeight.Bold,
                 )
             }
@@ -307,14 +322,10 @@ fun ForgeScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
-                    text = if (state.gauntletUnlocked) {
-                        "무한 회랑" + if (state.gauntletBest > 0) {
-                            "  ·  최고 ${state.gauntletBest}층"
-                        } else {
-                            ""
-                        }
-                    } else {
-                        "무한 회랑 — 화산의 군주를 잡으면 열린다"
+                    text = when {
+                        !state.gauntletUnlocked -> "🔒 무한 회랑"
+                        state.gauntletBest > 0 -> "무한 회랑 · ${state.gauntletBest}층"
+                        else -> "무한 회랑"
                     },
                     color = if (state.gauntletUnlocked) Color(0xFFC79BFF) else Color.Unspecified,
                 )
@@ -322,54 +333,30 @@ fun ForgeScreen(
             Spacer(Modifier.height(10.dp))
             AutoForgeBar(state, onStartAuto, onStopAuto)
             Spacer(Modifier.height(10.dp))
+            // 글자 버튼 다섯 개 대신 아이콘 줄 하나 - 화면의 글자를 줄인다
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                OutlinedButton(
-                    onClick = onOpenShop,
-                    enabled = !state.busy && !state.autoForging,
+                val enabled = !state.busy && !state.autoForging
+                IconEntry("🛒", "상점", enabled, Modifier.weight(1f), onOpenShop)
+                IconEntry("⚗️", "조합소", enabled, Modifier.weight(1f), onOpenCraft)
+                IconEntry(
+                    icon = "🎒",
+                    label = "${state.storage.size}/${state.storageCapacity}",
+                    enabled = enabled,
                     modifier = Modifier.weight(1f),
-                ) { Text("상점") }
-                OutlinedButton(
-                    onClick = onOpenCraft,
-                    enabled = !state.busy && !state.autoForging,
-                    modifier = Modifier.weight(1f),
-                ) { Text("조합소  ${state.shards}") }
-            }
-            Spacer(Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                OutlinedButton(
                     onClick = onOpenStorage,
-                    enabled = !state.busy && !state.autoForging,
-                    modifier = Modifier.weight(1.4f),
-                ) {
-                    Text("보관함  ${state.storage.size}/${state.storageCapacity}")
-                }
-                // 도감은 기록 메뉴 안에 묻혀 있어 찾지 못했다. 여기에도 입구를 둔다.
-                OutlinedButton(
-                    onClick = onOpenCodex,
-                    enabled = !state.busy && !state.autoForging,
+                )
+                IconEntry("📖", "도감", enabled, Modifier.weight(1f), onOpenCodex)
+                IconEntry(
+                    icon = "📜",
+                    label = if (state.questClaimable) "퀘스트!" else "퀘스트",
+                    enabled = enabled,
                     modifier = Modifier.weight(1f),
-                ) { Text("도감") }
-                OutlinedButton(
                     onClick = onOpenQuests,
-                    enabled = !state.busy && !state.autoForging,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    // 수령할 것이 있으면 「!」 - 매일 확인할 이유를 눈에 띄게
-                    Text(
-                        text = if (state.questClaimable) "퀘스트 !" else "퀘스트",
-                        color = if (state.questClaimable) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            Color.Unspecified
-                        },
-                    )
-                }
+                    highlight = state.questClaimable,
+                )
             }
         }
     }
@@ -381,6 +368,78 @@ fun ForgeScreen(
  * 안전구간에서만 뜬다. 하락·파괴가 걸린 구간을 자동화하면 그 구간의 긴장이 사라져
  * 게임이 남지 않기 때문이다. 멈춤 조건 판정은 전부 도메인이 한다.
  */
+/** 아이콘 + 값 한 쌍. 라벨 글자 없이 뜻이 통하는 것만 아이콘으로 쓴다. */
+@Composable
+private fun Stat(icon: String, value: String, color: Color = Color.Unspecified) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(icon, fontSize = 15.sp)
+        Spacer(Modifier.width(4.dp))
+        Text(
+            text = value,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            color = color,
+        )
+    }
+}
+
+/**
+ * 큰 수를 짧게. 26억을 자릿수로 다 쓰면 한 줄을 통째로 먹는다.
+ *
+ * 조(兆) 이상은 소수 첫째 자리까지만 보여 준다 — 정확한 값이 필요한 순간은
+ * 강화 비용을 낼 수 있는지뿐이고, 그건 버튼 활성화가 알려 준다.
+ */
+private fun compactGold(value: Long): String = when {
+    value >= 1_000_000_000_000L -> "%.1f조".format(value / 1_000_000_000_000.0)
+    value >= 100_000_000L -> "%.1f억".format(value / 100_000_000.0)
+    value >= 10_000L -> "%,d만".format(value / 10_000L)
+    else -> "%,d".format(value)
+}
+
+/**
+ * 아이콘 입구 하나. 큰 아이콘 + 아주 작은 라벨.
+ *
+ * 글자 버튼이 다섯 개 늘어서면 화면이 문장으로 뒤덮인다. 아이콘이 뜻을 말하고
+ * 라벨은 확인용으로만 작게 붙인다.
+ */
+@Composable
+private fun IconEntry(
+    icon: String,
+    label: String,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    highlight: Boolean = false,
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                if (highlight) {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
+                } else {
+                    MaterialTheme.colorScheme.surface
+                },
+            )
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(vertical = 8.dp)
+            .alpha(if (enabled) 1f else 0.4f),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(text = icon, fontSize = 22.sp)
+        Text(
+            text = label,
+            fontSize = 10.sp,
+            maxLines = 1,
+            color = if (highlight) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            },
+        )
+    }
+}
+
 @Composable
 private fun AutoForgeBar(
     state: ForgeUiState,

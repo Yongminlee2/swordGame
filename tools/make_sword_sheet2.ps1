@@ -59,6 +59,44 @@ function New-Attrs([float[][]]$m) {
     return $attrs
 }
 
+# Tier grading. Some families have few distinct source tiles (dragon has ONE for
+# all 11 tiers, rapier has 3). Without grading those rows show no progression at
+# all. Blend 35% original color with 65% luminance-tinted tier color.
+$tierRgb = @(
+    @(0.62, 0.56, 0.45),  # rusty
+    @(0.75, 0.79, 0.84),  # steel
+    @(0.88, 0.92, 0.98),  # silver
+    @(0.56, 0.82, 0.90),  # rune
+    @(0.95, 0.55, 0.28),  # flame
+    @(0.94, 0.86, 0.34),  # thunder
+    @(1.00, 0.97, 0.85),  # dawn
+    @(0.62, 0.35, 0.90),  # black_dragon
+    @(0.92, 0.35, 0.55),  # dragon_scale
+    @(0.35, 0.42, 0.95),  # abyss
+    @(1.00, 1.00, 1.00)   # nameless
+)
+function New-TierAttrs([int]$t) {
+    $c = $tierRgb[$t]
+    $keep = 0.35; $tint = 0.65
+    # Luminance weights per input channel, spread onto the tier color.
+    $lw = @(0.299, 0.587, 0.114)
+    $m = @()
+    for ($i = 0; $i -lt 3; $i++) {
+        $row = @()
+        for ($j = 0; $j -lt 3; $j++) {
+            $v = $lw[$i] * $c[$j] * $tint
+            if ($i -eq $j) { $v += $keep }
+            $row += [float]$v
+        }
+        $m += , ($row + @([float]0.0, [float]0.0))
+    }
+    $m += , @([float]0.0, [float]0.0, [float]0.0, [float]1.0, [float]0.0)
+    $m += , @([float]0.0, [float]0.0, [float]0.0, [float]0.0, [float]1.0)
+    return New-Attrs $m
+}
+$tierAttrs = @()
+for ($t = 0; $t -lt $tiers.Count; $t++) { $tierAttrs += (New-TierAttrs $t) }
+
 $fusedAttrs = New-Attrs @(
     @(0.4, 0.0, 0.6, 0.0, 0.0),
     @(0.6, 0.4, 0.0, 0.0, 0.0),
@@ -113,7 +151,17 @@ function Draw-Cell([string]$path, [int]$col, [int]$row, $attrs) {
     $b = Get-Bounds $src
     if ($null -eq $b) { $src.Dispose(); throw "empty tile: $path" }
     $bx = $b[0]; $by = $b[1]; $bw = $b[2]; $bh = $b[3]
-    $scale = $TARGET / [double][Math]::Max($bw, $bh)
+    # Integer-snap scaling: non-integer nearest-neighbor upscales make ragged,
+    # uneven pixels. Upscales use whole multiples (2x, 3x, ...) capped at the
+    # cell; downscales use the exact fit (shrinking blends fine).
+    $maxDim = [Math]::Max($bw, $bh)
+    if ($maxDim -lt $TARGET) {
+        $k = [Math]::Floor(($cell - 2) / $maxDim)
+        if ($k -lt 1) { $k = 1 }
+        $scale = [double]$k
+    } else {
+        $scale = $TARGET / [double]$maxDim
+    }
     $dw = [int][Math]::Round($bw * $scale)
     $dh = [int][Math]::Round($bh * $scale)
     $dx = $col * $cell + [int](($cell - $dw) / 2)
@@ -129,8 +177,27 @@ function Draw-Cell([string]$path, [int]$col, [int]$row, $attrs) {
 }
 
 for ($f = 0; $f -lt $familyIds.Count; $f++) {
+    $paths = @()
     for ($t = 0; $t -lt $tiers.Count; $t++) {
-        Draw-Cell (Find-Curated ($f + 1) $familyIds[$f] $tiers[$t]) $t $f $null
+        $paths += (Find-Curated ($f + 1) $familyIds[$f] $tiers[$t])
+    }
+    # If the family reuses tiles across tiers, grade them so tiers still differ.
+    # Compare by TILE NAME, not path: curated names embed the tile name in the
+    # 5th "__" segment and end with a per-file hash, so identical tiles have
+    # different filenames (dragon reuses one tile for all 11 tiers).
+    $tileNames = $paths | ForEach-Object {
+        $parts = (Split-Path $_ -Leaf) -split "__"
+        if ($parts.Count -ge 5) { $parts[4] } else { $_ }
+    }
+    $distinct = ($tileNames | Sort-Object -Unique).Count
+    $needsGrading = $distinct -lt $tiers.Count
+    for ($t = 0; $t -lt $tiers.Count; $t++) {
+        $attrs = $null
+        if ($needsGrading) { $attrs = $tierAttrs[$t] }
+        Draw-Cell $paths[$t] $t $f $attrs
+    }
+    if ($needsGrading) {
+        Write-Host ("graded row {0} ({1}): only {2} distinct tiles" -f $f, $familyIds[$f], $distinct)
     }
 }
 for ($t = 0; $t -lt $tiers.Count; $t++) {
