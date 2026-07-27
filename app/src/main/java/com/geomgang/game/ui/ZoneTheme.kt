@@ -24,6 +24,18 @@ fun zoneBrush(zone: Zone): Brush {
         Zone.ENDLESS_HALL -> Color(0xFF1F1A26) to Color(0xFF120F16)
         Zone.SKY_GALLERY -> Color(0xFF16202C) to Color(0xFF0B1018)
         Zone.RUINED_CAPITAL -> Color(0xFF241E1A) to Color(0xFF130F0D)
+        Zone.SILENT_TEMPLE -> Color(0xFF211F18) to Color(0xFF12110C)
+        Zone.GLASS_DESERT -> Color(0xFF26221A) to Color(0xFF14120D)
+        Zone.FLOATING_ISLE -> Color(0xFF17242A) to Color(0xFF0C1317)
+        Zone.WARPED_WOOD -> Color(0xFF1B2418) to Color(0xFF0E130C)
+        Zone.SUNKEN_CITY -> Color(0xFF122029) to Color(0xFF091116)
+        Zone.ASH_PLAIN -> Color(0xFF231F1D) to Color(0xFF121010)
+        Zone.STAR_TOMB -> Color(0xFF191A2A) to Color(0xFF0D0E17)
+        Zone.TIME_RIFT -> Color(0xFF1E1730) to Color(0xFF100C1A)
+        Zone.BLOOD_KEEP -> Color(0xFF2A1417) to Color(0xFF150A0C)
+        Zone.FROST_HEART -> Color(0xFF16232B) to Color(0xFF0B1217)
+        Zone.FIRST_FORGE -> Color(0xFF2A1D12) to Color(0xFF150F0A)
+        Zone.FINAL_GATE -> Color(0xFF221226) to Color(0xFF110914)
     }
     return Brush.verticalGradient(listOf(top, bottom))
 }

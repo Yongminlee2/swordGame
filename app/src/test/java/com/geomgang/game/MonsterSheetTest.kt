@@ -47,12 +47,12 @@ class MonsterSheetTest {
     }
 
     @Test
-    fun `구역 12개에 몬스터 5종씩 총 60종이다`() {
-        assertEquals(12, Zone.entries.size)
+    fun `구역 24개에 몬스터 5종씩 총 120종이다`() {
+        assertEquals(24, Zone.entries.size)
         for (zone in Zone.entries) {
             assertEquals("${zone.displayName} 몬스터 수", 5, zone.monsters.size)
         }
-        assertEquals(60, Zone.entries.sumOf { it.monsters.size })
+        assertEquals(120, Zone.entries.sumOf { it.monsters.size })
     }
 
     @Test
