@@ -491,6 +491,7 @@ class ForgeViewModel(
             if (skill.shardBonus > 0) {
                 game = game.copy(shards = game.shards + skill.shardBonus)
             }
+            progress = Progress.onSkill(progress)
         }
 
         if (fightingBoss) sound.bossHit(combo) else sound.hit(combo)
@@ -524,9 +525,12 @@ class ForgeViewModel(
                 forgeStones = game.forgeStones + zone.bossStones,
             )
             progress = Progress.refresh(
-                Progress.onZoneCleared(
-                    Progress.onMonsterKill(Progress.onSell(progress, bossGold), isBoss = true),
-                    zone.id,
+                Progress.onStones(
+                    Progress.onZoneCleared(
+                        Progress.onMonsterKill(Progress.onSell(progress, bossGold), isBoss = true),
+                        zone.id,
+                    ),
+                    zone.bossStones,
                 ),
             )
             rollDrop(zone, isBoss = true)
@@ -574,6 +578,7 @@ class ForgeViewModel(
             // 강화석은 검 드롭 판정 뒤에 굴린다 (난수 소비 순서 계약)
             if (rng.nextDouble() < MOB_STONE_CHANCE + Pets.stoneBonusOf(game.pets)) {
                 game = game.copy(forgeStones = game.forgeStones + 1)
+                progress = Progress.onStones(progress, 1)
             }
             activeEvent = null
             eventRemainingMillis = 0
@@ -708,6 +713,7 @@ class ForgeViewModel(
             // 층을 깼다 - 갈림길을 굴리고 마일스톤(허검·정령 알·기록)을 적용한다
             next = next.copy(choices = GauntletEngine.rollChoices(next.floor, rng))
             game = GauntletEngine.applyMilestones(game, next.floor)
+            progress = Progress.refresh(Progress.onGauntletFloor(progress, next.floor))
             // 보스 층은 체크포인트 - 보상 확정을 소리로 알린다
             if (run.isBossFloor) sound.gauntletCheckpoint() else sound.zoneCleared()
             persist()
@@ -772,6 +778,8 @@ class ForgeViewModel(
     private fun grantEgg(zone: Zone) {
         val pet = PetKind.byZone(zone.id) ?: return
         game = game.copy(pets = Pets.addEgg(game.pets, pet.id))
+        // 수집 기록은 전역에 남는다 - 모드를 초기화해도 모은 것은 남아야 한다.
+        progress = Progress.refresh(Progress.onPetFound(progress, pet.id))
         lastEgg = pet
         sound.eggGet()
     }
@@ -1135,7 +1143,12 @@ class ForgeViewModel(
         val result = StarForce.attempt(game, rng)
         game = result.state
         lastStarUp = result is StarForce.Result.Up
-        progress = Progress.refresh(Progress.onStarAttempt(progress))
+        progress = Progress.refresh(
+            Progress.onStars(
+                Progress.onStarAttempt(progress),
+                game.sword?.stars ?: 0,
+            ),
+        )
         if (result is StarForce.Result.Up) {
             sound.forgeSuccess(game.sword?.level ?: 0)
             game.sword?.let {

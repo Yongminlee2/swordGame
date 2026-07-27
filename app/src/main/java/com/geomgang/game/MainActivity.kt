@@ -152,9 +152,7 @@ private fun App(store: SaveStore) {
 
         Overlay.Records -> RecordsMenuScreen(
             progress = state.progress,
-            ownedPets = com.geomgang.core.PetKind.entries.count {
-                com.geomgang.core.Pets.owns(state.pets, it.id)
-            },
+            ownedPets = state.progress.petsFound.size,
             onOpenCodex = {
                 codexOrigin = Overlay.Records
                 overlay = Overlay.Codex

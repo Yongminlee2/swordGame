@@ -45,9 +45,10 @@ fun PetScreen(
     ) {
         ScreenHeader(title = "펫", onBack = onBack)
 
-        val ownedCount = PetKind.entries.count { Pets.owns(state.pets, it.id) }
+        // 수집 진행도는 전역 기록(도감)을 센다. 지금 보유는 모드 세이브가 들고 있다.
+        val foundCount = state.progress.petsFound.size
         Text(
-            text = "$ownedCount / ${PetKind.entries.size} · 보스가 5% 확률로 알을 떨어뜨린다",
+            text = "$foundCount / ${PetKind.entries.size} · 보스가 5% 확률로 알을 떨어뜨린다",
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
         )

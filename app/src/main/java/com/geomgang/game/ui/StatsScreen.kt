@@ -103,6 +103,26 @@ fun StatsScreen(
                 StatRow("파산 구제", "${stats.bailouts}회")
             }
         }
+
+        Spacer(Modifier.height(16.dp))
+        Text("사냥과 수집", fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(8.dp))
+
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(12.dp)) {
+                StatRow("잡몹 처치", "%,d".format(stats.monsterKills))
+                StatRow("보스 처치", "%,d".format(stats.bossKills))
+                StatRow("이벤트 조우", "%,d".format(stats.eventsSeen))
+                HorizontalDivider(Modifier.padding(vertical = 6.dp))
+                StatRow("조합", "%,d".format(stats.fusions))
+                StatRow("별 강화 시도", "%,d".format(stats.starAttempts))
+                StatRow("최고 별", "★".repeat(stats.maxStars).ifEmpty { "없음" })
+                HorizontalDivider(Modifier.padding(vertical = 6.dp))
+                StatRow("스킬 발동", "%,d".format(stats.skillsTriggered))
+                StatRow("모은 강화석", "%,d".format(stats.stonesEarned))
+                StatRow("회랑 최고 층", "${stats.gauntletBestEver}층")
+            }
+        }
     }
 }
 

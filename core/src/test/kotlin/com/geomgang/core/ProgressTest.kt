@@ -250,8 +250,8 @@ class ProgressTest {
     }
 
     @Test
-    fun `업적은 20종이고 아이디가 겹치지 않는다`() {
-        assertEquals(20, Achievement.entries.size)
+    fun `업적은 40종이고 아이디가 겹치지 않는다`() {
+        assertEquals(40, Achievement.entries.size)
         val ids = Achievement.entries.map { it.id }
         assertEquals(ids.size, ids.toSet().size)
     }

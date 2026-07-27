@@ -36,6 +36,34 @@ enum class Achievement(val id: String, val displayName: String, val title: Strin
     PREVENT_MISS_3("prevent_miss_3", "방지권 3회 놓침", "굼뜬 손"),
     DESTROY_AT_19("destroy_at_19", "+19 검을 파괴", "한 끗 차이"),
     FIRST_FAIL("first_fail", "첫 강화에서 실패", "불길한 시작"),
+
+    // 사냥형 — 강화 밖의 갈래들. v1.3~v1.4 에서 늘어난 컨텐츠를 담는다.
+    HUNT_100("hunt_100", "잡몹 100마리 처치", "첫 사냥꾼"),
+    HUNT_1000("hunt_1000", "잡몹 1,000마리 처치", "들판의 청소부"),
+    HUNT_10000("hunt_10000", "잡몹 10,000마리 처치", "몰이꾼"),
+    BOSS_FIRST("boss_first", "첫 보스 처치", "우두머리 사냥"),
+    ZONES_ALL("zones_all", "모든 구역 클리어", "열두 땅의 정복자"),
+    EVENT_50("event_50", "사냥 이벤트 50회 조우", "운명을 부르는 자"),
+
+    // 조합형
+    FUSE_10("fuse_10", "조합 10회", "도가니의 손"),
+    FUSE_100("fuse_100", "조합 100회", "합성의 대가"),
+    UNIQUE_FIRST("unique_first", "고유검 발견", "전설의 시작"),
+    UNIQUE_5("unique_5", "고유검 5종 발견", "전설 수집가"),
+    UNIQUE_ALL("unique_all", "고유검 10종 전부 발견", "이름을 아는 자"),
+
+    // 특수강화·재료형
+    STAR_3("star_3", "별 3개 달성", "별을 붙인 자"),
+    STAR_5("star_5", "별 5개 달성", "별의 정점"),
+    STONE_500("stone_500", "강화석 500개 획득", "광맥의 주인"),
+    SKILL_100("skill_100", "스킬 100회 발동", "검술의 경지"),
+
+    // 회랑·수집형
+    GAUNTLET_10("gauntlet_10", "무한 회랑 10층", "회랑의 방문자"),
+    GAUNTLET_25("gauntlet_25", "무한 회랑 25층", "회랑의 주인"),
+    GAUNTLET_50("gauntlet_50", "무한 회랑 50층", "끝없는 복도"),
+    PET_FIRST("pet_first", "펫 1마리 얻기", "동행"),
+    PET_ALL("pet_all", "펫 12종 전부 모으기", "동물의 친구"),
 }
 
 /** 도감 한 칸의 획득 기록. 같은 계열·티어라도 난이도가 다르면 별개 기록이다. */
@@ -79,6 +107,11 @@ data class Stats(
     val fusions: Long = 0,
     val starAttempts: Long = 0,
     val eventsSeen: Long = 0,
+    // v1.4 확장. 업적이 새 시스템을 볼 수 있게 하는 카운터들이다.
+    val skillsTriggered: Long = 0,
+    val stonesEarned: Long = 0,
+    val gauntletBestEver: Int = 0,
+    val maxStars: Int = 0,
 ) {
     /** 이 단계에서 실제로 관측된 성공률. 시도한 적이 없으면 null. */
     fun observedRate(targetLevel: Int): Double? {
@@ -108,6 +141,11 @@ data class ProgressState(
      * 계열 해금 조건(대검)이 이걸 본다.
      */
     val clearedZones: Set<String> = emptySet(),
+    /**
+     * 한 번이라도 얻어 본 펫 id. 수집 기록이므로 [uniqueFound] 와 같이 전역에 남는다.
+     * 지금 보유·레벨은 모드 세이브([GameState.pets])가 들고 있다.
+     */
+    val petsFound: Set<String> = emptySet(),
 )
 
 /** 진행도 누적 규칙. */
@@ -294,6 +332,34 @@ object Progress {
             if (s.highestDestroyedLevel >= 19) add(Achievement.DESTROY_AT_19)
             // 아직 한 번도 성공하지 못했는데 +1 시도를 한 적이 있으면 첫 강화에서 실패한 것이다.
             if (s.successes == 0L && s.attemptsByLevel[1] != null) add(Achievement.FIRST_FAIL)
+
+            // --- 사냥 ---
+            if (s.monsterKills >= 100) add(Achievement.HUNT_100)
+            if (s.monsterKills >= 1_000) add(Achievement.HUNT_1000)
+            if (s.monsterKills >= 10_000) add(Achievement.HUNT_10000)
+            if (s.bossKills >= 1) add(Achievement.BOSS_FIRST)
+            if (p.clearedZones.size >= Zone.entries.size) add(Achievement.ZONES_ALL)
+            if (s.eventsSeen >= 50) add(Achievement.EVENT_50)
+
+            // --- 조합 ---
+            if (s.fusions >= 10) add(Achievement.FUSE_10)
+            if (s.fusions >= 100) add(Achievement.FUSE_100)
+            if (p.uniqueFound.isNotEmpty()) add(Achievement.UNIQUE_FIRST)
+            if (p.uniqueFound.size >= 5) add(Achievement.UNIQUE_5)
+            if (p.uniqueFound.size >= UniqueSwords.RECIPES.size) add(Achievement.UNIQUE_ALL)
+
+            // --- 특수강화·재료 ---
+            if (s.maxStars >= 3) add(Achievement.STAR_3)
+            if (s.maxStars >= StarForce.MAX_STARS) add(Achievement.STAR_5)
+            if (s.stonesEarned >= 500) add(Achievement.STONE_500)
+            if (s.skillsTriggered >= 100) add(Achievement.SKILL_100)
+
+            // --- 회랑·수집 ---
+            if (s.gauntletBestEver >= 10) add(Achievement.GAUNTLET_10)
+            if (s.gauntletBestEver >= 25) add(Achievement.GAUNTLET_25)
+            if (s.gauntletBestEver >= 50) add(Achievement.GAUNTLET_50)
+            if (p.petsFound.isNotEmpty()) add(Achievement.PET_FIRST)
+            if (p.petsFound.size >= PetKind.entries.size) add(Achievement.PET_ALL)
         }
         return if (earned == p.achievements) p else p.copy(achievements = earned)
     }
@@ -310,6 +376,30 @@ object Progress {
     /** 보스를 깬 구역을 기록한다. 대검 해금 조건이 이걸 센다. */
     fun onZoneCleared(p: ProgressState, zoneId: String): ProgressState =
         if (zoneId in p.clearedZones) p else p.copy(clearedZones = p.clearedZones + zoneId)
+
+    /** 펫 알을 얻었다. 수집 기록은 전역에 남는다. */
+    fun onPetFound(p: ProgressState, petId: String): ProgressState =
+        if (petId in p.petsFound) p else p.copy(petsFound = p.petsFound + petId)
+
+    /** 계열 스킬이 터졌다. */
+    fun onSkill(p: ProgressState): ProgressState =
+        p.copy(stats = p.stats.copy(skillsTriggered = p.stats.skillsTriggered + 1))
+
+    /** 강화석을 얻었다. */
+    fun onStones(p: ProgressState, count: Int): ProgressState =
+        if (count <= 0) p else p.copy(stats = p.stats.copy(stonesEarned = p.stats.stonesEarned + count))
+
+    /** 회랑 층을 깼다. 최고 기록만 남긴다. */
+    fun onGauntletFloor(p: ProgressState, floor: Int): ProgressState =
+        if (floor <= p.stats.gauntletBestEver) {
+            p
+        } else {
+            p.copy(stats = p.stats.copy(gauntletBestEver = floor))
+        }
+
+    /** 별을 올렸다. 최고 별 수만 남긴다. */
+    fun onStars(p: ProgressState, stars: Int): ProgressState =
+        if (stars <= p.stats.maxStars) p else p.copy(stats = p.stats.copy(maxStars = stars))
 
     /** 칭호를 고르거나(달성한 업적만) 해제한다(null). */
     fun selectTitle(p: ProgressState, achievement: Achievement?): ProgressState {
