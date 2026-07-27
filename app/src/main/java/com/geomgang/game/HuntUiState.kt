@@ -2,6 +2,7 @@ package com.geomgang.game
 
 import com.geomgang.core.HuntEvent
 import com.geomgang.core.Item
+import com.geomgang.core.Skill
 import com.geomgang.core.Zone
 
 /** 사냥 중일 때 화면이 그리는 것. 사냥터 밖에서는 null 이다. */
@@ -25,6 +26,8 @@ data class HuntUiState(
     val lastHits: Int,
     /** 마지막 타격이 치명타였는지. */
     val lastCrit: Boolean,
+    /** 마지막 타격에 터진 계열 스킬. 없으면 null. */
+    val lastSkill: Skill? = null,
     /** 타격마다 1씩 오르는 일련번호. 화면이 팝업 애니메이션 트리거로 쓴다. */
     val hitSeq: Long,
     /** 지금 대상이 희귀 몬스터인지. 금색 틴트를 입힌다. */

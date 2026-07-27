@@ -31,6 +31,8 @@ import com.geomgang.core.QuestKind
 import com.geomgang.core.Recipes
 import com.geomgang.core.SaveStore
 import com.geomgang.core.Settings
+import com.geomgang.core.Skill
+import com.geomgang.core.Skills
 import com.geomgang.core.Storage
 import com.geomgang.core.Sword
 import com.geomgang.core.SwordDrop
@@ -94,6 +96,9 @@ class ForgeViewModel(
     private var lastDamage = 0L
     private var lastHits = 0
     private var lastCrit = false
+
+    /** 방금 터진 계열 스킬. 화면이 이름을 크게 띄운다. */
+    private var lastSkill: Skill? = null
     private var hitSeq = 0L
     private var lastKillGold = 0L
     private var bossFailed = false
@@ -462,13 +467,26 @@ class ForgeViewModel(
 
         // 펫 치명타 보너스는 롤 값에서 빼는 방식이다 - 문턱을 넓히는 것과 같다
         val critRoll = rng.nextDouble() - Pets.critBonusOf(game.pets)
-        val hit = Combat.hit(sword, combo, fightingBoss, critRoll, targetMaxHp)
+        // 난수 소비 순서 계약: 치명타 -> 스킬
+        val skillRoll = if (Skills.unlocked(sword)) rng.nextDouble() else 1.0
+        val hit = Combat.hit(sword, combo, fightingBoss, critRoll, targetMaxHp, skillRoll)
         combo++
         lastDamage = hit.damage
         lastHits = hit.hits
         lastCrit = hit.crit
+        lastSkill = hit.skill
         hitSeq++
         targetHp -= hit.damage
+
+        // 스킬 부가 효과. 화상 폭발은 즉시 피해로, 흡혈은 조각으로 들어온다.
+        hit.skill?.let { skill ->
+            if (skill.burnBurst) {
+                targetHp -= Combat.burnPerSecond(sword) * Skills.BURN_BURST_MULT
+            }
+            if (skill.shardBonus > 0) {
+                game = game.copy(shards = game.shards + skill.shardBonus)
+            }
+        }
 
         if (fightingBoss) sound.bossHit(combo) else sound.hit(combo)
 
@@ -634,6 +652,7 @@ class ForgeViewModel(
         // hitSeq 는 리셋하지 않는다 - 화면이 팝업 키로 쓰므로 되돌리면 충돌한다.
         // lastKillGold 도 리셋하지 않는다 - 처치 직후 스폰되므로 화면이 아직 그리는 중이다.
         lastCrit = false
+        lastSkill = null
     }
 
     // ---------------- 무한 회랑 ----------------
@@ -670,7 +689,9 @@ class ForgeViewModel(
 
         val critBuff = if (GauntletBuff.CRIT in run.buffs) GauntletEngine.CRIT_BUFF else 0.0
         val critRoll = rng.nextDouble() - Pets.critBonusOf(game.pets) - critBuff
-        val hit = Combat.hit(sword, 0, run.isBossFloor, critRoll, run.monsterMaxHp)
+        val skillRoll = if (Skills.unlocked(sword)) rng.nextDouble() else 1.0
+        val hit = Combat.hit(sword, 0, run.isBossFloor, critRoll, run.monsterMaxHp, skillRoll)
+        lastSkill = hit.skill
         var next = GauntletEngine.damage(run, hit.damage)
 
         if (next.choosing && next.choices.isEmpty()) {
@@ -897,6 +918,7 @@ class ForgeViewModel(
             lastDamage = lastDamage,
             lastHits = lastHits,
             lastCrit = lastCrit,
+            lastSkill = lastSkill,
             hitSeq = hitSeq,
             isRare = rareTarget && !fightingBoss,
             lastKillGold = lastKillGold,

@@ -214,6 +214,22 @@ fun ForgeScreen(
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
             )
+            // 스킬은 +15부터 열린다. 강화 단계를 올릴 이유를 하나 더 보여 준다.
+            val skill = com.geomgang.core.Skills.of(state.sword.family)
+            val unlocked = com.geomgang.core.Skills.unlocked(state.sword)
+            Text(
+                text = if (unlocked) {
+                    "⚡ ${skill.name} — ${skill.blurb}"
+                } else {
+                    "🔒 ${skill.name} — +${com.geomgang.core.Skills.MIN_LEVEL}부터"
+                },
+                fontSize = 11.sp,
+                color = if (unlocked) {
+                    Color(0xFF7FE8FF)
+                } else {
+                    MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
+                },
+            )
         }
         Spacer(Modifier.height(4.dp))
         ResultBanner(state.lastResult)

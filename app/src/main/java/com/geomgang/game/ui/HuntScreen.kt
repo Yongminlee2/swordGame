@@ -433,8 +433,18 @@ private fun ZoneCard(
     }
 }
 
-/** 화면에 떠 있는 숫자 하나. 음수 id 는 처치 골드 팝업이다. */
-private data class DamagePop(val id: Long, val text: String, val strong: Boolean, val xJitter: Int)
+/**
+ * 화면에 떠 있는 숫자 하나.
+ *
+ * 음수 id 는 처치 골드 팝업이고, [skill] 이 채워지면 스킬 이름을 크게 띄운다.
+ */
+private data class DamagePop(
+    val id: Long,
+    val text: String,
+    val strong: Boolean,
+    val xJitter: Int,
+    val skill: String? = null,
+)
 
 /**
  * 데미지 숫자 팝업.
@@ -452,7 +462,14 @@ private fun DamagePopups(hunt: HuntUiState, modifier: Modifier = Modifier) {
         } else {
             "-%,d".format(hunt.lastDamage)
         }
-        pops += DamagePop(hunt.hitSeq, text, hunt.lastCrit, Random.nextInt(-40, 41))
+        pops += DamagePop(
+            id = hunt.hitSeq,
+            text = text,
+            // 스킬이 터지면 치명타가 아니어도 크게 띄운다 - 그 순간이 판을 가른다
+            strong = hunt.lastCrit || hunt.lastSkill != null,
+            xJitter = Random.nextInt(-40, 41),
+            skill = hunt.lastSkill?.name,
+        )
         if (hunt.targetHp <= 0 && hunt.lastKillGold > 0) {
             pops += DamagePop(-hunt.hitSeq, "+%,d".format(hunt.lastKillGold), true, 0)
         }
@@ -474,11 +491,21 @@ private fun PopText(pop: DamagePop, onDone: () -> Unit) {
         progress.animateTo(1f, tween(durationMillis = if (pop.strong) 900 else 650))
         onDone()
     }
+    val label = when {
+        pop.skill != null -> "${pop.skill}!  ${pop.text}"
+        pop.strong && pop.id > 0 -> "치명타! ${pop.text}"
+        else -> pop.text
+    }
     Text(
-        text = if (pop.strong && pop.id > 0) "치명타! ${pop.text}" else pop.text,
+        text = label,
         fontSize = if (pop.strong) 24.sp else 16.sp,
         fontWeight = FontWeight.Bold,
-        color = if (pop.strong) Color(0xFFFFD54A) else Color(0xFFEEEEEE),
+        // 스킬은 청록빛으로 구분한다 - 치명타(금색)와 겹쳐 터져도 무엇이 터졌는지 읽힌다
+        color = when {
+            pop.skill != null -> Color(0xFF7FE8FF)
+            pop.strong -> Color(0xFFFFD54A)
+            else -> Color(0xFFEEEEEE)
+        },
         modifier = Modifier
             .offset { IntOffset(pop.xJitter, (-90 * progress.value).toInt()) }
             .graphicsLayer { alpha = 1f - progress.value * progress.value },
