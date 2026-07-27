@@ -227,6 +227,7 @@ fun ForgeScreen(
         ) {
             Stat("💰", compactGold(state.gold))
             Stat("💎", "${state.shards}")
+            Stat("🪨", "${state.forgeStones}")
             Stat("🛡", "${state.preventTickets}")
         }
 
@@ -281,6 +282,24 @@ fun ForgeScreen(
             )
             Spacer(Modifier.height(64.dp))
         } else {
+            // 고단계는 골드가 아니라 재료가 화폐다. 무엇이 드는지 버튼 위에 먼저 알린다.
+            if (state.requiredSwords > 0 || state.requiredStones > 0) {
+                Text(
+                    text = buildString {
+                        append("필요  ")
+                        if (state.requiredSwords > 0) append("🗡 ${state.requiredSwords}자루  ")
+                        if (state.requiredStones > 0) append("🪨 ${state.requiredStones}")
+                    },
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (state.canForge) {
+                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                    } else {
+                        MaterialTheme.colorScheme.error
+                    },
+                )
+                Spacer(Modifier.height(4.dp))
+            }
             Button(
                 onClick = onForge,
                 enabled = state.canForge,
@@ -290,6 +309,10 @@ fun ForgeScreen(
                     .height(64.dp),
             ) {
                 Text("강 화", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            }
+            state.forgeBlockedReason?.let {
+                Spacer(Modifier.height(4.dp))
+                Text(it, fontSize = 12.sp, color = MaterialTheme.colorScheme.error)
             }
             Spacer(Modifier.height(10.dp))
             MaterialBar(state, onMaterialCount)
