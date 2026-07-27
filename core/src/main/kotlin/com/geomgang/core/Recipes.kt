@@ -4,6 +4,7 @@ package com.geomgang.core
 sealed interface RecipeReward {
     data class GrantItem(val item: Item, val count: Int) : RecipeReward
     data class GrantSword(val level: Int) : RecipeReward
+    data class GrantStone(val count: Int) : RecipeReward
 }
 
 /** 조각으로 무언가를 바꾸는 교환식 하나. */
@@ -25,7 +26,11 @@ object Recipes {
     /** +5 검 교환가. [Economy.needsBailout]이 파산 판정 기준으로 함께 쓴다. */
     const val SWORD5_SHARD_COST: Int = 120
 
+    /** 조각을 강화석으로 바꾸는 값. 강화석은 고단계 강화의 화폐다. */
+    const val STONE_SHARD_COST: Int = 20
+
     val ALL: List<Recipe> = listOf(
+        Recipe("stone", "강화석", STONE_SHARD_COST, RecipeReward.GrantStone(1)),
         Recipe("prevent", "방지권", 10, RecipeReward.GrantItem(Item.PREVENT_TICKET, 1)),
         Recipe("blessing", "축복서", 30, RecipeReward.GrantItem(Item.BLESSING_SCROLL, 1)),
         Recipe("luck", "행운부적", 60, RecipeReward.GrantItem(Item.LUCK_CHARM, 1)),
@@ -56,6 +61,9 @@ object Recipes {
                     sword = Sword(family, reward.level),
                     bestLevel = maxOf(paid.bestLevel, reward.level),
                 )
+
+            is RecipeReward.GrantStone ->
+                paid.copy(forgeStones = paid.forgeStones + reward.count)
         }
     }
 }

@@ -11,8 +11,9 @@ class RecipesTest {
         GameState(Difficulty.NORMAL, shards = shards, sword = sword)
 
     @Test
-    fun `교환식은 5종이고 스펙 조각 가격과 일치한다`() {
-        assertEquals(5, Recipes.ALL.size)
+    fun `교환식은 6종이고 스펙 조각 가격과 일치한다`() {
+        assertEquals(6, Recipes.ALL.size)
+        assertEquals(Recipes.STONE_SHARD_COST, Recipes.byId("stone").shardCost)
         assertEquals(10, Recipes.byId("prevent").shardCost)
         assertEquals(30, Recipes.byId("blessing").shardCost)
         assertEquals(60, Recipes.byId("luck").shardCost)

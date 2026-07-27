@@ -60,18 +60,27 @@ object Storage {
         )
     }
 
-    /** 보관함의 검을 부숴 조각으로 바꾼다. 팔기보다 조각이 급할 때 쓴다. */
+    /**
+     * 보관함의 검을 부숴 조각과 강화석으로 바꾼다.
+     *
+     * 팔면 골드, 부수면 조각·강화석이다. 고단계 강화가 강화석을 먹으므로
+     * "파는 것보다 부수는 것이 나은 순간"이 생긴다.
+     */
     fun scrap(state: GameState, index: Int): GameState {
         require(index in state.storage.indices) { "no sword at $index" }
         val sword = state.storage[index]
         return state.copy(
             shards = state.shards + scrapShards(sword),
+            forgeStones = state.forgeStones + scrapStones(sword),
             storage = state.storage.toMutableList().apply { removeAt(index) },
         )
     }
 
     /** 부숴서 나오는 조각. 단계가 높을수록 많다. */
     fun scrapShards(sword: Sword): Int = (2 + sword.level * 2).coerceAtLeast(1)
+
+    /** 부숴서 나오는 강화석. 단계가 높을수록 많지만 상한이 있다. */
+    fun scrapStones(sword: Sword): Int = (1 + sword.level / 8).coerceAtMost(3)
 }
 
 /**
