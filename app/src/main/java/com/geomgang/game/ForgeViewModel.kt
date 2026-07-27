@@ -396,8 +396,12 @@ class ForgeViewModel(
     fun resetProgress() {
         stopHuntLoop()
         countdownJob?.cancel()
-        store.resetGame(game.difficulty)
-        game = store.loadGame(game.difficulty)
+        val difficulty = game.difficulty
+        store.resetGame(difficulty)
+        // 갓 지운 세이브는 골드 0에 검도 없다. 그대로 두면 검을 살 수도, 강화할 수도 없어
+        // 아무것도 못 하는 판이 된다. 새로 깐 앱과 똑같은 길([loadAndRepair])을 타게 해서
+        // 파산 구제가 시작 자금을 채우게 한다.
+        game = loadAndRepair(difficulty)
         huntZone = null
         phase = DestroyPhase.None
         lastResult = null

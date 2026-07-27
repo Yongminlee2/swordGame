@@ -46,9 +46,23 @@ sealed interface ForgeResult {
 object ForgeEngine {
 
     /**
+     * 강화를 시작할 수 있는지. **재료를 태우기 전에** 묻는 관문이다.
+     *
      * @param extraSwords 성공률 보너스로 더 태울 검 수. 필수 재료 위에 얹힌다.
      */
-    fun canAttempt(state: GameState, items: UsedItems, extraSwords: Int = 0): Boolean {
+    fun canAttempt(state: GameState, items: UsedItems, extraSwords: Int = 0): Boolean =
+        // 골드·재료 검·강화석 요구는 ForgeCost 가 단일 출처다.
+        canRoll(state, items) && ForgeCost.canPay(state, extraSwords)
+
+    /**
+     * 주사위를 굴릴 수 있는 상태인지. **재료는 묻지 않는다.**
+     *
+     * 재료는 판정 전에 태워지므로 판정 시점에는 이미 보관함에서 사라져 있다.
+     * 여기서 재료를 다시 물으면 **딱 필요한 만큼만 가진 플레이어**가 낼 것을 다 내고도
+     * 조건을 못 맞춘 상태가 되어 [attempt] 의 `check` 가 터진다.
+     * 재료는 입장료고, 입장료는 한 번만 받는다.
+     */
+    fun canRoll(state: GameState, items: UsedItems): Boolean {
         val sword = state.sword ?: return false
         if (state.pendingDestroy != null) return false
 
@@ -58,8 +72,8 @@ object ForgeEngine {
         if (items.blessing && state.inventory.blessingScrolls <= 0) return false
         if (items.luckCharm && state.inventory.luckCharms <= 0) return false
 
-        // 골드·재료 검·강화석 요구는 ForgeCost 가 단일 출처다.
-        return ForgeCost.canPay(state, extraSwords)
+        // 골드는 판정이 직접 깎으므로 여기서도 봐야 한다.
+        return state.gold >= Economy.upgradeCost(sword.level)
     }
 
     /**
@@ -71,8 +85,9 @@ object ForgeEngine {
         rng: Random,
         extraSuccessRate: Double = 0.0,
     ): ForgeResult {
-        check(canAttempt(state, items)) {
-            "attempt() called on a state that fails canAttempt()"
+        // 재료를 다시 묻지 않는다 - 여기 오기 전에 이미 태워졌기 때문이다.
+        check(canRoll(state, items)) {
+            "attempt() called on a state that fails canRoll()"
         }
         val sword = requireNotNull(state.sword)
         val targetLevel = sword.level + 1

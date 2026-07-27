@@ -41,6 +41,24 @@ class ForgeEngineTest {
     )
 
     @Test
+    fun `재료를 다 태운 뒤에도 굴릴 수 있다`() {
+        // 재료는 판정 전에 태워진다. 판정이 그 재료를 다시 요구하면, 딱 맞춰 온
+        // 플레이어가 낼 것을 다 내고도 조건 미달이 되어 attempt() 가 터진다.
+        // 실기기에서 +13 이상이 전부 죽던 버그가 이것이었다.
+        val paid = materialState(level = 15, stones = 0, storage = 0)
+        assertFalse("재료가 없으니 시작은 못 한다", ForgeEngine.canAttempt(paid, UsedItems.NONE))
+        assertTrue("그러나 이미 치른 판은 굴러가야 한다", ForgeEngine.canRoll(paid, UsedItems.NONE))
+        // 터지지 않는다
+        ForgeEngine.attempt(paid, UsedItems.NONE, ScriptedRandom(0.1))
+    }
+
+    @Test
+    fun `골드가 없으면 굴릴 수 없다`() {
+        val broke = materialState(level = 15, stones = 50, storage = 3).copy(gold = 0)
+        assertFalse(ForgeEngine.canRoll(broke, UsedItems.NONE))
+    }
+
+    @Test
     fun `16단계 목표는 강화석이 없으면 시도할 수 없다`() {
         assertFalse(
             ForgeEngine.canAttempt(
