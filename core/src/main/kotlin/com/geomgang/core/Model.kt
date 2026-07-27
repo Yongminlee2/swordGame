@@ -145,11 +145,14 @@ data class GameState(
     val pets: PetState = PetState(),
     /** 무한 회랑 최고 기록(깬 층). */
     val gauntletBest: Int = 0,
+    /** 강화석. 고단계 강화만 먹는 자원이다 - 조각과 수요가 겹치지 않게 분리했다. */
+    val forgeStones: Int = 0,
 ) {
     init {
         require(gold >= 0) { "gold must be >= 0, was $gold" }
         require(shards >= 0) { "shards must be >= 0, was $shards" }
         require(bestLevel >= 0) { "bestLevel must be >= 0, was $bestLevel" }
+        require(forgeStones >= 0) { "forgeStones must be >= 0, was $forgeStones" }
     }
 }
 
