@@ -79,10 +79,14 @@ class ForgeEngineTest {
     }
 
     @Test
-    fun `추가 재료를 요구하면 보관함이 그만큼 있어야 한다`() {
-        val state = materialState(level = 15, stones = 50, storage = 2)
-        assertTrue(ForgeEngine.canAttempt(state, UsedItems.NONE))
-        assertFalse(ForgeEngine.canAttempt(state, UsedItems.NONE, extraSwords = 1))
+    fun `보관함이 비어 있어도 강화할 수 있다`() {
+        // v1.8: 재료 검은 강화 요구에서 빠졌다. 보관함의 검은 조합 전용이다.
+        assertTrue(
+            ForgeEngine.canAttempt(
+                materialState(level = 15, stones = 50, storage = 0),
+                UsedItems.NONE,
+            ),
+        )
     }
 
     @Test

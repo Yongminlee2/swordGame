@@ -306,34 +306,17 @@ fun ForgeScreen(
             Spacer(Modifier.height(64.dp))
         } else {
             // 고단계는 골드가 아니라 재료가 화폐다. 무엇이 드는지 버튼 위에 먼저 알린다.
-            if (state.requiredSwords > 0 || state.requiredStones > 0) {
-                val lineColor = if (state.canForge) {
-                    MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                } else {
-                    MaterialTheme.colorScheme.error
-                }
+            if (state.requiredStones > 0) {
                 Text(
-                    text = buildString {
-                        append("이번 강화에 들어가는 것")
-                        if (state.requiredStones > 0) append("  ·  🪨 강화석 ${state.requiredStones}")
-                    },
+                    text = "이번 강화에 들어가는 것  ·  🪨 강화석 ${state.requiredStones}",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color = lineColor,
+                    color = if (state.canForge) {
+                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                    } else {
+                        MaterialTheme.colorScheme.error
+                    },
                 )
-                // 몇 자루가 아니라 **어느 검**이 사라지는지 이름으로 보여 준다.
-                // 「🗡 2자루」로는 보관함의 무엇이 타는지 알 수 없어 누르기가 무섭다.
-                if (state.requiredSwords > 0) {
-                    Text(
-                        text = if (state.materialNames.isEmpty()) {
-                            "🗡 재료 검 ${state.requiredSwords}자루 (보관함이 비었다)"
-                        } else {
-                            "🗡 " + state.materialNames.joinToString(" · ")
-                        },
-                        fontSize = 12.sp,
-                        color = lineColor,
-                    )
-                }
                 Spacer(Modifier.height(4.dp))
             }
             Button(

@@ -48,11 +48,10 @@ object ForgeEngine {
     /**
      * 강화를 시작할 수 있는지. **재료를 태우기 전에** 묻는 관문이다.
      *
-     * @param extraSwords 성공률 보너스로 더 태울 검 수. 필수 재료 위에 얹힌다.
      */
-    fun canAttempt(state: GameState, items: UsedItems, extraSwords: Int = 0): Boolean =
-        // 골드·재료 검·강화석 요구는 ForgeCost 가 단일 출처다.
-        canRoll(state, items) && ForgeCost.canPay(state, extraSwords)
+    fun canAttempt(state: GameState, items: UsedItems): Boolean =
+        // 골드·강화석 요구는 ForgeCost 가 단일 출처다.
+        canRoll(state, items) && ForgeCost.canPay(state)
 
     /**
      * 주사위를 굴릴 수 있는 상태인지. **재료는 묻지 않는다.**

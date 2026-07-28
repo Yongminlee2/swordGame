@@ -23,10 +23,10 @@ object HelpTopics {
         ),
         HelpTopic(
             "🪨", "강화 재료",
-            "+${ForgeCost.SWORD_BAND_START}부터는 골드만으로 강화할 수 없다. " +
-                "보관함의 검을 재료로 태우고, +${ForgeCost.STONE_BAND_START}부터는 강화석도 든다.\n" +
-                "강화석은 사냥·보스·검 분해·조합소 교환(조각 ${Recipes.STONE_SHARD_COST}개)으로 모은다.\n" +
-                "필수 재료 위에 검을 더 태우면 성공률이 오른다.",
+            "+${ForgeCost.STONE_BAND_START}부터는 골드만으로 강화할 수 없다. 강화석이 함께 든다.\n" +
+                "강화석은 사냥·보스·검 분해·조합소 교환(조각 ${Recipes.STONE_SHARD_COST}개)·" +
+                "상점 구매로 모은다.\n" +
+                "보관함의 검은 강화에 쓰지 않는다 — 조합 재료로만 쓴다.",
         ),
         HelpTopic(
             "🗡", "계열",

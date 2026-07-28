@@ -67,7 +67,6 @@ class ForgeViewModelExactMaterialTest {
                 difficulty = Difficulty.ENDLESS,
                 gold = req.gold,
                 sword = Sword(WeaponFamily.STRAIGHT, level),
-                storage = List(req.swords) { Sword(WeaponFamily.STRAIGHT, 1) },
                 forgeStones = req.stones,
                 bestLevel = level,
             ),
@@ -76,28 +75,16 @@ class ForgeViewModelExactMaterialTest {
     }
 
     @Test
-    fun `검 요구 구간에서 재료를 딱 맞춰도 강화가 실행된다`() = runTest(dispatcher) {
-        // 목표 +13 - 재료 검이 처음 필수가 되는 단계
-        val level = ForgeCost.SWORD_BAND_START - 1
+    fun `강화석 요구 구간에서 재료를 딱 맞춰도 강화가 실행된다`() = runTest(dispatcher) {
+        // 목표 +16 - 강화석이 처음 필수가 되는 단계
+        val level = ForgeCost.STONE_BAND_START - 1
         val vm = exactVm(level)
         assertTrue("딱 맞춘 상태는 강화할 수 있어야 한다", vm.ui.value.canForge)
 
         vm.forge()
 
         assertEquals(level + 1, vm.ui.value.sword?.level)
-        assertTrue("재료 검이 태워져야 한다", vm.ui.value.storage.isEmpty())
-    }
-
-    @Test
-    fun `강화석 요구 구간에서 재료를 딱 맞춰도 강화가 실행된다`() = runTest(dispatcher) {
-        // 목표 +16 - 강화석이 처음 필수가 되는 단계
-        val level = ForgeCost.STONE_BAND_START - 1
-        val vm = exactVm(level)
-        vm.forge()
-
-        assertEquals(level + 1, vm.ui.value.sword?.level)
         assertEquals(0, vm.ui.value.forgeStones)
-        assertTrue(vm.ui.value.storage.isEmpty())
     }
 
     @Test
@@ -114,7 +101,7 @@ class ForgeViewModelExactMaterialTest {
     @Test
     fun `재료 요구 전 구간을 딱 맞춰 굴려도 튕기지 않는다`() = runTest(dispatcher) {
         // 재료가 붙는 모든 단계를 훑는다. 한 구간이라도 어긋나면 여기서 잡힌다.
-        for (level in ForgeCost.SWORD_BAND_START - 1..ForgeCost.ENDLESS_BAND_START + 4) {
+        for (level in ForgeCost.STONE_BAND_START - 1..ForgeCost.ENDLESS_BAND_START + 4) {
             val vm = exactVm(level)
             vm.forge()
             assertEquals("level=$level", level + 1, vm.ui.value.sword?.level)

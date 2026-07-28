@@ -73,9 +73,7 @@ class ForgeViewModelStoneTest {
     @Test
     fun `요구량이 화면에 실린다`() {
         val ui = vm(level = 15, stones = 50, storage = 5).ui.value
-        val req = ForgeCost.requirementFor(15)
-        assertEquals(req.swords, ui.requiredSwords)
-        assertEquals(req.stones, ui.requiredStones)
+        assertEquals(ForgeCost.requirementFor(15).stones, ui.requiredStones)
         assertEquals(50, ui.forgeStones)
     }
 
@@ -83,22 +81,22 @@ class ForgeViewModelStoneTest {
     fun `저단계는 요구가 없다`() {
         val ui = vm(level = 3, stones = 0, storage = 0).ui.value
         assertTrue(ui.canForge)
-        assertEquals(0, ui.requiredSwords)
         assertEquals(0, ui.requiredStones)
     }
 
     @Test
-    fun `강화하면 필수 재료와 강화석이 빠진다`() = runTest(dispatcher) {
+    fun `강화하면 강화석만 빠진다`() = runTest(dispatcher) {
+        // v1.8: 보관함의 검은 강화가 건드리지 않는다. 조합 재료로 남는다.
         val v = vm(level = 15, stones = 50, storage = 5)
         val req = ForgeCost.requirementFor(15)
         v.forge()
         val ui = v.ui.value
         assertEquals(50 - req.stones, ui.forgeStones)
-        assertEquals(5 - req.swords, ui.storage.size)
+        assertEquals("보관함은 그대로여야 한다", 5, ui.storage.size)
     }
 
     @Test
-    fun `저단계 강화는 재료를 태우지 않는다`() = runTest(dispatcher) {
+    fun `저단계 강화는 아무것도 태우지 않는다`() = runTest(dispatcher) {
         val v = vm(level = 3, stones = 10, storage = 5)
         v.forge()
         val ui = v.ui.value
@@ -107,22 +105,11 @@ class ForgeViewModelStoneTest {
     }
 
     @Test
-    fun `무엇이 재료로 사라지는지 이름으로 알려 준다`() {
-        // +16 목표는 필수 2자루. 보관함에서 **낮은 단계부터** 두 자루를 집는다.
-        // 수량만 알려 주면 무엇이 타는지 알 수 없어 강화 버튼을 누르기가 무섭다.
-        val v = vm(level = 15, stones = 50, storage = 4)
-        val names = v.ui.value.materialNames
-        assertEquals(2, names.size)
-        assertEquals("직검 +1", names[0])
-    }
-
-    @Test
-    fun `화면이 알린 재료가 실제로 타는 재료다`() = runTest(dispatcher) {
-        val v = vm(level = 15, stones = 50, storage = 4)
-        val announced = v.ui.value.materialNames
+    fun `보관함이 비어도 고단계 강화가 된다`() = runTest(dispatcher) {
+        val v = vm(level = 20, stones = 50, storage = 0)
+        assertTrue(v.ui.value.canForge)
         v.forge()
-        val left = v.ui.value.storage.map { "${it.family.displayName} +${it.level}" }
-        assertEquals("알린 만큼만 사라져야 한다", 4 - announced.size, left.size)
+        assertEquals(21, v.ui.value.sword?.level)
     }
 
     @Test

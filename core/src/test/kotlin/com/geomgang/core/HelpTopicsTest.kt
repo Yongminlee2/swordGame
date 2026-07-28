@@ -32,7 +32,6 @@ class HelpTopicsTest {
     @Test
     fun `재료 설명이 실제 요구 단계를 말한다`() {
         val body = HelpTopics.ALL.first { it.title == "강화 재료" }.body
-        assertTrue(body.contains("+${ForgeCost.SWORD_BAND_START}"))
         assertTrue(body.contains("+${ForgeCost.STONE_BAND_START}"))
         assertTrue(body.contains("${Recipes.STONE_SHARD_COST}"))
     }

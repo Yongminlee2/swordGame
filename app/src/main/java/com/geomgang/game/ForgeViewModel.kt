@@ -242,12 +242,7 @@ class ForgeViewModel(
         val cost = Economy.upgradeCost(sword.level)
         val req = ForgeCost.requirementFor(sword.level)
 
-        // 재료는 강화 성패와 무관하게 태워진다. 판정 전에 먼저 소모한다.
-        // 무엇이 타는지는 화면이 미리 알려 주므로([materialIndices]) 여기서도 같은 순서로 집는다.
-        val burnIndices = materialIndices()
-        if (burnIndices.isNotEmpty()) {
-            game = MaterialBoost.consume(game, burnIndices)
-        }
+        // 강화석은 성패와 무관하게 소모된다. 판정 전에 먼저 뺀다.
         if (req.stones > 0) {
             game = game.copy(forgeStones = game.forgeStones - req.stones)
         }
@@ -1213,22 +1208,6 @@ class ForgeViewModel(
         _ui.value = render()
     }
 
-    /**
-     * 이번 강화에 **사라질** 재료 검을 낮은 단계부터 집는다.
-     *
-     * [runAttempt] 가 태우는 것과 같은 순서여야 한다. 화면이 "직검 +3" 이라고 알려 준
-     * 검과 실제로 타는 검이 다르면 그건 거짓말이다.
-     */
-    private fun materialIndices(): List<Int> {
-        val required = game.sword?.let { ForgeCost.requirementFor(it.level).swords } ?: 0
-        if (required == 0) return emptyList()
-        return game.storage
-            .withIndex()
-            .sortedBy { it.value.level }
-            .take(required)
-            .map { it.index }
-    }
-
     private fun renderStar(): StarUiState? {
         val sword = game.sword ?: return null
         if (sword.level < StarForce.MIN_LEVEL) return null
@@ -1309,13 +1288,7 @@ class ForgeViewModel(
             storageCapacity = Storage.CAPACITY,
             lastDrop = lastDrop,
             dropMissed = dropMissed,
-            // 「🗡 2자루」가 아니라 "직검 +3" 처럼 무엇이 사라지는지 이름으로 알린다.
-            materialNames = materialIndices().map { i ->
-                val s = game.storage[i]
-                "${s.family.displayName} +${s.level}"
-            },
             forgeStones = game.forgeStones,
-            requiredSwords = game.sword?.let { ForgeCost.requirementFor(it.level).swords } ?: 0,
             requiredStones = game.sword?.let { ForgeCost.requirementFor(it.level).stones } ?: 0,
             forgeBlockedReason = if (busy) null else ForgeCost.missingText(game),
             star = renderStar(),

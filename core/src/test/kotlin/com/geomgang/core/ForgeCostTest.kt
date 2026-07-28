@@ -23,41 +23,32 @@ class ForgeCostTest {
     )
 
     @Test
-    fun `12단계까지는 골드만 든다`() {
-        for (level in 0..11) {
+    fun `15단계까지는 골드만 든다`() {
+        for (level in 0..14) {
             val req = ForgeCost.requirementFor(level)
             assertEquals("+$level", Economy.upgradeCost(level), req.gold)
-            assertEquals("+$level 검", 0, req.swords)
             assertEquals("+$level 강화석", 0, req.stones)
         }
     }
 
     @Test
-    fun `13단계부터 검 한 자루가 필수다`() {
-        val req = ForgeCost.requirementFor(12)
-        assertEquals(1, req.swords)
-        assertEquals(0, req.stones)
-    }
-
-    @Test
-    fun `16단계부터 검 두 자루와 강화석이 필수다`() {
-        val req16 = ForgeCost.requirementFor(15)
-        assertEquals(2, req16.swords)
-        assertEquals(3, req16.stones)
+    fun `16단계부터 강화석이 필수다`() {
+        assertEquals(3, ForgeCost.requirementFor(15).stones)
         // v1.7에서 증가 속도를 절반으로 낮췄다 - 두 단계에 한 개씩 늘어난다.
-        val req20 = ForgeCost.requirementFor(19)
-        assertEquals(2, req20.swords)
-        assertEquals(5, req20.stones)
+        assertEquals(5, ForgeCost.requirementFor(19).stones)
     }
 
     @Test
-    fun `무한 구간은 검 세 자루와 강화석이 두 단계마다 늘어난다`() {
-        val req21 = ForgeCost.requirementFor(20)
-        assertEquals(3, req21.swords)
-        assertEquals(5, req21.stones)
-        val req30 = ForgeCost.requirementFor(29)
-        assertEquals(3, req30.swords)
-        assertEquals(10, req30.stones)
+    fun `무한 구간은 강화석이 두 단계마다 늘어난다`() {
+        assertEquals(5, ForgeCost.requirementFor(20).stones)
+        assertEquals(10, ForgeCost.requirementFor(29).stones)
+    }
+
+    @Test
+    fun `보관함의 검은 강화에 쓰지 않는다`() {
+        // v1.8: 검을 태우는 자리가 강화와 조합 둘이라 같은 보관함을 놓고 다퉜다.
+        // 이제 강화는 골드와 강화석만 먹고, 검은 조합 전용이다.
+        assertTrue(ForgeCost.canPay(state(20, storage = 0, stones = 99)))
     }
 
     @Test
@@ -77,19 +68,8 @@ class ForgeCostTest {
     }
 
     @Test
-    fun `재료 검이 모자라면 못 낸다`() {
-        assertFalse(ForgeCost.canPay(state(16, storage = 1)))
-    }
-
-    @Test
     fun `골드가 모자라면 못 낸다`() {
         assertFalse(ForgeCost.canPay(state(5, gold = 0)))
-    }
-
-    @Test
-    fun `추가 재료를 요구하면 그만큼 더 필요하다`() {
-        assertTrue(ForgeCost.canPay(state(16, storage = 5), extraSwords = 3))
-        assertFalse(ForgeCost.canPay(state(16, storage = 4), extraSwords = 3))
     }
 
     @Test

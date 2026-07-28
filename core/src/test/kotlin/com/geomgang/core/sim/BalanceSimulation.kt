@@ -164,22 +164,9 @@ object BalanceSimulation {
                 }
             }
 
-            // 7. 재료 확보. +13부터 검, +16부터 강화석이 필수다(ForgeCost).
+            // 7. 재료 확보. +16부터 강화석이 필수다(ForgeCost).
+            // 재료 검은 v1.8에서 강화 요구에서 빠졌다 - 보관함의 검은 조합 전용이다.
             val req = ForgeCost.requirementFor(sword.level)
-            if (state.storage.size < req.swords) {
-                if (state.gold < MATERIAL_SWORD_PRICE) {
-                    if (Economy.canSellSword(state)) {
-                        state = Economy.sellSword(state)
-                        continue
-                    }
-                    break
-                }
-                state = state.copy(
-                    gold = state.gold - MATERIAL_SWORD_PRICE,
-                    storage = state.storage + Sword(WeaponFamily.STRAIGHT, 0),
-                )
-                continue
-            }
             if (state.forgeStones < req.stones) {
                 if (state.gold < STONE_PRICE) {
                     if (Economy.canSellSword(state)) {
