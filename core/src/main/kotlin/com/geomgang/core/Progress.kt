@@ -186,6 +186,20 @@ object Progress {
         }
     }
 
+    /**
+     * 도감이 아직 다 차지 않은 계열.
+     *
+     * 조각 교환으로 검을 줄 때 이쪽을 먼저 준다. 계열은 성능이 전부 같아서
+     * 무엇을 받든 결과가 같은데, 도감 한 칸이 걸리면 받는 쪽에 의미가 생긴다.
+     */
+    fun incompleteFamilies(p: ProgressState): Set<WeaponFamily> {
+        val found = p.codex.map { CodexEntry(it.family, it.tier) }.toSet()
+        return WeaponCatalog.ENTRIES
+            .filterNot { it in found }
+            .map { it.family }
+            .toSet()
+    }
+
     /** 검을 손에 넣었을 때 도감에 등록한다. 구매·조합·강화 성공 모두 여기를 지난다. */
     fun registerSword(p: ProgressState, difficulty: Difficulty, sword: Sword): ProgressState {
         val key = CodexKey(sword.family, WeaponCatalog.tierFor(sword.level), difficulty)

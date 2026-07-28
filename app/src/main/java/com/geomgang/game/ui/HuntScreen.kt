@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.unit.sp
 import com.geomgang.core.AdventureState
 import com.geomgang.core.Combat
@@ -70,6 +71,7 @@ fun HuntScreen(
     onRetryBoss: () -> Unit,
     onGiveUpBoss: () -> Unit,
     onStayInZone: () -> Unit,
+    onNextZone: () -> Unit,
     onLeave: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -84,7 +86,7 @@ fun HuntScreen(
     if (hunt.bossFailed) {
         BossFailedDialog(hunt, onRetryBoss, onGiveUpBoss)
     } else if (hunt.zoneCleared) {
-        BossWonDialog(hunt, onStayInZone, onLeave)
+        BossWonDialog(hunt, onStayInZone, onNextZone)
     }
 
     // 강화 화면과 같은 이유로 스크롤된다 - 이벤트 배너·금덩이 버튼·보스 도전이
@@ -577,7 +579,8 @@ private fun BossFailedDialog(
     onGiveUp: () -> Unit,
 ) {
     AlertDialog(
-        onDismissRequest = onGiveUp,
+        onDismissRequest = {},
+        properties = STICKY_DIALOG,
         title = { Text("보스를 놓쳤다", fontWeight = FontWeight.Bold) },
         text = {
             Column {
@@ -606,11 +609,12 @@ private fun BossFailedDialog(
 private fun BossWonDialog(
     hunt: HuntUiState,
     onStay: () -> Unit,
-    onLeave: () -> Unit,
+    onNextZone: () -> Unit,
 ) {
     val reward = hunt.bossReward
     AlertDialog(
-        onDismissRequest = onStay,
+        onDismissRequest = {},
+        properties = STICKY_DIALOG,
         title = { Text("${hunt.zone.bossName} 격파", fontWeight = FontWeight.Bold) },
         text = {
             Column {
@@ -631,13 +635,25 @@ private fun BossWonDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onLeave) { Text("다음 구역으로") }
+            TextButton(onClick = onNextZone) { Text("다음 구역으로") }
         },
         dismissButton = {
             TextButton(onClick = onStay) { Text("이 구역 더 돌기") }
         },
     )
 }
+
+/**
+ * 승패 창은 바깥을 눌러도, 뒤로 가도 닫히지 않는다.
+ *
+ * 기본값대로 두면 잘못 스친 손가락이 대신 고른다 — 승리 창에서는 그것이
+ * "이 구역 더 돌기"가 되고, 패배 창에서는 골드가 걸린 갈림길이 그냥 지나간다.
+ * 둘 중 하나를 반드시 직접 눌러야 한다.
+ */
+private val STICKY_DIALOG = DialogProperties(
+    dismissOnBackPress = false,
+    dismissOnClickOutside = false,
+)
 
 @Composable
 private fun Notice(text: String, color: Color) {

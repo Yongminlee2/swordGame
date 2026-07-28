@@ -105,6 +105,7 @@ private fun App(store: SaveStore) {
             onRetryBoss = vm::retryBoss,
             onGiveUpBoss = vm::giveUpBoss,
             onStayInZone = vm::stayInZone,
+            onNextZone = vm::nextZone,
             onLeave = vm::leaveHunt,
             onBack = {
                 vm.leaveHunt()
@@ -140,7 +141,6 @@ private fun App(store: SaveStore) {
             onEquip = vm::equipFromStorage,
             onSell = vm::sellFromStorage,
             onScrap = vm::scrapFromStorage,
-            onFuse = vm::fuse,
             onBack = { overlay = Overlay.None },
         )
 
@@ -151,6 +151,7 @@ private fun App(store: SaveStore) {
             onBuyStone = vm::buyStone,
             onSellSword = vm::sellSword,
             onBuyItem = vm::buyItem,
+            onCraft = vm::craft,
             onBack = { overlay = Overlay.None },
         )
 
@@ -162,7 +163,7 @@ private fun App(store: SaveStore) {
 
         Overlay.Craft -> CraftScreen(
             state = state,
-            onCraft = vm::craft,
+            onFuse = vm::fuse,
             onBack = { overlay = Overlay.None },
         )
 

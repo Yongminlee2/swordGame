@@ -644,6 +644,28 @@ class ForgeViewModel(
         _ui.value = render()
     }
 
+    /**
+     * 다음 구역으로 곧바로 넘어간다.
+     *
+     * 예전에는 승리 팝업의 이 버튼이 [leaveHunt] 를 불러 사냥터 목록을 열었다.
+     * "다음 구역으로" 라고 써 놓고 첫 화면으로 돌려보내면 방금 이긴 흐름이 거기서 끊긴다.
+     *
+     * 다음 구역이 없거나 아직 잠겨 있을 때만 목록으로 돌아간다 — 그때는 정말
+     * 갈 곳이 없으므로 고를 화면을 보여 주는 편이 낫다.
+     */
+    fun nextZone() {
+        if (!zoneCleared) return
+        val current = huntZone ?: return
+        zoneCleared = false
+        bossReward = null
+        val next = Zone.entries.getOrNull(current.ordinal + 1)
+        if (next == null || !game.adventure.isUnlocked(next)) {
+            leaveHunt()
+            return
+        }
+        enterZone(next)
+    }
+
     /** 패배 팝업을 닫고 사냥터를 나간다. 대가를 안 냈으므로 잡몹 진행은 이미 지워졌다. */
     fun giveUpBoss() {
         if (!bossFailed) return
@@ -1043,11 +1065,22 @@ class ForgeViewModel(
         _ui.value = render()
     }
 
-    /** 조합소 교환. 검을 주는 교환일 때만 [family] 가 쓰인다. */
-    fun craft(recipeId: String, family: WeaponFamily) {
+    /**
+     * 조각 교환.
+     *
+     * 검을 주는 교환이면 계열은 [Recipes.familyFor] 가 정한다 — 화면이 고르게
+     * 하지 않는다. 계열끼리 성능이 같아서 고를 이유가 없었고, 지금은 도감이
+     * 덜 찬 계열이 먼저 나온다.
+     */
+    fun craft(recipeId: String) {
         if (busy) return
         val recipe = Recipes.ALL.firstOrNull { it.id == recipeId } ?: return
         if (!Recipes.canCraft(game, recipe)) return
+        val family = Recipes.familyFor(
+            unlocked = Progress.unlockedFamilies(progress),
+            incomplete = Progress.incompleteFamilies(progress),
+            roll = rng.nextInt(WeaponFamily.entries.size),
+        )
         game = Recipes.craft(game, recipe, family)
         game.sword?.let { progress = Progress.registerSword(progress, game.difficulty, it) }
         persist()

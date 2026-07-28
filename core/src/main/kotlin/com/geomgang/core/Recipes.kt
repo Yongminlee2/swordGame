@@ -42,6 +42,27 @@ object Recipes {
         ALL.firstOrNull { it.id == id }
             ?: throw IllegalArgumentException("unknown recipe id: $id")
 
+    /**
+     * 교환으로 받는 검의 계열.
+     *
+     * 예전에는 화면이 직접 고르게 했다. 그런데 계열은 확률에도 경제에도 전혀
+     * 관여하지 않아 **무엇을 고르든 결과가 같다.** 결과가 바뀌지 않는 선택은
+     * 손만 한 번 더 가게 한다.
+     *
+     * 그래서 고르는 대신 [incomplete] — 도감이 덜 찬 계열 — 을 먼저 준다.
+     * 남은 게 없으면 열린 계열 전부에서 고른다. 무작위지만 [roll] 을 밖에서
+     * 넣으므로 테스트가 결과를 고정할 수 있다.
+     */
+    fun familyFor(
+        unlocked: List<WeaponFamily>,
+        incomplete: Set<WeaponFamily>,
+        roll: Int,
+    ): WeaponFamily {
+        require(unlocked.isNotEmpty()) { "no unlocked family to grant" }
+        val pool = unlocked.filter { it in incomplete }.ifEmpty { unlocked }
+        return pool[roll.mod(pool.size)]
+    }
+
     fun canCraft(state: GameState, recipe: Recipe): Boolean {
         if (state.shards < recipe.shardCost) return false
         // 검을 주는 교환은 빈손일 때만 가능하다. 들고 있는 검을 덮어쓰지 않는다.

@@ -158,8 +158,11 @@ fun UniqueThumb(
 }
 
 /**
- * 목록에서 쓰는 작은 검. 큰 검과 **같은 시트2 그림**이라 화면 어디서든 같은 검은 같은 그림이다.
- * 고유검은 전용 칸을 쓴다.
+ * 목록에서 쓰는 작은 검.
+ *
+ * 그림을 고르는 길이 [SwordView] 와 **똑같아야 한다.** 예전에는 여기만 시트2 를 봐서
+ * 보관함의 검과 강화 화면의 검이 같은 자루인데도 다르게 생겼다. 시트 선택을
+ * [SwordSheet3.sourceFor] 한 곳에 맡겨 그 어긋남을 없앴다.
  */
 @Composable
 fun SwordThumb(
@@ -168,13 +171,19 @@ fun SwordThumb(
     size: Dp = 44.dp,
     dimmed: Boolean = false,
 ) {
-    val sheet = rememberSheet2()
-    val src = SwordSheet2.offsetOf(SwordSheet2.cellFor(sword))
+    val source = SwordSheet3.sourceFor(sword)
+    val sheet = if (source.useSheet3) rememberSheet3() else rememberSheet2()
+    val src = if (source.useSheet3) {
+        SwordSheet3.offsetOf(source.cell)
+    } else {
+        SwordSheet2.offsetOf(source.cell)
+    }
+    val cellSize = if (source.useSheet3) SwordSheet3.CELL else SwordSheet2.CELL
     Canvas(modifier.size(size)) {
         drawImage(
             image = sheet,
             srcOffset = IntOffset(src.x, src.y),
-            srcSize = IntSize(SwordSheet2.CELL, SwordSheet2.CELL),
+            srcSize = IntSize(cellSize, cellSize),
             dstSize = IntSize(this.size.width.toInt(), this.size.height.toInt()),
             filterQuality = FilterQuality.None,
             colorFilter = if (dimmed) ColorFilter.tint(Color(0xFF2E2740)) else null,

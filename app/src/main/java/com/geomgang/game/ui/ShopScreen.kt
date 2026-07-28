@@ -28,6 +28,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geomgang.core.Economy
 import com.geomgang.core.Item
+import com.geomgang.core.Recipe
+import com.geomgang.core.RecipeReward
+import com.geomgang.core.Recipes
 import com.geomgang.core.WeaponFamily
 import com.geomgang.game.ForgeUiState
 
@@ -45,6 +48,7 @@ fun ShopScreen(
     onBuyStone: () -> Unit,
     onSellSword: () -> Unit,
     onBuyItem: (Item) -> Unit,
+    onCraft: (recipeId: String) -> Unit,
     onBack: () -> Unit,
 ) {
     var family by remember { mutableStateOf(state.unlockedFamilies.first()) }
@@ -219,6 +223,81 @@ fun ShopScreen(
                     )
                 }
             }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        // --- 조각 교환 ---
+        // 예전에는 "조합소"라는 별도 화면이었다. 그런데 하는 일이 상점과 똑같다 —
+        // 화폐를 내고 물건을 받는다. 화폐가 골드가 아니라 조각일 뿐이라 여기로 옮겼다.
+        // 덕분에 조합소는 이름 그대로 검을 조합하는 곳만 남았다.
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp)) {
+                Text("조각 교환", fontWeight = FontWeight.Bold)
+                Text(
+                    text = "파괴된 검에서 주운 조각으로 바꾼다. " +
+                        "골드가 바닥나도 여기서 다시 일어설 수 있다.",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                )
+                Spacer(Modifier.height(4.dp))
+                Recipes.ALL.forEachIndexed { index, recipe ->
+                    if (index > 0) HorizontalDivider(Modifier.padding(vertical = 4.dp))
+                    RecipeRow(
+                        recipe = recipe,
+                        state = state,
+                        onCraft = { onCraft(recipe.id) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 조각 교환 한 줄.
+ *
+ * 검을 주는 교환도 계열을 묻지 않는다 — 계열끼리 성능이 같아 고를 이유가 없었고,
+ * 지금은 [Recipes.familyFor] 가 도감이 덜 찬 계열을 먼저 준다.
+ */
+@Composable
+private fun RecipeRow(
+    recipe: Recipe,
+    state: ForgeUiState,
+    onCraft: () -> Unit,
+) {
+    val grantsSword = recipe.reward is RecipeReward.GrantSword
+    val blockedBySword = grantsSword && state.sword != null
+    val enough = state.shards >= recipe.shardCost
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(recipe.displayName, fontWeight = FontWeight.Medium)
+            val reason = when {
+                blockedBySword -> "검을 들고 있으면 바꿀 수 없다"
+                !enough -> "조각 ${recipe.shardCost - state.shards}개 부족"
+                grantsSword -> "도감이 덜 찬 계열로 나온다"
+                else -> null
+            }
+            if (reason != null) {
+                Text(
+                    text = reason,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                )
+            }
+        }
+        Button(
+            onClick = onCraft,
+            enabled = enough && !blockedBySword && !state.busy,
+        ) {
+            Text("💎 ${recipe.shardCost}")
         }
     }
 }

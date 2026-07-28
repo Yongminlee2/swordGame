@@ -93,12 +93,12 @@ class ForgeViewModelEconomyTest {
         assertEquals(1, vm.ui.value.luckCharms)
     }
 
-    // --- 조합소 ---
+    // --- 조각 교환 ---
 
     @Test
     fun `조각을 바꾸면 조각이 줄고 아이템이 생긴다`() = runTest(dispatcher) {
         val vm = vm(shards = 50)
-        vm.craft("prevent", WeaponFamily.STRAIGHT)
+        vm.craft("prevent")
         assertEquals(40, vm.ui.value.shards)
         assertEquals(1, vm.ui.value.preventTickets)
     }
@@ -106,23 +106,29 @@ class ForgeViewModelEconomyTest {
     @Test
     fun `조각이 모자라면 바뀌지 않는다`() = runTest(dispatcher) {
         val vm = vm(shards = 5)
-        vm.craft("prevent", WeaponFamily.STRAIGHT)
+        vm.craft("prevent")
         assertEquals(5, vm.ui.value.shards)
         assertEquals(0, vm.ui.value.preventTickets)
     }
 
+    /**
+     * 계열을 고르지 않는다.
+     *
+     * 계열은 성능이 전부 같아서 고르게 할 이유가 없었다. 지금은 열린 계열 중에서
+     * 나오되 도감이 덜 찬 쪽이 먼저다 — 새 세이브는 직검 하나만 열려 있다.
+     */
     @Test
-    fun `조각으로 5단계 검을 바꾸면 지정한 계열로 생긴다`() = runTest(dispatcher) {
+    fun `조각으로 5단계 검을 바꾸면 열린 계열로 생긴다`() = runTest(dispatcher) {
         val vm = vm(shards = 200, sword = null)
-        vm.craft("sword5", WeaponFamily.CURVED)
-        assertEquals(Sword(WeaponFamily.CURVED, 5), vm.ui.value.sword)
+        vm.craft("sword5")
+        assertEquals(Sword(WeaponFamily.STRAIGHT, 5), vm.ui.value.sword)
         assertEquals(80, vm.ui.value.shards)
     }
 
     @Test
     fun `검을 들고 있으면 검 교환이 막힌다`() = runTest(dispatcher) {
         val vm = vm(shards = 200, sword = Sword(WeaponFamily.STRAIGHT, 3))
-        vm.craft("sword5", WeaponFamily.CURVED)
+        vm.craft("sword5")
         assertEquals(200, vm.ui.value.shards)
         assertEquals(3, vm.ui.value.sword?.level)
     }
