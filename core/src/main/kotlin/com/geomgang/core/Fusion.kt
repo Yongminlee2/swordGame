@@ -191,10 +191,19 @@ object StarForce {
     const val MIN_LEVEL = 10
 
     /** 최대 별. */
-    const val MAX_STARS = 5
+    const val MAX_STARS = 10
 
-    /** 별 하나가 올려 주는 공격력 비율. */
-    const val ATTACK_PER_STAR = 0.14
+    /**
+     * 별 하나가 올려 주는 공격력 비율.
+     *
+     * 5개에서 10개로 늘리면서 **절반으로 낮췄다.** 0.14 그대로 두면 별 10개가
+     * 공격력 2.4배가 되어 보스 문턱이 통째로 무너진다 — [BossTempoTest] 가 잡아 둔
+     * "권장 +2에서 잡힌다" 곡선을 별로 우회하게 된다.
+     *
+     * 지금 값이면 별 10개가 1.7배로 **예전 별 5개와 같다.** 총량은 그대로 두고
+     * 계단만 잘게 나눈 것이라, 한 번 올릴 때의 성취가 더 자주 온다.
+     */
+    const val ATTACK_PER_STAR = 0.07
 
     fun canStar(sword: Sword?): Boolean =
         sword != null && sword.level >= MIN_LEVEL && sword.stars < MAX_STARS
@@ -206,12 +215,22 @@ object StarForce {
     fun goldCost(sword: Sword): Long =
         (Economy.upgradeCost(sword.level) * (sword.stars + 1)).coerceAtLeast(1)
 
-    /** 다음 별의 성공률. */
+    /**
+     * 다음 별의 성공률.
+     *
+     * 10단까지 이어지되 바닥이 있다. 0이 되면 그 별은 "못 붙이는 별" 이 되어
+     * 화면에 남아 있을 이유가 없어진다.
+     */
     fun successRate(sword: Sword): Double = when (sword.stars) {
-        0 -> 0.80
-        1 -> 0.62
-        2 -> 0.45
-        3 -> 0.30
+        0 -> 0.90
+        1 -> 0.80
+        2 -> 0.70
+        3 -> 0.60
+        4 -> 0.50
+        5 -> 0.42
+        6 -> 0.34
+        7 -> 0.28
+        8 -> 0.22
         else -> 0.18
     }
 

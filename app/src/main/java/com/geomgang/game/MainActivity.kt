@@ -26,12 +26,16 @@ import com.geomgang.game.ui.QuestScreen
 import com.geomgang.game.ui.RecordsMenuScreen
 import com.geomgang.game.ui.SettingsScreen
 import com.geomgang.game.ui.ShopScreen
+import com.geomgang.game.ui.StarScreen
 import com.geomgang.game.ui.StatsScreen
 import com.geomgang.game.ui.StorageScreen
 import com.geomgang.game.ui.SwordForgeTheme
 
 /** 강화 화면 위에 무엇이 올라와 있는지. */
-private enum class Overlay { None, Hunt, Gauntlet, Storage, Shop, Craft, Records, Codex, Quests, Pets, Achievements, Stats, Help, Settings }
+private enum class Overlay {
+    None, Hunt, Gauntlet, Storage, Shop, Craft, Star,
+    Records, Codex, Quests, Pets, Achievements, Stats, Help, Settings,
+}
 
 /** 뒤로 가면 어디로 돌아가는지. 기록 하위 화면들은 메뉴로 돌아간다. */
 private fun Overlay.parent(): Overlay = when (this) {
@@ -98,6 +102,9 @@ private fun App(store: SaveStore) {
             onChallengeBoss = vm::challengeBoss,
             onTapNugget = vm::tapNugget,
             onBuyMerchant = vm::buyMerchantOffer,
+            onRetryBoss = vm::retryBoss,
+            onGiveUpBoss = vm::giveUpBoss,
+            onStayInZone = vm::stayInZone,
             onLeave = vm::leaveHunt,
             onBack = {
                 vm.leaveHunt()
@@ -144,6 +151,12 @@ private fun App(store: SaveStore) {
             onBuyStone = vm::buyStone,
             onSellSword = vm::sellSword,
             onBuyItem = vm::buyItem,
+            onBack = { overlay = Overlay.None },
+        )
+
+        Overlay.Star -> StarScreen(
+            state = state,
+            onStarUp = vm::starUp,
             onBack = { overlay = Overlay.None },
         )
 
@@ -217,7 +230,7 @@ private fun App(store: SaveStore) {
             onOpenQuests = { overlay = Overlay.Quests },
             onOpenMenu = { overlay = Overlay.Records },
             onDismissIdle = vm::dismissIdleReward,
-            onStarUp = vm::starUp,
+            onOpenStar = { overlay = Overlay.Star },
             onAnimationEnd = vm::onAnimationFinished,
         )
     }

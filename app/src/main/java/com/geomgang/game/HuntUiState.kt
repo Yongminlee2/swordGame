@@ -5,6 +5,20 @@ import com.geomgang.core.Item
 import com.geomgang.core.Skill
 import com.geomgang.core.Zone
 
+/**
+ * 보스를 잡고 얻은 것.
+ *
+ * 지금까지 이 넷은 조용히 들어갔다. 승리감의 대부분이 "얼마나 벌었나" 인데
+ * 화면이 알려 주지 않으면 그 순간이 그냥 지나간다.
+ */
+data class BossReward(
+    val gold: Long,
+    val shards: Int,
+    val stones: Int,
+    /** 떨어진 펫 이름. 안 나왔으면 null. */
+    val petName: String? = null,
+)
+
 /** 사냥 중일 때 화면이 그리는 것. 사냥터 밖에서는 null 이다. */
 data class HuntUiState(
     val zone: Zone,
@@ -50,6 +64,12 @@ data class HuntUiState(
     val merchantPrice: Long = 0,
     /** 화면에 금덩이가 떠 있는지. */
     val nugget: Boolean = false,
+    /** 지금 즉시 재도전하는 값. 놓친 직후에만 뜻이 있다. */
+    val retryPrice: Long = 0,
+    /** 그 값을 낼 수 있는지. */
+    val canRetry: Boolean = false,
+    /** 방금 보스에게서 얻은 것. 승리 팝업이 그대로 띄운다. */
+    val bossReward: BossReward? = null,
 ) {
     val hpRatio: Float get() = (targetHp.toFloat() / targetMaxHp).coerceIn(0f, 1f)
 

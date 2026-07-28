@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -66,6 +67,9 @@ fun HuntScreen(
     onChallengeBoss: () -> Unit,
     onTapNugget: () -> Unit,
     onBuyMerchant: () -> Unit,
+    onRetryBoss: () -> Unit,
+    onGiveUpBoss: () -> Unit,
+    onStayInZone: () -> Unit,
     onLeave: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -73,6 +77,14 @@ fun HuntScreen(
     if (hunt == null) {
         ZonePicker(state, adventure, onEnterZone, onBack)
         return
+    }
+
+    // 승패는 알림 한 줄이 아니라 창으로 알린다. 5초를 걸고 싸운 결과가
+    // 화면 구석 한 줄로 지나가면 그 순간이 없던 일이 된다.
+    if (hunt.bossFailed) {
+        BossFailedDialog(hunt, onRetryBoss, onGiveUpBoss)
+    } else if (hunt.zoneCleared) {
+        BossWonDialog(hunt, onStayInZone, onLeave)
     }
 
     // 강화 화면과 같은 이유로 스크롤된다 - 이벤트 배너·금덩이 버튼·보스 도전이
@@ -277,13 +289,7 @@ fun HuntScreen(
             }
         }
 
-        // --- 알림과 보스 도전 ---
-        if (hunt.zoneCleared) {
-            Notice("${hunt.zone.displayName}을 깼다. 다음 구역이 열렸다", MaterialTheme.colorScheme.primary)
-        } else if (hunt.bossFailed) {
-            Notice("시간 안에 못 잡았다. 잡몹부터 다시 모아야 한다", MaterialTheme.colorScheme.error)
-        }
-
+        // --- 보스 도전 ---
         if (hunt.killsInZone >= hunt.killsNeeded && !hunt.isBoss && !hunt.zoneCleared) {
             Spacer(Modifier.height(10.dp))
             val beatable = Combat.canBeatBoss(state.sword, hunt.zone)
@@ -556,6 +562,81 @@ private fun TimerBar(ratio: Float) {
                 .background(Color(0xFFE0A458)),
         )
     }
+}
+
+/**
+ * 보스를 놓쳤다.
+ *
+ * 골드를 내면 잡몹을 다시 모으지 않고 **즉시** 다시 붙는다. 낮추려는 것은
+ * 재도전 문턱이지 5초의 긴장이 아니다. 값은 다시 도전할 때마다 두 배가 된다.
+ */
+@Composable
+private fun BossFailedDialog(
+    hunt: HuntUiState,
+    onRetry: () -> Unit,
+    onGiveUp: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onGiveUp,
+        title = { Text("보스를 놓쳤다", fontWeight = FontWeight.Bold) },
+        text = {
+            Column {
+                Text("${hunt.zone.bossName}이(가) 달아났다.", fontSize = 14.sp)
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "나가면 잡몹부터 다시 모아야 한다.",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onRetry, enabled = hunt.canRetry) {
+                Text("다시 도전 · %,d".format(hunt.retryPrice))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onGiveUp) { Text("나가기") }
+        },
+    )
+}
+
+/** 보스를 잡았다. 무엇을 얼마나 벌었는지가 승리감의 대부분이다. */
+@Composable
+private fun BossWonDialog(
+    hunt: HuntUiState,
+    onStay: () -> Unit,
+    onLeave: () -> Unit,
+) {
+    val reward = hunt.bossReward
+    AlertDialog(
+        onDismissRequest = onStay,
+        title = { Text("${hunt.zone.bossName} 격파", fontWeight = FontWeight.Bold) },
+        text = {
+            Column {
+                if (reward != null) {
+                    Text("💰 %,d".format(reward.gold), fontWeight = FontWeight.Bold)
+                    Text("💎 조각 ${reward.shards}", fontWeight = FontWeight.Bold)
+                    Text("🪨 강화석 ${reward.stones}", fontWeight = FontWeight.Bold)
+                    reward.petName?.let {
+                        Text("🥚 $it 알!", color = MaterialTheme.colorScheme.primary)
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
+                Text(
+                    text = "다음 구역이 열렸다.",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onLeave) { Text("다음 구역으로") }
+        },
+        dismissButton = {
+            TextButton(onClick = onStay) { Text("이 구역 더 돌기") }
+        },
+    )
 }
 
 @Composable

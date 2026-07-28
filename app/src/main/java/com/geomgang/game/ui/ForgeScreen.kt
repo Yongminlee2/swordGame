@@ -82,7 +82,7 @@ fun ForgeScreen(
     onOpenQuests: () -> Unit,
     onOpenMenu: () -> Unit,
     onDismissIdle: () -> Unit,
-    onStarUp: () -> Unit,
+    onOpenStar: () -> Unit,
     onAnimationEnd: () -> Unit,
 ) {
     val shake = remember { Animatable(0f) }
@@ -351,7 +351,7 @@ fun ForgeScreen(
                 Text(it, fontSize = 12.sp, color = MaterialTheme.colorScheme.error)
             }
             Spacer(Modifier.height(10.dp))
-            StarBar(state, onStarUp)
+            StarBar(state, onOpenStar)
             Spacer(Modifier.height(10.dp))
             // 사냥이 강화 비용의 출처다. 강화 버튼 바로 아래에 둬서 왕복이 짧게 한다.
             Button(
@@ -465,7 +465,7 @@ private fun IdleRewardDialog(reward: IdleReward, onDismiss: () -> Unit) {
  * 값은 자주 보고 이름은 한 번만 확인하면 되므로 크기를 다르게 준다.
  */
 @Composable
-private fun Stat(icon: String, label: String, value: String, color: Color = Color.Unspecified) {
+fun Stat(icon: String, label: String, value: String, color: Color = Color.Unspecified) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(icon, fontSize = 15.sp)
@@ -537,61 +537,27 @@ private fun IconEntry(
  * 그래야 두 계층의 긴장이 겹치지 않는다.
  */
 @Composable
-private fun StarBar(state: ForgeUiState, onStarUp: () -> Unit) {
+private fun StarBar(state: ForgeUiState, onOpenStar: () -> Unit) {
     val star = state.star ?: return
 
-    Column(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+    // 별 강화는 자기 화면으로 옮겼다. 메인은 **한 번의 강화**에 집중해야 하는데
+    // 성격이 다른 두 번째 강화가 같은 자리에 있으면 눈이 갈라진다.
+    // 여기 남는 것은 "지금 별이 몇 개인가" 와 들어가는 문 하나뿐이다.
+    OutlinedButton(onClick = onOpenStar, modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "특수강화  " + "★".repeat(star.stars) + "☆".repeat(star.maxStars - star.stars),
+            fontSize = 13.sp,
+            color = Color(0xFFFFD24A),
+        )
+        if (star.attackBonusPercent > 0) {
             Text(
-                text = "특수강화  " + "★".repeat(star.stars) + "☆".repeat(star.maxStars - star.stars),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFFFFD24A),
-            )
-            if (star.attackBonusPercent > 0) {
-                Text(
-                    text = "공격력 +${star.attackBonusPercent}%",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-        }
-        star.lastUp?.let {
-            Text(
-                text = if (it) "별이 하나 올랐다" else "실패 — 별 하나를 잃었다 (검은 무사하다)",
+                text = "  ·  공격력 +${star.attackBonusPercent}%",
                 fontSize = 12.sp,
-                color = if (it) Color(0xFF7FD48A) else Color(0xFFE0906A),
+                color = MaterialTheme.colorScheme.primary,
             )
         }
-        Spacer(Modifier.height(4.dp))
-        if (star.stars >= star.maxStars) {
-            Text(
-                "더 올릴 별이 없다",
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-            )
-        } else {
-            OutlinedButton(
-                onClick = onStarUp,
-                enabled = !state.busy && star.affordable,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(
-                    text = "별 올리기  ${star.successPercent}%  ·  조각 ${star.shardCost} · " +
-                        " %,d골드".format(star.goldCost),
-                    fontSize = 13.sp,
-                )
-            }
-            if (!star.affordable) {
-                Text(
-                    "조각이나 골드가 모자라다",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-                )
-            }
-        }
-        Spacer(Modifier.height(10.dp))
     }
+    Spacer(Modifier.height(10.dp))
 }
 
 @Composable

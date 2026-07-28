@@ -29,6 +29,7 @@ import com.geomgang.core.Combat
 import com.geomgang.core.DailyQuests
 import com.geomgang.core.HuntEvent
 import com.geomgang.core.HuntEvents
+import com.geomgang.core.HuntRetry
 import com.geomgang.core.IdleReward
 import com.geomgang.core.IdleRewards
 import com.geomgang.core.QuestKind
@@ -110,6 +111,17 @@ class ForgeViewModel(
     private var lastKillGold = 0L
     private var bossFailed = false
     private var zoneCleared = false
+
+    /**
+     * 이 구역에서 골드를 내고 재도전한 횟수. 낼 값이 매번 2배가 된다([HuntRetry]).
+     *
+     * 구역을 나가거나 보스를 잡으면 0으로 돌아간다 — 안 그러면 다음 구역까지
+     * 값이 따라와서 "왜 처음부터 비싸지" 가 된다.
+     */
+    private var bossRetries = 0
+
+    /** 방금 보스에게서 얻은 것. 승리 팝업이 읽고 나면 비운다. */
+    private var bossReward: BossReward? = null
     private var huntJob: Job? = null
     private var targetKind: MonsterKind? = null
 
@@ -416,6 +428,9 @@ class ForgeViewModel(
         game = game.copy(adventure = game.adventure.copy(zoneId = zone.id))
         bossFailed = false
         zoneCleared = false
+        // 구역이 바뀌면 재도전 값도 처음으로 돌아간다.
+        bossRetries = 0
+        bossReward = null
         refreshQuests() // 자정을 넘겨 계속 켜 둔 경우를 여기서 따라잡는다
         spawnNext()
         startHuntLoop()
@@ -428,6 +443,8 @@ class ForgeViewModel(
         stopHuntLoop()
         huntZone = null
         combo = 0
+        bossRetries = 0
+        bossReward = null
         activeEvent = null
         eventRemainingMillis = 0
         goldenRemainingMillis = 0
@@ -524,9 +541,20 @@ class ForgeViewModel(
             )
             rollDrop(zone, isBoss = true)
             // 보스는 낮은 확률로 자기 구역 펫의 알을 떨어뜨린다 (드롭 판정 뒤 난수 1개)
+            val eggBefore = lastEgg
             if (rng.nextDouble() < Pets.EGG_DROP_CHANCE) {
                 grantEgg(zone)
             }
+            // 얻은 것을 한 덩어리로 모아 승리 팝업에 넘긴다. 지금까지는 전부 조용히
+            // 들어가서 무엇을 벌었는지 알 수 없었다.
+            bossReward = BossReward(
+                gold = bossGold,
+                shards = shards,
+                stones = zone.bossStones,
+                petName = if (lastEgg !== eggBefore) lastEgg?.displayName else null,
+            )
+            // 이 구역은 끝났다. 다음 구역에 재도전 값이 따라가면 안 된다.
+            bossRetries = 0
             zoneCleared = true
             sound.zoneCleared()
             stopHuntLoop()
@@ -580,6 +608,50 @@ class ForgeViewModel(
     fun challengeBoss() {
         val zone = huntZone ?: return
         if (!game.adventure.bossReady || game.sword == null) return
+        startBossFight(zone)
+    }
+
+    /**
+     * 골드를 내고 **즉시** 다시 도전한다.
+     *
+     * 잡몹을 다시 모으지 않는다 — 낮추려는 것은 재도전 문턱이지 5초의 긴장이 아니다.
+     */
+    fun retryBoss() {
+        val zone = huntZone ?: return
+        if (!bossFailed || game.sword == null) return
+        if (!HuntRetry.canRetry(game.gold, zone, bossRetries)) return
+
+        game = game.copy(gold = game.gold - HuntRetry.priceOf(zone, bossRetries))
+        bossRetries++
+        // 놓칠 때 잡몹 진행이 지워졌으므로 보스가 다시 나오도록 되돌린다.
+        game = game.copy(
+            adventure = game.adventure.copy(killsInZone = Zone.MONSTERS_BEFORE_BOSS),
+        )
+        persist()
+        startBossFight(zone)
+    }
+
+    /**
+     * 승리 팝업을 닫고 이 구역에 남는다. 잡몹부터 다시 모아 재료를 캔다.
+     *
+     * 보스를 잡을 때 `killsInZone` 이 이미 0이 되므로 여기서는 알림만 끄면 된다.
+     */
+    fun stayInZone() {
+        if (!zoneCleared) return
+        zoneCleared = false
+        bossReward = null
+        spawnNext()
+        _ui.value = render()
+    }
+
+    /** 패배 팝업을 닫고 사냥터를 나간다. 대가를 안 냈으므로 잡몹 진행은 이미 지워졌다. */
+    fun giveUpBoss() {
+        if (!bossFailed) return
+        bossFailed = false
+        leaveHunt()
+    }
+
+    private fun startBossFight(zone: Zone) {
         fightingBoss = true
         bossFailed = false
         targetMaxHp = zone.bossHp
@@ -931,6 +1003,9 @@ class ForgeViewModel(
             lastKillGold = lastKillGold,
             bossFailed = bossFailed,
             zoneCleared = zoneCleared,
+            retryPrice = HuntRetry.priceOf(zone, bossRetries),
+            canRetry = !busy && HuntRetry.canRetry(game.gold, zone, bossRetries),
+            bossReward = bossReward,
             event = activeEvent,
             eventRemainingMillis = eventRemainingMillis,
             goldenRemainingMillis = goldenRemainingMillis,
