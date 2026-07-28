@@ -100,8 +100,23 @@ object ForgeEngine {
             inventory = inventory,
         )
 
+        // 담금질은 이 목표 단계에 쌓인 것만 센다. 단계가 바뀌었으면 0 부터다.
+        val fails = Tempering.failsFor(state, targetLevel)
+
+        /**
+         * 실패했을 때의 바탕 상태. 담금질이 한 칸 쌓여 있다.
+         *
+         * 부적을 써서 검이 무사한 실패도 여기를 지난다 - 그러지 않으면 부적이
+         * "손해 없는 굴림" 이 되어 고를 이유가 사라진다.
+         */
+        val failed = if (Tempering.applies(targetLevel)) {
+            paid.copy(temperLevel = targetLevel, temperFails = fails + 1)
+        } else {
+            paid
+        }
+
         val successRate = (
-            RateTable.successRate(state.difficulty, targetLevel, items.blessing) +
+            RateTable.successRate(state.difficulty, targetLevel, items.blessing, fails) +
                 extraSuccessRate + UniqueSwords.forgeBonusOf(sword)
             ).coerceAtMost(RateTable.MAX_SUCCESS_RATE)
         if (rng.nextDouble() < successRate) {
@@ -109,6 +124,9 @@ object ForgeEngine {
                 state = paid.copy(
                     sword = sword.copy(level = targetLevel),
                     bestLevel = maxOf(paid.bestLevel, targetLevel),
+                    // 성공하면 담금질은 처음으로 돌아간다.
+                    temperLevel = 0,
+                    temperFails = 0,
                 ),
                 newLevel = targetLevel,
             )
@@ -116,13 +134,13 @@ object ForgeEngine {
 
         // 행운부적은 실패의 결과 자체를 무효화한다. 파괴 판정 난수도 소비하지 않는다.
         if (items.luckCharm) {
-            return ForgeResult.Stay(paid, sword.level)
+            return ForgeResult.Stay(failed, sword.level)
         }
 
         return when (RateTable.failureBand(targetLevel)) {
-            FailureBand.STAY -> ForgeResult.Stay(paid, sword.level)
+            FailureBand.STAY -> ForgeResult.Stay(failed, sword.level)
 
-            FailureBand.DROP -> drop(paid, sword)
+            FailureBand.DROP -> drop(failed, sword)
 
             FailureBand.DESTROY_OR_DROP ->
                 if (rng.nextDouble() < RateTable.destroyChance(targetLevel)) {
@@ -135,21 +153,21 @@ object ForgeEngine {
                             uniqueId = null,
                         )
                         ForgeResult.Drop(
-                            state = paid.copy(sword = revived),
+                            state = failed.copy(sword = revived),
                             newLevel = revived.level,
                         )
                     } else {
                         ForgeResult.Destroyed(
-                            state = paid.copy(
+                            state = failed.copy(
                                 sword = null,
                                 pendingDestroy = PendingDestroy(sword.family, sword.level),
                             ),
                             lostLevel = sword.level,
-                            preventable = paid.inventory.preventTickets > 0,
+                            preventable = failed.inventory.preventTickets > 0,
                         )
                     }
                 } else {
-                    drop(paid, sword)
+                    drop(failed, sword)
                 }
         }
     }

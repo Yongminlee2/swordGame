@@ -61,14 +61,23 @@ object RateTable {
         return maxOf(decayed, ENDLESS_FLOOR)
     }
 
-    /** 난이도 배수와 축복서를 반영한 최종 성공률. */
+    /**
+     * 난이도 배수·담금질·축복서를 반영한 최종 성공률.
+     *
+     * 순서가 뜻을 만든다. 담금질은 누적된 몫이라 난이도 배수 **뒤**에 붙고,
+     * 축복서는 "이번 판만 얹는 것" 이라 누적분 **위**에 얹힌다.
+     *
+     * @param temperFails 이 목표 단계에 쌓인 실패 수. 0 이면 예전과 같은 값이다.
+     */
     fun successRate(
         difficulty: Difficulty,
         targetLevel: Int,
         blessing: Boolean = false,
+        temperFails: Int = 0,
     ): Double {
         val scaled = baseSuccessRate(targetLevel) * difficulty.multiplier
-        val boosted = if (blessing) scaled + BLESSING_BONUS else scaled
+        val tempered = Tempering.rateFor(scaled, targetLevel, temperFails)
+        val boosted = if (blessing) tempered + BLESSING_BONUS else tempered
         return minOf(boosted, MAX_SUCCESS_RATE)
     }
 

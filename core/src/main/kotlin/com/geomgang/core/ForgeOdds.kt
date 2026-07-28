@@ -53,13 +53,16 @@ data class ForgeOdds(
          * @param targetLevel 이번 시도로 **도달하려는** 단계 (현재 단계 + 1)
          * @param items 지금 켜 둔 아이템. 축복서는 성공률을 올리고,
          *   행운부적은 실패의 결과 자체를 없앤다.
+         * @param temperFails 이 단계에 쌓인 담금질. 성공률을 올린다.
          */
         fun of(
             difficulty: Difficulty,
             targetLevel: Int,
             items: UsedItems = UsedItems.NONE,
+            temperFails: Int = 0,
         ): ForgeOdds {
-            val success = RateTable.successRate(difficulty, targetLevel, items.blessing)
+            val success =
+                RateTable.successRate(difficulty, targetLevel, items.blessing, temperFails)
             val fail = 1.0 - success
 
             // 행운부적은 실패해도 단계를 지키므로 실패분이 전부 유지가 된다.

@@ -173,20 +173,54 @@ data class GameState(
      * 그때는 보상을 주지 않는다. 처음 저장되는 순간부터 시계가 돈다.
      */
     val lastSeenMillis: Long = 0,
+    /**
+     * 담금질이 쌓인 목표 단계. 단계가 바뀌면 누적을 버린다.
+     *
+     * 0 은 "쌓인 것 없음"이다 — +1 을 노리는 시도의 targetLevel 이 1 이므로
+     * 0 과 겹치지 않는다.
+     */
+    val temperLevel: Int = 0,
+    /** [temperLevel] 에서 실패한 횟수. 성공하면 0 으로 돌아간다. */
+    val temperFails: Int = 0,
+    /**
+     * 최근 강화 결과. 왼쪽이 오래된 것, 오른쪽이 방금 것이다.
+     *
+     * 세이브에 남기는 이유: 앱을 껐다 켰다고 자기 연패가 없던 일이 되면 안 된다.
+     */
+    val recentMarks: List<ForgeMark> = emptyList(),
 ) {
     init {
         require(gold >= 0) { "gold must be >= 0, was $gold" }
         require(shards >= 0) { "shards must be >= 0, was $shards" }
         require(bestLevel >= 0) { "bestLevel must be >= 0, was $bestLevel" }
         require(forgeStones >= 0) { "forgeStones must be >= 0, was $forgeStones" }
+        require(temperFails >= 0) { "temperFails must be >= 0, was $temperFails" }
     }
 }
 
-/** 이번 강화 시도에 함께 사용할 아이템. */
+/**
+ * 이번 강화 시도에 함께 사용할 아이템.
+ *
+ * 축복서와 부적은 **함께 켜지지 않는다.** 둘 다 쓸 수 있으면 "있으면 전부 켠다" 가
+ * 유일한 최선이 되어 고를 것이 사라진다. 하나만 고르게 해야 갈림길이 생긴다.
+ *
+ * - 축복서 — 이번 판 확률만 올린다. 담금질이 얕을 때 지르는 수다
+ * - 부적 — 실패해도 부서지지 않지만 **담금질은 오른다.** 안전하게 쌓는 수다
+ *
+ * 배타를 화면이 아니라 여기서 지키는 이유: 토글이 둘로 나뉘어 있으면 반드시 어긋난다.
+ */
 data class UsedItems(
     val blessing: Boolean = false,
     val luckCharm: Boolean = false,
 ) {
+    /** 축복서를 켜고 끈다. 켜면 부적이 내려간다. */
+    fun toggleBlessing(): UsedItems =
+        if (blessing) NONE else UsedItems(blessing = true)
+
+    /** 부적을 켜고 끈다. 켜면 축복서가 내려간다. */
+    fun toggleLuckCharm(): UsedItems =
+        if (luckCharm) NONE else UsedItems(luckCharm = true)
+
     companion object {
         val NONE: UsedItems = UsedItems()
     }
