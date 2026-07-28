@@ -206,4 +206,19 @@ object UniqueSwords {
     fun forgeBonusOf(sword: Sword?): Double = if (sword?.uniqueId == "origin") 0.03 else 0.0
 
     fun canRevive(sword: Sword?): Boolean = sword?.uniqueId == "phoenix"
+
+    /** 고유검 한 종류를 발견한 값. 0.003 은 0.3%p 다. */
+    const val PER_UNIQUE: Double = 0.003
+
+    /**
+     * 발견한 고유검 수로 정해지는 보너스.
+     *
+     * **들고 있을 필요가 없다** — 한 번 만들어 봤다는 사실 자체가 대장장이의 실력이다.
+     * 모르는 id 는 세지 않는다(옛 세이브나 손댄 세이브 대비).
+     */
+    fun holdingBonus(progress: ProgressState): ForgeBonus {
+        val known = progress.uniqueFound.count { byId(it) != null }
+        val value = PER_UNIQUE * known
+        return ForgeBonus(successRate = value, destroyGuard = value)
+    }
 }

@@ -159,6 +159,12 @@ data class ProgressState(
      */
     val clearedZones: Set<String> = emptySet(),
     /**
+     * 대장간 스킬 레벨. 골드로 올리는 영구 성장이다.
+     *
+     * 진행도에 두는 이유: 모드 초기화로 지워지면 아무도 초기화를 누르지 않는다.
+     */
+    val smithyLevel: Int = 0,
+    /**
      * 한 번이라도 얻어 본 펫 id. 수집 기록이므로 [uniqueFound] 와 같이 전역에 남는다.
      * 지금 보유·레벨은 모드 세이브([GameState.pets])가 들고 있다.
      */

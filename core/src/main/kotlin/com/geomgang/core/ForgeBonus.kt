@@ -46,6 +46,17 @@ object ForgeBonuses {
             detail = "${Progress.entriesOf(progress).size} / ${WeaponCatalog.ENTRIES.size}",
             bonus = CodexOffer.bonusOf(progress),
         ),
+        BonusSource(
+            label = "대장간",
+            detail = "Lv ${progress.smithyLevel}",
+            bonus = Smithy.bonusOf(progress),
+        ),
+        BonusSource(
+            label = "고유검",
+            detail = "${progress.uniqueFound.count { UniqueSwords.byId(it) != null }} / " +
+                "${UniqueSwords.RECIPES.size}",
+            bonus = UniqueSwords.holdingBonus(progress),
+        ),
     )
 
     fun of(state: GameState, progress: ProgressState): ForgeBonus =
