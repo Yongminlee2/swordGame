@@ -182,19 +182,19 @@ class ForgeViewModelEconomyTest {
         assertFalse("남은 축복서가 없으면 켜질 수 없다", vm.ui.value.useBlessing)
     }
 
-    // --- 검 ---
+    // --- 계열 해금 ---
 
     @Test
-    fun `고를 수 있는 검은 용검 하나다`() = runTest(dispatcher) {
-        assertEquals(listOf(WeaponFamily.ONLY), vm().ui.value.unlockedFamilies)
+    fun `처음에는 기본 계열 4종만 고를 수 있다`() = runTest(dispatcher) {
+        assertEquals(WeaponFamily.STARTERS, vm().ui.value.unlockedFamilies)
     }
 
     @Test
     fun `검 구매는 지정한 계열로 생긴다`() = runTest(dispatcher) {
         val vm = vm(gold = 1_000, sword = null)
-        vm.buySword(WeaponFamily.ONLY)
+        vm.buySword(WeaponFamily.GREAT)
         assertNotNull(vm.ui.value.sword)
-        assertEquals(WeaponFamily.ONLY, vm.ui.value.sword?.family)
+        assertEquals(WeaponFamily.GREAT, vm.ui.value.sword?.family)
     }
 
     @Test
