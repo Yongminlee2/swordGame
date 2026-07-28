@@ -66,13 +66,30 @@ enum class Achievement(val id: String, val displayName: String, val title: Strin
     PET_ALL("pet_all", "펫 12종 전부 모으기", "동물의 친구"),
 }
 
-/** 도감 한 칸의 획득 기록. 같은 계열·티어라도 난이도가 다르면 별개 기록이다. */
+/**
+ * 도감 한 칸의 획득 기록. 같은 칸이라도 난이도가 다르면 별개 기록이다.
+ *
+ * [family] 가 null 이면 전설 칸이다 — [WeaponCatalog.FAMILY_MAX_LEVEL] 위는 계열과
+ * 무관하게 같은 그림이라 칸도 하나다.
+ */
 @Serializable
 data class CodexKey(
-    val family: WeaponFamily,
-    val tier: WeaponTier,
+    val family: WeaponFamily? = null,
+    val level: Int = LEGACY_LEVEL,
     val difficulty: Difficulty,
-)
+    /**
+     * 옛 세이브 호환용.
+     *
+     * 티어가 곧 칸이던 시절의 기록이다. 불러올 때 [Progress.migrateCodex] 가
+     * 티어의 첫 단계로 옮기고 이 값을 버린다. 새로 쓰는 기록에는 들어가지 않는다.
+     */
+    val tier: WeaponTier? = null,
+) {
+    companion object {
+        /** 단계가 적히지 않은 기록 — 티어 시절 세이브라는 뜻이다. */
+        const val LEGACY_LEVEL: Int = -1
+    }
+}
 
 /**
  * 누적 통계. 전 모드 합산이다.
@@ -193,16 +210,42 @@ object Progress {
      * 무엇을 받든 결과가 같은데, 도감 한 칸이 걸리면 받는 쪽에 의미가 생긴다.
      */
     fun incompleteFamilies(p: ProgressState): Set<WeaponFamily> {
-        val found = p.codex.map { CodexEntry(it.family, it.tier) }.toSet()
+        val found = entriesOf(p)
         return WeaponCatalog.ENTRIES
             .filterNot { it in found }
-            .map { it.family }
+            .mapNotNull { it.family }
             .toSet()
+    }
+
+    /** 도감에서 채워진 칸. 난이도를 지우고 칸만 센다. */
+    fun entriesOf(p: ProgressState): Set<CodexEntry> =
+        p.codex.map { CodexEntry(it.family, it.level) }.toSet()
+
+    /**
+     * 티어 시절 도감 기록을 칸 단위로 옮긴다.
+     *
+     * 옛 기록에는 정확한 단계가 남아 있지 않으므로 티어의 **첫 단계**로 옮긴다.
+     * 채운 칸 수는 그대로 살고 분모만 커진다.
+     *
+     * 다만 무한 구간 티어(+21 위)는 계열마다 있던 것이 전설 칸 하나로 모인다 —
+     * 그 구간은 원래 모든 계열이 같은 그림을 쓰므로 칸을 계열마다 둘 이유가 없다.
+     */
+    fun migrateCodex(p: ProgressState): ProgressState {
+        if (p.codex.none { it.level == CodexKey.LEGACY_LEVEL }) return p
+        val moved = p.codex.mapNotNull { key ->
+            if (key.level != CodexKey.LEGACY_LEVEL) return@mapNotNull key
+            val family = key.family ?: return@mapNotNull null
+            val tier = key.tier ?: return@mapNotNull null
+            val slot = WeaponCatalog.slotFor(family, tier.minLevel)
+            CodexKey(slot.family, slot.level, key.difficulty)
+        }
+        return p.copy(codex = moved.toSet())
     }
 
     /** 검을 손에 넣었을 때 도감에 등록한다. 구매·조합·강화 성공 모두 여기를 지난다. */
     fun registerSword(p: ProgressState, difficulty: Difficulty, sword: Sword): ProgressState {
-        val key = CodexKey(sword.family, WeaponCatalog.tierFor(sword.level), difficulty)
+        val slot = WeaponCatalog.slotFor(sword.family, sword.level)
+        val key = CodexKey(slot.family, slot.level, difficulty)
         return if (key in p.codex) p else p.copy(codex = p.codex + key)
     }
 
@@ -314,10 +357,14 @@ object Progress {
      *
      * 즉석에서 하나씩 판정하지 않는 이유: 세이브를 불러왔을 때나 업적을 새로 추가했을 때
      * 소급 적용이 자동으로 되기 때문이다. 이미 달성한 업적은 절대 취소되지 않는다.
+     *
+     * 도감 기록의 이관도 여기서 한다 — 불러오기가 반드시 지나는 길이라 옛 세이브가
+     * 티어 시절 기록을 그대로 들고 화면까지 가는 일이 없다.
      */
-    fun refresh(p: ProgressState): ProgressState {
+    fun refresh(state: ProgressState): ProgressState {
+        val p = migrateCodex(state)
         val s = p.stats
-        val distinctEntries = p.codex.map { CodexEntry(it.family, it.tier) }.toSet().size
+        val distinctEntries = entriesOf(p).size
         val total = WeaponCatalog.ENTRIES.size
 
         val earned = buildSet {

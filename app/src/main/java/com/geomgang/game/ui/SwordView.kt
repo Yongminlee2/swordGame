@@ -108,21 +108,26 @@ private fun Sprite2Box(sword: Sword, modifier: Modifier) {
 }
 
 /**
- * 도감 칸용 — 계열×티어 그림. 미발견은 어둡게.
+ * 도감 칸용 — 계열과 단계로 정확히 한 그림. 미발견은 어둡게.
  *
- * 티어의 대표 단계(minLevel) 그림을 시트3에서 가져온다. 강화 화면에서 본 그림과
- * 같아야 "그 검"으로 읽힌다.
+ * [family] 가 null 이면 전설 그림이다 — +21 위는 계열과 무관하게 같은 그림을 쓴다.
+ * 강화 화면에서 본 그림과 같아야 "그 검"으로 읽히므로 시트3의 같은 칸을 본다.
  */
 @Composable
-fun TierThumb(
-    family: WeaponFamily,
-    tier: com.geomgang.core.WeaponTier,
+fun LevelThumb(
+    family: WeaponFamily?,
+    level: Int,
     modifier: Modifier = Modifier,
     size: Dp = 52.dp,
     dimmed: Boolean = false,
 ) {
     val sheet = rememberSheet3()
-    val src = SwordSheet3.offsetOf(SwordSheet3.cellOf(family, tier.minLevel))
+    val cell = if (family == null) {
+        SwordSheet3.legendCellOf(level)
+    } else {
+        SwordSheet3.cellOf(family, level)
+    }
+    val src = SwordSheet3.offsetOf(cell)
     Canvas(modifier.size(size)) {
         drawImage(
             image = sheet,

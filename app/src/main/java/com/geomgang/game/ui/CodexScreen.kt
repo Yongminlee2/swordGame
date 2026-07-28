@@ -1,4 +1,4 @@
-package com.geomgang.game.ui
+﻿package com.geomgang.game.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
@@ -28,10 +28,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geomgang.core.CodexEntry
-import com.geomgang.core.CodexKey
-import com.geomgang.core.Difficulty
+import com.geomgang.core.Progress
 import com.geomgang.core.ProgressState
-import com.geomgang.core.SwordNames
 import com.geomgang.core.UniqueSwords
 import com.geomgang.core.WeaponCatalog
 import com.geomgang.core.WeaponFamily
@@ -39,16 +37,14 @@ import com.geomgang.core.WeaponFamily
 /**
  * 도감.
  *
- * 계열 8종 × 티어 11종 = 88칸. 얻은 칸은 실제 검을, 못 얻은 칸은 어두운 실루엣을 보여 준다.
- * 칸마다 어느 난이도에서 얻었는지 점으로 표시한다.
+ * **그림 한 장에 칸 하나다.** 계열 14 × 단계 21 = 294 칸에 전설 20 칸을 더해 314 칸이며,
+ * 시트3 의 그림 수와 정확히 같다. 얻은 칸은 실제 검을, 못 얻은 칸은 어두운 실루엣을 보여 준다.
  *
  * 모드를 초기화해도 여기는 지워지지 않는다. 그게 이 게임의 재도전 동력이다.
  */
 @Composable
 fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
-    val owned: Set<CodexEntry> = progress.codex
-        .map { CodexEntry(it.family, it.tier) }
-        .toSet()
+    val owned: Set<CodexEntry> = Progress.entriesOf(progress)
 
     Column(
         modifier = Modifier
@@ -71,19 +67,41 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
         Spacer(Modifier.height(14.dp))
 
         LazyVerticalGrid(
-            columns = GridCells.Fixed(4),
+            columns = GridCells.Fixed(COLUMNS),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            items(WeaponCatalog.ENTRIES) { entry ->
-                CodexCell(
-                    entry = entry,
-                    discovered = entry in owned,
-                    difficulties = progress.codex
-                        .filter { it.family == entry.family && it.tier == entry.tier }
-                        .map(CodexKey::difficulty)
-                        .toSet(),
+            // 계열마다 구획을 나눈다. 314칸을 한 격자에 쏟으면 79줄이 되어
+            // 지금 어느 계열을 보고 있는지 알 수 없다.
+            WeaponFamily.entries.forEach { family ->
+                val levels = WeaponCatalog.LEVELS_PER_FAMILY.toList()
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    SectionHeader(
+                        title = family.displayName,
+                        owned = levels.count { CodexEntry(family, it) in owned },
+                        total = levels.size,
+                    )
+                }
+                items(levels) { level ->
+                    val entry = CodexEntry(family, level)
+                    CodexCell(entry = entry, discovered = entry in owned)
+                }
+            }
+
+            // 전설 칸은 계열마다 두지 않는다. +21 위는 모든 계열이 같은 그림을 쓴다.
+            val legendLevels = WeaponCatalog.LEGEND_LEVELS.toList()
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                SectionHeader(
+                    title = "전설  +${WeaponCatalog.FAMILY_MAX_LEVEL + 1}~" +
+                        "+${WeaponCatalog.LEGEND_MAX_LEVEL}",
+                    owned = legendLevels.count { CodexEntry(null, it) in owned },
+                    total = legendLevels.size,
+                    color = Color(0xFFFFD54A),
                 )
+            }
+            items(legendLevels) { level ->
+                val entry = CodexEntry(null, level)
+                CodexCell(entry = entry, discovered = entry in owned)
             }
 
             // --- 조합표 ---
@@ -114,9 +132,9 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
                         modifier = Modifier.padding(10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        TierThumb(
+                        LevelThumb(
                             family = entry.result,
-                            tier = com.geomgang.core.WeaponTier.SILVER,
+                            level = 6,
                             size = 36.dp,
                         )
                         Column(Modifier.padding(start = 10.dp)) {
@@ -140,9 +158,9 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
                         modifier = Modifier.padding(10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        TierThumb(
+                        LevelThumb(
                             family = WeaponFamily.FUSED,
-                            tier = com.geomgang.core.WeaponTier.SILVER,
+                            level = 6,
                             size = 36.dp,
                         )
                         Column(Modifier.padding(start = 10.dp)) {
@@ -162,9 +180,9 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
                         modifier = Modifier.padding(10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        TierThumb(
+                        LevelThumb(
                             family = WeaponFamily.VOID,
-                            tier = com.geomgang.core.WeaponTier.SILVER,
+                            level = 6,
                             size = 36.dp,
                         )
                         Column(Modifier.padding(start = 10.dp)) {
@@ -237,82 +255,80 @@ private fun UniqueRow(recipe: com.geomgang.core.UniqueRecipe, found: Boolean) {
     }
 }
 
+/** 계열 한 구획의 머리. 몇 칸을 채웠는지가 여기서 바로 읽혀야 한다. */
 @Composable
-private fun CodexCell(
-    entry: CodexEntry,
-    discovered: Boolean,
-    difficulties: Set<Difficulty>,
+private fun SectionHeader(
+    title: String,
+    owned: Int,
+    total: Int,
+    color: Color = MaterialTheme.colorScheme.secondary,
 ) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 10.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(text = title, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = color)
+        Text(
+            text = "$owned / $total",
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onBackground.copy(
+                alpha = if (owned == total) 1f else 0.55f,
+            ),
+            fontWeight = if (owned == total) FontWeight.Bold else FontWeight.Normal,
+        )
+    }
+}
+
+/**
+ * 도감 한 칸.
+ *
+ * 계열은 구획 머리가 말해 주므로 칸에는 쓰지 않는다. 남는 것은 그림과 단계뿐이라
+ * 칸이 작아져도 314칸이 읽힌다.
+ */
+@Composable
+private fun CodexCell(entry: CodexEntry, discovered: Boolean) {
     Card(Modifier.fillMaxWidth()) {
         Column(
-            modifier = Modifier.padding(6.dp),
+            modifier = Modifier.padding(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(0.8f),
+                    .aspectRatio(1f),
                 contentAlignment = Alignment.Center,
             ) {
                 // 못 얻은 칸도 형태는 보여 준다. 무엇을 노려야 하는지 알아야 모으고 싶어진다.
-                TierThumb(
+                LevelThumb(
                     family = entry.family,
-                    tier = entry.tier,
+                    level = entry.level,
                     dimmed = !discovered,
-                    size = 52.dp,
+                    size = 40.dp,
                 )
             }
-
             Text(
-                // 도감도 단계 이름을 쓴다. 이름 체계를 두 벌 두면 헷갈린다.
-                text = if (discovered) SwordNames.nameFor(entry.tier.minLevel) else "???",
+                text = "+${entry.level}",
                 fontSize = 10.sp,
                 maxLines = 1,
+                fontWeight = if (discovered) FontWeight.Bold else FontWeight.Normal,
                 color = if (discovered) {
                     MaterialTheme.colorScheme.onSurface
                 } else {
-                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
                 },
             )
-            Text(
-                text = entry.family.displayName,
-                fontSize = 9.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
-            )
-
-            Spacer(Modifier.height(3.dp))
-            DifficultyDots(
-                available = WeaponCatalog.difficultiesFor(entry.tier),
-                earned = difficulties,
-            )
         }
     }
 }
 
-/** 이 티어를 얻을 수 있는 난이도마다 점 하나. 얻은 난이도는 채워진다. */
-@Composable
-private fun DifficultyDots(available: List<Difficulty>, earned: Set<Difficulty>) {
-    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-        available.forEach { d ->
-            Box(
-                Modifier
-                    .height(6.dp)
-                    .aspectRatio(1f),
-            ) {
-                Canvas(Modifier.fillMaxSize()) {
-                    drawCircle(
-                        color = if (d in earned) dotColor(d) else Color(0xFF3A3350),
-                    )
-                }
-            }
-        }
-    }
-}
-
-private fun dotColor(d: Difficulty): Color = when (d) {
-    Difficulty.EASY -> Color(0xFF7FD48A)
-    Difficulty.NORMAL -> Color(0xFF7FA5C4)
-    Difficulty.HARD -> Color(0xFFE05A5A)
-    Difficulty.ENDLESS -> Color(0xFFC79BFF)
-}
+/**
+ * 격자 열 수.
+ *
+ * 칸이 314개라 4열이면 너무 길고 6열이면 "+40" 이 잘린다. 21칸짜리 계열 구획이
+ * 다섯 줄로 딱 떨어지는 것도 5열이다.
+ */
+private const val COLUMNS = 5
 

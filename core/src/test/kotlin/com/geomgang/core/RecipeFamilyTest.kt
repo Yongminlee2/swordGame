@@ -62,7 +62,7 @@ class RecipeFamilyTest {
     fun `다 채운 계열은 후보에서 빠진다`() {
         val filled = WeaponCatalog.ENTRIES
             .filter { it.family == WeaponFamily.STRAIGHT }
-            .map { CodexKey(it.family, it.tier, Difficulty.ENDLESS) }
+            .map { CodexKey(it.family, it.level, Difficulty.ENDLESS) }
             .toSet()
 
         val incomplete = Progress.incompleteFamilies(ProgressState(codex = filled))

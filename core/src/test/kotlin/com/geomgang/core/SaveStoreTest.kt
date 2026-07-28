@@ -96,13 +96,46 @@ class SaveStoreTest {
     fun `진행도가 저장되고 복원된다`() {
         val s = store()
         val p = ProgressState(
-            codex = setOf(CodexKey(WeaponFamily.TWIN, WeaponTier.RUNE, Difficulty.EASY)),
+            codex = setOf(CodexKey(WeaponFamily.TWIN, 9, Difficulty.EASY)),
             achievements = setOf(Achievement.REACH_10),
             selectedTitle = Achievement.REACH_10,
             stats = Stats(attempts = 300, successes = 120, attemptsByLevel = mapOf(10 to 40L)),
         )
         s.saveProgress(p)
         assertEquals(p, s.loadProgress())
+    }
+
+    /**
+     * 티어가 칸이던 시절 파일을 그대로 읽는다.
+     *
+     * 불러오는 문에서 이관해야 한다. 예전에는 [Progress.refresh] 에 맡겼는데 그 함수를
+     * 거치지 않는 경로가 있어, 단계가 안 적힌 기록이 화면까지 가서 도감이 계열마다
+     * **한 칸**으로 뭉쳤다. 이 테스트가 그 길을 막는다.
+     */
+    @Test
+    fun `옛 티어 세이브를 읽으면 단계 칸으로 이관된다`() {
+        File(tmp.root, SaveStore.PROGRESS_FILE).writeText(
+            """
+            {
+              "codex": [
+                {"family":"STRAIGHT","tier":"RUSTY","difficulty":"EASY"},
+                {"family":"STRAIGHT","tier":"STEEL","difficulty":"EASY"},
+                {"family":"CURVED","tier":"RUSTY","difficulty":"EASY"}
+              ]
+            }
+            """.trimIndent(),
+        )
+
+        val loaded = store().loadProgress()
+        val entries = Progress.entriesOf(loaded)
+
+        // 계열마다 한 칸으로 뭉치지 않고 티어 수만큼 살아남는다
+        assertEquals(3, entries.size)
+        assertTrue(CodexEntry(WeaponFamily.STRAIGHT, 0) in entries)
+        assertTrue(CodexEntry(WeaponFamily.STRAIGHT, 3) in entries)
+        assertTrue(CodexEntry(WeaponFamily.CURVED, 0) in entries)
+        // 단계가 안 적힌 기록이 남아 있으면 안 된다
+        assertTrue(loaded.codex.none { it.level == CodexKey.LEGACY_LEVEL })
     }
 
     @Test

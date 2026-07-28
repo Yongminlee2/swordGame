@@ -77,19 +77,43 @@ class WeaponCatalogTest {
         )
     }
 
+    /**
+     * 그림 한 장에 칸 하나다.
+     *
+     * 계열 14 × 단계 21 = 294 에 전설 20 을 더해 314. 시트3 의 칸 수와 같아야 한다 —
+     * 어긋나면 도감에 자리가 없는 그림이 생기거나 그림 없는 칸이 생긴다.
+     */
     @Test
-    fun `도감 엔트리는 계열 14종 곱하기 티어 11종으로 154개다`() {
-        assertEquals(154, WeaponCatalog.ENTRIES.size)
-        assertEquals(154, WeaponCatalog.ENTRIES.toSet().size)
+    fun `도감 엔트리는 계열칸 294에 전설칸 20을 더해 314개다`() {
+        assertEquals(314, WeaponCatalog.ENTRIES.size)
+        assertEquals(314, WeaponCatalog.ENTRIES.toSet().size)
+        assertEquals(294, WeaponCatalog.ENTRIES.count { it.family != null })
+        assertEquals(20, WeaponCatalog.ENTRIES.count { it.family == null })
     }
 
     @Test
-    fun `모든 계열이 모든 티어를 하나씩 갖는다`() {
+    fun `모든 계열이 0부터 20단계까지 한 칸씩 갖는다`() {
         for (family in WeaponFamily.entries) {
-            val tiers = WeaponCatalog.ENTRIES.filter { it.family == family }.map { it.tier }
-            assertEquals(WeaponTier.entries.size, tiers.size)
-            assertEquals(WeaponTier.entries.toSet(), tiers.toSet())
+            val levels = WeaponCatalog.ENTRIES.filter { it.family == family }.map { it.level }
+            assertEquals(21, levels.size)
+            assertEquals((0..20).toSet(), levels.toSet())
         }
+    }
+
+    /** +21 위는 계열과 무관하게 같은 그림이라 칸도 계열마다 두지 않는다. */
+    @Test
+    fun `21단계 위는 계열 없는 전설 칸으로 간다`() {
+        assertEquals(CodexEntry(WeaponFamily.DRAGON, 20), WeaponCatalog.slotFor(WeaponFamily.DRAGON, 20))
+        assertEquals(CodexEntry(null, 21), WeaponCatalog.slotFor(WeaponFamily.DRAGON, 21))
+        assertEquals(CodexEntry(null, 21), WeaponCatalog.slotFor(WeaponFamily.HOLY, 21))
+    }
+
+    /** 그림이 더 없는 구간은 마지막 전설 칸으로 모인다. */
+    @Test
+    fun `41단계 위는 마지막 전설 칸을 쓴다`() {
+        assertEquals(CodexEntry(null, 40), WeaponCatalog.slotFor(WeaponFamily.DRAGON, 40))
+        assertEquals(CodexEntry(null, 40), WeaponCatalog.slotFor(WeaponFamily.DRAGON, 41))
+        assertEquals(CodexEntry(null, 40), WeaponCatalog.slotFor(WeaponFamily.DRAGON, 9999))
     }
 
     @Test

@@ -33,9 +33,19 @@ class SaveStore(private val dir: File) {
         write(gameFile(state.difficulty), json.encodeToString(GameState.serializer(), state))
     }
 
-    fun loadProgress(): ProgressState =
-        read(File(dir, PROGRESS_FILE)) { json.decodeFromString(ProgressState.serializer(), it) }
-            ?: ProgressState()
+    /**
+     * 도감·업적·통계를 읽는다.
+     *
+     * 옛 도감 기록의 이관을 **여기서** 한다. 불러오기가 반드시 지나는 문이라
+     * 화면이든 계산이든 티어 시절 모양을 볼 일이 없다 — 이관을 [Progress.refresh] 에
+     * 맡겼더니 그 함수를 거치지 않는 경로가 있어 도감이 계열마다 한 칸으로 뭉쳤다.
+     */
+    fun loadProgress(): ProgressState {
+        val loaded = read(File(dir, PROGRESS_FILE)) {
+            json.decodeFromString(ProgressState.serializer(), it)
+        } ?: ProgressState()
+        return Progress.migrateCodex(loaded)
+    }
 
     fun saveProgress(p: ProgressState) {
         write(File(dir, PROGRESS_FILE), json.encodeToString(ProgressState.serializer(), p))

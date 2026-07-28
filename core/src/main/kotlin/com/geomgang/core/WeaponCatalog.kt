@@ -26,8 +26,17 @@ enum class WeaponTier(
     NAMELESS("nameless", "이름 없는 검", 31, Int.MAX_VALUE, true),
 }
 
-/** 도감의 칸 하나. 계열 × 티어 조합이다. */
-data class CodexEntry(val family: WeaponFamily, val tier: WeaponTier)
+/**
+ * 도감의 칸 하나. **그림 한 장에 칸 하나다.**
+ *
+ * 예전에는 티어가 칸이었다. 그런데 그림은 강화 한 단계마다 바뀌는데 티어는 열한 구간뿐이라
+ * 「녹슨 검」 한 칸이 +0·+1·+2 세 그림을 덮고 「이름 없는 검」 한 칸이 +31 위 전부를 덮었다.
+ * 그림 절반이 도감에 자리가 없었던 셈이다.
+ *
+ * [family] 가 null 이면 전설 그림이다 — [WeaponCatalog.FAMILY_MAX_LEVEL] 위는 계열과
+ * 무관하게 같은 그림을 쓰므로 칸도 계열마다 두지 않는다.
+ */
+data class CodexEntry(val family: WeaponFamily?, val level: Int)
 
 /** 무기 외형 정의와 도감 구성. 확률·경제와는 무관하다. */
 object WeaponCatalog {
@@ -35,7 +44,13 @@ object WeaponCatalog {
     /** 이 단계부터 검에 오라 레이어를 그린다. */
     const val AURA_MIN_LEVEL: Int = 15
 
-    /** 해당 강화 단계의 외형 티어. */
+    /** 계열 고유 그림이 덮는 마지막 단계. 그 위는 전설 그림이다. */
+    const val FAMILY_MAX_LEVEL: Int = 20
+
+    /** 전설 그림이 덮는 마지막 단계. 그 위는 마지막 그림을 계속 쓴다. */
+    const val LEGEND_MAX_LEVEL: Int = 40
+
+    /** 해당 강화 단계의 외형 티어. 이름과 오라가 이 값을 쓴다. */
     fun tierFor(level: Int): WeaponTier {
         require(level >= 0) { "level must be >= 0, was $level" }
         return WeaponTier.entries.first { level >= it.minLevel && level <= it.maxLevel }
@@ -45,9 +60,38 @@ object WeaponCatalog {
     fun difficultiesFor(tier: WeaponTier): List<Difficulty> =
         if (tier.endlessOnly) listOf(Difficulty.ENDLESS) else Difficulty.entries.toList()
 
-    /** 도감 전체 칸. 계열 수 × 티어 11종 - 계열이 늘면 저절로 따라온다 (현재 14 × 11 = 154). */
+    /** 이 단계가 계열 고유 그림을 쓰는지. */
+    fun isFamilyArt(level: Int): Boolean = level <= FAMILY_MAX_LEVEL
+
+    /**
+     * 이 검이 채우는 도감 칸.
+     *
+     * +41 이상은 그림이 더 없으므로 마지막 전설 칸으로 모인다 — 상한 없는 구간을
+     * 칸으로 좇을 수는 없다.
+     */
+    fun slotFor(family: WeaponFamily, level: Int): CodexEntry {
+        require(level >= 0) { "level must be >= 0, was $level" }
+        return if (isFamilyArt(level)) {
+            CodexEntry(family, level)
+        } else {
+            CodexEntry(null, level.coerceAtMost(LEGEND_MAX_LEVEL))
+        }
+    }
+
+    /** 한 계열이 가지는 칸 수. */
+    val LEVELS_PER_FAMILY: IntRange = 0..FAMILY_MAX_LEVEL
+
+    /** 전설 칸이 덮는 단계. */
+    val LEGEND_LEVELS: IntRange = (FAMILY_MAX_LEVEL + 1)..LEGEND_MAX_LEVEL
+
+    /**
+     * 도감 전체 칸.
+     *
+     * 계열 14 × 단계 21 = 294 에 전설 20 을 더해 314 다. 시트3 의 그림 수와 정확히 같다 —
+     * 그림을 늘리면 여기도 같이 늘어야 한다.
+     */
     val ENTRIES: List<CodexEntry> =
         WeaponFamily.entries.flatMap { family ->
-            WeaponTier.entries.map { tier -> CodexEntry(family, tier) }
-        }
+            LEVELS_PER_FAMILY.map { level -> CodexEntry(family, level) }
+        } + LEGEND_LEVELS.map { level -> CodexEntry(null, level) }
 }

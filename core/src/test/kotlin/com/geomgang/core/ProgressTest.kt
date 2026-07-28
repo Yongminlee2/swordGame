@@ -166,21 +166,67 @@ class ProgressTest {
     // --- 도감 ---
 
     @Test
-    fun `검을 얻으면 해당 계열과 티어가 도감에 등록된다`() {
+    fun `검을 얻으면 해당 계열과 단계가 도감에 등록된다`() {
         val p = Progress.registerSword(
             empty,
             Difficulty.HARD,
             Sword(WeaponFamily.DRAGON, 19),
         )
-        assertTrue(
-            CodexKey(WeaponFamily.DRAGON, WeaponTier.BLACK_DRAGON, Difficulty.HARD) in p.codex,
-        )
+        assertTrue(CodexKey(WeaponFamily.DRAGON, 19, Difficulty.HARD) in p.codex)
     }
 
     @Test
-    fun `강화에 성공하면 도달한 티어가 도감에 등록된다`() {
+    fun `강화에 성공하면 도달한 단계가 도감에 등록된다`() {
         val p = forge(empty, 12, successAt(12), family = WeaponFamily.HOLY)
-        assertTrue(CodexKey(WeaponFamily.HOLY, WeaponTier.FLAME, Difficulty.NORMAL) in p.codex)
+        assertTrue(CodexKey(WeaponFamily.HOLY, 12, Difficulty.NORMAL) in p.codex)
+    }
+
+    /** +21 위는 계열이 없는 전설 칸이다. 계열이 달라도 같은 칸을 채운다. */
+    @Test
+    fun `무한 구간 검은 계열 없는 전설 칸에 등록된다`() {
+        var p = Progress.registerSword(empty, Difficulty.ENDLESS, Sword(WeaponFamily.DRAGON, 25))
+        p = Progress.registerSword(p, Difficulty.ENDLESS, Sword(WeaponFamily.HOLY, 25))
+        assertTrue(CodexKey(null, 25, Difficulty.ENDLESS) in p.codex)
+        assertEquals(1, p.codex.size)
+    }
+
+    /**
+     * 티어가 칸이던 시절 세이브를 불러온다.
+     *
+     * 정확한 단계가 남아 있지 않으므로 티어의 첫 단계로 옮긴다. 채운 칸 수는 그대로다.
+     */
+    @Test
+    fun `옛 티어 기록은 티어의 첫 단계로 옮겨진다`() {
+        val old = ProgressState(
+            codex = setOf(
+                CodexKey(WeaponFamily.DRAGON, difficulty = Difficulty.ENDLESS, tier = WeaponTier.FLAME),
+                CodexKey(WeaponFamily.HOLY, difficulty = Difficulty.ENDLESS, tier = WeaponTier.RUSTY),
+            ),
+        )
+        val moved = Progress.migrateCodex(old).codex
+        assertEquals(2, moved.size)
+        assertTrue(CodexKey(WeaponFamily.DRAGON, 12, Difficulty.ENDLESS) in moved)
+        assertTrue(CodexKey(WeaponFamily.HOLY, 0, Difficulty.ENDLESS) in moved)
+    }
+
+    /** 무한 구간 티어는 계열마다 있던 것이 전설 칸 하나로 모인다. */
+    @Test
+    fun `옛 무한 구간 티어는 전설 칸 하나로 모인다`() {
+        val old = ProgressState(
+            codex = setOf(
+                CodexKey(WeaponFamily.DRAGON, difficulty = Difficulty.ENDLESS, tier = WeaponTier.ABYSS),
+                CodexKey(WeaponFamily.HOLY, difficulty = Difficulty.ENDLESS, tier = WeaponTier.ABYSS),
+            ),
+        )
+        val moved = Progress.migrateCodex(old).codex
+        assertEquals(setOf(CodexKey(null, 26, Difficulty.ENDLESS)), moved)
+    }
+
+    /** 이미 옮겨진 기록은 다시 건드리지 않는다. */
+    @Test
+    fun `단계가 적힌 기록은 이관이 지나간다`() {
+        val current = ProgressState(codex = setOf(CodexKey(WeaponFamily.DRAGON, 7, Difficulty.ENDLESS)))
+        assertEquals(current.codex, Progress.migrateCodex(current).codex)
     }
 
     @Test
