@@ -50,11 +50,11 @@ object WeaponCatalog {
     /**
      * 전설 그림이 덮는 마지막 단계. 그 위는 마지막 그림을 계속 쓴다.
      *
-     * +21~+40 은 시트의 전설 칸, +41~+49 는 단계마다 낱장 그림이다
+     * +21~+39 는 시트의 전설 칸, +40~+50 은 단계마다 낱장 그림이다
      * ([com.geomgang.game.ui.LegendArt]). 도감은 그 둘을 구분하지 않는다 —
      * **그림 한 장에 칸 하나**라는 규칙만 지킨다.
      */
-    const val LEGEND_MAX_LEVEL: Int = 49
+    const val LEGEND_MAX_LEVEL: Int = 50
 
     /** 해당 강화 단계의 외형 티어. 이름과 오라가 이 값을 쓴다. */
     fun tierFor(level: Int): WeaponTier {
@@ -93,7 +93,7 @@ object WeaponCatalog {
     /**
      * 도감 전체 칸.
      *
-     * 계열 14 × 단계 21 = 294 에 전설 29(+21~+49)를 더해 323 이다.
+     * 계열 14 × 단계 21 = 294 에 전설 30(+21~+50)을 더해 324 다.
      * **그림 수와 정확히 같아야 한다** — 그림을 늘리면 여기도 같이 늘어난다.
      */
     val ENTRIES: List<CodexEntry> =

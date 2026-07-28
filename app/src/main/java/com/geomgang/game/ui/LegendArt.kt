@@ -22,7 +22,7 @@ import com.geomgang.game.R
  * 최상단 단계의 전용 그림.
  *
  * 검 그림은 원칙적으로 [SwordSheet3] 의 64px 격자에서 온다. 여기는 그 원칙의 예외다 —
- * +41 부터는 단계마다 128px 짜리 낱장 그림을 쓴다.
+ * +40 부터는 단계마다 128px 짜리 낱장 그림을 쓴다. 시트의 전설 칸은 +21~+39 만 덮는다.
  *
  * 격자에 넣지 않은 이유: 낱장이 시트 칸보다 크고, 이 구간은 그림이 한 장씩 늘어나는
  * 자리라 시트를 매번 다시 합성하는 것보다 파일을 더하는 편이 싸다.
@@ -31,16 +31,17 @@ import com.geomgang.game.R
  */
 object LegendArt {
 
-    /** 낱장 그림이 시작되는 단계. */
-    const val MIN_LEVEL = 41
+    /** 낱장 그림이 시작되는 단계. 여기부터는 시트를 보지 않는다. */
+    const val MIN_LEVEL = 40
 
     /** 낱장 그림이 있는 마지막 단계. */
-    const val MAX_LEVEL = 49
+    const val MAX_LEVEL = 50
 
     fun has(level: Int): Boolean = level >= MIN_LEVEL
 
     @DrawableRes
     fun drawableFor(level: Int): Int = when (level.coerceIn(MIN_LEVEL, MAX_LEVEL)) {
+        40 -> R.drawable.sword_lv40
         41 -> R.drawable.sword_lv41
         42 -> R.drawable.sword_lv42
         43 -> R.drawable.sword_lv43
@@ -49,7 +50,8 @@ object LegendArt {
         46 -> R.drawable.sword_lv46
         47 -> R.drawable.sword_lv47
         48 -> R.drawable.sword_lv48
-        else -> R.drawable.sword_lv49
+        49 -> R.drawable.sword_lv49
+        else -> R.drawable.sword_lv50
     }
 }
 

@@ -1112,7 +1112,7 @@ class ForgeViewModel(
      * 하지 않는다. 계열끼리 성능이 같아서 고를 이유가 없었고, 지금은 도감이
      * 덜 찬 계열이 먼저 나온다.
      */
-    fun craft(recipeId: String) {
+    fun craft(recipeId: String, count: Int = 1) {
         if (busy) return
         val recipe = Recipes.ALL.firstOrNull { it.id == recipeId } ?: return
         if (!Recipes.canCraft(game, recipe)) return
@@ -1121,7 +1121,7 @@ class ForgeViewModel(
             incomplete = Progress.incompleteFamilies(progress),
             roll = rng.nextInt(WeaponFamily.entries.size),
         )
-        game = Recipes.craft(game, recipe, family)
+        game = Recipes.craftMany(game, recipe, count, family)
         game.sword?.let { progress = Progress.registerSword(progress, game.difficulty, it) }
         persist()
         _ui.value = render()

@@ -48,7 +48,7 @@ fun ShopScreen(
     onBuyStone: () -> Unit,
     onSellSword: () -> Unit,
     onBuyItem: (Item) -> Unit,
-    onCraft: (recipeId: String) -> Unit,
+    onCraft: (recipeId: String, count: Int) -> Unit,
     onBack: () -> Unit,
 ) {
     var family by remember { mutableStateOf(state.unlockedFamilies.first()) }
@@ -257,7 +257,7 @@ fun ShopScreen(
                     RecipeRow(
                         recipe = recipe,
                         state = state,
-                        onCraft = { onCraft(recipe.id) },
+                        onCraft = { count -> onCraft(recipe.id, count) },
                     )
                 }
             }
@@ -275,11 +275,14 @@ fun ShopScreen(
 private fun RecipeRow(
     recipe: Recipe,
     state: ForgeUiState,
-    onCraft: () -> Unit,
+    onCraft: (count: Int) -> Unit,
 ) {
     val grantsSword = recipe.reward is RecipeReward.GrantSword
     val blockedBySword = grantsSword && state.sword != null
     val enough = state.shards >= recipe.shardCost
+    val canTap = enough && !blockedBySword && !state.busy
+    // 검은 손이 하나뿐이라 한 자루씩이다. 나머지는 조각이 닿는 만큼 한 번에 바꾼다.
+    val most = if (grantsSword) 1 else state.shards / recipe.shardCost
 
     Row(
         modifier = Modifier
@@ -304,11 +307,16 @@ private fun RecipeRow(
                 )
             }
         }
-        Button(
-            onClick = onCraft,
-            enabled = enough && !blockedBySword && !state.busy,
-        ) {
-            Text("💎 ${recipe.shardCost}")
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Button(onClick = { onCraft(1) }, enabled = canTap) {
+                Text("💎 ${recipe.shardCost}", fontSize = 13.sp)
+            }
+            // 고단계 강화석은 한 판에 열댓 개가 든다. 하나씩 누르면 그건 노가다다.
+            if (most > 1) {
+                OutlinedButton(onClick = { onCraft(most) }, enabled = canTap) {
+                    Text("최대 ×$most", fontSize = 13.sp)
+                }
+            }
         }
     }
 }

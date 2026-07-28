@@ -200,7 +200,12 @@ private fun StorageRow(
                     enabled = !state.busy,
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text("💰 %,d".format(Economy.sellPrice(sword.level)), fontSize = 12.sp)
+                    // 자릿수를 다 적으면 버튼 안에서 세 줄로 접힌다. 지갑 줄과 같은 축약을 쓴다.
+                    Text(
+                        text = "💰 ${compactGold(Economy.sellPrice(sword.level))}",
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                    )
                 }
                 TextButton(
                     onClick = onScrap,

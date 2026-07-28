@@ -70,6 +70,39 @@ object Recipes {
         return true
     }
 
+    /**
+     * 한 번에 바꿀 수 있는 최대 개수.
+     *
+     * 강화석은 고단계에서 한 번에 열댓 개씩 든다. 한 번에 하나씩 누르게 두면
+     * **바꾸는 일이 노가다가 된다** — 고민할 거리가 아니라 손가락 문제다.
+     *
+     * 검은 예외로 언제나 하나다. 손은 하나뿐이라 두 자루를 동시에 받을 수 없다.
+     */
+    fun maxCraftable(state: GameState, recipe: Recipe): Int {
+        if (!canCraft(state, recipe)) return 0
+        if (recipe.reward is RecipeReward.GrantSword) return 1
+        return state.shards / recipe.shardCost
+    }
+
+    /**
+     * 여러 개를 한 번에 바꾼다.
+     *
+     * [count] 가 [maxCraftable] 을 넘으면 살 수 있는 만큼만 바꾼다 — 화면이 계산을
+     * 다시 하지 않아도 되게 여기서 잘라 준다.
+     */
+    fun craftMany(
+        state: GameState,
+        recipe: Recipe,
+        count: Int,
+        family: WeaponFamily,
+    ): GameState {
+        val times = count.coerceAtMost(maxCraftable(state, recipe))
+        if (times <= 0) return state
+        var next = state
+        repeat(times) { next = craft(next, recipe, family) }
+        return next
+    }
+
     fun craft(state: GameState, recipe: Recipe, family: WeaponFamily): GameState {
         check(canCraft(state, recipe)) { "cannot craft ${recipe.id} in this state" }
         val paid = state.copy(shards = state.shards - recipe.shardCost)
