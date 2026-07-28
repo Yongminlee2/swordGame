@@ -141,6 +141,7 @@ private fun App(store: SaveStore) {
             state = state,
             onBuySword = vm::buySword,
             onBuySwordToStorage = vm::buySwordToStorage,
+            onBuyStone = vm::buyStone,
             onSellSword = vm::sellSword,
             onBuyItem = vm::buyItem,
             onBack = { overlay = Overlay.None },

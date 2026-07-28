@@ -56,6 +56,15 @@ object Economy {
         Item.LUCK_CHARM -> LUCK_CHARM_PRICE
     }
 
+    /**
+     * 아이템 값은 **단계에 연동하지 않는다.**
+     *
+     * v1.7에서 "후반에 방지권이 공짜라 고민이 안 된다" 는 이유로 강화 비용에 연동해 봤는데,
+     * [BalanceSimulation] 이 거부했다 — 무한 모드 최고 도달이 21단계에서 16단계로 주저앉았다.
+     * 아이템을 못 사면 파괴가 자금을 통째로 지우고, 그러면 고단계에 도전할 밑천이 안 생긴다.
+     *
+     * 골드 싱크는 [GoldShop] 의 재료 구매처럼 **진행을 막지 않는 곳**에만 둔다.
+     */
     fun canBuyItem(state: GameState, item: Item): Boolean =
         state.gold >= priceOf(item)
 

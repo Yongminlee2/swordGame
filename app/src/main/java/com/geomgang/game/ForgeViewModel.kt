@@ -11,6 +11,7 @@ import com.geomgang.core.Fusion
 import com.geomgang.core.GauntletBuff
 import com.geomgang.core.GauntletEngine
 import com.geomgang.core.GauntletRun
+import com.geomgang.core.GoldShop
 import com.geomgang.core.MaterialBoost
 import com.geomgang.core.StarForce
 import com.geomgang.core.GameState
@@ -254,7 +255,8 @@ class ForgeViewModel(
         val result = ForgeEngine.attempt(game, items, rng)
         // 아이템은 한 번 쓰면 내려간다. 켜 둔 채 잊고 연타하면 순식간에 녹는다.
         pendingItems = UsedItems.NONE
-        game = result.state
+        // 최고 단계가 올랐으면 상점 누진을 푼다. 리셋이 일어나는 유일한 지점이다.
+        game = GoldShop.rebase(result.state)
         progress = Progress.refresh(
             Progress.onAttempt(progress, game.difficulty, sword.family, targetLevel, cost, result),
         )
@@ -999,6 +1001,15 @@ class ForgeViewModel(
         _ui.value = render()
     }
 
+    /** 골드로 강화석을 산다. 살수록 비싸지고, 한 단계 올리면 값이 되돌아온다. */
+    fun buyStone() {
+        if (busy || !GoldShop.canBuyStone(game)) return
+        game = GoldShop.buyStone(game)
+        progress = Progress.refresh(Progress.onStones(progress, 1))
+        persist()
+        _ui.value = render()
+    }
+
     /**
      * 검을 보관함으로 바로 산다. 손에 든 검은 그대로다.
      *
@@ -1287,6 +1298,10 @@ class ForgeViewModel(
             canForge = !busy && ForgeEngine.canAttempt(game, pendingItems),
             canBuySword = !busy && Economy.canBuySword(game),
             canBuyToStorage = !busy && Economy.canBuyToStorage(game),
+            stonePrice = GoldShop.stonePrice(game),
+            nextStonePrice = GoldShop.stonePrice(game.copy(stonesBought = game.stonesBought + 1)),
+            canBuyStone = !busy && GoldShop.canBuyStone(game),
+            itemPrices = Item.entries.associateWith { Economy.priceOf(it) },
             unlockedFamilies = Progress.unlockedFamilies(progress),
             useBlessing = pendingItems.blessing,
             useLuckCharm = pendingItems.luckCharm,

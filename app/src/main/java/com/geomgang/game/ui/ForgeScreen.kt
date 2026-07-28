@@ -161,6 +161,12 @@ fun ForgeScreen(
             }
         }
 
+        // 재화는 **맨 위**에 둔다. 검 그림 아래에 두었더니 화면이 짧은 기기에서는
+        // 스크롤해야 보여서 "몇 개 있는지 모르겠다" 는 말이 나왔다.
+        Spacer(Modifier.height(4.dp))
+        WalletBar(state.wallet())
+        Spacer(Modifier.height(6.dp))
+
         // 그림 영역. 스크롤되는 열 안에서는 weight 를 쓸 수 없으므로(높이가 무한대다)
         // 최소 높이로 자리를 잡는다. 이름·강화 단계는 이 밖에 둔다 — 안에 넣으면
         // 가운데 정렬 탓에 위아래로 잘린다.
@@ -243,20 +249,9 @@ fun ForgeScreen(
         ResultBanner(state.lastResult)
         Spacer(Modifier.height(6.dp))
 
-        // 자원은 한 줄에 아이콘으로. 다만 **아이콘만 두면 무슨 값인지 알 수 없다** —
-        // 아래에 작은 이름을 붙여 둔다. 세 줄짜리 라벨-값 표보다는 여전히 짧다.
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-        ) {
-            Stat("💰", "골드", compactGold(state.gold))
-            Stat("💎", "조각", "${state.shards}")
-            Stat("🪨", "강화석", "${state.forgeStones}")
-            Stat("🛡", "방지권", "${state.preventTickets}")
-        }
-
+        // 재화(골드·조각·강화석·방지권)는 맨 위 지갑 줄이 이미 보여 준다.
+        // 여기 남는 것은 **이번 강화의 정보** 뿐이다 - 성공률·비용·판매가.
         if (state.sword != null) {
-            Spacer(Modifier.height(6.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,

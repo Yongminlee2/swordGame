@@ -42,6 +42,7 @@ fun ShopScreen(
     state: ForgeUiState,
     onBuySword: (WeaponFamily) -> Unit,
     onBuySwordToStorage: (WeaponFamily) -> Unit,
+    onBuyStone: () -> Unit,
     onSellSword: () -> Unit,
     onBuyItem: (Item) -> Unit,
     onBack: () -> Unit,
@@ -161,6 +162,46 @@ fun ShopScreen(
 
         Spacer(Modifier.height(12.dp))
 
+        // --- 재료 ---
+        // 골드는 남고 강화석은 모자란 상태가 후반의 기본값이다. 둘을 잇는다.
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp)) {
+                Text("재료", fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("🪨 강화석", fontWeight = FontWeight.Medium)
+                        Text(
+                            text = "보유 ${state.forgeStones}개",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                        )
+                        Text(
+                            text = "다음 개는 %,d".format(state.nextStonePrice),
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                        )
+                    }
+                    Button(onClick = onBuyStone, enabled = state.canBuyStone) {
+                        Text("%,d".format(state.stonePrice))
+                    }
+                }
+                Spacer(Modifier.height(6.dp))
+                // 값이 왜 오르고 언제 풀리는지 말해 주지 않으면 그냥 짜증으로만 남는다.
+                Text(
+                    text = "살수록 값이 오른다. 한 단계 올리면 처음 값으로 돌아온다.",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                )
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
         // --- 아이템 ---
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
@@ -168,10 +209,12 @@ fun ShopScreen(
                 Spacer(Modifier.height(4.dp))
                 Item.entries.forEachIndexed { index, item ->
                     if (index > 0) HorizontalDivider(Modifier.padding(vertical = 4.dp))
+                    val price = state.itemPrices[item] ?: Economy.priceOf(item)
                     ItemRow(
                         item = item,
                         owned = state.ownedCountOf(item),
-                        affordable = state.gold >= Economy.priceOf(item) && !state.busy,
+                        price = price,
+                        affordable = state.gold >= price && !state.busy,
                         onBuy = { onBuyItem(item) },
                     )
                 }
@@ -181,7 +224,13 @@ fun ShopScreen(
 }
 
 @Composable
-private fun ItemRow(item: Item, owned: Int, affordable: Boolean, onBuy: () -> Unit) {
+private fun ItemRow(
+    item: Item,
+    owned: Int,
+    price: Long,
+    affordable: Boolean,
+    onBuy: () -> Unit,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -203,7 +252,7 @@ private fun ItemRow(item: Item, owned: Int, affordable: Boolean, onBuy: () -> Un
             )
         }
         Button(onClick = onBuy, enabled = affordable) {
-            Text("%,d".format(Economy.priceOf(item)))
+            Text("%,d".format(price))
         }
     }
 }

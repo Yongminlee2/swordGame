@@ -3,6 +3,7 @@ package com.geomgang.game
 import com.geomgang.core.Difficulty
 import com.geomgang.core.ForgeResult
 import com.geomgang.core.IdleReward
+import com.geomgang.core.Item
 import com.geomgang.core.PetKind
 import com.geomgang.core.PetState
 import com.geomgang.core.ProgressState
@@ -28,6 +29,13 @@ data class ForgeUiState(
     val canBuySword: Boolean,
     /** 손에 든 검과 무관하게 보관함으로 바로 살 수 있는지. */
     val canBuyToStorage: Boolean = false,
+    /** 지금 강화석 한 개 값. 살수록 오르고, 한 단계 올리면 되돌아온다. */
+    val stonePrice: Long = 0,
+    /** 그다음 개의 값. 왜 오르는지 화면이 직접 보여 줘야 짜증이 되지 않는다. */
+    val nextStonePrice: Long = 0,
+    val canBuyStone: Boolean = false,
+    /** 아이템 값(단계 연동). 화면이 상수를 다시 쓰지 않게 여기서 준다. */
+    val itemPrices: Map<Item, Long> = emptyMap(),
     /** 지금 검을 살 때 고를 수 있는 계열. 업적으로 늘어난다. */
     val unlockedFamilies: List<WeaponFamily>,
     /** 다음 강화에 축복서를 쓸지. 한 번 쓰면 자동으로 내려간다. */
