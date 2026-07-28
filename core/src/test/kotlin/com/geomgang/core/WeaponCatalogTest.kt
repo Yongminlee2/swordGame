@@ -80,15 +80,16 @@ class WeaponCatalogTest {
     /**
      * 그림 한 장에 칸 하나다.
      *
-     * 계열 14 × 단계 21 = 294 에 전설 20 을 더해 314. 시트3 의 칸 수와 같아야 한다 —
+     * 계열 14 × 단계 21 = 294 에 전설 29(+21~+49)를 더해 323.
+     * 전설 29 는 시트3 의 전설 칸 20(+21~+40)과 낱장 그림 9(+41~+49)를 합한 수다.
      * 어긋나면 도감에 자리가 없는 그림이 생기거나 그림 없는 칸이 생긴다.
      */
     @Test
-    fun `도감 엔트리는 계열칸 294에 전설칸 20을 더해 314개다`() {
-        assertEquals(314, WeaponCatalog.ENTRIES.size)
-        assertEquals(314, WeaponCatalog.ENTRIES.toSet().size)
+    fun `도감 엔트리는 계열칸 294에 전설칸 29를 더해 323개다`() {
+        assertEquals(323, WeaponCatalog.ENTRIES.size)
+        assertEquals(323, WeaponCatalog.ENTRIES.toSet().size)
         assertEquals(294, WeaponCatalog.ENTRIES.count { it.family != null })
-        assertEquals(20, WeaponCatalog.ENTRIES.count { it.family == null })
+        assertEquals(29, WeaponCatalog.ENTRIES.count { it.family == null })
     }
 
     @Test
@@ -108,12 +109,19 @@ class WeaponCatalogTest {
         assertEquals(CodexEntry(null, 21), WeaponCatalog.slotFor(WeaponFamily.HOLY, 21))
     }
 
-    /** 그림이 더 없는 구간은 마지막 전설 칸으로 모인다. */
+    /** +41~+49 는 낱장 그림이라 각자 칸을 갖는다. */
     @Test
-    fun `41단계 위는 마지막 전설 칸을 쓴다`() {
-        assertEquals(CodexEntry(null, 40), WeaponCatalog.slotFor(WeaponFamily.DRAGON, 40))
-        assertEquals(CodexEntry(null, 40), WeaponCatalog.slotFor(WeaponFamily.DRAGON, 41))
-        assertEquals(CodexEntry(null, 40), WeaponCatalog.slotFor(WeaponFamily.DRAGON, 9999))
+    fun `41부터 49까지는 저마다 칸을 갖는다`() {
+        assertEquals(CodexEntry(null, 41), WeaponCatalog.slotFor(WeaponFamily.DRAGON, 41))
+        assertEquals(CodexEntry(null, 45), WeaponCatalog.slotFor(WeaponFamily.DRAGON, 45))
+        assertEquals(CodexEntry(null, 49), WeaponCatalog.slotFor(WeaponFamily.DRAGON, 49))
+    }
+
+    /** 그림이 더 없는 구간은 마지막 칸으로 모인다. */
+    @Test
+    fun `50단계 위는 마지막 칸을 쓴다`() {
+        assertEquals(CodexEntry(null, 49), WeaponCatalog.slotFor(WeaponFamily.DRAGON, 50))
+        assertEquals(CodexEntry(null, 49), WeaponCatalog.slotFor(WeaponFamily.DRAGON, 9999))
     }
 
     @Test

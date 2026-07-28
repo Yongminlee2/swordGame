@@ -72,10 +72,10 @@ fun SwordView(
 private fun Sprite2Box(sword: Sword, modifier: Modifier) {
     val source = SwordSheet3.sourceFor(sword)
 
-    // 전용 그림으로 덮인 칸은 시트를 보지 않는다. 오라도 그리지 않는다 -
+    // 낱장 그림을 쓰는 구간은 시트를 보지 않는다. 오라도 그리지 않는다 -
     // 그림 자체가 이미 빛으로 가득해서 겹치면 뭉갠다.
-    if (source.useSheet3 && SwordOverride.has(source.cell)) {
-        val bitmap = rememberOverrideBitmap()
+    if (sword.uniqueId == null && LegendArt.has(sword.level)) {
+        val bitmap = rememberLegendBitmap(sword.level)
         Canvas(modifier) {
             val side = size.minDimension
             val left = ((size.width - side) / 2f).toInt()
@@ -86,7 +86,7 @@ private fun Sprite2Box(sword: Sword, modifier: Modifier) {
                 srcSize = IntSize(bitmap.width, bitmap.height),
                 dstOffset = IntOffset(left, top),
                 dstSize = IntSize(side.toInt(), side.toInt()),
-                filterQuality = FilterQuality.Medium,
+                filterQuality = FilterQuality.None,
             )
         }
         return
@@ -142,16 +142,16 @@ fun LevelThumb(
     size: Dp = 52.dp,
     dimmed: Boolean = false,
 ) {
+    if (family == null && LegendArt.has(level)) {
+        LegendSwordArt(level, modifier, size, dimmed)
+        return
+    }
+
     val cell = if (family == null) {
         SwordSheet3.legendCellOf(level)
     } else {
         SwordSheet3.cellOf(family, level)
     }
-    if (SwordOverride.has(cell)) {
-        OverrideSwordArt(modifier = modifier, size = size, dimmed = dimmed)
-        return
-    }
-
     val sheet = rememberSheet3()
     val src = SwordSheet3.offsetOf(cell)
     Canvas(modifier.size(size)) {
@@ -202,12 +202,12 @@ fun SwordThumb(
     size: Dp = 44.dp,
     dimmed: Boolean = false,
 ) {
-    val source = SwordSheet3.sourceFor(sword)
-    if (source.useSheet3 && SwordOverride.has(source.cell)) {
-        OverrideSwordArt(modifier = modifier, size = size, dimmed = dimmed)
+    if (sword.uniqueId == null && LegendArt.has(sword.level)) {
+        LegendSwordArt(sword.level, modifier, size, dimmed)
         return
     }
 
+    val source = SwordSheet3.sourceFor(sword)
     val sheet = if (source.useSheet3) rememberSheet3() else rememberSheet2()
     val src = if (source.useSheet3) {
         SwordSheet3.offsetOf(source.cell)
