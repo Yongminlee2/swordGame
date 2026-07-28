@@ -164,6 +164,13 @@ data class GameState(
     val stonesBought: Int = 0,
     /** 이 구간에서 골드로 산 재료 검 수. */
     val swordsBought: Int = 0,
+    /**
+     * 이 구간에서 골드로 산 소모품 수(방지권·축복서·행운부적 합산).
+     *
+     * 셋이 카운터를 함께 쓴다 — 따로 세면 셋 다 쟁이는 것이 늘 최선이 되어
+     * 고를 것이 없어진다.
+     */
+    val itemsBought: Int = 0,
     /** 누진 카운터를 마지막으로 푼 최고 단계. */
     val priceBandLevel: Int = 0,
     /**

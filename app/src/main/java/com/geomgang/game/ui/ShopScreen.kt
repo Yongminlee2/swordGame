@@ -210,6 +210,17 @@ fun ShopScreen(
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 Text("아이템", fontWeight = FontWeight.Bold)
+                // 값이 왜 오르고 언제 풀리는지 말해 주지 않으면 그냥 짜증으로만 남는다.
+                Text(
+                    text = if (state.itemsBought > 0) {
+                        "이 구간에서 ${state.itemsBought}개 샀다. 살수록 값이 오르고, " +
+                            "한 단계 올리면 처음 값으로 돌아온다."
+                    } else {
+                        "살수록 값이 오른다. 한 단계 올리면 처음 값으로 돌아온다."
+                    },
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                )
                 Spacer(Modifier.height(4.dp))
                 Item.entries.forEachIndexed { index, item ->
                     if (index > 0) HorizontalDivider(Modifier.padding(vertical = 4.dp))

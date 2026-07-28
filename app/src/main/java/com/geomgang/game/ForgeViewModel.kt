@@ -143,14 +143,8 @@ class ForgeViewModel(
     private var nuggetRemainingMillis = 0L
     private var nuggetsLeft = 0
 
-    /** 방금 떨어진 검. 화면이 알린 뒤 비운다. */
-    private var lastDrop: Sword? = null
-
     /** 방금 얻은 펫 알. 화면이 알린 뒤 비운다. */
     private var lastEgg: PetKind? = null
-
-    /** 보관함이 꽉 차서 드롭을 놓쳤는지. */
-    private var dropMissed = false
 
     /** 마지막 별 강화가 성공했는지. 화면이 알린 뒤 비운다. */
     private var lastStarUp: Boolean? = null
@@ -586,8 +580,7 @@ class ForgeViewModel(
                     zone.bossStones,
                 ),
             )
-            rollDrop(zone, isBoss = true)
-            // 보스는 낮은 확률로 자기 구역 펫의 알을 떨어뜨린다 (드롭 판정 뒤 난수 1개)
+            // 보스는 낮은 확률로 자기 구역 펫의 알을 떨어뜨린다
             val eggBefore = lastEgg
             if (rng.nextDouble() < Pets.EGG_DROP_CHANCE) {
                 grantEgg(zone)
@@ -638,9 +631,6 @@ class ForgeViewModel(
             )
             sound.monsterDown()
             haptics.monsterDown()
-            // 미믹은 드롭 확정 + 보스급 단계 보정. "잡을까 말까"의 답이다.
-            rollDrop(zone, isBoss = activeEvent == HuntEvent.MIMIC)
-            // 강화석은 검 드롭 판정 뒤에 굴린다 (난수 소비 순서 계약)
             if (rng.nextDouble() < ForgeCost.MOB_STONE_CHANCE + Pets.stoneBonusOf(game.pets)) {
                 game = game.copy(forgeStones = game.forgeStones + 1)
                 progress = Progress.onStones(progress, 1)
@@ -1207,41 +1197,6 @@ class ForgeViewModel(
 
     // ---------------- 보관함 ----------------
 
-    /**
-     * 사냥에서 검이 떨어지는지 굴린다.
-     *
-     * 보관함이 꽉 차 있으면 조용히 버리지 않고 [dropMissed] 로 알린다.
-     * 모르는 사이에 손해를 보는 것이 가장 나쁘다.
-     */
-    private fun rollDrop(zone: Zone, isBoss: Boolean) {
-        val drop = SwordDrop.roll(
-            zone = zone,
-            isRare = rareTarget,
-            isBoss = isBoss,
-            families = Progress.unlockedFamilies(progress),
-            rng = rng,
-            chanceMult = UniqueSwords.dropMultOf(game.sword) * Pets.dropMultOf(game.pets),
-        ) ?: return
-
-        if (Storage.isFull(game)) {
-            dropMissed = true
-            return
-        }
-        game = game.copy(storage = game.storage + drop)
-        progress = Progress.refresh(Progress.registerSword(progress, game.difficulty, drop))
-        lastDrop = drop
-        dropMissed = false
-        sound.purchase()
-    }
-
-    /** 드롭 알림을 화면이 읽은 뒤 비운다. */
-    fun clearDropNotice() {
-        if (lastDrop == null && !dropMissed) return
-        lastDrop = null
-        dropMissed = false
-        _ui.value = render()
-    }
-
     /** 들고 있는 검을 보관함에 넣는다. */
     fun storeSword() {
         if (busy || !Storage.canStore(game)) return
@@ -1443,6 +1398,8 @@ class ForgeViewModel(
             basePercent = base * 100,
             currentPercent = now * 100,
             ratio = (now / Tempering.MAX_RATE).coerceIn(0.0, 1.0).toFloat(),
+            gainPerFail = base * Tempering.STEP_RATIO * 100,
+            maxPercent = Tempering.MAX_RATE * 100,
         )
     }
 
@@ -1478,14 +1435,13 @@ class ForgeViewModel(
             stonePrice = GoldShop.stonePrice(game),
             nextStonePrice = GoldShop.stonePrice(game.copy(stonesBought = game.stonesBought + 1)),
             canBuyStone = !busy && GoldShop.canBuyStone(game),
-            itemPrices = Item.entries.associateWith { Economy.priceOf(it) },
+            itemPrices = Item.entries.associateWith { GoldShop.itemPrice(game, it) },
+            itemsBought = game.itemsBought,
             unlockedFamilies = Progress.unlockedFamilies(progress),
             useBlessing = pendingItems.blessing,
             useLuckCharm = pendingItems.luckCharm,
             storage = game.storage,
             storageCapacity = Storage.CAPACITY,
-            lastDrop = lastDrop,
-            dropMissed = dropMissed,
             forgeStones = game.forgeStones,
             requiredStones = game.sword?.let { ForgeCost.requirementFor(it.level).stones } ?: 0,
             forgeBlockedReason = if (busy) null else ForgeCost.missingText(game),

@@ -57,23 +57,21 @@ object Economy {
     }
 
     /**
-     * 아이템 값은 **단계에 연동하지 않는다.**
+     * 실제로 내는 값은 [GoldShop.itemPrice] 가 정한다. 여기 [priceOf] 는 **바닥값**이다.
      *
-     * v1.7에서 "후반에 방지권이 공짜라 고민이 안 된다" 는 이유로 강화 비용에 연동해 봤는데,
-     * [BalanceSimulation] 이 거부했다 — 무한 모드 최고 도달이 21단계에서 16단계로 주저앉았다.
-     * 아이템을 못 사면 파괴가 자금을 통째로 지우고, 그러면 고단계에 도전할 밑천이 안 생긴다.
+     * 단계에 곧바로 연동해 봤다가 [com.geomgang.core.sim.BalanceSimulation] 이 거부한 적이
+     * 있다 — 무한 도달이 21단계에서 16단계로 주저앉았다. 아이템을 못 사면 파괴가 자금을
+     * 통째로 지우고, 그러면 고단계에 도전할 밑천이 안 생긴다.
      *
-     * 골드 싱크는 [GoldShop] 의 재료 구매처럼 **진행을 막지 않는 곳**에만 둔다.
+     * 지금은 바닥값을 깔고 **누진만** 얹는다. 처음 몇 개는 예전 값 그대로라 초반이
+     * 그대로고, 쟁여 둘수록 값이 오른다.
      */
     fun canBuyItem(state: GameState, item: Item): Boolean =
-        state.gold >= priceOf(item)
+        GoldShop.canBuyItem(state, item)
 
     fun buyItem(state: GameState, item: Item): GameState {
         check(canBuyItem(state, item)) { "not enough gold for $item" }
-        return state.copy(
-            gold = state.gold - priceOf(item),
-            inventory = state.inventory.plus(item, 1),
-        )
+        return GoldShop.buyItem(state, item)
     }
 
     fun canBuySword(state: GameState): Boolean =

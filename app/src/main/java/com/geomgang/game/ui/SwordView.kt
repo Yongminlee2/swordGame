@@ -71,6 +71,27 @@ fun SwordView(
 @Composable
 private fun Sprite2Box(sword: Sword, modifier: Modifier) {
     val source = SwordSheet3.sourceFor(sword)
+
+    // 전용 그림으로 덮인 칸은 시트를 보지 않는다. 오라도 그리지 않는다 -
+    // 그림 자체가 이미 빛으로 가득해서 겹치면 뭉갠다.
+    if (source.useSheet3 && SwordOverride.has(source.cell)) {
+        val bitmap = rememberOverrideBitmap()
+        Canvas(modifier) {
+            val side = size.minDimension
+            val left = ((size.width - side) / 2f).toInt()
+            val top = ((size.height - side) / 2f).toInt()
+            drawImage(
+                image = bitmap,
+                srcOffset = IntOffset(0, 0),
+                srcSize = IntSize(bitmap.width, bitmap.height),
+                dstOffset = IntOffset(left, top),
+                dstSize = IntSize(side.toInt(), side.toInt()),
+                filterQuality = FilterQuality.Medium,
+            )
+        }
+        return
+    }
+
     val sheet = if (source.useSheet3) rememberSheet3() else rememberSheet2()
     val src = if (source.useSheet3) {
         SwordSheet3.offsetOf(source.cell)
@@ -121,12 +142,17 @@ fun LevelThumb(
     size: Dp = 52.dp,
     dimmed: Boolean = false,
 ) {
-    val sheet = rememberSheet3()
     val cell = if (family == null) {
         SwordSheet3.legendCellOf(level)
     } else {
         SwordSheet3.cellOf(family, level)
     }
+    if (SwordOverride.has(cell)) {
+        OverrideSwordArt(modifier = modifier, size = size, dimmed = dimmed)
+        return
+    }
+
+    val sheet = rememberSheet3()
     val src = SwordSheet3.offsetOf(cell)
     Canvas(modifier.size(size)) {
         drawImage(
@@ -177,6 +203,11 @@ fun SwordThumb(
     dimmed: Boolean = false,
 ) {
     val source = SwordSheet3.sourceFor(sword)
+    if (source.useSheet3 && SwordOverride.has(source.cell)) {
+        OverrideSwordArt(modifier = modifier, size = size, dimmed = dimmed)
+        return
+    }
+
     val sheet = if (source.useSheet3) rememberSheet3() else rememberSheet2()
     val src = if (source.useSheet3) {
         SwordSheet3.offsetOf(source.cell)

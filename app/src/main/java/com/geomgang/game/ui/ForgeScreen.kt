@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import com.geomgang.core.Difficulty
 import com.geomgang.core.ForgeMark
 import com.geomgang.core.ForgeResult
@@ -127,6 +128,35 @@ fun ForgeScreen(
 
     // 자리비움 보상은 창으로 알린다. 화면에 자리를 만들어 두면 평소에는 빈 칸이다.
     state.idleReward?.let { IdleRewardDialog(it, onDismissIdle) }
+
+    // 파괴는 이 게임에서 가장 아픈 순간이다. 작은 원 하나로 지나가면 무엇을 놓쳤는지도
+    // 모른 채 검이 사라진다. 창으로 묻되 **제한 시간은 그대로 둔다** - 2.5초의 긴장이
+    // 이 게임의 핵심이고, 창은 그 긴장을 없애는 것이 아니라 보이게 하는 것이다.
+    when (val phase = state.destroyPhase) {
+        is DestroyPhase.Prevent -> DestroyDialog(
+            title = "검이 부서졌다",
+            body = if (state.canPrevent) {
+                "방지권을 쓰면 그대로 되살아난다."
+            } else {
+                "방지권이 없다. 시간이 지나면 파편이라도 주울 수 있다."
+            },
+            progress = phase.progress,
+            confirmLabel = "방지권 사용 · ${state.preventTickets}장",
+            confirmEnabled = state.canPrevent,
+            onConfirm = onPrevent,
+        )
+
+        is DestroyPhase.Salvage -> DestroyDialog(
+            title = "파편이 흩어진다",
+            body = "지금 주우면 조각을 회수한다. 놓치면 아무것도 남지 않는다.",
+            progress = phase.progress,
+            confirmLabel = "파편 줍기",
+            confirmEnabled = true,
+            onConfirm = onSalvage,
+        )
+
+        DestroyPhase.None -> Unit
+    }
 
     // 세로로 스크롤된다. 이 화면은 판이 갈수록 줄이 늘어나는데(요구량·스킬·재료·별·
     // 회랑·아이콘) 고정 높이로 두면 짧은 화면이나 큰 글꼴에서 아래가 잘려 나간다.
@@ -492,6 +522,50 @@ private fun IdleRewardDialog(reward: IdleReward, onDismiss: () -> Unit) {
  * 값은 자주 보고 이름은 한 번만 확인하면 되므로 크기를 다르게 준다.
  */
 /**
+ * 파괴 직후의 갈림길.
+ *
+ * 남은 시간이 막대로 줄어드는 동안 눌러야 한다. 바깥을 눌러도 닫히지 않는다 —
+ * 검 한 자루가 걸린 자리라 잘못 스친 손가락이 대신 고르면 안 된다.
+ * 시간을 넘기면 [ForgeViewModel] 이 알아서 다음 단계로 넘긴다.
+ */
+@Composable
+private fun DestroyDialog(
+    title: String,
+    body: String,
+    progress: Float,
+    confirmLabel: String,
+    confirmEnabled: Boolean,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = {},
+        properties = DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false,
+        ),
+        title = {
+            Text(title, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+        },
+        text = {
+            Column {
+                Text(body, fontSize = 14.sp)
+                Spacer(Modifier.height(12.dp))
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = confirmEnabled) {
+                Text(confirmLabel, fontWeight = FontWeight.Bold)
+            }
+        },
+    )
+}
+
+/**
  * 담금질 게이지.
  *
  * 무한 구간에서만 나온다. 실패가 쌓인 만큼 차오르고, 성공하면 비워진다.
@@ -511,13 +585,22 @@ private fun TemperBar(temper: TemperUi) {
                 color = Color(0xFFE0A458),
             )
             Text(
-                text = "%d회 · %.1f%% → %.1f%%".format(
-                    temper.fails,
-                    temper.basePercent,
-                    temper.currentPercent,
-                ),
+                text = if (temper.fails > 0) {
+                    "실패 %d회 · %.1f%% → %.1f%%".format(
+                        temper.fails,
+                        temper.basePercent,
+                        temper.currentPercent,
+                    )
+                } else {
+                    "%.1f%%".format(temper.basePercent)
+                },
                 fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                fontWeight = if (temper.fails > 0) FontWeight.Bold else FontWeight.Normal,
+                color = if (temper.fails > 0) {
+                    Color(0xFFE0A458)
+                } else {
+                    MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                },
             )
         }
         Spacer(Modifier.height(4.dp))
@@ -525,6 +608,17 @@ private fun TemperBar(temper: TemperUi) {
             progress = { temper.ratio },
             modifier = Modifier.fillMaxWidth(),
             color = Color(0xFFE0A458),
+        )
+        Spacer(Modifier.height(4.dp))
+        // 0회일 때 "0.5% → 0.5%" 만 보이면 이게 무슨 장치인지 알 수 없다.
+        // 다음 한 번의 실패가 무엇을 주는지 늘 적어 둔다.
+        Text(
+            text = "실패할 때마다 +%.2f%%p · 최대 %.0f%% · 성공하면 처음으로".format(
+                temper.gainPerFail,
+                temper.maxPercent,
+            ),
+            fontSize = 10.sp,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
         )
     }
 }

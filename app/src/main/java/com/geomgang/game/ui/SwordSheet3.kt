@@ -55,6 +55,14 @@ object SwordSheet3 {
     /** 이 단계가 전설 칸을 쓰는지. */
     fun isLegend(level: Int): Boolean = level > MAX_LEVEL_ROW
 
+    /**
+     * 마지막 전설 칸.
+     *
+     * +41 이상이 전부 여기로 모이고 도감의 +40 칸도 여기다. 그래서 이 칸 하나를
+     * 바꾸면 **손에 든 검과 도감이 같이** 바뀐다.
+     */
+    val LAST_LEGEND_CELL: Int = LEGEND_ROW * COLUMNS + (LEGEND_COUNT - 1)
+
     fun offsetOf(cell: Int): IntOffset =
         IntOffset((cell % COLUMNS) * CELL, (cell / COLUMNS) * CELL)
 

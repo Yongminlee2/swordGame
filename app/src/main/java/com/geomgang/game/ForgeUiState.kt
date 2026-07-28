@@ -27,6 +27,10 @@ data class TemperUi(
     val basePercent: Double,
     val currentPercent: Double,
     val ratio: Float,
+    /** 실패 한 번이 더해 주는 성공률(%p). 0회일 때도 이 장치가 뭔지 알리려면 필요하다. */
+    val gainPerFail: Double,
+    /** 담금질만으로 닿을 수 있는 최대 성공률(%). */
+    val maxPercent: Double,
 )
 
 /** 강화 화면이 그리는 데 필요한 것 전부. 도메인 상태를 화면 언어로 옮긴 것이다. */
@@ -63,8 +67,10 @@ data class ForgeUiState(
     /** 그다음 개의 값. 왜 오르는지 화면이 직접 보여 줘야 짜증이 되지 않는다. */
     val nextStonePrice: Long = 0,
     val canBuyStone: Boolean = false,
-    /** 아이템 값(단계 연동). 화면이 상수를 다시 쓰지 않게 여기서 준다. */
+    /** 지금 아이템 값. 살수록 오른다 — 화면이 상수를 다시 쓰지 않게 여기서 준다. */
     val itemPrices: Map<Item, Long> = emptyMap(),
+    /** 이 구간에서 산 소모품 수. 값이 왜 올랐는지 화면이 말해 줘야 한다. */
+    val itemsBought: Int = 0,
     /** 지금 검을 살 때 고를 수 있는 계열. 업적으로 늘어난다. */
     val unlockedFamilies: List<WeaponFamily>,
     /** 다음 강화에 축복서를 쓸지. 한 번 쓰면 자동으로 내려간다. */
@@ -86,10 +92,6 @@ data class ForgeUiState(
     /** 보관함에 든 검. 조합과 재료 강화가 여기서 꺼내 쓴다. */
     val storage: List<Sword> = emptyList(),
     val storageCapacity: Int = 0,
-    /** 방금 사냥에서 떨어진 검. 화면에 알린 뒤 비운다. */
-    val lastDrop: Sword? = null,
-    /** 보관함이 꽉 차서 드롭을 놓쳤는지. */
-    val dropMissed: Boolean = false,
     /** 별 강화 정보. 검이 조건을 못 갖추면 null. */
     val star: StarUiState? = null,
     /** 사냥 중일 때만 채워진다. */

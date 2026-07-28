@@ -42,8 +42,64 @@ object GoldShop {
     fun materialSwordPrice(state: GameState): Long =
         curve(state, SWORD_MULT, state.swordsBought).coerceAtLeast(Economy.BASE_SWORD_PRICE)
 
-    // 소모품(방지권·축복서·행운부적) 값은 여기서 다루지 않는다.
-    // 단계 연동을 시도했다가 밸런스 시뮬레이션이 거부했다 - 사유는 [Economy.canBuyItem] 참고.
+    /** 소모품 하나를 살 때 붙는 배수. */
+    const val ITEM_GROWTH = 1.18
+
+    /**
+     * 소모품 값이 움직이기 시작하는 최고 단계.
+     *
+     * 유한 구간(+20 이하)은 **예전 고정가 그대로**다. 이유가 둘이다.
+     *
+     * 하나, 거기서는 고정가가 이미 제 몫을 한다 — 골드가 귀해서 방지권 800이 고민거리다.
+     *
+     * 둘, [com.geomgang.core.sim.BalanceSimulation] 이 도는 구간이 여기인데 그 모형에는
+     * **사냥이 없다.** 후반 골드의 출처가 통째로 빠져 있어서, 진행 연동 가격을 넣으면
+     * 무엇을 넣든 거부한다. 실제로 v1.7에 한 번, 여기서 또 한 번 무한 도달이 19까지
+     * 주저앉았다. 시뮬레이터가 보지 못하는 것을 시뮬레이터로 재려 하면 안 된다.
+     */
+    const val ITEM_BAND_LEVEL = RateTable.MAX_FINITE_LEVEL + 1
+
+    /** 무한 구간 기준가 = 지금 강화 비용 × 이 값. 셋의 상대 순서는 고정가와 같다. */
+    private fun endlessMultOf(item: Item): Double = when (item) {
+        Item.PREVENT_TICKET -> 0.15
+        Item.BLESSING_SCROLL -> 0.25
+        Item.LUCK_CHARM -> 0.40
+    }
+
+    /**
+     * 소모품 값.
+     *
+     * 고정가만 두면 후반에 공짜나 다름없어진다 — 골드가 465억인데 방지권이 800골드였다.
+     * 무한 구간부터는 강화 비용에 연동하고 누진을 얹는다.
+     *
+     * 세 소모품이 **카운터 하나를 함께 쓴다.** 그래야 "이번 구간에 무엇을 쟁일까" 가
+     * 선택이 된다 — 따로 세면 셋 다 쟁이는 것이 늘 최선이 되어 고를 것이 없어진다.
+     * 누진은 한 단계 올리면 [rebase] 가 푼다.
+     *
+     * 값이 올라도 진행이 막히지 않는 이유: **조각 교환은 그대로다.** 골드로 못 사도
+     * 파괴에서 주운 조각으로 방지권·축복서·부적을 바꿀 수 있다([Recipes]).
+     */
+    fun itemPrice(state: GameState, item: Item): Long {
+        val floor = Economy.priceOf(item)
+        if (state.bestLevel < ITEM_BAND_LEVEL) return floor
+
+        val base = Economy.upgradeCost(state.bestLevel) * endlessMultOf(item)
+        return (base * ITEM_GROWTH.pow(state.itemsBought.toDouble()))
+            .roundToLong()
+            .coerceAtLeast(floor)
+    }
+
+    fun canBuyItem(state: GameState, item: Item): Boolean =
+        state.gold >= itemPrice(state, item)
+
+    fun buyItem(state: GameState, item: Item): GameState {
+        check(canBuyItem(state, item)) { "cannot buy $item in this state" }
+        return state.copy(
+            gold = state.gold - itemPrice(state, item),
+            inventory = state.inventory.plus(item, 1),
+            itemsBought = state.itemsBought + 1,
+        )
+    }
 
     fun canBuyStone(state: GameState): Boolean =
         state.pendingDestroy == null && state.gold >= stonePrice(state)
@@ -65,7 +121,12 @@ object GoldShop {
      */
     fun rebase(state: GameState): GameState =
         if (state.bestLevel > state.priceBandLevel) {
-            state.copy(stonesBought = 0, swordsBought = 0, priceBandLevel = state.bestLevel)
+            state.copy(
+                stonesBought = 0,
+                swordsBought = 0,
+                itemsBought = 0,
+                priceBandLevel = state.bestLevel,
+            )
         } else {
             state
         }
