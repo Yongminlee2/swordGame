@@ -38,16 +38,36 @@ object Economy {
      */
     private const val PRICE_GROWTH = 1.80
 
+    /**
+     * 무한 구간(+21 위)의 판매가 증가율.
+     *
+     * 1.80 은 **사냥이 없던 시절** 값이다. 그때는 검을 파는 것이 유일한 수입이라
+     * 비용(1.45)을 크게 앞서야 자본이 모였다. 지금은 사냥이 그 몫을 한다.
+     *
+     * 1.80 을 끝까지 끌고 가면 +44 검 한 자루가 강화 27,000번치가 된다 — 골드가
+     * 뜻을 잃는 진짜 출처다. 유한 구간은 건드리지 않는다(시뮬레이션이 지키는 구간이다).
+     */
+    private const val ENDLESS_PRICE_GROWTH = 1.35
+
     /** [currentLevel] 검을 한 단계 올리는 데 드는 비용. */
     fun upgradeCost(currentLevel: Int): Long {
         require(currentLevel >= 0) { "currentLevel must be >= 0, was $currentLevel" }
         return (COST_BASE * COST_GROWTH.pow(currentLevel.toDouble())).roundToLong()
     }
 
-    /** [level] 검을 팔았을 때 받는 골드. */
+    /**
+     * [level] 검을 팔았을 때 받는 골드.
+     *
+     * [RateTable.MAX_FINITE_LEVEL] 까지는 예전 곡선 그대로고, 그 위는 완만해진다.
+     */
     fun sellPrice(level: Int): Long {
         require(level >= 0) { "level must be >= 0, was $level" }
-        return (PRICE_BASE * PRICE_GROWTH.pow(level.toDouble())).roundToLong()
+        val finite = level.coerceAtMost(RateTable.MAX_FINITE_LEVEL)
+        val endless = (level - finite).coerceAtLeast(0)
+        val value = PRICE_BASE *
+            PRICE_GROWTH.pow(finite.toDouble()) *
+            ENDLESS_PRICE_GROWTH.pow(endless.toDouble())
+        return value.roundToLong()
     }
 
     fun priceOf(item: Item): Long = when (item) {

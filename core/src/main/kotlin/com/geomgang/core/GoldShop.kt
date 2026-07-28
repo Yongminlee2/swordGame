@@ -26,11 +26,25 @@ object GoldShop {
     /** 하나 살 때마다 붙는 배수. */
     const val GROWTH = 1.18
 
-    /** 강화석 기준가 = 지금 강화 비용 × 이 값. */
-    const val STONE_MULT = 0.8
+    /**
+     * 강화석 기준가 = 지금 강화 비용 × 이 값.
+     *
+     * 사냥 골드를 「한 바퀴 = 강화 25번치」로 통일하면서 후반 구역 수입이 10배 줄었다.
+     * 이 값을 그대로 두면 **같은 한 레벨에 사냥을 10배 더 돌아야 한다.** 수입과 함께
+     * 내려야 갈리는 속도가 그대로다 — 줄이려던 것은 골드의 자릿수지 플레이 시간이 아니다.
+     */
+    const val STONE_MULT = 0.077
 
-    /** 재료 검 기준가. 강화석보다 싸야 한다 — 자루는 사냥 드롭으로도 흔하다. */
-    const val SWORD_MULT = 0.35
+    /**
+     * 재료 검 기준가. **강화석보다 싸야 한다.**
+     *
+     * 사냥에서 검이 떨어지지 않게 된 뒤로 보관함을 채우는 길은 여기뿐이다.
+     * 강화석보다 비싸지면 조합이 통째로 잠긴다.
+     *
+     * [STONE_MULT] 와 같은 비율(0.44배)을 유지한다 — 둘을 따로 만지면 어느 쪽이
+     * 비싼지가 우연에 맡겨진다.
+     */
+    const val SWORD_MULT = 0.034
 
     private fun curve(state: GameState, mult: Double, bought: Int): Long {
         val base = Economy.upgradeCost(state.bestLevel) * mult
