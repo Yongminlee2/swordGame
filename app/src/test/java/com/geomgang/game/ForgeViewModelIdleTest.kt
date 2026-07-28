@@ -93,7 +93,7 @@ class ForgeViewModelIdleTest {
 
         val reward = second.ui.value.idleReward
         assertNotNull("3시간을 비웠으면 보상이 있어야 한다", reward)
-        assertEquals(3, reward!!.stones)
+        assertEquals(3 * IdleRewards.STONES_PER_HOUR, reward!!.stones)
         assertEquals(Zone.MEADOW, reward.zone)
         assertEquals(goldBefore + reward.gold, second.ui.value.gold)
         assertEquals(reward.stones, second.ui.value.forgeStones)

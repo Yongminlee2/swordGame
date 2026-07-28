@@ -44,19 +44,20 @@ class ForgeCostTest {
         val req16 = ForgeCost.requirementFor(15)
         assertEquals(2, req16.swords)
         assertEquals(3, req16.stones)
+        // v1.7에서 증가 속도를 절반으로 낮췄다 - 두 단계에 한 개씩 늘어난다.
         val req20 = ForgeCost.requirementFor(19)
         assertEquals(2, req20.swords)
-        assertEquals(7, req20.stones)
+        assertEquals(5, req20.stones)
     }
 
     @Test
-    fun `무한 구간은 검 세 자루와 강화석이 단계마다 늘어난다`() {
+    fun `무한 구간은 검 세 자루와 강화석이 두 단계마다 늘어난다`() {
         val req21 = ForgeCost.requirementFor(20)
         assertEquals(3, req21.swords)
-        assertEquals(9, req21.stones)
+        assertEquals(5, req21.stones)
         val req30 = ForgeCost.requirementFor(29)
         assertEquals(3, req30.swords)
-        assertEquals(18, req30.stones)
+        assertEquals(10, req30.stones)
     }
 
     @Test

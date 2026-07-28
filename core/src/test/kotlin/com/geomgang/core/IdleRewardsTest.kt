@@ -56,11 +56,15 @@ class IdleRewardsTest {
 
     @Test
     fun `강화석은 시간 단위로만 쌓인다`() {
+        val perHour = IdleRewards.STONES_PER_HOUR
         assertEquals(0, IdleRewards.rewardFor(state(), 3599)!!.stones)
-        assertEquals(1, IdleRewards.rewardFor(state(), 3600)!!.stones)
-        assertEquals(3, IdleRewards.rewardFor(state(), 3600 * 3)!!.stones)
-        // 상한이 8시간이므로 한 번 복귀로 얻을 수 있는 강화석도 8개가 끝이다
-        assertEquals(8, IdleRewards.rewardFor(state(), IdleRewards.MAX_SECONDS * 5)!!.stones)
+        assertEquals(perHour, IdleRewards.rewardFor(state(), 3600)!!.stones)
+        assertEquals(perHour * 3, IdleRewards.rewardFor(state(), 3600 * 3)!!.stones)
+        // 상한이 8시간이므로 한 번 복귀로 얻는 강화석도 8시간치가 끝이다
+        assertEquals(
+            perHour * 8,
+            IdleRewards.rewardFor(state(), IdleRewards.MAX_SECONDS * 5)!!.stones,
+        )
     }
 
     @Test

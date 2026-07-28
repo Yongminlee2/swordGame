@@ -567,7 +567,7 @@ class ForgeViewModel(
             // 미믹은 드롭 확정 + 보스급 단계 보정. "잡을까 말까"의 답이다.
             rollDrop(zone, isBoss = activeEvent == HuntEvent.MIMIC)
             // 강화석은 검 드롭 판정 뒤에 굴린다 (난수 소비 순서 계약)
-            if (rng.nextDouble() < MOB_STONE_CHANCE + Pets.stoneBonusOf(game.pets)) {
+            if (rng.nextDouble() < ForgeCost.MOB_STONE_CHANCE + Pets.stoneBonusOf(game.pets)) {
                 game = game.copy(forgeStones = game.forgeStones + 1)
                 progress = Progress.onStones(progress, 1)
             }
@@ -1262,8 +1262,8 @@ class ForgeViewModel(
         /** 사냥 루프 주기. 화상 피해와 보스 제한 시간을 이 간격으로 처리한다. */
         const val HUNT_TICK_MILLIS = 1_000L
 
-        /** 잡몹이 강화석을 떨어뜨릴 확률. */
-        const val MOB_STONE_CHANCE = 0.05
+        // 잡몹 강화석 확률은 ForgeCost.MOB_STONE_CHANCE 로 옮겼다 -
+        // 공급과 요구가 같은 파일에 있어야 ForgeTempoTest 가 둘을 견줄 수 있다.
     }
 
     private fun render(): ForgeUiState {
