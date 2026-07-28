@@ -36,7 +36,7 @@ class RewardStackingTest {
 
     @Test
     fun `강화 성공률 보정 총합이 상한 아래다`() {
-        // 재료 18%p + 시작의 검 3%p + 축복서를 다 겹쳐도 MAX_SUCCESS_RATE 가 막는다
+        // 쌓아 온 보너스 + 시작의 검 3%p + 축복서를 다 겹쳐도 MAX_SUCCESS_RATE 가 막는다
         val sword = Sword(WeaponFamily.STRAIGHT, 0, uniqueId = "origin")
         val state = GameState(
             difficulty = Difficulty.ENDLESS,
@@ -45,7 +45,7 @@ class RewardStackingTest {
         )
         val result = ForgeEngine.attempt(
             state, UsedItems.NONE, ScriptedRandom(0.0),
-            extraSuccessRate = MaterialBoost.TOTAL_CAP,
+            bonus = ForgeBonus(successRate = 0.5, destroyGuard = 0.5),
         )
         // 성공했는지가 아니라 "상한을 넘는 확률로 판정되지 않았는지"가 관심사다.
         // 롤 0.0은 항상 성공이므로 예외 없이 통과하면 상한 계산이 유효한 것이다.

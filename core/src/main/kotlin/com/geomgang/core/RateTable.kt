@@ -68,17 +68,20 @@ object RateTable {
      * 축복서는 "이번 판만 얹는 것" 이라 누적분 **위**에 얹힌다.
      *
      * @param temperFails 이 목표 단계에 쌓인 실패 수. 0 이면 예전과 같은 값이다.
+     * @param bonus [ForgeBonuses] 가 모은 성공률 가산. 플레이어가 쌓아 온 몫이라
+     *   맨 마지막에 더한다. 0 이면 예전과 같은 값이다.
      */
     fun successRate(
         difficulty: Difficulty,
         targetLevel: Int,
         blessing: Boolean = false,
         temperFails: Int = 0,
+        bonus: Double = 0.0,
     ): Double {
         val scaled = baseSuccessRate(targetLevel) * difficulty.multiplier
         val tempered = Tempering.rateFor(scaled, targetLevel, temperFails)
         val boosted = if (blessing) tempered + BLESSING_BONUS else tempered
-        return minOf(boosted, MAX_SUCCESS_RATE)
+        return minOf(boosted + bonus, MAX_SUCCESS_RATE)
     }
 
     /** 실패했을 때 어떤 처리를 받는 구간인지. */

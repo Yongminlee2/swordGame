@@ -76,13 +76,14 @@ object ForgeEngine {
     }
 
     /**
-     * @param extraSuccessRate 재료 강화 같은 외부 보정(%p). 상한은 [RateTable.MAX_SUCCESS_RATE] 가 지킨다.
+     * @param bonus 플레이어가 쌓아 온 몫([ForgeBonuses]). 성공률을 올리고 파괴를 막는다.
+     *   상한은 [RateTable.MAX_SUCCESS_RATE] 가 지킨다.
      */
     fun attempt(
         state: GameState,
         items: UsedItems,
         rng: Random,
-        extraSuccessRate: Double = 0.0,
+        bonus: ForgeBonus = ForgeBonus.NONE,
     ): ForgeResult {
         // 재료를 다시 묻지 않는다 - 여기 오기 전에 이미 태워졌기 때문이다.
         check(canRoll(state, items)) {
@@ -116,8 +117,13 @@ object ForgeEngine {
         }
 
         val successRate = (
-            RateTable.successRate(state.difficulty, targetLevel, items.blessing, fails) +
-                extraSuccessRate + UniqueSwords.forgeBonusOf(sword)
+            RateTable.successRate(
+                state.difficulty,
+                targetLevel,
+                items.blessing,
+                fails,
+                bonus.successRate,
+            ) + UniqueSwords.forgeBonusOf(sword)
             ).coerceAtMost(RateTable.MAX_SUCCESS_RATE)
         if (rng.nextDouble() < successRate) {
             return ForgeResult.Success(
@@ -144,7 +150,11 @@ object ForgeEngine {
 
             FailureBand.DESTROY_OR_DROP ->
                 if (rng.nextDouble() < RateTable.destroyChance(targetLevel)) {
-                    if (UniqueSwords.canRevive(sword)) {
+                    // 파괴가 정해진 뒤 한 번 더 굴린다. 방지권보다 먼저이고 소모품이 아니다.
+                    // 순서를 여기 둔 이유: 파괴가 안 났으면 굴릴 이유가 없어 난수만 낭비된다.
+                    if (bonus.destroyGuard > 0 && rng.nextDouble() < bonus.destroyGuard) {
+                        ForgeResult.Stay(failed, sword.level)
+                    } else if (UniqueSwords.canRevive(sword)) {
                         // 불사조 - 파괴 대신 한 번 되살아난다. 대가로 단계를 잃고
                         // 고유의 힘도 재가 된다(uniqueId 소멸). 난수 소비는 파괴와 동일.
                         val revived = sword.copy(

@@ -1122,7 +1122,6 @@ class ForgeViewModel(
             roll = rng.nextInt(WeaponFamily.entries.size),
         )
         game = Recipes.craftMany(game, recipe, count, family)
-        game.sword?.let { progress = Progress.registerSword(progress, game.difficulty, it) }
         persist()
         _ui.value = render()
     }
@@ -1140,7 +1139,6 @@ class ForgeViewModel(
     fun buySword(family: WeaponFamily) {
         if (busy || !Economy.canBuySword(game)) return
         game = Economy.buySword(game, family)
-        game.sword?.let { progress = Progress.registerSword(progress, game.difficulty, it) }
         persist()
         _ui.value = render()
     }
@@ -1162,7 +1160,6 @@ class ForgeViewModel(
     fun buySwordToStorage(family: WeaponFamily) {
         if (busy || !Economy.canBuyToStorage(game)) return
         game = Economy.buyToStorage(game, family)
-        progress = Progress.registerSword(progress, game.difficulty, Sword(family, 0))
         persist()
         _ui.value = render()
     }
@@ -1231,13 +1228,10 @@ class ForgeViewModel(
     fun fuse(indices: List<Int>) {
         if (busy || !Fusion.canFuse(game, indices)) return
         game = Fusion.fuse(game, indices)
-        game.storage.lastOrNull()?.let { result ->
-            progress =
-                Progress.refresh(Progress.registerSword(progress, game.difficulty, result))
-            result.uniqueId?.let { uniqueId ->
-                progress = Progress.onUniqueFound(progress, uniqueId)
-                sound.uniqueBorn() // 발견은 사건이어야 한다
-            }
+        // 도감은 여기서 채우지 않는다 - 조합으로 나온 검도 바쳐야 오른다([CodexOffer]).
+        game.storage.lastOrNull()?.uniqueId?.let { uniqueId ->
+            progress = Progress.onUniqueFound(progress, uniqueId)
+            sound.uniqueBorn() // 발견은 사건이어야 한다
         }
         progress = Progress.refresh(Progress.onFusion(progress))
         sound.zoneCleared()
@@ -1261,7 +1255,6 @@ class ForgeViewModel(
         if (result is StarForce.Result.Up) {
             sound.forgeSuccess(game.sword?.level ?: 0)
             game.sword?.let {
-                progress = Progress.refresh(Progress.registerSword(progress, game.difficulty, it))
             }
         } else {
             sound.forgeStay()

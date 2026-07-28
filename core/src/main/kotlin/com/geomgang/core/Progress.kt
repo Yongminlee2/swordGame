@@ -299,12 +299,9 @@ object Progress {
             )
         }
 
-        val withStats = p.copy(stats = stats)
-        return if (succeeded) {
-            registerSword(withStats, difficulty, Sword(family, targetLevel))
-        } else {
-            withStats
-        }
+        // 도감은 여기서 채우지 않는다. 강화에 성공했다고 저절로 오르면 도감이
+        // "지나간 자취"일 뿐 아무 결정도 요구하지 않는다. [CodexOffer] 로 바쳐야 열린다.
+        return p.copy(stats = stats)
     }
 
     fun onPreventUsed(p: ProgressState): ProgressState =

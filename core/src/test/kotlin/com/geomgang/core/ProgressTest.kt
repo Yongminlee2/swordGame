@@ -175,9 +175,21 @@ class ProgressTest {
         assertTrue(CodexKey(WeaponFamily.DRAGON, 19, Difficulty.HARD) in p.codex)
     }
 
+    /**
+     * 강화에 성공해도 도감은 저절로 오르지 않는다.
+     *
+     * 저절로 오르면 도감이 "지나간 자취"일 뿐 아무 결정도 요구하지 않는다.
+     * 이제 [CodexOffer] 로 검을 바쳐야 칸이 열린다.
+     */
     @Test
-    fun `강화에 성공하면 도달한 단계가 도감에 등록된다`() {
+    fun `강화에 성공해도 도감은 저절로 오르지 않는다`() {
         val p = forge(empty, 12, successAt(12), family = WeaponFamily.HOLY)
+        assertTrue(p.codex.isEmpty())
+    }
+
+    @Test
+    fun `바치면 그때 도감에 오른다`() {
+        val p = CodexOffer.offer(empty, Difficulty.NORMAL, Sword(WeaponFamily.HOLY, 12))
         assertTrue(CodexKey(WeaponFamily.HOLY, 12, Difficulty.NORMAL) in p.codex)
     }
 

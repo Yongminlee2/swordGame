@@ -161,6 +161,17 @@ class ForgeViewModelSettingsTest {
         val vm = vm(level = 0)
         vm.forgeTimes(3)
         assertTrue(vm.ui.value.progress.stats.attempts > 0)
-        assertTrue(vm.ui.value.progress.codex.isNotEmpty())
+    }
+
+    /**
+     * 강화만으로는 도감이 오르지 않는다. 바쳐야 열린다.
+     *
+     * 저절로 오르면 도감이 "지나간 자취" 일 뿐 아무 결정도 요구하지 않는다.
+     */
+    @Test
+    fun `강화만으로는 도감이 오르지 않는다`() = runTest(dispatcher) {
+        val vm = vm(level = 0)
+        vm.forgeTimes(3)
+        assertTrue(vm.ui.value.progress.codex.isEmpty())
     }
 }
