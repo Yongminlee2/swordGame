@@ -161,22 +161,10 @@ class CombatTest {
     }
 
     @Test
-    fun `용검과 정령검만 화상 피해가 있다`() {
-        val burning = setOf(WeaponFamily.DRAGON, WeaponFamily.SPIRIT)
-        burning.forEach {
-            assertTrue("${it.id} 는 화상이 있어야 한다", Combat.burnPerSecond(sword(10, it)) > 0)
-        }
-        WeaponFamily.entries.filter { it !in burning }.forEach {
-            assertEquals("${it.id} 화상", 0L, Combat.burnPerSecond(sword(10, it)))
-        }
-    }
-
-    @Test
-    fun `용검이 정령검보다 화상이 세다`() {
-        assertTrue(
-            Combat.burnPerSecond(sword(10, WeaponFamily.DRAGON)) >
-                Combat.burnPerSecond(sword(10, WeaponFamily.SPIRIT)),
-        )
+    fun `이 게임의 검은 기준 특성을 쓴다`() {
+        // v2.0: 계열이 하나뿐이면 특성도 하나여야 한다. 화상 같은 개성은 단계 스킬로 옮긴다.
+        assertEquals(FamilyStyle.BALANCED, FamilyStyle.of(WeaponFamily.ONLY))
+        assertEquals(0L, Combat.burnPerSecond(sword(10, WeaponFamily.ONLY)))
     }
 
     @Test
@@ -191,13 +179,6 @@ class CombatTest {
     @Test
     fun `조각이 안 나오는 구역에서는 마검도 못 얻는다`() {
         assertEquals(0, Combat.shardReward(sword(10, WeaponFamily.DEMON), base = 0))
-    }
-
-    @Test
-    fun `계열 14종이 서로 다른 전투 방식을 갖는다`() {
-        val styles = WeaponFamily.entries.map { FamilyStyle.of(it) }
-        assertEquals(14, styles.size)
-        assertEquals("같은 전투 방식을 쓰는 계열이 있다", 14, styles.toSet().size)
     }
 
     // --- 보스 문턱 ---

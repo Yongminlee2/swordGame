@@ -27,7 +27,22 @@ class SaveStore(private val dir: File) {
 
     fun loadGame(difficulty: Difficulty): GameState =
         read(gameFile(difficulty)) { json.decodeFromString(GameState.serializer(), it) }
+            ?.let(::normalize)
             ?: GameState(difficulty)
+
+    /**
+     * 옛 세이브를 지금 규칙으로 옮긴다.
+     *
+     * v2.0에서 계열이 하나가 됐다. 열거형은 남겨 뒀으므로 옛 값도 파싱은 되지만,
+     * 그대로 두면 곡도·성검 같은 것이 화면에 남는다. **불러오는 이 한 곳에서만**
+     * 정규화한다 — 여러 곳에서 하면 어디서 바뀐 건지 알 수 없게 된다.
+     *
+     * 단계와 별은 그대로 둔다. 계열만 바뀌고 키운 것은 잃지 않는다.
+     */
+    private fun normalize(state: GameState): GameState = state.copy(
+        sword = state.sword?.copy(family = WeaponFamily.ONLY, uniqueId = null),
+        storage = state.storage.map { it.copy(family = WeaponFamily.ONLY, uniqueId = null) },
+    )
 
     fun saveGame(state: GameState) {
         write(gameFile(state.difficulty), json.encodeToString(GameState.serializer(), state))

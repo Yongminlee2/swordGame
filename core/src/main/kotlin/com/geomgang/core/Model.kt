@@ -36,6 +36,18 @@ enum class WeaponFamily(val id: String, val displayName: String) {
     ;
 
     companion object {
+        /**
+         * 이 게임의 검.
+         *
+         * v2.0부터 계열은 하나다. 이름은 검**강화** 게임인데 "어느 검을 키울까" 가
+         * 절반을 차지했고, 정작 계열은 강화 판정에 아무 영향이 없었다.
+         * 계열이 주던 개성은 **단계 스킬**로 옮긴다.
+         *
+         * 열거형 자체는 지우지 않는다 — 옛 세이브에 `"curved"` 같은 값이 들어 있어서
+         * 지우면 파싱이 깨진다. 불러올 때 전부 이 값으로 정규화한다([SaveStore]).
+         */
+        val ONLY: WeaponFamily = DRAGON
+
         /** 처음부터 쓸 수 있는 계열. 직검 하나뿐이다 - 나머지는 조건으로 열린다. */
         val STARTERS: List<WeaponFamily> = listOf(STRAIGHT)
 

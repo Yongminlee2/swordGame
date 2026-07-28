@@ -104,13 +104,10 @@ class UniqueIntegrationTest {
 
     @Test
     fun `용왕의 송곳니는 화상이 3배다`() {
-        val plain = Sword(WeaponFamily.DRAGON, 15)
+        // v2.0에서 용검이 기준 특성(화상 0)이 되어 곱할 바탕이 사라졌다.
+        // 배수 자체는 화상을 가진 계열로 확인한다. 화상은 단계 스킬로 옮겨질 예정이다.
+        val plain = Sword(WeaponFamily.SPIRIT, 15)
         val fang = plain.copy(uniqueId = "dragon_fang")
-        val expected = Math.round(
-            Combat.attackPower(fang) * FamilyStyle.BURNING.burnRatio * 3.0,
-        )
-        assertEquals(expected, Combat.burnPerSecond(fang))
-        // 반올림 오차 안에서 3배
         assertEquals(3.0, Combat.burnPerSecond(fang).toDouble() / Combat.burnPerSecond(plain), 0.05)
     }
 

@@ -273,31 +273,17 @@ class ProgressTest {
         assertTrue(Achievement.FAIL_STREAK_10 in p.achievements)
     }
 
-    // --- 계열 해금 ---
+    // --- 검 ---
 
     @Test
-    fun `처음에는 기본 계열 4종만 열려 있다`() {
-        assertEquals(WeaponFamily.STARTERS, Progress.unlockedFamilies(empty))
-    }
+    fun `새 검이 태어나는 길은 모두 용검 하나로 모인다`() {
+        // v2.0: 상점·드롭·교환 셋이 전부 unlockedFamilies 를 지난다.
+        // 여기가 하나면 게임에 다른 계열이 생길 길이 없다.
+        assertEquals(listOf(WeaponFamily.ONLY), Progress.unlockedFamilies(empty))
 
-    // v1.4: 계열 해금이 업적에서 진행도 조건으로 바뀌었다.
-    // 쌍검·마검·용검 등 10계열은 이제 조합 전용이라 상점에 나오지 않는다.
-    // 해금 규칙 자체는 FamilyUnlockTest 가 지킨다.
-
-    @Test
-    fun `10단계를 달성하면 곡도가 열린다`() {
-        var p = forge(empty, 10, successAt(10))
-        p = Progress.refresh(p)
-        assertTrue(WeaponFamily.CURVED in Progress.unlockedFamilies(p))
-    }
-
-    @Test
-    fun `강화만 해서는 조합 전용 계열이 열리지 않는다`() {
         var p = forge(empty, 18, successAt(18))
         p = Progress.refresh(p)
-        assertFalse(WeaponFamily.TWIN in Progress.unlockedFamilies(p))
-        assertFalse(WeaponFamily.DRAGON in Progress.unlockedFamilies(p))
-        assertFalse(WeaponFamily.DEMON in Progress.unlockedFamilies(p))
+        assertEquals("진행해도 늘지 않는다", listOf(WeaponFamily.ONLY), Progress.unlockedFamilies(p))
     }
 
     // --- 칭호 ---

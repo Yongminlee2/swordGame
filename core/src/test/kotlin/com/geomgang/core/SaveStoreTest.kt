@@ -51,21 +51,32 @@ class SaveStoreTest {
         File(tmp.root, "save_normal.json").writeText(old)
         val loaded = store().loadGame(Difficulty.NORMAL)
         assertEquals(500L, loaded.gold)
-        assertEquals(Sword(WeaponFamily.STRAIGHT, 7), loaded.sword)
+        // v2.0: 계열은 용검으로 정규화되지만 단계는 그대로다
+        assertEquals(Sword(WeaponFamily.ONLY, 7), loaded.sword)
         assertNull(loaded.sword!!.uniqueId)
         assertTrue(loaded.essences.isEmpty())
     }
 
     @Test
-    fun `고유검과 정수가 저장되고 복원된다`() {
+    fun `옛 세이브의 계열과 고유검은 용검으로 옮겨진다`() {
+        // v2.0: 열거형은 남겨 뒀으므로 옛 값도 파싱은 된다. 불러오는 한 곳에서 정규화한다.
+        // **단계와 별은 잃지 않는다** - 계열만 바뀌고 키운 것은 그대로다.
         val s = store()
-        val state = sample().copy(
-            sword = Sword(WeaponFamily.HOLY, 12, stars = 1, uniqueId = "trinity"),
-            essences = mapOf("volcano" to 3),
+        s.saveGame(
+            sample().copy(
+                sword = Sword(WeaponFamily.HOLY, 12, stars = 1, uniqueId = "trinity"),
+                storage = listOf(Sword(WeaponFamily.CURVED, 5)),
+                essences = mapOf("volcano" to 3),
+            ),
         )
-        s.saveGame(state)
         val loaded = s.loadGame(Difficulty.NORMAL)
-        assertEquals("trinity", loaded.sword!!.uniqueId)
+
+        assertEquals(WeaponFamily.ONLY, loaded.sword!!.family)
+        assertEquals(null, loaded.sword.uniqueId)
+        assertEquals("단계는 그대로", 12, loaded.sword.level)
+        assertEquals("별도 그대로", 1, loaded.sword.stars)
+        assertEquals(WeaponFamily.ONLY, loaded.storage.single().family)
+        assertEquals(5, loaded.storage.single().level)
         assertEquals(3, loaded.essences["volcano"])
     }
 

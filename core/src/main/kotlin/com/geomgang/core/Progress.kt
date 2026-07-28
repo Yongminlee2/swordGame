@@ -158,33 +158,16 @@ object Progress {
     const val GREAT_UNLOCK_ZONES = 3
 
     /**
-     * 기본 계열의 해금 조건.
+     * 계열 해금은 v2.0에서 사라졌다.
      *
-     * 시작은 직검 하나뿐이다. 계열이 열리는 것 자체가 진행의 이정표가 되고,
-     * 조건이 서로 다른 활동(강화·사냥·조합)을 가리켜 한 갈래만 파도 다 열리지 않는다.
-     * 조건 판정은 전역 진행도만 본다 — 그래서 **이미 달성한 세이브는 소급 적용**된다.
+     * 검이 하나뿐이므로 열고 말고 할 것이 없다. 계열이 맡던 "진행의 이정표" 는
+     * **단계**가 대신한다 — 한 단계가 오를 때마다 그림이 바뀌고 스킬이 열린다.
      */
-    fun basicFamilyUnlocked(p: ProgressState, family: WeaponFamily): Boolean = when (family) {
-        WeaponFamily.STRAIGHT -> true
-        WeaponFamily.CURVED -> p.stats.bestLevelEver >= CURVED_UNLOCK_LEVEL
-        WeaponFamily.GREAT -> p.clearedZones.size >= GREAT_UNLOCK_ZONES
-        WeaponFamily.RAPIER -> p.uniqueFound.isNotEmpty()
-        else -> false
-    }
+    fun basicFamilyUnlocked(p: ProgressState, family: WeaponFamily): Boolean =
+        family == WeaponFamily.ONLY
 
-    /** 아직 잠긴 기본 계열의 해금 조건 설명. 열려 있으면 null. */
-    fun basicFamilyHint(p: ProgressState, family: WeaponFamily): String? {
-        if (basicFamilyUnlocked(p, family)) return null
-        return when (family) {
-            WeaponFamily.CURVED -> "아무 검 +$CURVED_UNLOCK_LEVEL 달성"
-            WeaponFamily.GREAT ->
-                "구역 ${GREAT_UNLOCK_ZONES}곳 클리어 " +
-                    "(${p.clearedZones.size}/$GREAT_UNLOCK_ZONES)"
-
-            WeaponFamily.RAPIER -> "고유검 1개 발견"
-            else -> null
-        }
-    }
+    /** 잠긴 계열이 없으므로 늘 null. */
+    fun basicFamilyHint(p: ProgressState, family: WeaponFamily): String? = null
 
     /** 검을 손에 넣었을 때 도감에 등록한다. 구매·조합·강화 성공 모두 여기를 지난다. */
     fun registerSword(p: ProgressState, difficulty: Difficulty, sword: Sword): ProgressState {
@@ -365,13 +348,12 @@ object Progress {
     }
 
     /**
-     * 상점·드롭에 나올 수 있는 계열들. 항상 enum 선언 순서를 유지한다.
+     * 상점·드롭·교환이 만들어 낼 수 있는 검.
      *
-     * 기본 4계열 중 조건을 채운 것만이다. 나머지 10계열은 조합·회랑 전용이라
-     * 여기 절대 들어오지 않는다.
+     * **새 검이 태어나는 세 경로가 전부 여기를 지난다.** 그래서 v2.0에서
+     * 계열을 하나로 모으는 데 고칠 곳이 이 한 줄이었다.
      */
-    fun unlockedFamilies(p: ProgressState): List<WeaponFamily> =
-        WeaponFamily.BASICS.filter { basicFamilyUnlocked(p, it) }
+    fun unlockedFamilies(p: ProgressState): List<WeaponFamily> = listOf(WeaponFamily.ONLY)
 
     /** 보스를 깬 구역을 기록한다. 대검 해금 조건이 이걸 센다. */
     fun onZoneCleared(p: ProgressState, zoneId: String): ProgressState =

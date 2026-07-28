@@ -59,7 +59,9 @@ enum class FamilyStyle(
             WeaponFamily.TWIN -> DOUBLE
             WeaponFamily.DEMON -> GREEDY
             WeaponFamily.HOLY -> SACRED
-            WeaponFamily.DRAGON -> BURNING
+            // v2.0: 이 게임의 유일한 검([WeaponFamily.ONLY]). 기준값을 쓴다 —
+            // 계열이 하나뿐이면 특성도 하나여야 하고, 화상 같은 개성은 단계 스킬로 옮긴다.
+            WeaponFamily.DRAGON -> BALANCED
             WeaponFamily.SCYTHE -> REAPING
             WeaponFamily.AXE -> CLEAVING
             WeaponFamily.SPEAR -> PIERCING
