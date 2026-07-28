@@ -4,6 +4,7 @@ import com.geomgang.core.Difficulty
 import com.geomgang.core.ForgeResult
 import com.geomgang.core.IdleReward
 import com.geomgang.core.Item
+import com.geomgang.core.OddsPercent
 import com.geomgang.core.PetKind
 import com.geomgang.core.PetState
 import com.geomgang.core.ProgressState
@@ -24,7 +25,13 @@ data class ForgeUiState(
     val bestLevel: Int,
     val upgradeCost: Long,
     val sellPrice: Long,
-    val successPercent: Int,
+    /**
+     * 이번 강화가 어떻게 끝날 수 있는지. 성공·유지·하락·파괴 넷을 더하면 100이다.
+     *
+     * 켜 둔 아이템이 반영된 값이다 — 축복서를 켜면 성공률이 오르고,
+     * 행운부적을 켜면 하락·파괴가 0이 된다.
+     */
+    val odds: OddsPercent = OddsPercent(0, 0, 0, 0),
     val canForge: Boolean,
     val canBuySword: Boolean,
     /** 손에 든 검과 무관하게 보관함으로 바로 살 수 있는지. */

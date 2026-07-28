@@ -6,6 +6,7 @@ import com.geomgang.core.Difficulty
 import com.geomgang.core.Economy
 import com.geomgang.core.ForgeCost
 import com.geomgang.core.ForgeEngine
+import com.geomgang.core.ForgeOdds
 import com.geomgang.core.ForgeResult
 import com.geomgang.core.Fusion
 import com.geomgang.core.GauntletBuff
@@ -1271,9 +1272,9 @@ class ForgeViewModel(
             bestLevel = game.bestLevel,
             upgradeCost = Economy.upgradeCost(level),
             sellPrice = Economy.sellPrice(level),
-            successPercent = (
-                RateTable.successRate(game.difficulty, targetLevel, pendingItems.blessing) * 100
-                ).roundToInt(),
+            // 성공률만이 아니라 하락·파괴까지 한 곳에서 낸다. 화면이 다시 계산하면
+            // 규칙이 두 군데가 되고 반드시 어긋난다.
+            odds = ForgeOdds.of(game.difficulty, targetLevel, pendingItems).percents(),
             canForge = !busy && ForgeEngine.canAttempt(game, pendingItems),
             canBuySword = !busy && Economy.canBuySword(game),
             canBuyToStorage = !busy && Economy.canBuyToStorage(game),

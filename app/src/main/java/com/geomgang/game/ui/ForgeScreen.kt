@@ -252,11 +252,28 @@ fun ForgeScreen(
         // 재화(골드·조각·강화석·방지권)는 맨 위 지갑 줄이 이미 보여 준다.
         // 여기 남는 것은 **이번 강화의 정보** 뿐이다 - 성공률·비용·판매가.
         if (state.sword != null) {
+            // 이번 한 번이 어떻게 끝날 수 있는지. 성공률만 보여 주던 탓에
+            // 무한 구간에서 **실패가 곧 파괴**라는 걸 모르고 누르게 됐다.
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                Stat("🎯", "성공률", "${state.successPercent}%", MaterialTheme.colorScheme.primary)
+                Stat("🎯", "성공", "${state.odds.success}%", MaterialTheme.colorScheme.primary)
+                if (state.odds.stay > 0) {
+                    Stat("＝", "유지", "${state.odds.stay}%")
+                }
+                if (state.odds.drop > 0) {
+                    Stat("↓", "하락", "${state.odds.drop}%", Color(0xFFE0A060))
+                }
+                if (state.odds.destroy > 0) {
+                    Stat("💥", "파괴", "${state.odds.destroy}%", MaterialTheme.colorScheme.error)
+                }
+            }
+            Spacer(Modifier.height(6.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
                 Stat("🔥", "강화 비용", compactGold(state.upgradeCost))
                 Stat("🏷", "판매가", compactGold(state.sellPrice))
             }
