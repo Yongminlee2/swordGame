@@ -1,6 +1,7 @@
 package com.geomgang.game
 
 import com.geomgang.core.Difficulty
+import com.geomgang.core.ForgeMark
 import com.geomgang.core.ForgeResult
 import com.geomgang.core.IdleReward
 import com.geomgang.core.Item
@@ -12,6 +13,21 @@ import com.geomgang.core.QuestState
 import com.geomgang.core.Settings
 import com.geomgang.core.Sword
 import com.geomgang.core.WeaponFamily
+
+/**
+ * 담금질 표시. 붙지 않는 구간이면 null 이다.
+ *
+ * @property fails 이 단계에 쌓인 실패 수
+ * @property basePercent 담금질 없는 성공률(%)
+ * @property currentPercent 담금질을 반영한 지금 성공률(%)
+ * @property ratio 게이지 채움 정도. 0..1
+ */
+data class TemperUi(
+    val fails: Int,
+    val basePercent: Double,
+    val currentPercent: Double,
+    val ratio: Float,
+)
 
 /** 강화 화면이 그리는 데 필요한 것 전부. 도메인 상태를 화면 언어로 옮긴 것이다. */
 data class ForgeUiState(
@@ -32,6 +48,12 @@ data class ForgeUiState(
      * 행운부적을 켜면 하락·파괴가 0이 된다.
      */
     val odds: OddsPercent = OddsPercent(0, 0, 0, 0),
+    /** 담금질. 무한 구간에서만 채워진다. */
+    val temper: TemperUi? = null,
+    /** 최근 강화 결과. 왼쪽이 오래된 것이다. */
+    val recentMarks: List<ForgeMark> = emptyList(),
+    /** 이번 성공이 최고 기록을 갈아치웠는지. */
+    val isRecord: Boolean = false,
     val canForge: Boolean,
     val canBuySword: Boolean,
     /** 손에 든 검과 무관하게 보관함으로 바로 살 수 있는지. */

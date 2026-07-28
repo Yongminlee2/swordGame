@@ -10,9 +10,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geomgang.core.Difficulty
 import com.geomgang.core.SaveStore
+import com.geomgang.game.feel.HapticEngine
+import com.geomgang.game.feel.systemVibrator
 import com.geomgang.game.sound.SoundEngine
 import com.geomgang.game.ui.AchievementScreen
 import com.geomgang.game.ui.CodexScreen
@@ -72,10 +75,12 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun App(store: SaveStore) {
     // 소리를 켤지는 ViewModel 의 설정을 그때그때 읽는다. 설정을 바꾸면 즉시 반영된다.
+    val context = LocalContext.current
     val vm = remember {
         lateinit var holder: ForgeViewModel
         val engine = SoundEngine { holder.soundEnabled() }
-        holder = ForgeViewModel(store, ONLY_MODE, sound = engine)
+        val feel = HapticEngine(systemVibrator(context)) { holder.hapticsEnabled() }
+        holder = ForgeViewModel(store, ONLY_MODE, sound = engine, haptics = feel)
         holder
     }
     val state by vm.ui.collectAsStateWithLifecycle()
@@ -205,6 +210,7 @@ private fun App(store: SaveStore) {
             settings = state.settings,
             onAutoPreventChange = vm::setAutoPrevent,
             onSoundChange = vm::setSoundOn,
+            onHapticsChange = vm::setHapticsOn,
             onReset = vm::resetProgress,
             onBack = { overlay = Overlay.Records },
         )

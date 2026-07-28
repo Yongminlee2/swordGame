@@ -6,6 +6,7 @@ import com.geomgang.core.Difficulty
 import com.geomgang.core.Economy
 import com.geomgang.core.ForgeCost
 import com.geomgang.core.ForgeEngine
+import com.geomgang.core.ForgeMarks
 import com.geomgang.core.ForgeOdds
 import com.geomgang.core.ForgeResult
 import com.geomgang.core.Fusion
@@ -23,6 +24,7 @@ import com.geomgang.core.Pets
 import com.geomgang.core.Progress
 import com.geomgang.core.ProgressState
 import com.geomgang.core.RateTable
+import com.geomgang.core.Tempering
 import com.geomgang.core.Achievement
 import com.geomgang.core.AdventureState
 import com.geomgang.core.Combat
@@ -46,6 +48,7 @@ import com.geomgang.core.UniqueSwords
 import com.geomgang.core.UsedItems
 import com.geomgang.core.WeaponFamily
 import com.geomgang.core.Zone
+import com.geomgang.game.feel.HapticEngine
 import com.geomgang.game.sound.SoundEngine
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -72,6 +75,8 @@ class ForgeViewModel(
     private val rng: Random = Random.Default,
     /** 소리. 테스트에서는 넘기지 않으므로 아무 일도 하지 않는 기본값을 둔다. */
     private val sound: SoundEngine = SoundEngine { false },
+    /** 진동. 소리와 같은 이유로 아무 일도 하지 않는 기본값을 둔다. */
+    private val haptics: HapticEngine = HapticEngine(null) { false },
     /** 지금 시각. 자리비움 보상만 쓴다 — 테스트가 시계를 직접 쥐어야 해서 밖에서 넣는다. */
     private val now: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
@@ -158,6 +163,9 @@ class ForgeViewModel(
      */
     private var lastResult: ForgeResult? = null
 
+    /** 이번 성공이 최고 기록을 넘었는지. 연출이 끝나면 내려간다. */
+    private var lastWasRecord: Boolean = false
+
     /** 다음 강화에 쓸 아이템. 한 번 쓰면 [UsedItems.NONE] 으로 돌아간다. */
     private var pendingItems: UsedItems = UsedItems.NONE
 
@@ -232,11 +240,31 @@ class ForgeViewModel(
         lastResult = result
         _ui.value = render()
 
+        // 소리와 진동은 늘 나란히 간다. 한쪽만 울리면 손과 귀가 다른 말을 한다.
         when (result) {
-            is ForgeResult.Success -> sound.forgeSuccess(result.newLevel)
-            is ForgeResult.Stay -> sound.forgeStay()
-            is ForgeResult.Drop -> sound.forgeDrop()
-            is ForgeResult.Destroyed -> sound.forgeDestroy()
+            is ForgeResult.Success ->
+                if (lastWasRecord) {
+                    sound.newRecord()
+                    haptics.newRecord()
+                } else {
+                    sound.forgeSuccess(result.newLevel)
+                    haptics.forgeSuccess(result.newLevel)
+                }
+
+            is ForgeResult.Stay -> {
+                sound.forgeStay()
+                haptics.forgeStay()
+            }
+
+            is ForgeResult.Drop -> {
+                sound.forgeDrop()
+                haptics.forgeDrop()
+            }
+
+            is ForgeResult.Destroyed -> {
+                sound.forgeDestroy()
+                haptics.forgeDestroy()
+            }
         }
 
         if (result is ForgeResult.Destroyed) openDestroyWindow()
@@ -260,11 +288,18 @@ class ForgeViewModel(
             game = game.copy(forgeStones = game.forgeStones - req.stones)
         }
 
+        val bestBefore = game.bestLevel
+
         val result = ForgeEngine.attempt(game, items, rng)
         // 아이템은 한 번 쓰면 내려간다. 켜 둔 채 잊고 연타하면 순식간에 녹는다.
         pendingItems = UsedItems.NONE
         // 최고 단계가 올랐으면 상점 누진을 푼다. 리셋이 일어나는 유일한 지점이다.
         game = GoldShop.rebase(result.state)
+        // 자취를 한 칸 민다. 결과가 뜨고 사라지면 연패가 이야기로 남지 않는다.
+        game = game.copy(recentMarks = ForgeMarks.push(game.recentMarks, ForgeMarks.of(result)))
+        lastWasRecord = result is ForgeResult.Success &&
+            result.newLevel > bestBefore &&
+            result.newLevel >= MIN_RECORD_LEVEL
         progress = Progress.refresh(
             Progress.onAttempt(progress, game.difficulty, sword.family, targetLevel, cost, result),
         )
@@ -356,6 +391,7 @@ class ForgeViewModel(
         game = ForgeEngine.applyPrevent(game)
         progress = Progress.refresh(Progress.onPreventUsed(progress))
         sound.preventUsed()
+        haptics.preventUsed()
         closeDestroyWindow()
     }
 
@@ -383,8 +419,19 @@ class ForgeViewModel(
         if (on) sound.purchase()
     }
 
+    fun setHapticsOn(on: Boolean) {
+        settings = settings.copy(hapticsOn = on)
+        store.saveSettings(settings)
+        _ui.value = render()
+        // 켜는 순간 한 번 울려 준다 - 무엇을 켰는지 손으로 확인된다.
+        if (on) haptics.forgeSuccess(0)
+    }
+
     /** 소리를 켤지 판단할 때 쓴다. 설정이 바뀌면 즉시 반영된다. */
     fun soundEnabled(): Boolean = settings.soundOn
+
+    /** 진동을 울릴지 판단할 때 쓴다. 설정이 바뀌면 즉시 반영된다. */
+    fun hapticsEnabled(): Boolean = settings.hapticsOn
 
     /** 이 모드의 진행을 지운다. 도감·업적·통계·설정은 남는다. */
     fun resetProgress() {
@@ -590,6 +637,7 @@ class ForgeViewModel(
                 Progress.onMonsterKill(Progress.onSell(progress, gold), isBoss = false),
             )
             sound.monsterDown()
+            haptics.monsterDown()
             // 미믹은 드롭 확정 + 보스급 단계 보정. "잡을까 말까"의 답이다.
             rollDrop(zone, isBoss = activeEvent == HuntEvent.MIMIC)
             // 강화석은 검 드롭 판정 뒤에 굴린다 (난수 소비 순서 계약)
@@ -1039,21 +1087,23 @@ class ForgeViewModel(
         )
     }
 
-    /** 다음 강화에 축복서를 쓸지 켜고 끈다. 보유량이 없으면 켜지지 않는다. */
+    /**
+     * 다음 강화에 축복서를 쓸지 켜고 끈다. **켜면 부적이 내려간다.**
+     *
+     * 배타는 [UsedItems] 가 지킨다 — 여기서 각각 다루면 반드시 어긋난다.
+     */
     fun toggleBlessing() {
         if (busy) return
-        val next = !pendingItems.blessing
-        if (next && game.inventory.blessingScrolls <= 0) return
-        pendingItems = pendingItems.copy(blessing = next)
+        if (!pendingItems.blessing && game.inventory.blessingScrolls <= 0) return
+        pendingItems = pendingItems.toggleBlessing()
         _ui.value = render()
     }
 
-    /** 다음 강화에 행운부적을 쓸지 켜고 끈다. 보유량이 없으면 켜지지 않는다. */
+    /** 다음 강화에 행운부적을 쓸지 켜고 끈다. 켜면 축복서가 내려간다. */
     fun toggleLuckCharm() {
         if (busy) return
-        val next = !pendingItems.luckCharm
-        if (next && game.inventory.luckCharms <= 0) return
-        pendingItems = pendingItems.copy(luckCharm = next)
+        if (!pendingItems.luckCharm && game.inventory.luckCharms <= 0) return
+        pendingItems = pendingItems.toggleLuckCharm()
         _ui.value = render()
     }
 
@@ -1132,6 +1182,7 @@ class ForgeViewModel(
         if (!busy) return
         busy = false
         lastResult = null
+        lastWasRecord = false
         _ui.value = render()
     }
 
@@ -1245,6 +1296,7 @@ class ForgeViewModel(
         val result = StarForce.attempt(game, rng)
         game = result.state
         lastStarUp = result is StarForce.Result.Up
+        if (result is StarForce.Result.Up) haptics.starUp() else haptics.starDown()
         progress = Progress.refresh(
             Progress.onStars(
                 Progress.onStarAttempt(progress),
@@ -1361,8 +1413,37 @@ class ForgeViewModel(
         /** 사냥 루프 주기. 화상 피해와 보스 제한 시간을 이 간격으로 처리한다. */
         const val HUNT_TICK_MILLIS = 1_000L
 
+        /**
+         * 이 단계 위부터 신기록을 축하한다.
+         *
+         * 새 세이브는 처음 열 판이 전부 신기록이라 문턱이 없으면 연출이 금방 값을 잃는다.
+         * [com.geomgang.core.StarForce.MIN_LEVEL] 과 같은 값이라 규칙이 한 벌로 읽힌다.
+         */
+        const val MIN_RECORD_LEVEL = 10
+
         // 잡몹 강화석 확률은 ForgeCost.MOB_STONE_CHANCE 로 옮겼다 -
         // 공급과 요구가 같은 파일에 있어야 ForgeTempoTest 가 둘을 견줄 수 있다.
+    }
+
+    /**
+     * 담금질 표시. 붙지 않는 구간이면 null 이다.
+     *
+     * 기준값과 지금 값을 함께 낸다 — 게이지 옆의 "0.5% → 12.3%" 가 실패가 무엇을
+     * 남겼는지 말해 주는 유일한 자리다.
+     */
+    private fun temperUiFor(targetLevel: Int): TemperUi? {
+        if (game.sword == null) return null
+        if (!Tempering.applies(targetLevel)) return null
+
+        val fails = Tempering.failsFor(game, targetLevel)
+        val base = RateTable.successRate(game.difficulty, targetLevel)
+        val now = RateTable.successRate(game.difficulty, targetLevel, temperFails = fails)
+        return TemperUi(
+            fails = fails,
+            basePercent = base * 100,
+            currentPercent = now * 100,
+            ratio = (now / Tempering.MAX_RATE).coerceIn(0.0, 1.0).toFloat(),
+        )
     }
 
     private fun render(): ForgeUiState {
@@ -1382,7 +1463,15 @@ class ForgeViewModel(
             sellPrice = Economy.sellPrice(level),
             // 성공률만이 아니라 하락·파괴까지 한 곳에서 낸다. 화면이 다시 계산하면
             // 규칙이 두 군데가 되고 반드시 어긋난다.
-            odds = ForgeOdds.of(game.difficulty, targetLevel, pendingItems).percents(),
+            odds = ForgeOdds.of(
+                game.difficulty,
+                targetLevel,
+                pendingItems,
+                Tempering.failsFor(game, targetLevel),
+            ).percents(),
+            temper = temperUiFor(targetLevel),
+            recentMarks = game.recentMarks,
+            isRecord = lastWasRecord,
             canForge = !busy && ForgeEngine.canAttempt(game, pendingItems),
             canBuySword = !busy && Economy.canBuySword(game),
             canBuyToStorage = !busy && Economy.canBuyToStorage(game),

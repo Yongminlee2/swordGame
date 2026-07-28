@@ -120,6 +120,14 @@ class SoundEngine(private val enabled: () -> Boolean) {
         at(0.42) { tone(1_318.0, 0.42, decay = 4.0, gain = 0.20) }
     }
 
+    /** 최고 기록 경신. 고유검보다 짧되 분명하게 올라가는 세 음. */
+    fun newRecord() = play {
+        tone(784.0, 0.14, decay = 10.0, gain = 0.32)
+        at(0.11) { tone(988.0, 0.14, decay = 10.0, gain = 0.32) }
+        at(0.22) { tone(1_318.0, 0.34, decay = 5.0, gain = 0.38) }
+        at(0.22) { tone(1_568.0, 0.34, decay = 5.0, gain = 0.18) }
+    }
+
     /** 펫 알을 얻었다. 통통 튀는 두 음. */
     fun eggGet() = play {
         tone(740.0, 0.08, decay = 24.0, gain = 0.26)

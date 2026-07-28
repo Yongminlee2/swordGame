@@ -24,6 +24,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -43,12 +44,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geomgang.core.Difficulty
+import com.geomgang.core.ForgeMark
 import com.geomgang.core.ForgeResult
 import com.geomgang.core.IdleReward
 import com.geomgang.core.IdleRewards
 import com.geomgang.core.SwordNames
 import com.geomgang.game.DestroyPhase
 import com.geomgang.game.ForgeUiState
+import com.geomgang.game.TemperUi
 
 /**
  * 결과별 연출 길이(ms).
@@ -269,6 +272,10 @@ fun ForgeScreen(
                     Stat("💥", "파괴", "${state.odds.destroy}%", MaterialTheme.colorScheme.error)
                 }
             }
+            state.temper?.let { temper ->
+                Spacer(Modifier.height(8.dp))
+                TemperBar(temper)
+            }
             Spacer(Modifier.height(6.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -280,6 +287,13 @@ fun ForgeScreen(
 
             if (!state.awaitingDestroyChoice) {
                 Spacer(Modifier.height(8.dp))
+                // 배타는 UsedItems 가 지킨다 - 한쪽을 켜면 다른 쪽이 저절로 내려간다.
+                Text(
+                    text = "둘 중 하나만 걸 수 있다",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+                )
+                Spacer(Modifier.height(4.dp))
                 // 아이템은 한 번 쓰면 토글이 내려간다. 매번 다시 켜야 한다.
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -349,6 +363,19 @@ fun ForgeScreen(
             state.forgeBlockedReason?.let {
                 Spacer(Modifier.height(4.dp))
                 Text(it, fontSize = 12.sp, color = MaterialTheme.colorScheme.error)
+            }
+            if (state.isRecord) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = "★ 최고 기록!",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFFFD54A),
+                )
+            }
+            if (state.recentMarks.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                MarkStrip(state.recentMarks)
             }
             Spacer(Modifier.height(10.dp))
             StarBar(state, onOpenStar)
@@ -464,6 +491,76 @@ private fun IdleRewardDialog(reward: IdleReward, onDismiss: () -> Unit) {
  * 아이콘만으로는 무슨 숫자인지 알 수 없다는 말을 들었다. 이름을 아주 작게 아래 붙인다 —
  * 값은 자주 보고 이름은 한 번만 확인하면 되므로 크기를 다르게 준다.
  */
+/**
+ * 담금질 게이지.
+ *
+ * 무한 구간에서만 나온다. 실패가 쌓인 만큼 차오르고, 성공하면 비워진다.
+ * **실패가 눈에 보이는 무언가를 남기는 유일한 자리**라 화면에 있어야 한다.
+ */
+@Composable
+private fun TemperBar(temper: TemperUi) {
+    Column(Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = "담금질",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFE0A458),
+            )
+            Text(
+                text = "%d회 · %.1f%% → %.1f%%".format(
+                    temper.fails,
+                    temper.basePercent,
+                    temper.currentPercent,
+                ),
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+            )
+        }
+        Spacer(Modifier.height(4.dp))
+        LinearProgressIndicator(
+            progress = { temper.ratio },
+            modifier = Modifier.fillMaxWidth(),
+            color = Color(0xFFE0A458),
+        )
+    }
+}
+
+/**
+ * 최근 강화 자취. 왼쪽이 오래된 것, 오른쪽이 방금 것이다.
+ *
+ * 결과가 한 번 뜨고 사라지면 "세 판째 말아먹는 중" 이라는 이야기가 남지 않는다.
+ */
+@Composable
+private fun MarkStrip(marks: List<ForgeMark>) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        marks.forEach { mark ->
+            Text(
+                text = when (mark) {
+                    ForgeMark.UP -> "●"
+                    ForgeMark.STAY -> "·"
+                    ForgeMark.DOWN -> "▽"
+                    ForgeMark.BREAK -> "✕"
+                },
+                fontSize = 13.sp,
+                modifier = Modifier.padding(horizontal = 3.dp),
+                color = when (mark) {
+                    ForgeMark.UP -> Color(0xFF7FD48A)
+                    ForgeMark.STAY -> MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
+                    ForgeMark.DOWN -> Color(0xFFE0A060)
+                    ForgeMark.BREAK -> MaterialTheme.colorScheme.error
+                },
+            )
+        }
+    }
+}
+
 @Composable
 fun Stat(icon: String, label: String, value: String, color: Color = Color.Unspecified) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {

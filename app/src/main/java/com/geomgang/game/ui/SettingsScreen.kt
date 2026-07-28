@@ -26,14 +26,14 @@ import com.geomgang.core.Timing
 /**
  * 설정.
  *
- * 효과음 토글은 넣지 않는다 — 아직 소리가 없다. 없는 기능의 스위치를 두지 않는다.
- * 데이터 초기화는 모드 선택 화면의 5초 길게 누르기에 있다. 두 군데 두지 않는다.
+ * 데이터 초기화는 이 화면 아래쪽에 있다. 두 군데 두지 않는다.
  */
 @Composable
 fun SettingsScreen(
     settings: Settings,
     onAutoPreventChange: (Boolean) -> Unit,
     onSoundChange: (Boolean) -> Unit,
+    onHapticsChange: (Boolean) -> Unit,
     onReset: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -62,6 +62,29 @@ fun SettingsScreen(
                         )
                     }
                     Switch(checked = settings.soundOn, onCheckedChange = onSoundChange)
+                }
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("진동", fontWeight = FontWeight.Medium)
+                        Text(
+                            text = "성공은 짧게, 실패는 둔탁하게, 파괴는 길게 울린다. " +
+                                "사냥 탭마다는 울리지 않는다 — 연타라 손이 아프다.",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        )
+                    }
+                    Switch(checked = settings.hapticsOn, onCheckedChange = onHapticsChange)
                 }
             }
         }

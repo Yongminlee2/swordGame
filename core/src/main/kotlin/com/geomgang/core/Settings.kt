@@ -19,4 +19,11 @@ data class Settings(
 
     /** 효과음. 강화 게임 손맛의 절반이 소리라서 기본값은 켜짐이다. */
     val soundOn: Boolean = true,
+
+    /**
+     * 진동. 기본값이 켜짐인 이유는 소리와 같다 — **손맛의 나머지 절반이 여기 있다.**
+     *
+     * 성공과 파괴가 손에 똑같이 오면 걸고 누른 그 순간이 밋밋해진다.
+     */
+    val hapticsOn: Boolean = true,
 )
