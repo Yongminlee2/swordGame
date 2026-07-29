@@ -57,6 +57,13 @@ object ForgeBonuses {
                 "${UniqueSwords.RECIPES.size}",
             bonus = UniqueSwords.holdingBonus(progress),
         ),
+        FamilyForge.of(state.sword).let { forge ->
+            BonusSource(
+                label = if (state.sword?.isLegend() == true) "전설검" else "계열",
+                detail = forge.blurb,
+                bonus = ForgeBonus(forge.successBonus, forge.destroyGuard),
+            )
+        },
     )
 
     fun of(state: GameState, progress: ProgressState): ForgeBonus =
