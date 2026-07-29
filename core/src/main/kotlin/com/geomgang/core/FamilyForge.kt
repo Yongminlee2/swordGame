@@ -19,7 +19,6 @@ fun Sword.isLegend(): Boolean = level > RateTable.MAX_FINITE_LEVEL
  *
  * @param successBonus   성공률 가산
  * @param destroyGuard   파괴 판정을 무효로 돌릴 확률
- * @param temperMult     담금질이 쌓이는 배수
  * @param temperCapBonus 담금질 상한 가산
  * @param costMult       강화 비용 배수
  * @param stoneRelief    강화석 요구를 줄이는 개수
@@ -31,7 +30,6 @@ fun Sword.isLegend(): Boolean = level > RateTable.MAX_FINITE_LEVEL
 enum class FamilyForge(
     val successBonus: Double = 0.0,
     val destroyGuard: Double = 0.0,
-    val temperMult: Double = 1.0,
     val temperCapBonus: Double = 0.0,
     val costMult: Double = 1.0,
     val stoneRelief: Int = 0,
@@ -44,11 +42,17 @@ enum class FamilyForge(
     /** 검이 없을 때. 아무것도 주지 않는다. */
     NONE,
 
-    /** 기본 계열은 기준이다. 특전을 주면 시뮬레이터가 보는 곡선이 흔들린다. */
-    STRAIGHT(destroyGuard = 0.005, blurb = "무난하다. 조금 덜 부서진다"),
-    CURVED(temperMult = 1.5, blurb = "담금질이 1.5배로 쌓인다"),
+    /**
+     * 기준.
+     *
+     * **아무 특전도 없다.** 다른 계열이 이 값과 견줘 읽히려면 기준 하나는 비어 있어야
+     * 하고, 무엇보다 [com.geomgang.core.sim.BalanceSimulation] 이 직검으로만 도는데
+     * 여기에 값을 주면 그 모형이 재려던 "맨손" 이 맨손이 아니게 된다.
+     */
+    STRAIGHT(blurb = "기준. 특별할 것도 모자랄 것도 없다"),
+    CURVED(successBonus = 0.004, blurb = "조금 더 잘 붙는다"),
     GREAT(destroyGuard = 0.03, blurb = "잘 부서지지 않는다"),
-    RAPIER(temperMult = 2.0, blurb = "담금질이 두 배로 쌓인다"),
+    RAPIER(costMult = 0.7, blurb = "가벼워서 벼리는 값이 싸다"),
     TWIN(successBonus = 0.003, destroyGuard = 0.015, blurb = "성공률과 내구가 조금씩"),
     DEMON(salvageMult = 2.0, blurb = "부서져도 조각을 두 배로 줍는다"),
     HOLY(blessingMult = 1.5, blurb = "축복서가 더 잘 듣는다"),
@@ -56,11 +60,10 @@ enum class FamilyForge(
     SCYTHE(codexPair = true, blurb = "도감에 바치면 다음 칸도 함께 열린다"),
     AXE(costMult = 0.8, blurb = "강화 비용이 싸다"),
     SPEAR(stoneRelief = 2, blurb = "강화석이 두 개 덜 든다"),
-    SPIRIT(temperCapBonus = 0.10, blurb = "담금질 상한이 높다"),
+    SPIRIT(destroyGuard = 0.025, blurb = "정령이 부서짐을 막아 준다"),
     FUSED(
         successBonus = 0.0025,
         destroyGuard = 0.015,
-        temperMult = 1.25,
         costMult = 0.9,
         salvageMult = 1.5,
         blessingMult = 1.25,
@@ -68,7 +71,12 @@ enum class FamilyForge(
     ),
     VOID(refundStones = true, blurb = "실패해도 강화석을 돌려받는다"),
 
-    /** 가장 어려운 길의 보상. 어느 계열보다 강하다. */
+    /**
+     * 가장 어려운 길의 보상. 어느 계열보다 강하다.
+     *
+     * **담금질 관련 특성은 여기에만 있다.** 담금질은 +21 부터 붙는데 계열 검은 +20 에서
+     * 끝나므로, 계열에 담금질 특성을 주면 영원히 발동하지 않는다.
+     */
     LEGEND(
         successBonus = 0.03,
         destroyGuard = 0.03,

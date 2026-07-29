@@ -207,7 +207,8 @@ class ForgeEngineTest {
     @Test
     fun `파괴되면 검이 사라지고 파괴 대기 상태가 남는다`() {
         val before = state(level = 13, family = WeaponFamily.DRAGON)
-        val result = ForgeEngine.attempt(before, UsedItems.NONE, ScriptedRandom(0.9, 0.1))
+        // 용검은 파괴방지 특성이 있어 난수를 하나 더 쓴다. 0.9 는 방지에 실패하는 값이다.
+        val result = ForgeEngine.attempt(before, UsedItems.NONE, ScriptedRandom(0.9, 0.1, 0.9))
         result as ForgeResult.Destroyed
         assertEquals(13, result.lostLevel)
         assertNull(result.state.sword)
@@ -233,8 +234,9 @@ class ForgeEngineTest {
 
     @Test
     fun `무한 구간 실패는 두 번째 난수와 무관하게 파괴다`() {
+        // +21 위는 전설검이고 전설검은 파괴방지 특성이 있어 난수를 하나 더 쓴다.
         val before = state(level = 21, difficulty = Difficulty.ENDLESS)
-        val result = ForgeEngine.attempt(before, UsedItems.NONE, ScriptedRandom(0.9, 0.99))
+        val result = ForgeEngine.attempt(before, UsedItems.NONE, ScriptedRandom(0.9, 0.99, 0.9))
         assertTrue(result is ForgeResult.Destroyed)
     }
 

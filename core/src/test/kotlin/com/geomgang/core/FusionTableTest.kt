@@ -103,9 +103,19 @@ class FusionTableTest {
         assertNull(FusionTable.resultFor(f(WeaponFamily.SPIRIT, WeaponFamily.AXE)))
     }
 
+    /**
+     * 허검을 회랑 전용에서 내렸다.
+     *
+     * 강화 게임인데 회랑 진도에 강제로 묶이는 것이 전설검 재료로는 너무 높은 문턱이었다.
+     * 회랑 10층 보상은 그대로 남아 있어 얻는 길이 둘이 된다.
+     */
     @Test
-    fun `허검은 표에 없다 - 회랑 보상 전용이다`() {
-        assertTrue(FusionTable.ALL.none { it.result == WeaponFamily.VOID })
+    fun `허검은 조합으로도 얻는다`() {
+        assertTrue(FusionTable.ALL.any { it.result == WeaponFamily.VOID })
+        assertEquals(
+            WeaponFamily.VOID,
+            FusionTable.resultFor(f(WeaponFamily.AXE, WeaponFamily.SPEAR)),
+        )
     }
 
     @Test

@@ -35,7 +35,7 @@ class FamilyForgeTest {
     fun `검이 없으면 아무 특성도 없다`() {
         val none = FamilyForge.of(null)
         assertEquals(0.0, none.successBonus, 1e-9)
-        assertEquals(1.0, none.temperMult, 1e-9)
+        assertEquals(0.0, none.destroyGuard, 1e-9)
         assertEquals(1.0, none.costMult, 1e-9)
     }
 
@@ -49,8 +49,8 @@ class FamilyForgeTest {
     }
 
     @Test
-    fun `세검은 담금질이 두 배로 쌓인다`() {
-        assertEquals(2.0, FamilyForge.of(Sword(WeaponFamily.RAPIER, 5)).temperMult, 1e-9)
+    fun `세검은 벼리는 값이 싸다`() {
+        assertTrue(FamilyForge.of(Sword(WeaponFamily.RAPIER, 5)).costMult < 1.0)
     }
 
     @Test

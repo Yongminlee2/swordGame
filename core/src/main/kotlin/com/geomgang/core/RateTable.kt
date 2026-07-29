@@ -77,10 +77,12 @@ object RateTable {
         blessing: Boolean = false,
         temperFails: Int = 0,
         bonus: Double = 0.0,
+        temperCapBonus: Double = 0.0,
+        blessingMult: Double = 1.0,
     ): Double {
         val scaled = baseSuccessRate(targetLevel) * difficulty.multiplier
-        val tempered = Tempering.rateFor(scaled, targetLevel, temperFails)
-        val boosted = if (blessing) tempered + BLESSING_BONUS else tempered
+        val tempered = Tempering.rateFor(scaled, targetLevel, temperFails, temperCapBonus)
+        val boosted = if (blessing) tempered + BLESSING_BONUS * blessingMult else tempered
         return minOf(boosted + bonus, MAX_SUCCESS_RATE)
     }
 

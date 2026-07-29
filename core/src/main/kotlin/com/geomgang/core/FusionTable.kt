@@ -55,6 +55,13 @@ object FusionTable {
             WeaponFamily.SPIRIT,
             "낫검 + 창검",
         ),
+        // 허검은 무한 회랑 10층 돌파로도 얻지만 여기 조합으로도 얻는다.
+        // 강화 게임인데 회랑 진도에 강제로 묶이면 전설검 재료로 쓸 수 없다.
+        FusionEntry(
+            setOf(WeaponFamily.AXE, WeaponFamily.SPEAR),
+            WeaponFamily.VOID,
+            "도끼검 + 창검",
+        ),
     )
 
     private val byMaterials: Map<Set<WeaponFamily>, WeaponFamily> =

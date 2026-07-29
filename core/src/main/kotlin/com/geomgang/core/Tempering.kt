@@ -41,11 +41,13 @@ object Tempering {
      *
      * 붙지 않는 구간이거나 쌓인 실패가 없으면 [baseRate] 를 그대로 돌려준다.
      * 담금질은 **올려 주기만 한다** — 기준값이 이미 [MAX_RATE] 보다 높아도 낮추지 않는다.
+     *
+     * @param capBonus 계열 특성이 올려 주는 상한 가산. 정령검·전설검이 쓴다
      */
-    fun rateFor(baseRate: Double, targetLevel: Int, fails: Int): Double {
+    fun rateFor(baseRate: Double, targetLevel: Int, fails: Int, capBonus: Double = 0.0): Double {
         if (!applies(targetLevel) || fails <= 0) return baseRate
         val raised = baseRate + baseRate * STEP_RATIO * fails
-        return maxOf(baseRate, minOf(raised, MAX_RATE))
+        return maxOf(baseRate, minOf(raised, MAX_RATE + capBonus))
     }
 
     /** 이 목표 단계에 유효한 누적 실패 수. 다른 단계에 쌓인 것은 세지 않는다. */

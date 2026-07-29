@@ -58,7 +58,8 @@ object ForgeCost {
     /** 잡몹이 강화석을 떨어뜨릴 확률. 재료 공급의 절반이 여기서 나온다. */
     const val MOB_STONE_CHANCE = 0.15
 
-    fun requirementFor(currentLevel: Int): ForgeRequirement {
+    /** @param relief 계열 특성이 깎아 주는 강화석 수. 창검이 쓴다 */
+    fun requirementFor(currentLevel: Int, relief: Int = 0): ForgeRequirement {
         require(currentLevel >= 0) { "currentLevel must be >= 0, was $currentLevel" }
         val target = currentLevel + 1
         // 증가 속도를 v1.6의 절반으로 낮췄다. 요구가 단계마다 1씩 오르면
@@ -70,7 +71,7 @@ object ForgeCost {
         }
         return ForgeRequirement(
             gold = Economy.upgradeCost(currentLevel),
-            stones = stones,
+            stones = (stones - relief).coerceAtLeast(0),
         )
     }
 

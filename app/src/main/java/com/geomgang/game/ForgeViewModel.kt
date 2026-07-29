@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.geomgang.core.Difficulty
 import com.geomgang.core.Economy
+import com.geomgang.core.FamilyForge
+import com.geomgang.core.ForgeBonuses
 import com.geomgang.core.ForgeCost
 import com.geomgang.core.ForgeEngine
 import com.geomgang.core.ForgeMarks
@@ -275,7 +277,8 @@ class ForgeViewModel(
         val sword = game.sword ?: return null
         val targetLevel = sword.level + 1
         val cost = Economy.upgradeCost(sword.level)
-        val req = ForgeCost.requirementFor(sword.level)
+        val forge = FamilyForge.of(sword)
+        val req = ForgeCost.requirementFor(sword.level, forge.stoneRelief)
 
         // 강화석은 성패와 무관하게 소모된다. 판정 전에 먼저 뺀다.
         if (req.stones > 0) {
@@ -284,11 +287,17 @@ class ForgeViewModel(
 
         val bestBefore = game.bestLevel
 
-        val result = ForgeEngine.attempt(game, items, rng)
+        val result = ForgeEngine.attempt(game, items, rng, ForgeBonuses.of(game, progress))
         // 아이템은 한 번 쓰면 내려간다. 켜 둔 채 잊고 연타하면 순식간에 녹는다.
         pendingItems = UsedItems.NONE
         // 최고 단계가 올랐으면 상점 누진을 푼다. 리셋이 일어나는 유일한 지점이다.
         game = GoldShop.rebase(result.state)
+
+        // 허검은 실패해도 강화석을 돌려받는다. 성공했을 때는 정상 소모다.
+        // 되돌리는 자리가 rebase 뒤인 이유: 그 위에서 game 이 통째로 갈린다.
+        if (forge.refundStones && result !is ForgeResult.Success && req.stones > 0) {
+            game = game.copy(forgeStones = game.forgeStones + req.stones)
+        }
         // 자취를 한 칸 민다. 결과가 뜨고 사라지면 연패가 이야기로 남지 않는다.
         game = game.copy(recentMarks = ForgeMarks.push(game.recentMarks, ForgeMarks.of(result)))
         lastWasRecord = result is ForgeResult.Success &&
@@ -389,12 +398,19 @@ class ForgeViewModel(
         closeDestroyWindow()
     }
 
-    /** 파편을 주워 조각을 얻는다. */
+    /** 파편을 주워 조각을 얻는다. 마검은 두 배로 줍는다. */
     fun salvage() {
-        if (game.pendingDestroy == null) return
+        val pending = game.pendingDestroy ?: return
         countdownJob?.cancel()
         val before = game.shards
         game = ForgeEngine.applySalvage(game, rng)
+
+        // 부서진 검의 계열이 회수량을 정한다. 손에는 이미 검이 없으므로 잔해에서 읽는다.
+        val forge = FamilyForge.of(Sword(pending.family, pending.level))
+        val gained = game.shards - before
+        val extra = ((gained * (forge.salvageMult - 1.0)).roundToLong()).toInt()
+        if (extra > 0) game = game.copy(shards = game.shards + extra)
+
         progress = Progress.refresh(Progress.onSalvage(progress, game.shards - before))
         sound.salvage()
         closeDestroyWindow()

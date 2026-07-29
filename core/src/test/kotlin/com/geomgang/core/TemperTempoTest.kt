@@ -17,9 +17,14 @@ class TemperTempoTest {
         const val START_LEVEL = 44
         const val RUNS = 2_000
 
-        /** 한 단계를 올리는 데 걸리는 시도 수의 목표 구간(중앙값). */
-        const val MIN_MEDIAN = 15
-        const val MAX_MEDIAN = 45
+        /**
+         * 한 단계를 올리는 데 걸리는 시도 수의 목표 구간(중앙값).
+         *
+         * +44 는 전설검 구간이라 전설 특성(성공률 +3%p, 파괴방지 +3%)이 포함된 값이다.
+         * 어렵게 얻은 검이 실제로 더 잘 붙는지를 여기서 잰다.
+         */
+        const val MIN_MEDIAN = 8
+        const val MAX_MEDIAN = 30
     }
 
     /** 검이 부서지면 방지권으로 되살린다. 재도전 문턱이 아니라 속도를 재는 시험이다. */

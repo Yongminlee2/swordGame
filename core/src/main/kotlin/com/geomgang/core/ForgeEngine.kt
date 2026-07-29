@@ -1,6 +1,8 @@
 package com.geomgang.core
 
 import kotlin.math.floor
+import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 import kotlin.random.Random
 
 /**
@@ -96,8 +98,12 @@ object ForgeEngine {
         if (items.blessing) inventory = inventory.minus(Item.BLESSING_SCROLL, 1)
         if (items.luckCharm) inventory = inventory.minus(Item.LUCK_CHARM, 1)
 
+        // 계열마다 벼리는 방식이 다르다. 비용·담금질·확률·내구가 전부 여기서 갈린다.
+        val forge = FamilyForge.of(sword)
+
         val paid = state.copy(
-            gold = state.gold - Economy.upgradeCost(sword.level),
+            gold = state.gold -
+                (Economy.upgradeCost(sword.level) * forge.costMult).roundToLong(),
             inventory = inventory,
         )
 
@@ -122,7 +128,9 @@ object ForgeEngine {
                 targetLevel,
                 items.blessing,
                 fails,
-                bonus.successRate,
+                bonus.successRate + forge.successBonus,
+                forge.temperCapBonus,
+                forge.blessingMult,
             ) + UniqueSwords.forgeBonusOf(sword)
             ).coerceAtMost(RateTable.MAX_SUCCESS_RATE)
         if (rng.nextDouble() < successRate) {
@@ -152,7 +160,8 @@ object ForgeEngine {
                 if (rng.nextDouble() < RateTable.destroyChance(targetLevel)) {
                     // 파괴가 정해진 뒤 한 번 더 굴린다. 방지권보다 먼저이고 소모품이 아니다.
                     // 순서를 여기 둔 이유: 파괴가 안 났으면 굴릴 이유가 없어 난수만 낭비된다.
-                    if (bonus.destroyGuard > 0 && rng.nextDouble() < bonus.destroyGuard) {
+                    val guard = bonus.destroyGuard + forge.destroyGuard
+                    if (guard > 0 && rng.nextDouble() < guard) {
                         ForgeResult.Stay(failed, sword.level)
                     } else if (UniqueSwords.canRevive(sword)) {
                         // 불사조 - 파괴 대신 한 번 되살아난다. 대가로 단계를 잃고
