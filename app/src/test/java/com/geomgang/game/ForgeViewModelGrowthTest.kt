@@ -3,9 +3,11 @@ package com.geomgang.game
 import com.geomgang.core.Difficulty
 import com.geomgang.core.GameState
 import com.geomgang.core.LegendForge
+import com.geomgang.core.Progress
 import com.geomgang.core.SaveStore
 import com.geomgang.core.Smithy
 import com.geomgang.core.Sword
+import com.geomgang.core.WeaponCatalog
 import com.geomgang.core.WeaponFamily
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -158,6 +160,31 @@ class ForgeViewModelGrowthTest {
     @Test
     fun `옛 세이브가 이미 전설검을 들고 있으면 해금된 채로 연다`() {
         assertTrue(vm(rich(Sword(WeaponFamily.STRAIGHT, 30))).ui.value.legendUnlocked)
+    }
+
+    /**
+     * 낫검은 다음 칸도 함께 열지만 **계열 칸 안에서만**이다.
+     *
+     * +20 낫검의 "다음" 은 전설 칸이다. 그게 열리면 전설검을 한 번도 못 만들어 본
+     * 사람의 도감에 전설 칸이 차 있게 된다.
+     */
+    @Test
+    fun `20강 낫검을 바쳐도 전설 칸은 열리지 않는다`() {
+        val vm = vm(rich(Sword(WeaponFamily.SCYTHE, 20)))
+        vm.offerToCodex()
+
+        val legendSlot = WeaponCatalog.slotFor(WeaponFamily.SCYTHE, LegendForge.LEVEL)
+        assertFalse(legendSlot in Progress.entriesOf(vm.ui.value.progress))
+        assertFalse(vm.ui.value.legendUnlocked)
+    }
+
+    /** 계열 안에서는 짝 열기가 그대로 산다. */
+    @Test
+    fun `낫검은 계열 칸 안에서 다음 칸도 연다`() {
+        val vm = vm(rich(Sword(WeaponFamily.SCYTHE, 5)))
+        val before = Progress.entriesOf(vm.ui.value.progress).size
+        vm.offerToCodex()
+        assertEquals(before + 2, Progress.entriesOf(vm.ui.value.progress).size)
     }
 
     /** 전설검은 부서지지 않으므로 확률 표시에도 파괴가 남으면 안 된다. */

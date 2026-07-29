@@ -52,6 +52,7 @@ import com.geomgang.core.SwordDrop
 import com.geomgang.core.Timing
 import com.geomgang.core.UniqueSwords
 import com.geomgang.core.UsedItems
+import com.geomgang.core.WeaponCatalog
 import com.geomgang.core.WeaponFamily
 import com.geomgang.core.Zone
 import com.geomgang.game.feel.HapticEngine
@@ -196,9 +197,17 @@ class ForgeViewModel(
             store.saveProgress(progress)
         }
 
-        // 이미 +21 위에 있다는 것은 벽을 넘었다는 뜻이다. 이 기능이 없던 시절의
-        // 세이브가 해금을 못 받고 시작하면, 손에 든 검이 사라지는 순간 길이 막힌다.
-        if ((loaded.sword?.level ?: 0) > RateTable.MAX_FINITE_LEVEL && !progress.legendUnlocked) {
+        // 한 번이라도 +21 을 밟았으면 벽을 넘은 사람이다. 이 기능이 없던 시절의
+        // 세이브가 해금을 못 받고 시작하면, 검이 사라지는 순간 길이 막힌다.
+        //
+        // 손에 든 검이 아니라 **최고 기록**을 본다 - 그 검을 보관함에 넣어 뒀거나
+        // 이미 잃은 사람도 벽을 넘은 것은 마찬가지다.
+        val everLegend = maxOf(
+            loaded.bestLevel,
+            loaded.sword?.level ?: 0,
+            loaded.storage.maxOfOrNull { it.level } ?: 0,
+        ) > RateTable.MAX_FINITE_LEVEL
+        if (everLegend && !progress.legendUnlocked) {
             progress = progress.copy(legendUnlocked = true)
             store.saveProgress(progress)
         }
@@ -440,7 +449,13 @@ class ForgeViewModel(
 
         progress = CodexOffer.offer(progress, game.difficulty, sword)
         // 낫검은 다음 단계 칸도 함께 연다. 이미 차 있으면 한 칸만 열린다.
-        if (FamilyForge.of(sword).codexPair) {
+        //
+        // **계열 칸 안에서만이다.** +20 낫검의 "다음" 은 전설 칸인데, 전설 칸은
+        // 전설검으로만 열려야 한다 - 안 그러면 전설검을 한 번도 못 만들어 본 사람의
+        // 도감에 전설 칸이 차 있게 된다.
+        if (FamilyForge.of(sword).codexPair &&
+            WeaponCatalog.isFamilyArt(sword.level + 1)
+        ) {
             val next = Sword(sword.family, sword.level + 1)
             if (CodexOffer.canOffer(progress, next)) {
                 progress = CodexOffer.offer(progress, game.difficulty, next)
@@ -1436,6 +1451,7 @@ class ForgeViewModel(
     /** 보관함의 검을 부숴 조각으로 바꾼다. */
     fun scrapFromStorage(index: Int) {
         if (busy || index !in game.storage.indices) return
+        if (!Storage.canScrap(game.storage[index])) return
         game = Storage.scrap(game, index)
         sound.salvage()
         persist()

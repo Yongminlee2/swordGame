@@ -213,10 +213,11 @@ private fun StorageRow(
                 }
                 TextButton(
                     onClick = onScrap,
-                    enabled = !state.busy,
+                    // 전설검을 부수면 다시 벼릴 값의 5분의 1도 안 나온다([Storage.canScrap]).
+                    enabled = !state.busy && Storage.canScrap(sword),
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text("🔨 ${Storage.scrapShards(sword)}", fontSize = 12.sp)
+                    Text("🔨 ${Storage.scrapShards(sword)}", fontSize = 12.sp, maxLines = 1)
                 }
                 // 이미 찬 칸이면 잠긴다. 검만 사라지고 얻는 게 없으면 함정이다.
                 TextButton(

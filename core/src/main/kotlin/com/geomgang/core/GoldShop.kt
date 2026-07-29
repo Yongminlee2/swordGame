@@ -46,9 +46,22 @@ object GoldShop {
      */
     const val SWORD_MULT = 0.034
 
+    /**
+     * 누진이 멈추는 개수.
+     *
+     * [rebase] 는 **최고 단계가 올라야** 누진을 푸는데, 계열이 +20 에서 끝나면서
+     * 최고 단계가 그 자리에 오래 머무는 구간이 생겼다 — 전설검 재료 네 자루를
+     * 각각 +20 까지 올리는 동안이 전부 그렇다. 그 구간에서 값이 끝없이 오르면
+     * **골드가 다시 쓸 데를 잃는다.** 이 파일이 처음부터 막으려던 실패다.
+     *
+     * 1.18^30 ≈ 143배. 여기서 멈춰도 "몰아 사서 사냥터를 건너뛰는" 길은 막힌다.
+     */
+    const val GROWTH_CAP = 30
+
     private fun curve(state: GameState, mult: Double, bought: Int): Long {
         val base = Economy.upgradeCost(state.bestLevel) * mult
-        return (base * GROWTH.pow(bought.toDouble())).roundToLong().coerceAtLeast(1)
+        val steps = bought.coerceAtMost(GROWTH_CAP)
+        return (base * GROWTH.pow(steps.toDouble())).roundToLong().coerceAtLeast(1)
     }
 
     fun stonePrice(state: GameState): Long = curve(state, STONE_MULT, state.stonesBought)

@@ -27,9 +27,19 @@ object Fusion {
         if (indices.distinct().size != indices.size) return false
         if (indices.any { it !in state.storage.indices }) return false
         // 고유검은 녹일 수 없다. 실수 한 번으로 전설이 사라지면 안 된다.
-        if (indices.any { state.storage[it].uniqueId != null }) return false
+        // 전설검도 같다 — 결과가 +20 으로 깎이므로 녹이면 **반드시 손해**고,
+        // 재료 넷을 다시 모으는 일이라 되돌릴 방법도 없다.
+        if (indices.any { !meltable(state.storage[it]) }) return false
         return state.gold >= cost(state, indices)
     }
+
+    /**
+     * 이 검을 녹일 수 있는지.
+     *
+     * 화면도 같은 판단을 써야 한다 — 목록에서 고를 수 있는데 버튼이 안 눌리면
+     * 왜 안 되는지 알 길이 없다.
+     */
+    fun meltable(sword: Sword): Boolean = sword.uniqueId == null && !sword.isLegend()
 
     /** 조합 비용. 재료 중 가장 좋은 검 판매가의 절반이다. */
     fun cost(state: GameState, indices: List<Int>): Long =

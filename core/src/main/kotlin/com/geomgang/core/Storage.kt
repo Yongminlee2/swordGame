@@ -69,12 +69,22 @@ object Storage {
     fun scrap(state: GameState, index: Int): GameState {
         require(index in state.storage.indices) { "no sword at $index" }
         val sword = state.storage[index]
+        check(canScrap(sword)) { "cannot scrap a legend sword" }
         return state.copy(
             shards = state.shards + scrapShards(sword),
             forgeStones = state.forgeStones + scrapStones(sword),
             storage = state.storage.toMutableList().apply { removeAt(index) },
         )
     }
+
+    /**
+     * 이 검을 부술 수 있는지.
+     *
+     * **전설검은 부술 수 없다.** +45 를 부수면 조각 92개가 나오는데 다시 벼리는 데는
+     * 500개가 든다. 값이 그만큼 어긋나 있으면 그건 선택지가 아니라 함정이다.
+     * 내려놓는 길은 도감에 바치는 것 하나로 족하다 — 그쪽은 해금이라도 남는다.
+     */
+    fun canScrap(sword: Sword): Boolean = !sword.isLegend()
 
     /** 부숴서 나오는 조각. 단계가 높을수록 많다. */
     fun scrapShards(sword: Sword): Int = (2 + sword.level * 2).coerceAtLeast(1)

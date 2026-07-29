@@ -81,6 +81,7 @@ fun CraftScreen(
             canRecraft = state.canRecraftLegend,
             unlocked = state.legendUnlocked,
             shards = state.shards,
+            handsFull = state.sword != null,
             onCraft = onCraftLegend,
             onRecraft = onRecraftLegend,
         )
@@ -114,8 +115,8 @@ fun CraftScreen(
                 MaterialRow(
                     sword = sword,
                     selected = index in picked,
-                    // 고유검은 녹일 수 없다. 실수 한 번으로 전설이 사라지면 안 된다.
-                    selectable = sword.uniqueId == null,
+                    // 고유검과 전설검은 녹일 수 없다([Fusion.meltable]).
+                    selectable = Fusion.meltable(sword),
                     onToggle = {
                         picked = when {
                             index in picked -> picked - index
@@ -141,6 +142,7 @@ private fun LegendPanel(
     canRecraft: Boolean,
     unlocked: Boolean,
     shards: Int,
+    handsFull: Boolean,
     onCraft: () -> Unit,
     onRecraft: () -> Unit,
 ) {
@@ -167,6 +169,16 @@ private fun LegendPanel(
                 )
             }
             Spacer(Modifier.height(8.dp))
+            // 재료가 다 있는데도 손에 검이 있으면 안 눌린다. 그 이유를 말해 주지 않으면
+            // 무엇이 모자란지 재료 목록만 몇 번씩 다시 보게 된다.
+            if (handsFull && missing.isEmpty()) {
+                Text(
+                    text = "손에 든 검을 보관함에 넣어야 벼릴 수 있다",
+                    fontSize = 11.sp,
+                    color = Color(0xFFE0A458),
+                )
+                Spacer(Modifier.height(4.dp))
+            }
             Button(onClick = onCraft, enabled = canCraft, modifier = Modifier.fillMaxWidth()) {
                 Text("재료로 벼리기")
             }
@@ -197,7 +209,7 @@ private fun FusionPanel(
 ) {
     val materials = picked.sorted().mapNotNull { state.storage.getOrNull(it) }
     val preview = if (materials.size in Fusion.MIN_MATERIALS..Fusion.MAX_MATERIALS &&
-        materials.none { it.uniqueId != null }
+        materials.all { Fusion.meltable(it) }
     ) {
         Fusion.resultOf(materials, state.essences)
     } else {
