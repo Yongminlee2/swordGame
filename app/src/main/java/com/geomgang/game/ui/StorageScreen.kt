@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
+import com.geomgang.core.CodexOffer
 import com.geomgang.core.Combat
 import com.geomgang.core.Economy
 import com.geomgang.core.FamilyStyle
@@ -48,6 +49,7 @@ fun StorageScreen(
     onEquip: (Int) -> Unit,
     onSell: (Int) -> Unit,
     onScrap: (Int) -> Unit,
+    onOffer: (Int) -> Unit,
     onBack: () -> Unit,
 ) {
     Column(
@@ -92,6 +94,7 @@ fun StorageScreen(
                     onEquip = { onEquip(index) },
                     onSell = { onSell(index) },
                     onScrap = { onScrap(index) },
+                    onOffer = { onOffer(index) },
                 )
             }
         }
@@ -155,6 +158,7 @@ private fun StorageRow(
     onEquip: () -> Unit,
     onSell: () -> Unit,
     onScrap: () -> Unit,
+    onOffer: () -> Unit,
 ) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
@@ -213,6 +217,14 @@ private fun StorageRow(
                     modifier = Modifier.weight(1f),
                 ) {
                     Text("🔨 ${Storage.scrapShards(sword)}", fontSize = 12.sp)
+                }
+                // 이미 찬 칸이면 잠긴다. 검만 사라지고 얻는 게 없으면 함정이다.
+                TextButton(
+                    onClick = onOffer,
+                    enabled = !state.busy && CodexOffer.canOffer(state.progress, sword),
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text("📖 바치기", fontSize = 12.sp, maxLines = 1)
                 }
             }
         }

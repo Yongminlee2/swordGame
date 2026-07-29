@@ -146,6 +146,7 @@ private fun App(store: SaveStore) {
             onEquip = vm::equipFromStorage,
             onSell = vm::sellFromStorage,
             onScrap = vm::scrapFromStorage,
+            onOffer = vm::offerFromStorage,
             onBack = { overlay = Overlay.None },
         )
 
@@ -169,6 +170,8 @@ private fun App(store: SaveStore) {
         Overlay.Craft -> CraftScreen(
             state = state,
             onFuse = vm::fuse,
+            onCraftLegend = vm::craftLegend,
+            onRecraftLegend = vm::recraftLegend,
             onBack = { overlay = Overlay.None },
         )
 
@@ -238,6 +241,8 @@ private fun App(store: SaveStore) {
             onOpenMenu = { overlay = Overlay.Records },
             onDismissIdle = vm::dismissIdleReward,
             onOpenStar = { overlay = Overlay.Star },
+            onOfferCodex = vm::offerToCodex,
+            onUpgradeSmithy = vm::upgradeSmithy,
             onAnimationEnd = vm::onAnimationFinished,
         )
     }

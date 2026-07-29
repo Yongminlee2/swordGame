@@ -29,9 +29,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geomgang.core.Fusion
+import com.geomgang.core.LegendForge
 import com.geomgang.core.Sword
 import com.geomgang.core.SwordNames
 import com.geomgang.core.UniqueSwords
+import com.geomgang.core.WeaponFamily
 import com.geomgang.core.Zone
 import com.geomgang.game.ForgeUiState
 
@@ -48,6 +50,8 @@ import com.geomgang.game.ForgeUiState
 fun CraftScreen(
     state: ForgeUiState,
     onFuse: (List<Int>) -> Unit,
+    onCraftLegend: () -> Unit,
+    onRecraftLegend: () -> Unit,
     onBack: () -> Unit,
 ) {
     var picked by remember { mutableStateOf(setOf<Int>()) }
@@ -66,6 +70,19 @@ fun CraftScreen(
             text = "보관함의 검 여러 자루를 녹여 한 자루로 만든다",
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+        )
+
+        // 재료가 모자라 아래가 잘려 나가도 이 칸은 남는다 - 무엇을 모아야 하는지가
+        // 바로 그때 가장 필요한 정보다.
+        Spacer(Modifier.height(12.dp))
+        LegendPanel(
+            missing = state.legendMissing,
+            canCraft = state.canCraftLegend,
+            canRecraft = state.canRecraftLegend,
+            unlocked = state.legendUnlocked,
+            shards = state.shards,
+            onCraft = onCraftLegend,
+            onRecraft = onRecraftLegend,
         )
 
         if (state.storage.size < Fusion.MIN_MATERIALS) {
@@ -107,6 +124,65 @@ fun CraftScreen(
                         }
                     },
                 )
+            }
+        }
+    }
+}
+
+/**
+ * 전설검 벼리기.
+ *
+ * 재료가 모자라도 **무엇이 필요한지 늘 보여 준다.** 목표가 보여야 모으고 싶어진다.
+ */
+@Composable
+private fun LegendPanel(
+    missing: List<WeaponFamily>,
+    canCraft: Boolean,
+    canRecraft: Boolean,
+    unlocked: Boolean,
+    shards: Int,
+    onCraft: () -> Unit,
+    onRecraft: () -> Unit,
+) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp)) {
+            Text("전설검 벼리기", fontWeight = FontWeight.Bold, color = Color(0xFFFFD54A))
+            Text(
+                text = "계열은 +${LegendForge.MATERIAL_LEVEL}에서 끝난다. 그 위는 여기서만 간다.",
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+            )
+            Spacer(Modifier.height(8.dp))
+            LegendForge.MATERIALS.forEach { family ->
+                val have = family !in missing
+                Text(
+                    text = "${if (have) "✓" else "✗"} ${family.displayName} " +
+                        "+${LegendForge.MATERIAL_LEVEL}",
+                    fontSize = 12.sp,
+                    color = if (have) {
+                        Color(0xFF7FD48A)
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    },
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = onCraft, enabled = canCraft, modifier = Modifier.fillMaxWidth()) {
+                Text("재료로 벼리기")
+            }
+            // 한 번 넘은 벽을 두 번 넘으라고 하면 아무도 두 번째 도전을 하지 않는다.
+            if (unlocked) {
+                Spacer(Modifier.height(6.dp))
+                OutlinedButton(
+                    onClick = onRecraft,
+                    enabled = canRecraft,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        text = "💎 ${LegendForge.RECRAFT_SHARDS}로 다시 벼리기  (보유 $shards)",
+                        fontSize = 13.sp,
+                    )
+                }
             }
         }
     }

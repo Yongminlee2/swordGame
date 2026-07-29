@@ -44,12 +44,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import com.geomgang.core.BonusSource
 import com.geomgang.core.Difficulty
 import com.geomgang.core.ForgeMark
 import com.geomgang.core.ForgeResult
 import com.geomgang.core.IdleReward
 import com.geomgang.core.IdleRewards
+import com.geomgang.core.LegendForge
+import com.geomgang.core.Smithy
 import com.geomgang.core.SwordNames
+import com.geomgang.core.isLegend
 import com.geomgang.game.DestroyPhase
 import com.geomgang.game.ForgeUiState
 import com.geomgang.game.TemperUi
@@ -87,6 +91,8 @@ fun ForgeScreen(
     onOpenMenu: () -> Unit,
     onDismissIdle: () -> Unit,
     onOpenStar: () -> Unit,
+    onOfferCodex: () -> Unit,
+    onUpgradeSmithy: () -> Unit,
     onAnimationEnd: () -> Unit,
 ) {
     val shake = remember { Animatable(0f) }
@@ -306,6 +312,10 @@ fun ForgeScreen(
                 Spacer(Modifier.height(8.dp))
                 TemperBar(temper)
             }
+            if (state.bonusSources.any { it.bonus.successRate > 0 || it.bonus.destroyGuard > 0 }) {
+                Spacer(Modifier.height(8.dp))
+                BonusBreakdown(state.bonusSources)
+            }
             Spacer(Modifier.height(6.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -380,19 +390,38 @@ fun ForgeScreen(
                 )
                 Spacer(Modifier.height(4.dp))
             }
-            Button(
-                onClick = onForge,
-                enabled = state.canForge,
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(64.dp),
-            ) {
-                Text("강 화", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            // 계열의 끝에서는 강화 버튼이 영원히 잠긴다. 잠긴 버튼만 두면 무엇을 더
+            // 사야 풀리는지 찾아 헤매게 되므로, 버튼 자리를 안내로 바꾼다.
+            val atFamilyCap = state.sword?.let {
+                !it.isLegend() && it.level >= LegendForge.MATERIAL_LEVEL
+            } == true
+            if (atFamilyCap) {
+                FamilyCapNotice()
+            } else {
+                Button(
+                    onClick = onForge,
+                    enabled = state.canForge,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp),
+                ) {
+                    Text("강 화", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                }
+                state.forgeBlockedReason?.let {
+                    Spacer(Modifier.height(4.dp))
+                    Text(it, fontSize = 12.sp, color = MaterialTheme.colorScheme.error)
+                }
             }
-            state.forgeBlockedReason?.let {
-                Spacer(Modifier.height(4.dp))
-                Text(it, fontSize = 12.sp, color = MaterialTheme.colorScheme.error)
+            if (state.canOfferCodex) {
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = onOfferCodex,
+                    enabled = !state.busy,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("📖 도감에 바치기 — 이 검은 사라진다", fontSize = 13.sp)
+                }
             }
             if (state.isRecord) {
                 Spacer(Modifier.height(6.dp))
@@ -409,6 +438,23 @@ fun ForgeScreen(
             }
             Spacer(Modifier.height(10.dp))
             StarBar(state, onOpenStar)
+            Spacer(Modifier.height(8.dp))
+            // 대장간은 골드로 사는 영구 확률이다. 별도 화면을 만들지 않는다 - 줄 하나면 된다.
+            OutlinedButton(
+                onClick = onUpgradeSmithy,
+                enabled = state.canUpgradeSmithy,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = if (state.smithyLevel >= Smithy.MAX_LEVEL) {
+                        "🔨 대장간 Lv ${state.smithyLevel} · 최고"
+                    } else {
+                        "🔨 대장간 Lv ${state.smithyLevel}/${Smithy.MAX_LEVEL}  ·  " +
+                            compactGold(state.smithyPrice)
+                    },
+                    fontSize = 13.sp,
+                )
+            }
             Spacer(Modifier.height(10.dp))
             // 사냥이 강화 비용의 출처다. 강화 버튼 바로 아래에 둬서 왕복이 짧게 한다.
             Button(
@@ -717,6 +763,70 @@ private fun IconEntry(
             } else {
                 MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             },
+        )
+    }
+}
+
+/**
+ * 확률이 어디서 왔는지.
+ *
+ * 합계만 보여 주면 "왜 이 숫자인지" 알 수 없고, 그러면 도감이나 대장간을 올릴 이유가
+ * 손에 잡히지 않는다.
+ */
+@Composable
+private fun BonusBreakdown(sources: List<BonusSource>) {
+    Column(Modifier.fillMaxWidth()) {
+        sources.filter { it.bonus.successRate > 0 || it.bonus.destroyGuard > 0 }.forEach { source ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = "${source.label}  ${source.detail}",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
+                )
+                Text(
+                    text = buildList {
+                        if (source.bonus.successRate > 0) {
+                            add("성공 +%.1f%%p".format(source.bonus.successRate * 100))
+                        }
+                        if (source.bonus.destroyGuard > 0) {
+                            add("파괴방지 +%.1f%%p".format(source.bonus.destroyGuard * 100))
+                        }
+                    }.joinToString("  "),
+                    fontSize = 11.sp,
+                    color = Color(0xFF7FD48A),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 계열의 끝.
+ *
+ * 강화 버튼을 잠그기만 하면 "골드가 모자란가" 하고 상점을 헤맨다. 여기서 길이
+ * 끊긴 것이 아니라 **다른 길로 갈아타는 자리**라는 것을 말해 준다.
+ */
+@Composable
+private fun FamilyCapNotice() {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = "여기가 계열의 끝",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFFE0A458),
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = "+${LegendForge.MATERIAL_LEVEL} 위는 강화로 가지 않는다. " +
+                "조합소에서 전설검으로 벼린다",
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
         )
     }
 }

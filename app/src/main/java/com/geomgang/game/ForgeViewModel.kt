@@ -454,6 +454,21 @@ class ForgeViewModel(
         _ui.value = render()
     }
 
+    /** 보관함의 검을 도감에 바친다. 손에 든 검을 내려놓지 않고도 칸을 채우는 길이다. */
+    fun offerFromStorage(index: Int) {
+        if (busy) return
+        val sword = game.storage.getOrNull(index) ?: return
+        if (!CodexOffer.canOffer(progress, sword)) return
+
+        progress = CodexOffer.offer(progress, game.difficulty, sword)
+        progress = LegendForge.onOffered(progress, sword)
+        progress = Progress.refresh(progress)
+        game = game.copy(storage = game.storage.filterIndexed { i, _ -> i != index })
+        sound.purchase()
+        persist()
+        _ui.value = render()
+    }
+
     fun upgradeSmithy() {
         if (busy || !Smithy.canUpgrade(game, progress)) return
         val (nextGame, nextProgress) = Smithy.upgrade(game, progress)
