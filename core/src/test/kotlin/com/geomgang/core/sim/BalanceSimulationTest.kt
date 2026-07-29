@@ -57,11 +57,18 @@ class BalanceSimulationTest {
         assertTrue("파산 발생률=${r.bankruptcyRate}", r.bankruptcyRate < 0.5)
     }
 
+    /**
+     * 무한 모드에는 난이도 상한이 없지만, **계열 상한 +20 은 있다.**
+     *
+     * +21 부터는 전설검 등급이고 강화가 아니라 조합으로만 넘어간다([LegendForge]).
+     * 시뮬레이터는 사냥도 조합도 모형화하지 않으므로 그 벽을 넘을 길이 없다 —
+     * 이 숫자가 21 이 되면 오히려 **강화만으로 벽이 뚫렸다는 뜻**이라 잘못이다.
+     * 벽 너머는 `LegendForgeTest` 가 지킨다.
+     */
     @Test
-    fun `무한 모드는 상한 없이 21단계 이상을 만들어 낸다`() {
-        // 용린참 이상 티어가 도감에서 죽은 칸이 되지 않으려면 이게 성립해야 한다.
+    fun `무한 모드는 난이도 상한 없이 계열 상한까지 올라간다`() {
         val r = report(Difficulty.ENDLESS)
-        assertTrue("무한 최고 도달=${r.maxBestLevel}", r.maxBestLevel > 20)
+        assertEquals("무한 최고 도달=${r.maxBestLevel}", 20, r.maxBestLevel)
         assertEquals(0.0, r.capRate, 1e-9)
     }
 

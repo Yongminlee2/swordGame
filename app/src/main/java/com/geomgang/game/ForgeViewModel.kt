@@ -16,7 +16,10 @@ import com.geomgang.core.GauntletBuff
 import com.geomgang.core.GauntletEngine
 import com.geomgang.core.GauntletRun
 import com.geomgang.core.GoldShop
+import com.geomgang.core.LegendForge
 import com.geomgang.core.MaterialBoost
+import com.geomgang.core.Smithy
+import com.geomgang.core.isLegend
 import com.geomgang.core.StarForce
 import com.geomgang.core.GameState
 import com.geomgang.core.Item
@@ -29,6 +32,7 @@ import com.geomgang.core.RateTable
 import com.geomgang.core.Tempering
 import com.geomgang.core.Achievement
 import com.geomgang.core.AdventureState
+import com.geomgang.core.CodexOffer
 import com.geomgang.core.Combat
 import com.geomgang.core.DailyQuests
 import com.geomgang.core.HuntEvent
@@ -189,6 +193,13 @@ class ForgeViewModel(
             loaded = ForgeEngine.confirmDestroy(loaded)
             progress = Progress.refresh(Progress.onPreventMissed(progress))
             store.saveGame(loaded)
+            store.saveProgress(progress)
+        }
+
+        // 이미 +21 위에 있다는 것은 벽을 넘었다는 뜻이다. 이 기능이 없던 시절의
+        // 세이브가 해금을 못 받고 시작하면, 손에 든 검이 사라지는 순간 길이 막힌다.
+        if ((loaded.sword?.level ?: 0) > RateTable.MAX_FINITE_LEVEL && !progress.legendUnlocked) {
+            progress = progress.copy(legendUnlocked = true)
             store.saveProgress(progress)
         }
 
@@ -414,6 +425,64 @@ class ForgeViewModel(
         progress = Progress.refresh(Progress.onSalvage(progress, game.shards - before))
         sound.salvage()
         closeDestroyWindow()
+    }
+
+    /**
+     * 든 검을 도감에 바친다. 검은 사라지고 칸이 열린다.
+     *
+     * 지나가기만 하면 저절로 차던 것을 **누르는 행동**으로 바꿨다. 칸이 늘어날수록
+     * 강화 확률이 오르므로, 아까운 검을 내려놓는 선택 자체가 성장이 된다.
+     */
+    fun offerToCodex() {
+        if (busy) return
+        val sword = game.sword ?: return
+        if (!CodexOffer.canOffer(progress, sword)) return
+
+        progress = CodexOffer.offer(progress, game.difficulty, sword)
+        // 낫검은 다음 단계 칸도 함께 연다. 이미 차 있으면 한 칸만 열린다.
+        if (FamilyForge.of(sword).codexPair) {
+            val next = Sword(sword.family, sword.level + 1)
+            if (CodexOffer.canOffer(progress, next)) {
+                progress = CodexOffer.offer(progress, game.difficulty, next)
+            }
+        }
+        progress = LegendForge.onOffered(progress, sword)
+        progress = Progress.refresh(progress)
+        game = game.copy(sword = null)
+        sound.purchase()
+        persist()
+        _ui.value = render()
+    }
+
+    fun upgradeSmithy() {
+        if (busy || !Smithy.canUpgrade(game, progress)) return
+        val (nextGame, nextProgress) = Smithy.upgrade(game, progress)
+        game = nextGame
+        progress = nextProgress
+        sound.purchase()
+        persist()
+        _ui.value = render()
+    }
+
+    /** 재료 넷을 태워 전설검을 벼린다. 계열을 넘는 유일한 길이다. */
+    fun craftLegend() {
+        if (busy || !LegendForge.canCraft(game, progress)) return
+        val (nextGame, nextProgress) = LegendForge.craft(game, progress)
+        game = nextGame
+        progress = nextProgress
+        sound.uniqueBorn()
+        haptics.newRecord()
+        persist()
+        _ui.value = render()
+    }
+
+    /** 해금된 뒤에는 조각으로 다시 벼린다. 같은 벽을 두 번 넘게 하지 않는다. */
+    fun recraftLegend() {
+        if (busy || !LegendForge.canRecraft(game, progress)) return
+        game = LegendForge.recraft(game)
+        sound.uniqueBorn()
+        persist()
+        _ui.value = render()
     }
 
     fun setAutoPrevent(on: Boolean) {
@@ -1412,10 +1481,27 @@ class ForgeViewModel(
         )
     }
 
+    /**
+     * 강화 버튼이 안 눌리는 이유 한 줄.
+     *
+     * 계열 상한이 먼저다 — +20 에서 막힌 사람에게 "강화석이 모자라다"고 말하면
+     * 강화석을 사러 가서 또 막힌다.
+     */
+    private fun forgeBlockedReason(): String? {
+        val sword = game.sword ?: return ForgeCost.missingText(game)
+        if (!LegendForge.canForge(sword)) {
+            return "계열은 +${LegendForge.MATERIAL_LEVEL}이 끝이다. 조합소에서 전설검으로 넘어간다"
+        }
+        return ForgeCost.missingText(game)
+    }
+
     private fun render(): ForgeUiState {
         val sword = game.sword
         val level = sword?.level ?: 0
         val targetLevel = level + 1
+        // 화면이 보는 확률과 판정이 쓰는 확률은 같은 값이어야 한다.
+        val bonus = ForgeBonuses.of(game, progress)
+        val forge = FamilyForge.of(sword)
         return ForgeUiState(
             difficulty = game.difficulty,
             sword = sword,
@@ -1434,6 +1520,11 @@ class ForgeViewModel(
                 targetLevel,
                 pendingItems,
                 Tempering.failsFor(game, targetLevel),
+                bonus = bonus.successRate + forge.successBonus,
+                destroyGuard = bonus.destroyGuard + forge.destroyGuard,
+                legend = sword?.isLegend() == true,
+                temperCapBonus = forge.temperCapBonus,
+                blessingMult = forge.blessingMult,
             ).percents(),
             temper = temperUiFor(targetLevel),
             recentMarks = game.recentMarks,
@@ -1452,8 +1543,19 @@ class ForgeViewModel(
             storage = game.storage,
             storageCapacity = Storage.CAPACITY,
             forgeStones = game.forgeStones,
-            requiredStones = game.sword?.let { ForgeCost.requirementFor(it.level).stones } ?: 0,
-            forgeBlockedReason = if (busy) null else ForgeCost.missingText(game),
+            requiredStones = game.sword?.let {
+                ForgeCost.requirementFor(it.level, forge.stoneRelief).stones
+            } ?: 0,
+            forgeBlockedReason = if (busy) null else forgeBlockedReason(),
+            bonusSources = ForgeBonuses.sourcesOf(game, progress),
+            canOfferCodex = !busy && sword?.let { CodexOffer.canOffer(progress, it) } == true,
+            smithyLevel = progress.smithyLevel,
+            smithyPrice = Smithy.priceOf(game, progress.smithyLevel),
+            canUpgradeSmithy = !busy && Smithy.canUpgrade(game, progress),
+            legendMissing = LegendForge.missingFor(game),
+            canCraftLegend = !busy && LegendForge.canCraft(game, progress),
+            canRecraftLegend = !busy && LegendForge.canRecraft(game, progress),
+            legendUnlocked = progress.legendUnlocked,
             star = renderStar(),
             progress = progress,
             settings = settings,

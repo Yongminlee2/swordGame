@@ -165,6 +165,13 @@ data class ProgressState(
      */
     val smithyLevel: Int = 0,
     /**
+     * 전설검을 한 번이라도 도감에 바쳤는지.
+     *
+     * 켜지면 조각으로 전설검을 다시 벼릴 수 있다. 진행도에 두어 모드 초기화로도
+     * 지워지지 않게 한다 — **가장 높은 벽을 두 번 넘으라고 하면 안 된다.**
+     */
+    val legendUnlocked: Boolean = false,
+    /**
      * 한 번이라도 얻어 본 펫 id. 수집 기록이므로 [uniqueFound] 와 같이 전역에 남는다.
      * 지금 보유·레벨은 모드 세이브([GameState.pets])가 들고 있다.
      */

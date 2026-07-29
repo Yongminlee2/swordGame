@@ -116,10 +116,17 @@ class ForgeEngineTest {
     @Test
     fun `상한에 도달하면 더 강화할 수 없다`() {
         assertFalse(ForgeEngine.canAttempt(state(level = 20), UsedItems.NONE))
-        // 무한 모드는 상한이 없다
-        assertTrue(
+        // 무한 모드에도 계열 상한은 있다. +20 위는 조합으로만 간다([LegendForge]).
+        assertFalse(
             ForgeEngine.canAttempt(
                 state(level = 20, difficulty = Difficulty.ENDLESS),
+                UsedItems.NONE,
+            ),
+        )
+        // 전설검이 되면 상한이 풀린다
+        assertTrue(
+            ForgeEngine.canAttempt(
+                state(level = 21, difficulty = Difficulty.ENDLESS),
                 UsedItems.NONE,
             ),
         )
@@ -232,12 +239,18 @@ class ForgeEngineTest {
         assertTrue(withTicket.preventable)
     }
 
+    /**
+     * 무한 구간은 [RateTable.destroyChance] 가 1.00 이라 실패가 곧 파괴 판정이다.
+     *
+     * 다만 그 구간의 검은 전부 전설검이고, 전설검은 사라지는 대신 +21 로 되돌아간다.
+     * 파괴방지 특성이 있어 난수도 하나 더 쓴다.
+     */
     @Test
-    fun `무한 구간 실패는 두 번째 난수와 무관하게 파괴다`() {
-        // +21 위는 전설검이고 전설검은 파괴방지 특성이 있어 난수를 하나 더 쓴다.
+    fun `무한 구간 실패는 두 번째 난수와 무관하게 파괴 판정이다`() {
         val before = state(level = 21, difficulty = Difficulty.ENDLESS)
         val result = ForgeEngine.attempt(before, UsedItems.NONE, ScriptedRandom(0.9, 0.99, 0.9))
-        assertTrue(result is ForgeResult.Destroyed)
+        assertTrue("결과=$result", result is ForgeResult.Drop)
+        assertEquals(LegendForge.LEVEL, result.state.sword?.level)
     }
 
     // --- 아이템 ---

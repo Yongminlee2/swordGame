@@ -106,10 +106,11 @@ class ForgeViewModelStoneTest {
 
     @Test
     fun `보관함이 비어도 고단계 강화가 된다`() = runTest(dispatcher) {
-        val v = vm(level = 20, stones = 50, storage = 0)
+        // +20 은 계열의 끝이라 여기서 굴리면 안 된다. 한 칸 아래로 본다.
+        val v = vm(level = 19, stones = 50, storage = 0)
         assertTrue(v.ui.value.canForge)
         v.forge()
-        assertEquals(21, v.ui.value.sword?.level)
+        assertEquals(20, v.ui.value.sword?.level)
     }
 
     @Test

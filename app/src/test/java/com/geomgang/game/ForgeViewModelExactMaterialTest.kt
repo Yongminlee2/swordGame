@@ -4,6 +4,7 @@ import com.geomgang.core.Difficulty
 import com.geomgang.core.Economy
 import com.geomgang.core.ForgeCost
 import com.geomgang.core.GameState
+import com.geomgang.core.LegendForge
 import com.geomgang.core.SaveStore
 import com.geomgang.core.Sword
 import com.geomgang.core.WeaponFamily
@@ -15,6 +16,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -102,10 +104,20 @@ class ForgeViewModelExactMaterialTest {
     fun `재료 요구 전 구간을 딱 맞춰 굴려도 튕기지 않는다`() = runTest(dispatcher) {
         // 재료가 붙는 모든 단계를 훑는다. 한 구간이라도 어긋나면 여기서 잡힌다.
         for (level in ForgeCost.STONE_BAND_START - 1..ForgeCost.ENDLESS_BAND_START + 4) {
+            // +20 은 계열의 끝이다. 그 위는 강화가 아니라 조합으로 넘어간다([LegendForge]).
+            if (level == LegendForge.MATERIAL_LEVEL) continue
             val vm = exactVm(level)
             vm.forge()
             assertEquals("level=$level", level + 1, vm.ui.value.sword?.level)
         }
+    }
+
+    /** 계열의 끝에서는 굴림이 아예 막힌다 - 재료를 딱 맞춰 왔어도 마찬가지다. */
+    @Test
+    fun `계열 상한에서는 재료가 맞아도 굴리지 않는다`() = runTest(dispatcher) {
+        val ui = exactVm(LegendForge.MATERIAL_LEVEL).ui.value
+        assertFalse(ui.canForge)
+        assertNotNull(ui.forgeBlockedReason)
     }
 
     // --- 초기화 ---

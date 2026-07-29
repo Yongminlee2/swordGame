@@ -75,10 +75,20 @@ object ForgeCost {
         )
     }
 
+    /**
+     * 지금 든 검이 실제로 내야 하는 요구.
+     *
+     * 계열 특성의 강화석 감면([FamilyForge.stoneRelief])이 여기 들어 있다. 판정은
+     * 감면을 쓰는데 화면은 안 쓰면, 창검이 낼 수 있는데도 "모자라다"고 뜬다.
+     */
+    fun requirementOf(state: GameState): ForgeRequirement? {
+        val sword = state.sword ?: return null
+        return requirementFor(sword.level, FamilyForge.of(sword).stoneRelief)
+    }
+
     /** 지금 상태로 요구를 낼 수 있는지. */
     fun canPay(state: GameState): Boolean {
-        val sword = state.sword ?: return false
-        val req = requirementFor(sword.level)
+        val req = requirementOf(state) ?: return false
         if (state.gold < req.gold) return false
         if (state.forgeStones < req.stones) return false
         return true
@@ -86,8 +96,7 @@ object ForgeCost {
 
     /** 못 내는 이유 한 줄. 낼 수 있으면 null. 화면이 그대로 띄운다. */
     fun missingText(state: GameState): String? {
-        val sword = state.sword ?: return "검이 없다"
-        val req = requirementFor(sword.level)
+        val req = requirementOf(state) ?: return "검이 없다"
         if (state.gold < req.gold) return "골드가 모자라다"
         if (state.forgeStones < req.stones) {
             return "강화석 ${req.stones}개가 필요하다 (보유 ${state.forgeStones})"

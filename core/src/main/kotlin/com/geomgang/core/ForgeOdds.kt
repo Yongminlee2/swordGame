@@ -54,15 +54,32 @@ data class ForgeOdds(
          * @param items 지금 켜 둔 아이템. 축복서는 성공률을 올리고,
          *   행운부적은 실패의 결과 자체를 없앤다.
          * @param temperFails 이 단계에 쌓인 담금질. 성공률을 올린다.
+         * @param bonus 쌓아 온 몫과 계열 특성을 더한 성공률 가산([ForgeBonuses]).
+         * @param destroyGuard 파괴가 정해진 뒤 한 번 더 막을 확률. 막히면 단계가 그대로다.
+         * @param legend 전설검인지. 전설검은 부서지는 대신 [LegendForge.LEVEL] 로 돌아간다.
+         * @param temperCapBonus 담금질 상한 가산. 전설검만 갖는다.
+         * @param blessingMult 축복서 효과 배수. 성검이 1.5배로 쓴다.
          */
         fun of(
             difficulty: Difficulty,
             targetLevel: Int,
             items: UsedItems = UsedItems.NONE,
             temperFails: Int = 0,
+            bonus: Double = 0.0,
+            destroyGuard: Double = 0.0,
+            legend: Boolean = false,
+            temperCapBonus: Double = 0.0,
+            blessingMult: Double = 1.0,
         ): ForgeOdds {
-            val success =
-                RateTable.successRate(difficulty, targetLevel, items.blessing, temperFails)
+            val success = RateTable.successRate(
+                difficulty,
+                targetLevel,
+                items.blessing,
+                temperFails,
+                bonus,
+                temperCapBonus,
+                blessingMult,
+            )
             val fail = 1.0 - success
 
             // 행운부적은 실패해도 단계를 지키므로 실패분이 전부 유지가 된다.
@@ -79,11 +96,16 @@ data class ForgeOdds(
 
                 FailureBand.DESTROY_OR_DROP -> {
                     val destroyShare = RateTable.destroyChance(targetLevel)
+                    val doomed = fail * destroyShare
+                    // 파괴가 정해져도 방지 특성이 한 번 더 막는다. 막히면 단계가 그대로다.
+                    val guarded = doomed * destroyGuard.coerceIn(0.0, 1.0)
+                    val lost = doomed - guarded
                     ForgeOdds(
                         success = success,
-                        stay = 0.0,
-                        drop = fail * (1.0 - destroyShare),
-                        destroy = fail * destroyShare,
+                        stay = guarded,
+                        // 전설검은 부서지지 않고 +21 로 돌아간다 - 화면도 그렇게 말해야 한다.
+                        drop = fail * (1.0 - destroyShare) + if (legend) lost else 0.0,
+                        destroy = if (legend) 0.0 else lost,
                     )
                 }
             }

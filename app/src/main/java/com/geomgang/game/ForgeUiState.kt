@@ -1,5 +1,6 @@
 package com.geomgang.game
 
+import com.geomgang.core.BonusSource
 import com.geomgang.core.Difficulty
 import com.geomgang.core.ForgeMark
 import com.geomgang.core.ForgeResult
@@ -122,6 +123,19 @@ data class ForgeUiState(
     val requiredStones: Int = 0,
     /** 강화할 수 없는 이유 한 줄. 가능하면 null. */
     val forgeBlockedReason: String? = null,
+    /** 강화 보너스의 출처별 내역. 화면이 "왜 이 확률인지" 말해 준다. */
+    val bonusSources: List<BonusSource> = emptyList(),
+    /** 지금 든 검을 도감에 바칠 수 있는지. */
+    val canOfferCodex: Boolean = false,
+    val smithyLevel: Int = 0,
+    val smithyPrice: Long = 0,
+    val canUpgradeSmithy: Boolean = false,
+    /** 전설검 재료 중 아직 없는 것. 목표가 보여야 모으고 싶어진다. */
+    val legendMissing: List<WeaponFamily> = emptyList(),
+    val canCraftLegend: Boolean = false,
+    val canRecraftLegend: Boolean = false,
+    /** 전설검을 한 번이라도 도감에 바쳤는지. 켜지면 조각으로 다시 벼릴 수 있다. */
+    val legendUnlocked: Boolean = false,
 ) {
     /** 방지권이든 줍기든 응답을 기다리는 중인지. */
     val awaitingDestroyChoice: Boolean get() = destroyPhase != DestroyPhase.None

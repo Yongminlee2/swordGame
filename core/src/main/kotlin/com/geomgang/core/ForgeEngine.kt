@@ -67,6 +67,9 @@ object ForgeEngine {
         val sword = state.sword ?: return false
         if (state.pendingDestroy != null) return false
 
+        // 계열은 +20 에서 끝난다. 그 위는 조합으로만 간다([LegendForge]).
+        if (!LegendForge.canForge(sword)) return false
+
         val max = state.difficulty.maxLevel
         if (max != null && sword.level >= max) return false
 
@@ -175,6 +178,13 @@ object ForgeEngine {
                             state = failed.copy(sword = revived),
                             newLevel = revived.level,
                         )
+                    } else if (sword.isLegend()) {
+                        // 전설검은 사라지지 않는다. 재료 넷을 다시 모으는 것은 몇 시간을
+                        // 지우는 일이라 누를 엄두가 안 난다. 단계를 잃는 것으로 충분하다.
+                        ForgeResult.Drop(
+                            state = failed.copy(sword = sword.copy(level = LegendForge.LEVEL)),
+                            newLevel = LegendForge.LEVEL,
+                        )
                     } else {
                         ForgeResult.Destroyed(
                             state = failed.copy(
@@ -245,7 +255,9 @@ object ForgeEngine {
         if (state.pendingDestroy == null) state else state.copy(pendingDestroy = null)
 
     private fun drop(paid: GameState, sword: Sword): ForgeResult.Drop {
-        val dropped = maxOf(0, sword.level - 1)
+        // 전설검은 +21 아래로 내려가지 않는다. 그 아래는 계열의 영역이다.
+        val floor = if (sword.isLegend()) LegendForge.LEVEL else 0
+        val dropped = maxOf(floor, sword.level - 1)
         return ForgeResult.Drop(
             state = paid.copy(sword = sword.copy(level = dropped)),
             newLevel = dropped,
