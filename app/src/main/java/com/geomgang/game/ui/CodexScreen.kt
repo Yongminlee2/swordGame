@@ -74,9 +74,9 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            // 계열마다 구획을 나눈다. 314칸을 한 격자에 쏟으면 79줄이 되어
-            // 지금 어느 계열을 보고 있는지 알 수 없다.
-            WeaponFamily.entries.forEach { family ->
+            // 계열마다 구획을 나눈다. 노출 계열만이다 - 숨긴 계열의 칸은
+            // 도감 어디에도 없다([WeaponFamily.CODEX_FAMILIES]).
+            WeaponFamily.CODEX_FAMILIES.forEach { family ->
                 val levels = WeaponCatalog.LEVELS_PER_FAMILY.toList()
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     SectionHeader(
@@ -91,11 +91,11 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
                 }
             }
 
-            // 전설 칸은 계열마다 두지 않는다. +21 위는 모든 계열이 같은 그림을 쓴다.
+            // 용검은 계열 구획이 없다. +21부터만 존재하는 전설이라 전설 구획이 곧 용검이다.
             val legendLevels = WeaponCatalog.LEGEND_LEVELS.toList()
             item(span = { GridItemSpan(maxLineSpan) }) {
                 SectionHeader(
-                    title = "전설  +${WeaponCatalog.FAMILY_MAX_LEVEL + 1}~" +
+                    title = "용검(전설)  +${WeaponCatalog.FAMILY_MAX_LEVEL + 1}~" +
                         "+${WeaponCatalog.LEGEND_MAX_LEVEL}",
                     owned = legendLevels.count { CodexEntry(null, it) in owned },
                     total = legendLevels.size,
@@ -120,7 +120,7 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
                     )
                     Text(
                         text = "기본 4계열(직검·곡도·대검·세검)만 상점에 나온다. " +
-                            "나머지는 조합으로 얻는다.",
+                            "마검·성검은 조합으로, 용검은 그 둘 +20을 합쳐 얻는다.",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
                     )
@@ -155,43 +155,23 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
                     }
                 }
             }
+            // 용검(전설)로 가는 길도 여기서 말한다. 표에는 없지만 길은 있다.
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Card(Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier.padding(10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        LevelThumb(
-                            family = WeaponFamily.FUSED,
-                            level = 6,
-                            size = 36.dp,
-                        )
+                        LevelThumb(family = null, level = 21, size = 36.dp)
                         Column(Modifier.padding(start = 10.dp)) {
-                            Text("합검", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                             Text(
-                                text = "서로 다른 4계열",
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                "용검(전설)",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFFFD54A),
                             )
-                        }
-                    }
-                }
-            }
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Card(Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier.padding(10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        LevelThumb(
-                            family = WeaponFamily.VOID,
-                            level = 6,
-                            size = 36.dp,
-                        )
-                        Column(Modifier.padding(start = 10.dp)) {
-                            Text("허검", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                             Text(
-                                text = "무한 회랑 10층 돌파",
+                                text = "마검 +20 + 성검 +20 — 조합소 전설 칸에서",
                                 fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                             )

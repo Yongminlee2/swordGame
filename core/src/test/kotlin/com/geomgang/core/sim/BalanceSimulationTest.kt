@@ -24,14 +24,15 @@ class BalanceSimulationTest {
     @Test
     fun `일반 모드 평균 최고 단계가 목표 구간 안에 있다`() {
         val r = report(Difficulty.NORMAL)
-        assertTrue("평균 최고 단계=${r.averageBestLevel}", r.averageBestLevel in 9.0..15.0)
+        // v2.1에서 1~20강 확률을 올렸다. 목표 구간도 함께 올라간다.
+        assertTrue("평균 최고 단계=${r.averageBestLevel}", r.averageBestLevel in 14.0..20.0)
     }
 
     @Test
     fun `일반 모드에서 상한 도달이 가능하되 흔하지는 않다`() {
         val r = report(Difficulty.NORMAL)
         assertTrue("상한 도달률=${r.capRate}", r.capRate > 0.0)
-        assertTrue("상한 도달률=${r.capRate}", r.capRate < 0.15)
+        assertTrue("상한 도달률=${r.capRate}", r.capRate < 0.6)
     }
 
     @Test

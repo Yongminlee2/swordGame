@@ -1,11 +1,11 @@
-package com.geomgang.core
+﻿package com.geomgang.core
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+/** 고유검 6종 - 전부 재료 두 자루다(v2.1). */
 class UniqueSwordsTest {
 
     private fun swords(vararg pairs: Pair<WeaponFamily, Int>) =
@@ -14,11 +14,9 @@ class UniqueSwordsTest {
     // --- 매칭 ---
 
     @Test
-    fun `삼위일체 - 성검 셋 10단계 이상`() {
+    fun `삼위일체 - 성검 둘 10단계 이상`() {
         val recipe = UniqueSwords.match(
-            swords(
-                WeaponFamily.HOLY to 10, WeaponFamily.HOLY to 12, WeaponFamily.HOLY to 11,
-            ),
+            swords(WeaponFamily.HOLY to 10, WeaponFamily.HOLY to 12),
             emptyMap(),
         )
         assertEquals("trinity", recipe?.id)
@@ -28,9 +26,7 @@ class UniqueSwordsTest {
     fun `단계가 모자라면 불발`() {
         assertNull(
             UniqueSwords.match(
-                swords(
-                    WeaponFamily.HOLY to 9, WeaponFamily.HOLY to 12, WeaponFamily.HOLY to 11,
-                ),
+                swords(WeaponFamily.HOLY to 9, WeaponFamily.HOLY to 12),
                 emptyMap(),
             ),
         )
@@ -38,120 +34,96 @@ class UniqueSwordsTest {
 
     @Test
     fun `정수가 모자라면 불발`() {
-        val materials = swords(WeaponFamily.DRAGON to 15, WeaponFamily.DRAGON to 16)
-        assertNull(UniqueSwords.match(materials, mapOf("dragon_nest" to 2)))
-        assertEquals(
-            "dragon_fang",
-            UniqueSwords.match(materials, mapOf("dragon_nest" to 3))?.id,
-        )
+        val materials = swords(WeaponFamily.DEMON to 16, WeaponFamily.DEMON to 17)
+        // 심연은 abyss 정수 5가 필요하다. 4로는 탐식자(정수 없음)로 떨어진다.
+        assertEquals("glutton", UniqueSwords.match(materials, mapOf("abyss" to 4))?.id)
+        assertEquals("abyss_eater", UniqueSwords.match(materials, mapOf("abyss" to 5))?.id)
     }
 
     @Test
-    fun `탐식자 - 마검 둘과 아무 검 둘`() {
+    fun `탐식자 - 마검 아무 둘`() {
         val recipe = UniqueSwords.match(
-            swords(
-                WeaponFamily.DEMON to 3, WeaponFamily.DEMON to 5,
-                WeaponFamily.GREAT to 1, WeaponFamily.SCYTHE to 2,
-            ),
+            swords(WeaponFamily.DEMON to 3, WeaponFamily.DEMON to 5),
             emptyMap(),
         )
         assertEquals("glutton", recipe?.id)
     }
 
     @Test
-    fun `구체 레시피가 아무 검 레시피보다 우선한다`() {
-        // 마검 셋 +16 + 심연 정수 = 심연을 삼킨 검. 탐식자(마검2+아무2)로 새면 안 된다.
-        val materials = swords(
-            WeaponFamily.DEMON to 16, WeaponFamily.DEMON to 17, WeaponFamily.DEMON to 18,
-        )
-        assertEquals(
-            "abyss_eater",
-            UniqueSwords.match(materials, mapOf("abyss" to 5))?.id,
-        )
+    fun `불사조 - 성검과 마검 12단계 이상과 화산 정수`() {
+        val materials = swords(WeaponFamily.HOLY to 12, WeaponFamily.DEMON to 13)
+        assertNull(UniqueSwords.match(materials, emptyMap()))
+        assertEquals("phoenix", UniqueSwords.match(materials, mapOf("volcano" to 3))?.id)
     }
 
     @Test
-    fun `행운아 - 네 계열이 전부 달라야 한다`() {
-        val ok = UniqueSwords.match(
-            swords(
-                WeaponFamily.CURVED to 0, WeaponFamily.RAPIER to 3,
-                WeaponFamily.TWIN to 1, WeaponFamily.SPEAR to 2,
-            ),
+    fun `시작의 검 - 직검 둘`() {
+        val recipe = UniqueSwords.match(
+            swords(WeaponFamily.STRAIGHT to 0, WeaponFamily.STRAIGHT to 1),
             emptyMap(),
         )
-        assertEquals("lucky", ok?.id)
+        assertEquals("origin", recipe?.id)
     }
 
-    @Test
-    fun `고유검은 재료가 될 수 없다`() {
-        val withUnique = listOf(
-            Sword(WeaponFamily.HOLY, 12, uniqueId = "trinity"),
-            Sword(WeaponFamily.HOLY, 12),
-            Sword(WeaponFamily.HOLY, 12),
-        )
-        assertNull(UniqueSwords.match(withUnique, emptyMap()))
-    }
+    // --- 목록 규칙 ---
 
     @Test
-    fun `재료 수가 넘치면 불발`() {
-        assertNull(
-            UniqueSwords.match(
-                swords(
-                    WeaponFamily.STRAIGHT to 1, WeaponFamily.STRAIGHT to 1,
-                    WeaponFamily.STRAIGHT to 1, WeaponFamily.STRAIGHT to 1,
-                    WeaponFamily.STRAIGHT to 1,
-                ),
-                emptyMap(),
-            ),
+    fun `레시피는 6종이고 id가 겹치지 않는다`() {
+        assertEquals(6, UniqueSwords.RECIPES.size)
+        assertEquals(
+            UniqueSwords.RECIPES.size,
+            UniqueSwords.RECIPES.map { it.id }.toSet().size,
         )
     }
 
+    /** 조합이 두 자루라 레시피도 전부 두 자루여야 한다. 아니면 영원히 못 만든다. */
     @Test
-    fun `레시피는 10종이고 id가 겹치지 않는다`() {
-        assertEquals(10, UniqueSwords.RECIPES.size)
-        assertEquals(10, UniqueSwords.RECIPES.map { it.id }.toSet().size)
-    }
-
-    // --- 패시브 ---
-
-    @Test
-    fun `패시브 수치 표`() {
-        fun u(id: String) = Sword(WeaponFamily.STRAIGHT, 10, uniqueId = id)
-        assertEquals(1.4, UniqueSwords.bossBonusOf(u("trinity")), 0.0)
-        assertEquals(2.0, UniqueSwords.shardMultOf(u("glutton")), 0.0)
-        assertEquals(3.0, UniqueSwords.burnMultOf(u("dragon_fang")), 0.0)
-        assertEquals(2.0, UniqueSwords.dropMultOf(u("lucky")), 0.0)
-        assertEquals(0.10, UniqueSwords.critBonusOf(u("cleaver")), 0.0)
-        assertEquals(0.7, UniqueSwords.tapIntervalMultOf(u("tempest")), 0.0)
-        assertEquals(0.02, UniqueSwords.maxHpRatioOf(u("abyss_eater")), 0.0)
-        assertEquals(1.5, UniqueSwords.goldMultOf(u("bloom")), 0.0)
-        assertEquals(0.03, UniqueSwords.forgeBonusOf(u("origin")), 0.0)
-        assertTrue(UniqueSwords.canRevive(u("phoenix")))
-    }
-
-    @Test
-    fun `평범한 검과 null은 전부 중립값`() {
-        val plain = Sword(WeaponFamily.HOLY, 15)
-        for (sword in listOf(plain, null)) {
-            assertEquals(1.0, UniqueSwords.bossBonusOf(sword), 0.0)
-            assertEquals(1.0, UniqueSwords.shardMultOf(sword), 0.0)
-            assertEquals(1.0, UniqueSwords.burnMultOf(sword), 0.0)
-            assertEquals(1.0, UniqueSwords.dropMultOf(sword), 0.0)
-            assertEquals(0.0, UniqueSwords.critBonusOf(sword), 0.0)
-            assertEquals(1.0, UniqueSwords.tapIntervalMultOf(sword), 0.0)
-            assertEquals(0.0, UniqueSwords.maxHpRatioOf(sword), 0.0)
-            assertEquals(1.0, UniqueSwords.goldMultOf(sword), 0.0)
-            assertEquals(0.0, UniqueSwords.forgeBonusOf(sword), 0.0)
-            assertFalse(UniqueSwords.canRevive(sword))
+    fun `모든 레시피는 재료 두 자루다`() {
+        for (recipe in UniqueSwords.RECIPES) {
+            assertEquals(recipe.id, 2, recipe.needs.sumOf { it.third })
         }
     }
 
+    /** 숨긴 계열을 쓰는 레시피가 남아 있으면 조합소에 만들 수 없는 힌트가 뜬다. */
     @Test
-    fun `모든 레시피의 정수 구역 id는 실제 구역이다`() {
+    fun `레시피는 노출 계열만 쓴다`() {
         for (recipe in UniqueSwords.RECIPES) {
-            for (zoneId in recipe.essences.keys) {
-                assertTrue("$zoneId 없음", Zone.entries.any { it.id == zoneId })
+            assertTrue(recipe.id, recipe.resultFamily in WeaponFamily.VISIBLE)
+            for ((family, _, _) in recipe.needs) {
+                if (family != null) {
+                    assertTrue("${recipe.id}: $family", family in WeaponFamily.VISIBLE)
+                }
             }
         }
+    }
+
+    /** 구체 레시피(단계 하한·정수)가 넓은 레시피보다 앞이어야 재료가 새지 않는다. */
+    @Test
+    fun `심연이 탐식자보다 앞이다`() {
+        val ids = UniqueSwords.RECIPES.map { it.id }
+        assertTrue(ids.indexOf("abyss_eater") < ids.indexOf("glutton"))
+    }
+
+    // --- 보유 보너스 ---
+
+    @Test
+    fun `발견한 고유검 수만큼 보너스가 쌓인다`() {
+        val p = ProgressState(uniqueFound = setOf("origin", "glutton"))
+        assertEquals(
+            UniqueSwords.PER_UNIQUE * 2,
+            UniqueSwords.holdingBonus(p).successRate,
+            1e-9,
+        )
+    }
+
+    @Test
+    fun `모르는 id는 세지 않는다`() {
+        // 내려간 옛 레시피(dragon_fang 등)를 발견한 세이브도 그대로 열린다
+        val p = ProgressState(uniqueFound = setOf("origin", "dragon_fang", "hacked"))
+        assertEquals(
+            UniqueSwords.PER_UNIQUE * 1,
+            UniqueSwords.holdingBonus(p).successRate,
+            1e-9,
+        )
     }
 }

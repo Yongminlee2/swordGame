@@ -8,7 +8,6 @@ import com.geomgang.core.FamilyForge
 import com.geomgang.core.ForgeBonuses
 import com.geomgang.core.ForgeCost
 import com.geomgang.core.ForgeEngine
-import com.geomgang.core.ForgeMarks
 import com.geomgang.core.ForgeOdds
 import com.geomgang.core.ForgeResult
 import com.geomgang.core.Fusion
@@ -319,7 +318,7 @@ class ForgeViewModel(
             game = game.copy(forgeStones = game.forgeStones + req.stones)
         }
         // 자취를 한 칸 민다. 결과가 뜨고 사라지면 연패가 이야기로 남지 않는다.
-        game = game.copy(recentMarks = ForgeMarks.push(game.recentMarks, ForgeMarks.of(result)))
+        // 최근 자취 기록은 v2.1에서 삭제했다 - 저장 필드는 옛 세이브 호환으로 남는다.
         lastWasRecord = result is ForgeResult.Success &&
             result.newLevel > bestBefore &&
             result.newLevel >= MIN_RECORD_LEVEL
@@ -1545,7 +1544,6 @@ class ForgeViewModel(
                 blessingMult = forge.blessingMult,
             ).percents(),
             temper = temperUiFor(targetLevel),
-            recentMarks = game.recentMarks,
             isRecord = lastWasRecord,
             canForge = !busy && ForgeEngine.canAttempt(game, pendingItems),
             canBuySword = !busy && Economy.canBuySword(game),

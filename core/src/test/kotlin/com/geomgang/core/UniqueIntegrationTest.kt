@@ -1,4 +1,4 @@
-package com.geomgang.core
+﻿package com.geomgang.core
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -22,38 +22,34 @@ class UniqueIntegrationTest {
     @Test
     fun `레시피와 맞으면 조합이 고유검을 만든다`() {
         val state = stateWith(
-            listOf(
-                Sword(WeaponFamily.HOLY, 10),
-                Sword(WeaponFamily.HOLY, 12),
-                Sword(WeaponFamily.HOLY, 11),
-            ),
+            listOf(Sword(WeaponFamily.HOLY, 10), Sword(WeaponFamily.HOLY, 12)),
         )
-        val fused = Fusion.fuse(state, listOf(0, 1, 2))
+        val fused = Fusion.fuse(state, listOf(0, 1))
         val result = fused.storage.single()
         assertEquals("trinity", result.uniqueId)
-        assertEquals(12, result.level) // 재료 중 최고 단계
+        assertEquals(12, result.level) // 고유검은 재료 중 최고 단계
         assertEquals(WeaponFamily.HOLY, result.family)
     }
 
     @Test
     fun `고유검 조합은 정수를 차감한다`() {
         val state = stateWith(
-            listOf(Sword(WeaponFamily.DRAGON, 15), Sword(WeaponFamily.DRAGON, 16)),
-            essences = mapOf("dragon_nest" to 4),
+            listOf(Sword(WeaponFamily.DEMON, 16), Sword(WeaponFamily.DEMON, 17)),
+            essences = mapOf("abyss" to 7),
         )
         val fused = Fusion.fuse(state, listOf(0, 1))
-        assertEquals("dragon_fang", fused.storage.single().uniqueId)
-        assertEquals(1, fused.essences["dragon_nest"])
+        assertEquals("abyss_eater", fused.storage.single().uniqueId)
+        assertEquals(2, fused.essences["abyss"])
     }
 
     @Test
     fun `정수를 다 쓰면 항목이 사라진다`() {
         val state = stateWith(
-            listOf(Sword(WeaponFamily.DRAGON, 15), Sword(WeaponFamily.DRAGON, 16)),
-            essences = mapOf("dragon_nest" to 3),
+            listOf(Sword(WeaponFamily.DEMON, 16), Sword(WeaponFamily.DEMON, 17)),
+            essences = mapOf("abyss" to 5),
         )
         val fused = Fusion.fuse(state, listOf(0, 1))
-        assertNull(fused.essences["dragon_nest"])
+        assertNull(fused.essences["abyss"])
     }
 
     @Test
@@ -68,14 +64,13 @@ class UniqueIntegrationTest {
     }
 
     @Test
-    fun `레시피와 안 맞으면 기존 조합 규칙 그대로다`() {
+    fun `레시피에도 표에도 없으면 조합되지 않는다`() {
+        // 성검 둘 +10 미만 - 삼위일체 하한에 못 미치고 {성검} 은 조합표에 없다
         val state = stateWith(
             listOf(Sword(WeaponFamily.HOLY, 5), Sword(WeaponFamily.HOLY, 3)),
         )
-        val result = Fusion.fuse(state, listOf(0, 1)).storage.single()
-        assertNull(result.uniqueId)
-        // 최고 5 + (2-1) + 같은 계열 1 = 7
-        assertEquals(7, result.level)
+        assertNull(Fusion.resultOrNull(state.storage, state.essences))
+        assertFalse(Fusion.canFuse(state, listOf(0, 1)))
     }
 
     // --- 전투 ---
@@ -92,26 +87,6 @@ class UniqueIntegrationTest {
             Combat.hit(trinity, 0, isBoss = true).damage >
                 Combat.hit(plain, 0, isBoss = true).damage,
         )
-    }
-
-    @Test
-    fun `절단자는 치명타 경계가 넓어진다`() {
-        val cleaver = Sword(WeaponFamily.AXE, 14, uniqueId = "cleaver")
-        val roll = Combat.CRIT_CHANCE + 0.05 // 평범한 검이면 치명타가 아닌 롤
-        assertFalse(Combat.hit(Sword(WeaponFamily.AXE, 14), 0, false, roll).crit)
-        assertTrue(Combat.hit(cleaver, 0, false, roll).crit)
-    }
-
-    @Test
-    fun `용왕의 송곳니는 화상이 3배다`() {
-        val plain = Sword(WeaponFamily.DRAGON, 15)
-        val fang = plain.copy(uniqueId = "dragon_fang")
-        val expected = Math.round(
-            Combat.attackPower(fang) * FamilyStyle.BURNING.burnRatio * 3.0,
-        )
-        assertEquals(expected, Combat.burnPerSecond(fang))
-        // 반올림 오차 안에서 3배
-        assertEquals(3.0, Combat.burnPerSecond(fang).toDouble() / Combat.burnPerSecond(plain), 0.05)
     }
 
     @Test
@@ -133,8 +108,6 @@ class UniqueIntegrationTest {
             difficulty = Difficulty.ENDLESS,
             gold = 1_000_000,
             sword = Sword(WeaponFamily.STRAIGHT, level, uniqueId = "origin"),
-            // +15 목표는 재료 검이 필수다 (ForgeCost)
-            storage = List(2) { Sword(WeaponFamily.STRAIGHT, 1) },
             forgeStones = 50,
         )
         val result = ForgeEngine.attempt(origin, UsedItems.NONE, ScriptedRandom(roll))
@@ -148,8 +121,6 @@ class UniqueIntegrationTest {
             difficulty = Difficulty.ENDLESS,
             gold = 10_000_000,
             sword = Sword(WeaponFamily.HOLY, level, uniqueId = "phoenix"),
-            // +18 목표는 재료 검 2자루와 강화석이 필수다 (ForgeCost)
-            storage = List(2) { Sword(WeaponFamily.STRAIGHT, 1) },
             forgeStones = 50,
         )
         // 난수: 성공 판정 실패(1.0) -> 파괴 판정 성공(0.0)

@@ -54,6 +54,22 @@ enum class WeaponFamily(val id: String, val displayName: String) {
          */
         val SPECIAL: Set<WeaponFamily> = setOf(FUSED, VOID)
 
+        /**
+         * v2.1에서 게임에 노출되는 계열 — **노출 여부의 단일 출처.**
+         *
+         * 계열 14종·고유검 10종이 첫 화면 언저리에 전부 있으니 처음 하는 사람이
+         * 읽을 것이 너무 많았다. 일곱 자루만 남기고 나머지는 **숨긴다. 지우지 않는다** —
+         * enum·저장 필드·특성 코드는 그대로라, 되살릴 때 이 목록에 넣기만 하면 된다.
+         * 옛 세이브의 숨긴 계열 검도 그대로 보이고 쓰인다. 새로 얻을 길만 없다.
+         *
+         * 용검은 여기 있지만 +21(전설) 전용이다. 20강 이하 용검은 만들 수 없다.
+         */
+        val VISIBLE: List<WeaponFamily> =
+            listOf(STRAIGHT, CURVED, GREAT, RAPIER, DEMON, HOLY, DRAGON)
+
+        /** 도감에 계열 구획(+0~+20)을 가지는 계열. 용검은 전설 구획에만 산다. */
+        val CODEX_FAMILIES: List<WeaponFamily> = VISIBLE - DRAGON
+
         fun fromId(id: String): WeaponFamily =
             entries.firstOrNull { it.id == id }
                 ?: throw IllegalArgumentException("unknown family id: $id")
@@ -208,25 +224,22 @@ data class GameState(
 /**
  * 이번 강화 시도에 함께 사용할 아이템.
  *
- * 축복서와 부적은 **함께 켜지지 않는다.** 둘 다 쓸 수 있으면 "있으면 전부 켠다" 가
- * 유일한 최선이 되어 고를 것이 사라진다. 하나만 고르게 해야 갈림길이 생긴다.
+ * 축복서와 부적은 **함께 켤 수 있다** (v2.1).
  *
- * - 축복서 — 이번 판 확률만 올린다. 담금질이 얕을 때 지르는 수다
- * - 부적 — 실패해도 부서지지 않지만 **담금질은 오른다.** 안전하게 쌓는 수다
+ * 배타로 두었던 이유는 "있으면 전부 켠다"가 유일한 최선이 되는 것을 막기 위해서였는데,
+ * 실제로 해 보니 갈림길이 아니라 **함정**으로 읽혔다 — 왜 하나가 꺼지는지 화면이
+ * 설명하지 못했다. 이제 값(골드)이 선택을 가른다. 둘 다 켜면 두 장이 나간다.
  *
- * 배타를 화면이 아니라 여기서 지키는 이유: 토글이 둘로 나뉘어 있으면 반드시 어긋난다.
+ * - 축복서 — 이번 판 확률만 올린다
+ * - 부적 — 실패해도 부서지지 않지만 **담금질은 오른다**
  */
 data class UsedItems(
     val blessing: Boolean = false,
     val luckCharm: Boolean = false,
 ) {
-    /** 축복서를 켜고 끈다. 켜면 부적이 내려간다. */
-    fun toggleBlessing(): UsedItems =
-        if (blessing) NONE else UsedItems(blessing = true)
+    fun toggleBlessing(): UsedItems = copy(blessing = !blessing)
 
-    /** 부적을 켜고 끈다. 켜면 축복서가 내려간다. */
-    fun toggleLuckCharm(): UsedItems =
-        if (luckCharm) NONE else UsedItems(luckCharm = true)
+    fun toggleLuckCharm(): UsedItems = copy(luckCharm = !luckCharm)
 
     companion object {
         val NONE: UsedItems = UsedItems()

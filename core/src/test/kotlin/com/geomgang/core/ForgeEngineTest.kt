@@ -258,8 +258,8 @@ class ForgeEngineTest {
     @Test
     fun `축복서는 성공률을 올리고 소모된다`() {
         val before = state(level = 9, inventory = Inventory(blessingScrolls = 1))
-        // 일반 +10 성공률 0.40, 축복서로 0.50. 난수 0.45 는 축복서가 있어야 성공한다.
-        val result = ForgeEngine.attempt(before, UsedItems(blessing = true), ScriptedRandom(0.45))
+        // 일반 +10 성공률 0.46, 축복서로 0.56. 난수 0.50 은 축복서가 있어야 성공한다.
+        val result = ForgeEngine.attempt(before, UsedItems(blessing = true), ScriptedRandom(0.50))
         assertTrue(result is ForgeResult.Success)
         assertEquals(0, result.state.inventory.blessingScrolls)
     }
@@ -267,7 +267,7 @@ class ForgeEngineTest {
     @Test
     fun `축복서 없이 같은 난수면 실패한다`() {
         val before = state(level = 9)
-        val result = ForgeEngine.attempt(before, UsedItems.NONE, ScriptedRandom(0.45))
+        val result = ForgeEngine.attempt(before, UsedItems.NONE, ScriptedRandom(0.50))
         assertFalse(result is ForgeResult.Success)
     }
 

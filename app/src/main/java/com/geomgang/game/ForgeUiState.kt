@@ -2,7 +2,6 @@ package com.geomgang.game
 
 import com.geomgang.core.BonusSource
 import com.geomgang.core.Difficulty
-import com.geomgang.core.ForgeMark
 import com.geomgang.core.ForgeResult
 import com.geomgang.core.IdleReward
 import com.geomgang.core.Item
@@ -55,8 +54,6 @@ data class ForgeUiState(
     val odds: OddsPercent = OddsPercent(0, 0, 0, 0),
     /** 담금질. 무한 구간에서만 채워진다. */
     val temper: TemperUi? = null,
-    /** 최근 강화 결과. 왼쪽이 오래된 것이다. */
-    val recentMarks: List<ForgeMark> = emptyList(),
     /** 이번 성공이 최고 기록을 갈아치웠는지. */
     val isRecord: Boolean = false,
     val canForge: Boolean,

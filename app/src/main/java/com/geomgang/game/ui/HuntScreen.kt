@@ -63,6 +63,7 @@ import kotlin.random.Random
 fun HuntScreen(
     state: ForgeUiState,
     adventure: AdventureState,
+    onEnterGauntlet: () -> Unit,
     onEnterZone: (Zone) -> Unit,
     onTap: () -> Unit,
     onChallengeBoss: () -> Unit,
@@ -77,7 +78,7 @@ fun HuntScreen(
 ) {
     val hunt = state.hunt
     if (hunt == null) {
-        ZonePicker(state, adventure, onEnterZone, onBack)
+        ZonePicker(state, adventure, onEnterGauntlet, onEnterZone, onBack)
         return
     }
 
@@ -322,6 +323,7 @@ fun HuntScreen(
 private fun ZonePicker(
     state: ForgeUiState,
     adventure: AdventureState,
+    onEnterGauntlet: () -> Unit,
     onEnterZone: (Zone) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -362,7 +364,26 @@ private fun ZonePicker(
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
         )
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(12.dp))
+
+        // 무한 회랑은 사냥의 변형이라 여기서 들어간다. 강화 화면에 두면
+        // 강화와 무관한 문이 그 화면의 자리를 먹는다.
+        OutlinedButton(
+            onClick = onEnterGauntlet,
+            enabled = !state.busy && state.gauntletUnlocked,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                text = when {
+                    !state.gauntletUnlocked -> "🔒 무한 회랑 — 화산 보스를 잡으면 열린다"
+                    state.gauntletBest > 0 -> "무한 회랑 · 최고 ${state.gauntletBest}층"
+                    else -> "무한 회랑"
+                },
+                color = if (state.gauntletUnlocked) Color(0xFFC79BFF) else Color.Unspecified,
+            )
+        }
+
+        Spacer(Modifier.height(12.dp))
 
         Zone.entries.forEach { zone ->
             ZoneCard(

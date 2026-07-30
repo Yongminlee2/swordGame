@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geomgang.core.Fusion
+import com.geomgang.core.FusionTable
 import com.geomgang.core.LegendForge
 import com.geomgang.core.Sword
 import com.geomgang.core.SwordNames
@@ -72,9 +73,14 @@ fun CraftScreen(
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
         )
 
+        // 조합법을 화면에 항상 적는다. "뭘 섞어야 하는지" 를 외우게 하면
+        // 조합소가 아니라 암기장이 된다.
+        Spacer(Modifier.height(10.dp))
+        RecipeList(state)
+
         // 재료가 모자라 아래가 잘려 나가도 이 칸은 남는다 - 무엇을 모아야 하는지가
         // 바로 그때 가장 필요한 정보다.
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(10.dp))
         LegendPanel(
             missing = state.legendMissing,
             canCraft = state.canCraftLegend,
@@ -131,7 +137,63 @@ fun CraftScreen(
 }
 
 /**
- * 전설검 벼리기.
+ * 조합법.
+ *
+ * 계열 조합 두 줄과 고유검 레시피(발견한 것은 이름·정수, 미발견은 힌트)를 항상 보여 준다.
+ * **정수는 여기서 쓴다** — 사냥 보스가 주는 정수가 뭐에 쓰이는지 화면이 말하는 유일한
+ * 자리다.
+ */
+@Composable
+private fun RecipeList(state: ForgeUiState) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp)) {
+            Text("조합법", fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(4.dp))
+            FusionTable.ALL.forEach { entry ->
+                Text(
+                    text = "${entry.hint}  =  ${entry.result.displayName}",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "고유검 — 특별한 조합은 특별한 검이 된다",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFFFD54A),
+            )
+            UniqueSwords.RECIPES.forEach { recipe ->
+                val found = recipe.id in state.progress.uniqueFound
+                val essenceText = recipe.essences.entries.joinToString(" ") {
+                    "+ ${Zone.fromId(it.key).displayName} 정수 ${it.value}"
+                }
+                Text(
+                    text = if (found) {
+                        // 발견했으면 정확한 식을 보여 준다. 정수 요구까지.
+                        recipe.needs.joinToString(" + ") { (family, minLevel, count) ->
+                            val name = family?.displayName ?: "아무 검"
+                            val level = if (minLevel > 0) " +$minLevel↑" else ""
+                            if (count > 1) "$name$level ×$count" else "$name$level"
+                        } + (if (essenceText.isEmpty()) "" else " $essenceText") +
+                            "  =  ✦ ${recipe.name}"
+                    } else {
+                        "??? — ${recipe.hint}"
+                    },
+                    fontSize = 11.sp,
+                    color = if (found) {
+                        Color(0xFFFFD54A).copy(alpha = 0.85f)
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    },
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 용검(전설) 벼리기.
  *
  * 재료가 모자라도 **무엇이 필요한지 늘 보여 준다.** 목표가 보여야 모으고 싶어진다.
  */
@@ -148,9 +210,10 @@ private fun LegendPanel(
 ) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
-            Text("전설검 벼리기", fontWeight = FontWeight.Bold, color = Color(0xFFFFD54A))
+            Text("용검 벼리기 — 전설", fontWeight = FontWeight.Bold, color = Color(0xFFFFD54A))
             Text(
-                text = "계열은 +${LegendForge.MATERIAL_LEVEL}에서 끝난다. 그 위는 여기서만 간다.",
+                text = "계열은 +${LegendForge.MATERIAL_LEVEL}에서 끝난다. " +
+                    "어둠과 빛을 끝까지 벼려 합치면 용이 된다 (+${LegendForge.LEVEL}).",
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
             )
@@ -208,10 +271,10 @@ private fun FusionPanel(
     onClear: () -> Unit,
 ) {
     val materials = picked.sorted().mapNotNull { state.storage.getOrNull(it) }
-    val preview = if (materials.size in Fusion.MIN_MATERIALS..Fusion.MAX_MATERIALS &&
+    val preview = if (materials.size == Fusion.MIN_MATERIALS &&
         materials.all { Fusion.meltable(it) }
     ) {
-        Fusion.resultOf(materials, state.essences)
+        Fusion.resultOrNull(materials, state.essences)
     } else {
         null
     }
@@ -221,8 +284,7 @@ private fun FusionPanel(
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
             Text(
-                text = "재료 ${Fusion.MIN_MATERIALS}~${Fusion.MAX_MATERIALS}자루를 고른다 " +
-                    "(${picked.size}자루 선택)",
+                text = "재료 두 자루를 고른다 (${picked.size}/2) · 결과 단계는 둘의 평균",
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
             )

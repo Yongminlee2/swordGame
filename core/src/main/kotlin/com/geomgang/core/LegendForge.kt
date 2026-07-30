@@ -19,16 +19,15 @@ object LegendForge {
     const val RECRAFT_SHARDS: Int = 500
 
     /**
-     * 재료 넷.
+     * 재료 둘 — 마검과 성검, 각각 +20.
      *
-     * 조합 나무의 3층 두 갈래(용검·정령검)와 폭넓음(합검), 그리고 허검이다.
-     * 성격이 다 달라서 넷을 모았다는 것은 **전부 통달했다**는 뜻이 된다.
+     * v2.1에서 넷(용검·정령검·합검·허검)에서 줄었다. 노출 계열이 일곱뿐이라
+     * 사다리가 기본 4 → 마검·성검 → 용검(전설)으로 곧게 선다.
+     * 어둠과 빛을 각각 끝까지 벼려야 용이 된다.
      */
     val MATERIALS: List<WeaponFamily> = listOf(
-        WeaponFamily.DRAGON,
-        WeaponFamily.SPIRIT,
-        WeaponFamily.FUSED,
-        WeaponFamily.VOID,
+        WeaponFamily.DEMON,
+        WeaponFamily.HOLY,
     )
 
     /** 이 검을 더 강화할 수 있는지. **계열은 +20 에서 멈춘다.** */
@@ -61,7 +60,8 @@ object LegendForge {
             usable(sword) && toBurn.remove(sword.family)
         }
         val next = state.copy(
-            sword = Sword(MATERIALS.first(), LEVEL),
+            // 전설은 용검이다. 재료가 무엇이든 나오는 것은 용검 +21 하나다.
+            sword = Sword(WeaponFamily.DRAGON, LEVEL),
             storage = left,
             bestLevel = maxOf(state.bestLevel, LEVEL),
         )
@@ -81,7 +81,7 @@ object LegendForge {
             state.shards >= RECRAFT_SHARDS
 
     fun recraft(state: GameState): GameState = state.copy(
-        sword = Sword(MATERIALS.first(), LEVEL),
+        sword = Sword(WeaponFamily.DRAGON, LEVEL),
         shards = state.shards - RECRAFT_SHARDS,
         bestLevel = maxOf(state.bestLevel, LEVEL),
     )

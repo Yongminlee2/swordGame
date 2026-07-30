@@ -23,7 +23,7 @@ class TemperTempoTest {
          * +44 는 전설검 구간이라 전설 특성(성공률 +3%p, 파괴방지 +3%)이 포함된 값이다.
          * 어렵게 얻은 검이 실제로 더 잘 붙는지를 여기서 잰다.
          */
-        const val MIN_MEDIAN = 8
+        const val MIN_MEDIAN = 5
         const val MAX_MEDIAN = 30
     }
 

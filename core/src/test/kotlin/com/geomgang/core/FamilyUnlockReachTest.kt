@@ -40,21 +40,18 @@ class FamilyUnlockReachTest {
     /** 잠긴 동안에는 몇 번 남았는지가 보여야 한다. */
     @Test
     fun `세검 힌트가 진행도를 담는다`() {
-        val hint = Progress.basicFamilyHint(
-            ProgressState(stats = Stats(fusions = 1L)),
-            WeaponFamily.RAPIER,
-        )
+        val hint = Progress.basicFamilyHint(ProgressState(), WeaponFamily.RAPIER)
         assertNotNull(hint)
-        assertTrue("힌트=$hint", hint!!.contains("1/${Progress.RAPIER_UNLOCK_FUSIONS}"))
+        assertTrue("힌트=$hint", hint!!.contains("0/${Progress.RAPIER_UNLOCK_FUSIONS}"))
     }
 
     /**
-     * 전설검까지 가는 길에 숨은 조건이 없어야 한다.
+     * 용검(전설)까지 가는 길에 숨은 조건이 없어야 한다.
      *
-     * 전설검 ← 허검 ← 도끼검+창검 ← 세검. 이 사슬의 어느 고리도 고유검을 요구하면 안 된다.
+     * 용검 ← 마검+성검 ← 기본 4계열. 이 사슬의 어느 고리도 고유검을 요구하면 안 된다.
      */
     @Test
-    fun `전설검 재료로 가는 길에 숨은 조건이 없다`() {
+    fun `전설 재료로 가는 길에 숨은 조건이 없다`() {
         // 상점에서 살 수 있는 기본 계열은 전부 드러난 조건으로 열린다
         val reachable = ProgressState(
             stats = Stats(
@@ -67,9 +64,9 @@ class FamilyUnlockReachTest {
             assertTrue("$family 가 안 열렸다", Progress.basicFamilyUnlocked(reachable, family))
         }
 
-        // 그 넷으로 조합 나무를 타면 허검까지 닿는다
-        assertTrue(FusionTable.ALL.any { it.result == WeaponFamily.SPEAR })
-        assertTrue(FusionTable.ALL.any { it.result == WeaponFamily.AXE })
-        assertTrue(FusionTable.ALL.any { it.result == WeaponFamily.VOID })
+        // 그 넷로 전설 재료 둘(마검·성검)이 전부 만들어진다
+        for (material in LegendForge.MATERIALS) {
+            assertTrue("$material", FusionTable.ALL.any { it.result == material })
+        }
     }
 }

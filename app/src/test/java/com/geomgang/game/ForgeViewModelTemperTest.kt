@@ -76,31 +76,14 @@ class ForgeViewModelTemperTest {
         assertTrue("ratio=${temper.ratio}", temper.ratio in 0f..1f)
     }
 
+    /** v2.1: 축복서와 부적은 함께 켤 수 있다. 값(골드)이 선택을 가른다. */
     @Test
-    fun `강화하면 자취가 한 칸 늘어난다`() = runTest(dispatcher) {
-        val vm = vm(3)
-        val before = vm.ui.value.recentMarks.size
-        vm.forge()
-        assertEquals(before + 1, vm.ui.value.recentMarks.size)
-    }
-
-    @Test
-    fun `축복서를 켜면 부적이 꺼진다`() = runTest(dispatcher) {
+    fun `축복서와 부적을 함께 켤 수 있다`() = runTest(dispatcher) {
         val vm = vm(3, Inventory(blessingScrolls = 1, luckCharms = 1))
         vm.toggleLuckCharm()
-        assertTrue(vm.ui.value.useLuckCharm)
         vm.toggleBlessing()
         assertTrue(vm.ui.value.useBlessing)
-        assertFalse(vm.ui.value.useLuckCharm)
-    }
-
-    @Test
-    fun `부적을 켜면 축복서가 꺼진다`() = runTest(dispatcher) {
-        val vm = vm(3, Inventory(blessingScrolls = 1, luckCharms = 1))
-        vm.toggleBlessing()
-        vm.toggleLuckCharm()
         assertTrue(vm.ui.value.useLuckCharm)
-        assertFalse(vm.ui.value.useBlessing)
     }
 
     @Test

@@ -50,7 +50,7 @@ enum class Achievement(val id: String, val displayName: String, val title: Strin
     FUSE_100("fuse_100", "조합 100회", "합성의 대가"),
     UNIQUE_FIRST("unique_first", "고유검 발견", "전설의 시작"),
     UNIQUE_5("unique_5", "고유검 5종 발견", "전설 수집가"),
-    UNIQUE_ALL("unique_all", "고유검 10종 전부 발견", "이름을 아는 자"),
+    UNIQUE_ALL("unique_all", "고유검 전부 발견", "이름을 아는 자"),
 
     // 특수강화·재료형
     STAR_3("star_3", "별 3개 달성", "별을 붙인 자"),
@@ -198,7 +198,7 @@ object Progress {
      * 조합 횟수로 바꿨다. 원래 의도(계열마다 다른 활동을 가리킨다)는 그대로고,
      * 직검 두 자루만 있으면 누구나 밟는 길이라 막히지 않는다.
      */
-    const val RAPIER_UNLOCK_FUSIONS = 3
+    const val RAPIER_UNLOCK_FUSIONS = 1
 
     /**
      * 기본 계열의 해금 조건.

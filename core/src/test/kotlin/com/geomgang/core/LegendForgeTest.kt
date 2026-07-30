@@ -61,12 +61,12 @@ class LegendForgeTest {
 
     @Test
     fun `모자란 재료를 알려 준다`() {
-        val two = GameState(
+        val one = GameState(
             difficulty = Difficulty.ENDLESS,
-            storage = LegendForge.MATERIALS.take(2).map { Sword(it, 20) },
+            storage = LegendForge.MATERIALS.take(1).map { Sword(it, 20) },
         )
-        assertEquals(LegendForge.MATERIALS.drop(2), LegendForge.missingFor(two))
-        assertFalse(LegendForge.canCraft(two, ProgressState()))
+        assertEquals(LegendForge.MATERIALS.drop(1), LegendForge.missingFor(one))
+        assertFalse(LegendForge.canCraft(one, ProgressState()))
     }
 
     @Test

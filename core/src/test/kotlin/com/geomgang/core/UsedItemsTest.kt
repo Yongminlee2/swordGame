@@ -1,36 +1,29 @@
-package com.geomgang.core
+﻿package com.geomgang.core
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * 축복서와 부적은 함께 켜지지 않는다.
+ * 축복서와 부적은 함께 켤 수 있다 (v2.1).
  *
- * 둘 다 쓸 수 있으면 "있으면 전부 켠다" 가 유일한 최선이 되어 선택이 사라진다.
- * 하나만 고르게 해야 **확률을 올릴까, 검을 지킬까** 가 매 판 갈림길이 된다.
+ * 배타는 갈림길이 아니라 함정으로 읽혔다 - 왜 하나가 꺼지는지 화면이 설명하지
+ * 못했다. 이제 값(골드)이 선택을 가른다.
  */
 class UsedItemsTest {
 
     @Test
-    fun `축복서를 켜면 부적이 꺼진다`() {
-        val items = UsedItems(luckCharm = true).toggleBlessing()
+    fun `둘 다 켤 수 있다`() {
+        val items = UsedItems.NONE.toggleBlessing().toggleLuckCharm()
         assertTrue(items.blessing)
-        assertFalse(items.luckCharm)
-    }
-
-    @Test
-    fun `부적을 켜면 축복서가 꺼진다`() {
-        val items = UsedItems(blessing = true).toggleLuckCharm()
         assertTrue(items.luckCharm)
-        assertFalse(items.blessing)
     }
 
     @Test
-    fun `켠 것을 다시 누르면 둘 다 꺼진다`() {
-        assertEquals(UsedItems.NONE, UsedItems(blessing = true).toggleBlessing())
-        assertEquals(UsedItems.NONE, UsedItems(luckCharm = true).toggleLuckCharm())
+    fun `켠 것을 다시 누르면 그것만 꺼진다`() {
+        val both = UsedItems(blessing = true, luckCharm = true)
+        assertEquals(UsedItems(luckCharm = true), both.toggleBlessing())
+        assertEquals(UsedItems(blessing = true), both.toggleLuckCharm())
     }
 
     @Test

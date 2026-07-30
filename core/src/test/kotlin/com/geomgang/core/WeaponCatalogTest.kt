@@ -78,26 +78,30 @@ class WeaponCatalogTest {
     }
 
     /**
-     * 그림 한 장에 칸 하나다.
+     * v2.1 노출 축소.
      *
-     * 계열 14 × 단계 21 = 294 에 전설 30(+21~+50)을 더해 324.
-     * 전설 30 은 시트3 의 전설 칸 19(+21~+39)와 낱장 그림 11(+40~+50)을 합한 수다.
-     * 어긋나면 도감에 자리가 없는 그림이 생기거나 그림 없는 칸이 생긴다.
+     * 노출 6계열(용검 제외) × 21 = 126 에 용검(전설) 30(+21~+50)을 더해 156.
+     * 숨긴 계열의 칸은 도감 어디에도 없다.
      */
     @Test
-    fun `도감 엔트리는 계열칸 294에 전설칸 30을 더해 324개다`() {
-        assertEquals(324, WeaponCatalog.ENTRIES.size)
-        assertEquals(324, WeaponCatalog.ENTRIES.toSet().size)
-        assertEquals(294, WeaponCatalog.ENTRIES.count { it.family != null })
+    fun `도감 엔트리는 계열칸 126에 전설칸 30을 더해 156개다`() {
+        assertEquals(156, WeaponCatalog.ENTRIES.size)
+        assertEquals(156, WeaponCatalog.ENTRIES.toSet().size)
+        assertEquals(126, WeaponCatalog.ENTRIES.count { it.family != null })
         assertEquals(30, WeaponCatalog.ENTRIES.count { it.family == null })
     }
 
     @Test
-    fun `모든 계열이 0부터 20단계까지 한 칸씩 갖는다`() {
+    fun `노출 계열만 0부터 20단계까지 한 칸씩 갖는다`() {
         for (family in WeaponFamily.entries) {
             val levels = WeaponCatalog.ENTRIES.filter { it.family == family }.map { it.level }
-            assertEquals(21, levels.size)
-            assertEquals((0..20).toSet(), levels.toSet())
+            if (family in WeaponFamily.CODEX_FAMILIES) {
+                assertEquals(21, levels.size)
+                assertEquals((0..20).toSet(), levels.toSet())
+            } else {
+                // 숨긴 계열(그리고 +21 전용인 용검)은 계열 칸이 없다
+                assertEquals("$family", 0, levels.size)
+            }
         }
     }
 

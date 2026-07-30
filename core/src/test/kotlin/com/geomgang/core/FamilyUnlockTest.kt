@@ -84,32 +84,30 @@ class FamilyUnlockTest {
 
     @Test
     fun `조합이 조합표대로 계열을 만든다`() {
-        // 직검 둘 -> 쌍검
-        val twin = Fusion.resultOf(
-            listOf(Sword(WeaponFamily.STRAIGHT, 3), Sword(WeaponFamily.STRAIGHT, 5)),
+        // 직검 + 곡도 -> 마검, 단계는 평균 내림
+        val demon = Fusion.resultOrNull(
+            listOf(Sword(WeaponFamily.STRAIGHT, 3), Sword(WeaponFamily.CURVED, 5)),
         )
-        assertEquals(WeaponFamily.TWIN, twin.family)
-        // 최고 5 + (2-1) + 같은 계열 1 = 7
-        assertEquals(7, twin.level)
+        assertEquals(WeaponFamily.DEMON, demon?.family)
+        assertEquals(4, demon?.level)
 
         // 대검 + 세검 -> 성검
-        val holy = Fusion.resultOf(
+        val holy = Fusion.resultOrNull(
             listOf(Sword(WeaponFamily.GREAT, 8), Sword(WeaponFamily.RAPIER, 6)),
         )
-        assertEquals(WeaponFamily.HOLY, holy.family)
+        assertEquals(WeaponFamily.HOLY, holy?.family)
     }
 
     @Test
     fun `고유검 레시피가 조합표보다 먼저다`() {
-        // 성검 셋 +10 이상은 삼위일체(고유검)다. 조합표에는 {성검} 항목이 없지만
+        // 성검 둘 +10 이상은 삼위일체(고유검)다. 조합표에는 {성검} 항목이 없지만
         // 있더라도 고유검이 이긴다는 것을 확인한다.
-        val result = Fusion.resultOf(
+        val result = Fusion.resultOrNull(
             listOf(
                 Sword(WeaponFamily.HOLY, 10),
                 Sword(WeaponFamily.HOLY, 11),
-                Sword(WeaponFamily.HOLY, 12),
             ),
         )
-        assertEquals("trinity", result.uniqueId)
+        assertEquals("trinity", result?.uniqueId)
     }
 }

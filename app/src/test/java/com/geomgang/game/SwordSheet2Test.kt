@@ -21,9 +21,9 @@ class SwordSheet2Test {
     }
 
     @Test
-    fun `고유검 10종이 전부 자기 칸을 갖고 겹치지 않는다`() {
+    fun `고유검이 전부 자기 칸을 갖고 겹치지 않는다`() {
         val cells = UniqueSwords.RECIPES.map { SwordSheet2.uniqueCellOf(it.id) }
-        assertEquals(10, cells.toSet().size)
+        assertEquals(UniqueSwords.RECIPES.size, cells.toSet().size)
         // 고유검 칸은 계열x티어 칸과 겹치지 않는다 (행 14)
         val familyCells = WeaponFamily.entries.flatMap { f ->
             WeaponTier.entries.map { t -> SwordSheet2.cellOf(f, t) }

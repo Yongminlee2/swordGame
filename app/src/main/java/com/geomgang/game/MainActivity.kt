@@ -105,6 +105,11 @@ private fun App(store: SaveStore) {
         Overlay.Hunt -> HuntScreen(
             state = state,
             adventure = vm.adventure(),
+            onEnterGauntlet = {
+                vm.leaveHunt()
+                vm.enterGauntlet()
+                overlay = Overlay.Gauntlet
+            },
             onEnterZone = vm::enterZone,
             onTap = vm::tapTarget,
             onChallengeBoss = vm::challengeBoss,
@@ -121,6 +126,8 @@ private fun App(store: SaveStore) {
             },
         )
 
+        // 퀘스트 화면은 v2.1에서 숨겼다. Overlay.Quests 로 오는 길이 없지만
+        // enum 은 남겨 둔다 - 되살릴 때 화면과 길만 다시 잇는다.
         Overlay.Quests -> QuestScreen(
             state = state,
             onClaim = vm::claimQuest,
@@ -236,10 +243,6 @@ private fun App(store: SaveStore) {
             onToggleBlessing = vm::toggleBlessing,
             onToggleLuckCharm = vm::toggleLuckCharm,
             onOpenHunt = { overlay = Overlay.Hunt },
-            onOpenGauntlet = {
-                vm.enterGauntlet()
-                overlay = Overlay.Gauntlet
-            },
             onOpenStorage = { overlay = Overlay.Storage },
             onOpenShop = { overlay = Overlay.Shop },
             onOpenCraft = { overlay = Overlay.Craft },
@@ -247,7 +250,6 @@ private fun App(store: SaveStore) {
                 codexOrigin = Overlay.None
                 overlay = Overlay.Codex
             },
-            onOpenQuests = { overlay = Overlay.Quests },
             onOpenMenu = { overlay = Overlay.Records },
             onDismissIdle = vm::dismissIdleReward,
             onOpenTraining = { overlay = Overlay.Training },

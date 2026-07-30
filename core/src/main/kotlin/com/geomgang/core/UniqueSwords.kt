@@ -32,34 +32,22 @@ object UniqueSwords {
     const val REVIVE_LEVEL_LOSS = 3
 
     /**
-     * 레시피 10종.
+     * 레시피 6종. 전부 **재료 두 자루**다 — 조합이 두 자루라서.
      *
-     * **정의 순서가 우선순위다.** "아무 검" 조건이 있는 레시피(탐식자·개화)는
-     * 구체적인 레시피보다 뒤에 둔다 - 마검 셋이 탐식자로 새면 심연을 만들 수 없다.
+     * **정의 순서가 우선순위다.** 조건이 좁은 것(단계 하한·정수)이 앞이다.
+     * 심연(마검+16 둘)이 탐식자(마검 아무 둘)보다 앞에 있어야 +16 둘이 탐식자로 새지 않는다.
+     *
+     * v2.1에서 숨긴 계열을 쓰는 4종(용왕의 송곳니·절단자·행운아·개화)을 내렸다.
+     * git 이력에 있다 — 계열을 되살릴 때 함께 되살린다.
      */
     val RECIPES: List<UniqueRecipe> = listOf(
         UniqueRecipe(
             id = "abyss_eater", name = "심연을 삼킨 검",
-            hint = "가장 어두운 것 셋을 깊이 벼려, 심연의 정수에 담그면…",
+            hint = "가장 어두운 것 둘을 깊이 벼려, 심연의 정수에 담그면…",
             resultFamily = WeaponFamily.DEMON,
-            needs = listOf(Triple(WeaponFamily.DEMON, 16, 3)),
+            needs = listOf(Triple(WeaponFamily.DEMON, 16, 2)),
             essences = mapOf("abyss" to 5),
             blurb = "적 최대체력의 2%를 추가로 벤다",
-        ),
-        UniqueRecipe(
-            id = "trinity", name = "삼위일체",
-            hint = "성스러운 것 셋이 한 곳에 모이면…",
-            resultFamily = WeaponFamily.HOLY,
-            needs = listOf(Triple(WeaponFamily.HOLY, 10, 3)),
-            blurb = "보스에게 40% 더 아프다",
-        ),
-        UniqueRecipe(
-            id = "dragon_fang", name = "용왕의 송곳니",
-            hint = "두 마리 용과 둥지의 정수…",
-            resultFamily = WeaponFamily.DRAGON,
-            needs = listOf(Triple(WeaponFamily.DRAGON, 15, 2)),
-            essences = mapOf("dragon_nest" to 3),
-            blurb = "화상이 3배로 타오른다",
         ),
         UniqueRecipe(
             id = "phoenix", name = "불사조",
@@ -73,62 +61,34 @@ object UniqueSwords {
             blurb = "파괴될 때 한 번, 재가 되는 대신 되살아난다",
         ),
         UniqueRecipe(
-            id = "cleaver", name = "절단자",
-            hint = "가장 무거운 두 날을 겹치면…",
-            resultFamily = WeaponFamily.AXE,
-            needs = listOf(
-                Triple(WeaponFamily.GREAT, 14, 1),
-                Triple(WeaponFamily.AXE, 14, 1),
-            ),
-            blurb = "치명타 확률 +10%p",
+            id = "trinity", name = "삼위일체",
+            hint = "성스러운 것 둘이 한 곳에 모이면…",
+            resultFamily = WeaponFamily.HOLY,
+            needs = listOf(Triple(WeaponFamily.HOLY, 10, 2)),
+            blurb = "보스에게 40% 더 아프다",
         ),
         UniqueRecipe(
             id = "tempest", name = "폭풍우",
-            hint = "가장 빠른 것 셋과 설원의 정수…",
+            hint = "가장 빠른 것 둘과 설원의 정수…",
             resultFamily = WeaponFamily.RAPIER,
-            needs = listOf(Triple(WeaponFamily.RAPIER, 0, 3)),
+            needs = listOf(Triple(WeaponFamily.RAPIER, 0, 2)),
             essences = mapOf("snowfield" to 2),
             blurb = "손이 30% 더 빨라진다",
         ),
         UniqueRecipe(
-            id = "lucky", name = "행운아",
-            hint = "네 가지 서로 다른 날랜 검이 만나면…",
-            resultFamily = WeaponFamily.CURVED,
-            needs = listOf(
-                Triple(WeaponFamily.CURVED, 0, 1),
-                Triple(WeaponFamily.RAPIER, 0, 1),
-                Triple(WeaponFamily.TWIN, 0, 1),
-                Triple(WeaponFamily.SPEAR, 0, 1),
-            ),
-            blurb = "검이 2배로 잘 떨어진다",
-        ),
-        UniqueRecipe(
             id = "origin", name = "시작의 검",
-            hint = "처음의 검 넷이 처음으로 돌아가면…",
+            hint = "처음의 검 둘이 처음으로 돌아가면…",
             resultFamily = WeaponFamily.STRAIGHT,
-            needs = listOf(Triple(WeaponFamily.STRAIGHT, 0, 4)),
+            needs = listOf(Triple(WeaponFamily.STRAIGHT, 0, 2)),
             blurb = "장착 중 강화 성공률 +3%p",
         ),
-        // --- 아무 검 조건 - 반드시 구체 레시피 뒤 ---
+        // 탐식자는 마검 아무 둘 - 심연(+16 하한)보다 뒤라야 +16 둘이 여기로 새지 않는다
         UniqueRecipe(
             id = "glutton", name = "탐식자",
-            hint = "마검 둘이 아무것이나 둘을 집어삼키면…",
+            hint = "굶주린 마검 둘이 서로를 집어삼키면…",
             resultFamily = WeaponFamily.DEMON,
-            needs = listOf(
-                Triple(WeaponFamily.DEMON, 0, 2),
-                Triple(null, 0, 2),
-            ),
+            needs = listOf(Triple(WeaponFamily.DEMON, 0, 2)),
             blurb = "조각을 2배로 챙긴다",
-        ),
-        UniqueRecipe(
-            id = "bloom", name = "개화",
-            hint = "정령이 셋을 품어 꽃을 피우면…",
-            resultFamily = WeaponFamily.SPIRIT,
-            needs = listOf(
-                Triple(WeaponFamily.SPIRIT, 0, 1),
-                Triple(null, 0, 3),
-            ),
-            blurb = "골드가 50% 더 들어온다",
         ),
     )
 
@@ -207,8 +167,13 @@ object UniqueSwords {
 
     fun canRevive(sword: Sword?): Boolean = sword?.uniqueId == "phoenix"
 
-    /** 고유검 한 종류를 발견한 값. 0.003 은 0.3%p 다. */
-    const val PER_UNIQUE: Double = 0.003
+    /**
+     * 고유검 한 종류를 발견한 값. 0.005 는 0.5%p 다.
+     *
+     * v2.1에서 10종→6종이 되면서 0.3%p 그대로면 만점이 1.8%p 로 줄어든다.
+     * 한 종의 값을 올려 만점 +3.0%p 를 유지한다.
+     */
+    const val PER_UNIQUE: Double = 0.005
 
     /**
      * 발견한 고유검 수로 정해지는 보너스.

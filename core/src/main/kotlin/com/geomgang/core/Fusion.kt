@@ -6,30 +6,29 @@ import kotlin.random.Random
 /**
  * 조합.
  *
- * 보관함의 검 여러 자루를 녹여 한 자루로 만든다.
- * 사냥에서 얻은 어정쩡한 검들이 쌓였을 때 쓸모를 주는 장치다.
+ * 보관함의 검 **두 자루**를 녹여 한 자루로 만든다.
  *
- * 결과 단계는 **재료 중 최고 단계 + 보너스**다. 재료를 많이 넣을수록,
- * 계열을 맞출수록 보너스가 커진다. 강화만으로 오르는 것보다 빠를 수 없게
- * 상한을 [RateTable.MAX_FINITE_LEVEL] 로 막았다 — 무한 구간은 강화로만 간다.
+ * v2.1에서 2~4자루 · 최고단계+보너스 · 다수결 규칙을 전부 걷어냈다. 규칙이 셋이면
+ * 결과를 예측하려고 표를 외워야 한다. 이제 규칙은 하나다 —
+ * **결과 단계 = 두 단계의 평균(내림), 계열은 조합표가 정한다.**
+ * 조합은 단계를 올리는 장치가 아니라 계열을 만드는 장치다.
  */
 object Fusion {
 
-    /** 넣을 수 있는 재료 수. */
+    /** 재료는 정확히 두 자루다. */
     const val MIN_MATERIALS = 2
-    const val MAX_MATERIALS = 4
-
-    /** 계열을 전부 맞췄을 때 붙는 추가 단계. */
-    const val SAME_FAMILY_BONUS = 1
+    const val MAX_MATERIALS = 2
 
     fun canFuse(state: GameState, indices: List<Int>): Boolean {
-        if (indices.size < MIN_MATERIALS || indices.size > MAX_MATERIALS) return false
+        if (indices.size != MIN_MATERIALS) return false
         if (indices.distinct().size != indices.size) return false
         if (indices.any { it !in state.storage.indices }) return false
         // 고유검은 녹일 수 없다. 실수 한 번으로 전설이 사라지면 안 된다.
-        // 전설검도 같다 — 결과가 +20 으로 깎이므로 녹이면 **반드시 손해**고,
-        // 재료 넷을 다시 모으는 일이라 되돌릴 방법도 없다.
+        // 용검(전설)도 같다 — 결과가 +20 으로 깎이므로 녹이면 **반드시 손해**고,
+        // 되돌리려면 마검·성검을 +20 까지 다시 올려야 한다.
         if (indices.any { !meltable(state.storage[it]) }) return false
+        // 만들어지는 것이 없으면 조합이 아니다. 표(또는 고유검 레시피)에 있어야 한다.
+        if (resultOrNull(indices.map { state.storage[it] }, state.essences) == null) return false
         return state.gold >= cost(state, indices)
     }
 
@@ -59,22 +58,23 @@ object Fusion {
     /** 조합 결과를 미리 계산한다. 화면이 "무엇이 나오는지" 보여 주기 위해 필요하다. */
     fun preview(state: GameState, indices: List<Int>): Sword? {
         val materials = indices.mapNotNull { state.storage.getOrNull(it) }
-        if (materials.size < MIN_MATERIALS) return null
-        return resultOf(materials, state.essences)
+        if (materials.size != MIN_MATERIALS) return null
+        return resultOrNull(materials, state.essences)
     }
 
     /**
-     * 재료들로 만들어지는 검.
+     * 재료 둘로 만들어지는 검. 만들어지는 것이 없으면 null.
      *
-     * 우선순위가 셋이다.
-     * 1. **숨은 고유검 레시피** — 재료·정수가 [UniqueSwords] 와 맞으면 전설검
-     * 2. **조합표**([FusionTable]) — 계열 집합이 표에 있으면 그 계열. 조합 전용 10계열의 출처다
-     * 3. 일반 규칙 — 계열은 가장 많이 넣은 계열, 동수면 최고 단계 검의 계열
+     * 우선순위는 둘이다.
+     * 1. **숨은 고유검 레시피** — 재료·정수가 [UniqueSwords] 와 맞으면 고유검
+     * 2. **조합표**([FusionTable]) — 계열 집합이 표에 있으면 그 계열
      *
-     * 별은 어느 경우에도 이어지지 않는다 — 녹여서 새로 만드는 것이므로 0부터다.
+     * 결과 단계 = **(a + b) ÷ 2 내림.** 고유검만 최고 단계를 따른다 —
+     * 레시피가 이미 단계 하한을 요구하므로 평균으로 또 깎으면 이중 벌이다.
+     * 별은 이어지지 않는다 — 녹여서 새로 만드는 것이므로 0부터다.
      */
-    fun resultOf(materials: List<Sword>, essences: Map<String, Int> = emptyMap()): Sword {
-        require(materials.size >= MIN_MATERIALS) { "need at least $MIN_MATERIALS materials" }
+    fun resultOrNull(materials: List<Sword>, essences: Map<String, Int> = emptyMap()): Sword? {
+        if (materials.size != MIN_MATERIALS) return null
 
         UniqueSwords.match(materials, essences)?.let { recipe ->
             return Sword(
@@ -85,32 +85,10 @@ object Fusion {
             )
         }
 
-        val best = materials.maxBy { it.level }
-
-        // 조합표. 고유검이 아니면 여기가 계열을 정한다.
-        FusionTable.resultFor(materials.map { it.family }.toSet())?.let { family ->
-            val sameFamily = materials.all { it.family == best.family }
-            val bonus = (materials.size - 1) + if (sameFamily) SAME_FAMILY_BONUS else 0
-            return Sword(
-                family = family,
-                level = (best.level + bonus).coerceAtMost(RateTable.MAX_FINITE_LEVEL),
-                stars = 0,
-            )
-        }
-        val sameFamily = materials.all { it.family == best.family }
-        val bonus = (materials.size - 1) + if (sameFamily) SAME_FAMILY_BONUS else 0
-
-        val counts = materials.groupingBy { it.family }.eachCount()
-        val topCount = counts.values.max()
-        val family = if (counts[best.family] == topCount) {
-            best.family
-        } else {
-            counts.entries.first { it.value == topCount }.key
-        }
-
+        val family = FusionTable.resultFor(materials.map { it.family }.toSet()) ?: return null
         return Sword(
             family = family,
-            level = (best.level + bonus).coerceAtMost(RateTable.MAX_FINITE_LEVEL),
+            level = materials.sumOf { it.level } / 2,
             stars = 0,
         )
     }
@@ -119,7 +97,7 @@ object Fusion {
     fun fuse(state: GameState, indices: List<Int>): GameState {
         check(canFuse(state, indices)) { "cannot fuse with $indices" }
         val materials = indices.map { state.storage[it] }
-        val result = resultOf(materials, state.essences)
+        val result = checkNotNull(resultOrNull(materials, state.essences))
         val remaining = state.storage.filterIndexed { i, _ -> i !in indices }
 
         val essencesLeft = if (result.uniqueId != null) {

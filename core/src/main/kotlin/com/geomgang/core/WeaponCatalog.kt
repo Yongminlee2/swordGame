@@ -93,11 +93,11 @@ object WeaponCatalog {
     /**
      * 도감 전체 칸.
      *
-     * 계열 14 × 단계 21 = 294 에 전설 30(+21~+50)을 더해 324 다.
-     * **그림 수와 정확히 같아야 한다** — 그림을 늘리면 여기도 같이 늘어난다.
+     * 노출 계열 6(용검 제외) × 단계 21 = 126 에 용검(전설) 30(+21~+50)을 더해 156 이다.
+     * 숨긴 계열의 칸은 여기 없다 — 옛 세이브가 이미 채운 칸은 지우지 않되 세지도 않는다.
      */
     val ENTRIES: List<CodexEntry> =
-        WeaponFamily.entries.flatMap { family ->
+        WeaponFamily.CODEX_FAMILIES.flatMap { family ->
             LEVELS_PER_FAMILY.map { level -> CodexEntry(family, level) }
         } + LEGEND_LEVELS.map { level -> CodexEntry(null, level) }
 }

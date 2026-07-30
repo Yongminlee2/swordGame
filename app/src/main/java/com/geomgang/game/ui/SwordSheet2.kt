@@ -31,9 +31,21 @@ object SwordSheet2 {
     fun cellOf(family: WeaponFamily, tier: WeaponTier): Int =
         family.ordinal * COLUMNS + tier.ordinal
 
-    /** 고유검 칸 번호. 레시피 선언 순서가 곧 열이다. */
+    /**
+     * 시트 15행(고유검)의 열 순서 — **그림이 그려진 순서라 바꿀 수 없다.**
+     *
+     * 예전에는 `RECIPES` 선언 순서를 썼는데, v2.1에서 레시피가 6종으로 줄고
+     * 매칭 우선순위 때문에 순서도 바뀌었다. 목록 순서에 묶어 두면 레시피를 만질
+     * 때마다 그림이 엉뚱한 검에 붙는다. 열은 그림의 사실이므로 여기 굳힌다.
+     */
+    private val UNIQUE_COLUMNS = listOf(
+        "abyss_eater", "trinity", "dragon_fang", "phoenix", "cleaver",
+        "tempest", "lucky", "origin", "glutton", "bloom",
+    )
+
+    /** 고유검 칸 번호. */
     fun uniqueCellOf(uniqueId: String): Int {
-        val index = UniqueSwords.RECIPES.indexOfFirst { it.id == uniqueId }
+        val index = UNIQUE_COLUMNS.indexOf(uniqueId)
         require(index >= 0) { "unknown unique: $uniqueId" }
         return UNIQUE_ROW * COLUMNS + index
     }

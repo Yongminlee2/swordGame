@@ -137,10 +137,10 @@ class GauntletTest {
     }
 
     @Test
-    fun `10층 최초 돌파는 허검을 주고 두 번째는 안 준다`() {
+    fun `10층 최초 돌파는 마검을 주고 두 번째는 안 준다`() {
         val state = GameState(difficulty = Difficulty.ENDLESS)
         val first = GauntletEngine.applyMilestones(state, 10)
-        assertEquals(WeaponFamily.VOID, first.storage.single().family)
+        assertEquals(WeaponFamily.DEMON, first.storage.single().family)
         assertEquals(10, first.gauntletBest)
         val second = GauntletEngine.applyMilestones(first, 11)
         assertEquals(1, second.storage.size)

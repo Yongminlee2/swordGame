@@ -46,7 +46,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import com.geomgang.core.BonusSource
 import com.geomgang.core.Difficulty
-import com.geomgang.core.ForgeMark
 import com.geomgang.core.ForgeResult
 import com.geomgang.core.IdleReward
 import com.geomgang.core.IdleRewards
@@ -82,12 +81,10 @@ fun ForgeScreen(
     onToggleBlessing: () -> Unit,
     onToggleLuckCharm: () -> Unit,
     onOpenHunt: () -> Unit,
-    onOpenGauntlet: () -> Unit,
     onOpenStorage: () -> Unit,
     onOpenShop: () -> Unit,
     onOpenCraft: () -> Unit,
     onOpenCodex: () -> Unit,
-    onOpenQuests: () -> Unit,
     onOpenMenu: () -> Unit,
     onDismissIdle: () -> Unit,
     onOpenTraining: () -> Unit,
@@ -420,10 +417,6 @@ fun ForgeScreen(
                     color = Color(0xFFFFD54A),
                 )
             }
-            if (state.recentMarks.isNotEmpty()) {
-                Spacer(Modifier.height(8.dp))
-                MarkStrip(state.recentMarks)
-            }
             // 스킬과 특수강화는 「단련」 화면으로 옮겼다([TrainingScreen]).
             // 성장 장치를 여기 늘어놓으면 정작 강화 버튼이 아래로 밀린다.
             Spacer(Modifier.height(10.dp))
@@ -445,48 +438,25 @@ fun ForgeScreen(
                     fontWeight = FontWeight.Bold,
                 )
             }
-            Spacer(Modifier.height(8.dp))
-            // 무한 회랑 - 중반(화산 클리어)부터 열리는 엔드컨텐츠
-            OutlinedButton(
-                onClick = onOpenGauntlet,
-                enabled = !state.busy && state.sword != null && state.gauntletUnlocked,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(
-                    text = when {
-                        !state.gauntletUnlocked -> "🔒 무한 회랑"
-                        state.gauntletBest > 0 -> "무한 회랑 · ${state.gauntletBest}층"
-                        else -> "무한 회랑"
-                    },
-                    color = if (state.gauntletUnlocked) Color(0xFFC79BFF) else Color.Unspecified,
-                )
-            }
             Spacer(Modifier.height(10.dp))
-            // 아이콘 여섯 개를 한 줄에 넣으면 칸이 46dp 로 좁아져 글자가 접힌다.
-            // 세 개씩 두 줄로 나눠 각 칸에 자리를 준다.
+            // 회랑은 사냥터 안으로 갔다. 퀘스트는 v2.1에서 숨겼다 — 다섯 개면 한 줄에 선다.
             val enabled = !state.busy
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 IconEntry("🛒", "상점", enabled, Modifier.weight(1f), onOpenShop)
-                IconEntry("⚗️", "조합소", enabled, Modifier.weight(1f), onOpenCraft)
+                IconEntry("⚗️", "조합", enabled, Modifier.weight(1f), onOpenCraft)
                 IconEntry(
                     icon = "🎒",
-                    label = "가방 ${state.storage.size}/${state.storageCapacity}",
+                    label = "${state.storage.size}/${state.storageCapacity}",
                     enabled = enabled,
                     modifier = Modifier.weight(1f),
                     onClick = onOpenStorage,
                 )
-            }
-            Spacer(Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
                 IconEntry(
                     icon = "⚒",
-                    label = "단련 Lv${state.skillLevel}",
+                    label = "단련",
                     enabled = enabled,
                     modifier = Modifier.weight(1f),
                     onClick = onOpenTraining,
@@ -494,14 +464,6 @@ fun ForgeScreen(
                     highlight = state.canUpgradeSkill,
                 )
                 IconEntry("📖", "도감", enabled, Modifier.weight(1f), onOpenCodex)
-                IconEntry(
-                    icon = "📜",
-                    label = if (state.questClaimable) "퀘스트!" else "퀘스트",
-                    enabled = enabled,
-                    modifier = Modifier.weight(1f),
-                    onClick = onOpenQuests,
-                    highlight = state.questClaimable,
-                )
             }
         }
     }
@@ -656,73 +618,8 @@ private fun TemperBar(temper: TemperUi) {
     }
 }
 
-/** 자취 기호 하나의 뜻. 기호와 색과 말이 한 자리에 있어야 어긋나지 않는다. */
-private data class MarkLook(val glyph: String, val word: String, val color: Color)
-
-@Composable
-private fun lookOf(mark: ForgeMark): MarkLook = when (mark) {
-    ForgeMark.UP -> MarkLook("●", "성공", Color(0xFF7FD48A))
-    ForgeMark.STAY -> MarkLook(
-        "·",
-        "유지",
-        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
-    )
-
-    ForgeMark.DOWN -> MarkLook("▽", "하락", Color(0xFFE0A060))
-    ForgeMark.BREAK -> MarkLook("✕", "파괴", MaterialTheme.colorScheme.error)
-}
-
-/**
- * 최근 강화 자취. 왼쪽이 오래된 것, 오른쪽이 방금 것이다.
- *
- * 결과가 한 번 뜨고 사라지면 "세 판째 말아먹는 중" 이라는 이야기가 남지 않는다.
- *
- * **기호만 있으면 읽히지 않는다.** ● 과 ▽ 가 무엇인지 아무 데도 적혀 있지 않아서
- * 줄 전체가 장식으로 보였다. 아래에 범례를 한 줄 붙여 기호를 말로 잇는다.
- */
-@Composable
-private fun MarkStrip(marks: List<ForgeMark>) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = "최근 ${marks.size}판",
-            fontSize = 10.sp,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f),
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            marks.forEach { mark ->
-                val look = lookOf(mark)
-                Text(
-                    text = look.glyph,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(horizontal = 3.dp),
-                    color = look.color,
-                )
-            }
-        }
-        Spacer(Modifier.height(2.dp))
-        // 범례. 기호가 넷뿐이라 한 줄에 들어간다.
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            ForgeMark.entries.forEach { mark ->
-                val look = lookOf(mark)
-                Text(
-                    text = "${look.glyph} ${look.word}",
-                    fontSize = 10.sp,
-                    modifier = Modifier.padding(horizontal = 5.dp),
-                    color = look.color,
-                )
-            }
-        }
-    }
-}
+// 최근 자취(MarkStrip)는 v2.1에서 삭제했다. 범례까지 붙여 봤지만
+// "그래서 뭘 하라는 건지" 가 없었다 - 읽어도 행동이 바뀌지 않는 표시는 장식이다.
 
 @Composable
 fun Stat(icon: String, label: String, value: String, color: Color = Color.Unspecified) {

@@ -51,12 +51,11 @@ class ForgeViewModelUniqueTest {
                 storage = listOf(
                     Sword(WeaponFamily.HOLY, 10),
                     Sword(WeaponFamily.HOLY, 12),
-                    Sword(WeaponFamily.HOLY, 11),
                 ),
             ),
         )
         val vm = ForgeViewModel(store, Difficulty.ENDLESS, ZeroRandom())
-        vm.fuse(listOf(0, 1, 2))
+        vm.fuse(listOf(0, 1))
         val ui = vm.ui.value
         val result = ui.storage.single()
         assertEquals("trinity", result.uniqueId)

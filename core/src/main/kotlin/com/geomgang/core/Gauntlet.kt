@@ -218,13 +218,16 @@ object GauntletEngine {
     /**
      * 층 돌파 마일스톤을 적용한다.
      *
-     * 10층 최초 돌파 = 허검 +10 (보관함이 꽉 찼어도 지급한다 - 1회뿐인 보상을 잃게 하지 않는다),
+     * 10층 최초 돌파 = 마검 +10 (보관함이 꽉 찼어도 지급한다 - 1회뿐인 보상을 잃게 하지 않는다),
      * 25층 최초 돌파 = 회랑의 정령 알. 최고 기록도 여기서 갱신한다.
+     *
+     * v2.1 전에는 허검이었다. 허검이 숨으면서 전설 사다리에 걸리는 마검으로 바꿨다 —
+     * 회랑 보상이 얻을 수 없는 계열이면 빈 상자다.
      */
     fun applyMilestones(state: GameState, clearedFloor: Int): GameState {
         var s = state
         if (state.gauntletBest < VOID_FLOOR && clearedFloor >= VOID_FLOOR) {
-            s = s.copy(storage = s.storage + Sword(WeaponFamily.VOID, 10))
+            s = s.copy(storage = s.storage + Sword(WeaponFamily.DEMON, 10))
         }
         if (state.gauntletBest < WISP_FLOOR && clearedFloor >= WISP_FLOOR) {
             s = s.copy(pets = Pets.addEgg(s.pets, PetKind.HALL_WISP.id))

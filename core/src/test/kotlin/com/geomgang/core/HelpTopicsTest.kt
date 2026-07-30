@@ -67,7 +67,7 @@ class HelpTopicsTest {
     fun `조합 설명이 실제 고유검 수를 말한다`() {
         val body = HelpTopics.ALL.first { it.title == "조합" }.body
         assertTrue(body.contains("${UniqueSwords.RECIPES.size}"))
-        assertTrue(body.contains("${Fusion.MAX_MATERIALS}"))
+        assertTrue(body.contains("두 자루"))
     }
 
     @Test
