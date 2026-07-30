@@ -125,11 +125,15 @@ data class ForgeUiState(
     val forgeBlockedReason: String? = null,
     /** 강화 보너스의 출처별 내역. 화면이 "왜 이 확률인지" 말해 준다. */
     val bonusSources: List<BonusSource> = emptyList(),
-    /** 지금 든 검을 도감에 바칠 수 있는지. */
-    val canOfferCodex: Boolean = false,
-    val smithyLevel: Int = 0,
-    val smithyPrice: Long = 0,
-    val canUpgradeSmithy: Boolean = false,
+    /**
+     * 스킬 — 골드로 사는 영구 확률.
+     *
+     * 도메인 이름은 [com.geomgang.core.Smithy] 지만 화면에서는 "스킬"이다.
+     * 저장 필드(`smithyLevel`)는 그대로 둔다 — 이름을 바꾸면 옛 세이브가 값을 잃는다.
+     */
+    val skillLevel: Int = 0,
+    val skillPrice: Long = 0,
+    val canUpgradeSkill: Boolean = false,
     /** 전설검 재료 중 아직 없는 것. 목표가 보여야 모으고 싶어진다. */
     val legendMissing: List<WeaponFamily> = emptyList(),
     val canCraftLegend: Boolean = false,

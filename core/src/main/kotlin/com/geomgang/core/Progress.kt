@@ -188,6 +188,19 @@ object Progress {
     const val GREAT_UNLOCK_ZONES = 3
 
     /**
+     * 세검이 열리는 데 필요한 조합 횟수.
+     *
+     * 예전 조건은 **"고유검 1개 발견"** 이었다. 고유검은 힌트만 있는 숨은 레시피라
+     * 우연히 맞추기 전에는 세검이 열리지 않았고, 그것이 게임 전체를 막았다 —
+     * 창검은 세검 둘, 허검은 도끼검+창검, 전설검은 허검이 있어야 한다.
+     * **숨은 것 하나가 주 진행선을 인질로 잡고 있었다.**
+     *
+     * 조합 횟수로 바꿨다. 원래 의도(계열마다 다른 활동을 가리킨다)는 그대로고,
+     * 직검 두 자루만 있으면 누구나 밟는 길이라 막히지 않는다.
+     */
+    const val RAPIER_UNLOCK_FUSIONS = 3
+
+    /**
      * 기본 계열의 해금 조건.
      *
      * 시작은 직검 하나뿐이다. 계열이 열리는 것 자체가 진행의 이정표가 되고,
@@ -198,7 +211,7 @@ object Progress {
         WeaponFamily.STRAIGHT -> true
         WeaponFamily.CURVED -> p.stats.bestLevelEver >= CURVED_UNLOCK_LEVEL
         WeaponFamily.GREAT -> p.clearedZones.size >= GREAT_UNLOCK_ZONES
-        WeaponFamily.RAPIER -> p.uniqueFound.isNotEmpty()
+        WeaponFamily.RAPIER -> p.stats.fusions >= RAPIER_UNLOCK_FUSIONS
         else -> false
     }
 
@@ -211,7 +224,9 @@ object Progress {
                 "구역 ${GREAT_UNLOCK_ZONES}곳 클리어 " +
                     "(${p.clearedZones.size}/$GREAT_UNLOCK_ZONES)"
 
-            WeaponFamily.RAPIER -> "고유검 1개 발견"
+            WeaponFamily.RAPIER ->
+                "조합소에서 조합 ${RAPIER_UNLOCK_FUSIONS}회 " +
+                    "(${p.stats.fusions}/$RAPIER_UNLOCK_FUSIONS)"
             else -> null
         }
     }

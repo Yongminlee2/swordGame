@@ -1,6 +1,7 @@
 package com.geomgang.game.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -161,13 +162,21 @@ private fun StorageRow(
     onOffer: () -> Unit,
 ) {
     Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(12.dp)) {
+        Column(Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+            // 검 그림과 장착이 **한 줄에 나란히** 있다. 예전에는 그림 아래로 설명이 세 줄,
+            // 그 아래 버튼이 또 한 줄이라 한 자루가 화면의 3분의 1을 먹었다.
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SwordThumb(sword, size = 38.dp)
-                Column(Modifier.padding(start = 10.dp)) {
+                SwordThumb(sword, size = 32.dp)
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 8.dp),
+                ) {
                     Text(
                         text = SwordNames.nameFor(sword),
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
+                        maxLines = 1,
                         color = if (sword.uniqueId != null) {
                             Color(0xFFFFD54A)
                         } else {
@@ -176,59 +185,74 @@ private fun StorageRow(
                     )
                     Text(
                         text = swordLine(sword),
-                        fontSize = 11.sp,
+                        fontSize = 10.sp,
+                        maxLines = 1,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     )
+                }
+                Button(
+                    onClick = onEquip,
+                    enabled = !state.busy && !state.awaitingDestroyChoice,
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                    modifier = Modifier.height(34.dp),
+                ) { Text("🗡 장착", fontSize = 12.sp, maxLines = 1) }
+            }
+
+            // 고유검 설명만 남긴다. 계열 설명은 어느 자루에나 같은 말이 붙어서
+            // 스무 자루가 같은 문장을 스무 번 반복하는 줄이 됐다.
+            sword.uniqueId?.let { id ->
+                UniqueSwords.byId(id)?.let { recipe ->
                     Text(
-                        text = sword.uniqueId?.let { UniqueSwords.byId(it)?.blurb }
-                            ?: FamilyStyle.of(sword.family).blurb,
-                        fontSize = 11.sp,
-                        color = if (sword.uniqueId != null) {
-                            Color(0xFFFFD54A).copy(alpha = 0.8f)
-                        } else {
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                        },
+                        text = recipe.blurb,
+                        fontSize = 10.sp,
+                        maxLines = 1,
+                        color = Color(0xFFFFD54A).copy(alpha = 0.8f),
                     )
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(
-                    onClick = onEquip,
-                    enabled = !state.busy && !state.awaitingDestroyChoice,
-                    modifier = Modifier.weight(1f),
-                ) { Text("🗡 장착", fontSize = 13.sp) }
-                OutlinedButton(
-                    onClick = onSell,
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                RowAction(
+                    // 자릿수를 다 적으면 버튼 안에서 접힌다. 지갑 줄과 같은 축약을 쓴다.
+                    label = "💰 ${compactGold(Economy.sellPrice(sword.level))}",
                     enabled = !state.busy,
                     modifier = Modifier.weight(1f),
-                ) {
-                    // 자릿수를 다 적으면 버튼 안에서 세 줄로 접힌다. 지갑 줄과 같은 축약을 쓴다.
-                    Text(
-                        text = "💰 ${compactGold(Economy.sellPrice(sword.level))}",
-                        fontSize = 12.sp,
-                        maxLines = 1,
-                    )
-                }
-                TextButton(
-                    onClick = onScrap,
+                    onClick = onSell,
+                )
+                RowAction(
+                    label = "🔨 ${Storage.scrapShards(sword)}",
                     // 전설검을 부수면 다시 벼릴 값의 5분의 1도 안 나온다([Storage.canScrap]).
                     enabled = !state.busy && Storage.canScrap(sword),
                     modifier = Modifier.weight(1f),
-                ) {
-                    Text("🔨 ${Storage.scrapShards(sword)}", fontSize = 12.sp, maxLines = 1)
-                }
-                // 이미 찬 칸이면 잠긴다. 검만 사라지고 얻는 게 없으면 함정이다.
-                TextButton(
-                    onClick = onOffer,
+                    onClick = onScrap,
+                )
+                RowAction(
+                    label = "📖 도감",
+                    // 이미 찬 칸이면 잠긴다. 검만 사라지고 얻는 게 없으면 함정이다.
                     enabled = !state.busy && CodexOffer.canOffer(state.progress, sword),
                     modifier = Modifier.weight(1f),
-                ) {
-                    Text("📖 바치기", fontSize = 12.sp, maxLines = 1)
-                }
+                    onClick = onOffer,
+                )
             }
         }
+    }
+}
+
+/** 보관함 한 자루의 부수 조작. 높이를 낮춰 한 자루가 먹는 자리를 줄인다. */
+@Composable
+private fun RowAction(
+    label: String,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    TextButton(
+        onClick = onClick,
+        enabled = enabled,
+        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
+        modifier = modifier.height(30.dp),
+    ) {
+        Text(label, fontSize = 11.sp, maxLines = 1)
     }
 }
 

@@ -90,9 +90,7 @@ fun ForgeScreen(
     onOpenQuests: () -> Unit,
     onOpenMenu: () -> Unit,
     onDismissIdle: () -> Unit,
-    onOpenStar: () -> Unit,
-    onOfferCodex: () -> Unit,
-    onUpgradeSmithy: () -> Unit,
+    onOpenTraining: () -> Unit,
     onAnimationEnd: () -> Unit,
 ) {
     val shake = remember { Animatable(0f) }
@@ -413,16 +411,6 @@ fun ForgeScreen(
                     Text(it, fontSize = 12.sp, color = MaterialTheme.colorScheme.error)
                 }
             }
-            if (state.canOfferCodex) {
-                Spacer(Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = onOfferCodex,
-                    enabled = !state.busy,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("📖 도감에 바치기 — 이 검은 사라진다", fontSize = 13.sp)
-                }
-            }
             if (state.isRecord) {
                 Spacer(Modifier.height(6.dp))
                 Text(
@@ -436,25 +424,8 @@ fun ForgeScreen(
                 Spacer(Modifier.height(8.dp))
                 MarkStrip(state.recentMarks)
             }
-            Spacer(Modifier.height(10.dp))
-            StarBar(state, onOpenStar)
-            Spacer(Modifier.height(8.dp))
-            // 대장간은 골드로 사는 영구 확률이다. 별도 화면을 만들지 않는다 - 줄 하나면 된다.
-            OutlinedButton(
-                onClick = onUpgradeSmithy,
-                enabled = state.canUpgradeSmithy,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(
-                    text = if (state.smithyLevel >= Smithy.MAX_LEVEL) {
-                        "🔨 대장간 Lv ${state.smithyLevel} · 최고"
-                    } else {
-                        "🔨 대장간 Lv ${state.smithyLevel}/${Smithy.MAX_LEVEL}  ·  " +
-                            compactGold(state.smithyPrice)
-                    },
-                    fontSize = 13.sp,
-                )
-            }
+            // 스킬과 특수강화는 「단련」 화면으로 옮겼다([TrainingScreen]).
+            // 성장 장치를 여기 늘어놓으면 정작 강화 버튼이 아래로 밀린다.
             Spacer(Modifier.height(10.dp))
             // 사냥이 강화 비용의 출처다. 강화 버튼 바로 아래에 둬서 왕복이 짧게 한다.
             Button(
@@ -491,20 +462,36 @@ fun ForgeScreen(
                 )
             }
             Spacer(Modifier.height(10.dp))
-            // 글자 버튼 다섯 개 대신 아이콘 줄 하나 - 화면의 글자를 줄인다
+            // 아이콘 여섯 개를 한 줄에 넣으면 칸이 46dp 로 좁아져 글자가 접힌다.
+            // 세 개씩 두 줄로 나눠 각 칸에 자리를 준다.
+            val enabled = !state.busy
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                val enabled = !state.busy
                 IconEntry("🛒", "상점", enabled, Modifier.weight(1f), onOpenShop)
                 IconEntry("⚗️", "조합소", enabled, Modifier.weight(1f), onOpenCraft)
                 IconEntry(
                     icon = "🎒",
-                    label = "${state.storage.size}/${state.storageCapacity}",
+                    label = "가방 ${state.storage.size}/${state.storageCapacity}",
                     enabled = enabled,
                     modifier = Modifier.weight(1f),
                     onClick = onOpenStorage,
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                IconEntry(
+                    icon = "⚒",
+                    label = "단련 Lv${state.skillLevel}",
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f),
+                    onClick = onOpenTraining,
+                    // 올릴 돈이 있으면 알려 준다 - 안 그러면 들어가 볼 이유를 잊는다
+                    highlight = state.canUpgradeSkill,
                 )
                 IconEntry("📖", "도감", enabled, Modifier.weight(1f), onOpenCodex)
                 IconEntry(
@@ -625,7 +612,7 @@ private fun TemperBar(temper: TemperUi) {
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
-                text = "담금질",
+                text = "담금질 — 실패가 다음 확률을 올린다",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFFE0A458),
@@ -669,34 +656,70 @@ private fun TemperBar(temper: TemperUi) {
     }
 }
 
+/** 자취 기호 하나의 뜻. 기호와 색과 말이 한 자리에 있어야 어긋나지 않는다. */
+private data class MarkLook(val glyph: String, val word: String, val color: Color)
+
+@Composable
+private fun lookOf(mark: ForgeMark): MarkLook = when (mark) {
+    ForgeMark.UP -> MarkLook("●", "성공", Color(0xFF7FD48A))
+    ForgeMark.STAY -> MarkLook(
+        "·",
+        "유지",
+        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
+    )
+
+    ForgeMark.DOWN -> MarkLook("▽", "하락", Color(0xFFE0A060))
+    ForgeMark.BREAK -> MarkLook("✕", "파괴", MaterialTheme.colorScheme.error)
+}
+
 /**
  * 최근 강화 자취. 왼쪽이 오래된 것, 오른쪽이 방금 것이다.
  *
  * 결과가 한 번 뜨고 사라지면 "세 판째 말아먹는 중" 이라는 이야기가 남지 않는다.
+ *
+ * **기호만 있으면 읽히지 않는다.** ● 과 ▽ 가 무엇인지 아무 데도 적혀 있지 않아서
+ * 줄 전체가 장식으로 보였다. 아래에 범례를 한 줄 붙여 기호를 말로 잇는다.
  */
 @Composable
 private fun MarkStrip(marks: List<ForgeMark>) {
-    Row(
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        marks.forEach { mark ->
-            Text(
-                text = when (mark) {
-                    ForgeMark.UP -> "●"
-                    ForgeMark.STAY -> "·"
-                    ForgeMark.DOWN -> "▽"
-                    ForgeMark.BREAK -> "✕"
-                },
-                fontSize = 13.sp,
-                modifier = Modifier.padding(horizontal = 3.dp),
-                color = when (mark) {
-                    ForgeMark.UP -> Color(0xFF7FD48A)
-                    ForgeMark.STAY -> MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
-                    ForgeMark.DOWN -> Color(0xFFE0A060)
-                    ForgeMark.BREAK -> MaterialTheme.colorScheme.error
-                },
-            )
+        Text(
+            text = "최근 ${marks.size}판",
+            fontSize = 10.sp,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f),
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            marks.forEach { mark ->
+                val look = lookOf(mark)
+                Text(
+                    text = look.glyph,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(horizontal = 3.dp),
+                    color = look.color,
+                )
+            }
+        }
+        Spacer(Modifier.height(2.dp))
+        // 범례. 기호가 넷뿐이라 한 줄에 들어간다.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            ForgeMark.entries.forEach { mark ->
+                val look = lookOf(mark)
+                Text(
+                    text = "${look.glyph} ${look.word}",
+                    fontSize = 10.sp,
+                    modifier = Modifier.padding(horizontal = 5.dp),
+                    color = look.color,
+                )
+            }
         }
     }
 }
@@ -832,35 +855,8 @@ private fun FamilyCapNotice() {
 }
 
 /**
- * 별 강화(특수강화) 막대.
- *
- * 강화 단계와 별개의 계층이다. **실패해도 검이 부서지지 않고 별만 하나 줄어든다** —
- * 그래야 두 계층의 긴장이 겹치지 않는다.
+ * 별 강화(특수강화) 막대는 「단련」 화면으로 갔다([TrainingScreen]).
  */
-@Composable
-private fun StarBar(state: ForgeUiState, onOpenStar: () -> Unit) {
-    val star = state.star ?: return
-
-    // 별 강화는 자기 화면으로 옮겼다. 메인은 **한 번의 강화**에 집중해야 하는데
-    // 성격이 다른 두 번째 강화가 같은 자리에 있으면 눈이 갈라진다.
-    // 여기 남는 것은 "지금 별이 몇 개인가" 와 들어가는 문 하나뿐이다.
-    OutlinedButton(onClick = onOpenStar, modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = "특수강화  " + "★".repeat(star.stars) + "☆".repeat(star.maxStars - star.stars),
-            fontSize = 13.sp,
-            color = Color(0xFFFFD24A),
-        )
-        if (star.attackBonusPercent > 0) {
-            Text(
-                text = "  ·  공격력 +${star.attackBonusPercent}%",
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        }
-    }
-    Spacer(Modifier.height(10.dp))
-}
-
 @Composable
 private fun ResultBanner(result: ForgeResult?) {
     val (text, color) = when (result) {

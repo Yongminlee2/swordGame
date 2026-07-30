@@ -21,16 +21,14 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.geomgang.game.R
 
+/**
+ * 몬스터·펫 시트.
+ *
+ * 읽기는 [SpriteCache] 가 프로세스 수준에서 한 번만 한다 — 펫 도감처럼 자리가
+ * 스물넷인 화면이 `remember` 를 쓰면 그 수만큼 다시 읽는다.
+ */
 @Composable
-private fun rememberMonsterSheet(): ImageBitmap {
-    val context = LocalContext.current
-    return remember {
-        // inScaled 를 끄지 않으면 밀도에 따라 확대되어 칸 좌표가 어긋난다.
-        val options = BitmapFactory.Options().apply { inScaled = false }
-        BitmapFactory.decodeResource(context.resources, R.drawable.monster_sheet, options)
-            .asImageBitmap()
-    }
-}
+private fun rememberMonsterSheet(): ImageBitmap = rememberSheet(R.drawable.monster_sheet)
 
 /** 펫 아이콘. 미소유는 회색 실루엣. */
 @Composable

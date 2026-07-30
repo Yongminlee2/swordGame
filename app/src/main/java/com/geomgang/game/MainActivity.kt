@@ -32,19 +32,22 @@ import com.geomgang.game.ui.ShopScreen
 import com.geomgang.game.ui.StarScreen
 import com.geomgang.game.ui.StatsScreen
 import com.geomgang.game.ui.StorageScreen
+import com.geomgang.game.ui.TrainingScreen
 import com.geomgang.game.ui.SwordForgeTheme
 
 /** 강화 화면 위에 무엇이 올라와 있는지. */
 private enum class Overlay {
-    None, Hunt, Gauntlet, Storage, Shop, Craft, Star,
+    None, Hunt, Gauntlet, Storage, Shop, Craft, Training, Star,
     Records, Codex, Quests, Pets, Achievements, Stats, Help, Settings,
 }
 
-/** 뒤로 가면 어디로 돌아가는지. 기록 하위 화면들은 메뉴로 돌아간다. */
+/** 뒤로 가면 어디로 돌아가는지. 하위 화면은 자기를 연 화면으로 돌아간다. */
 private fun Overlay.parent(): Overlay = when (this) {
     Overlay.Codex, Overlay.Pets, Overlay.Achievements, Overlay.Stats,
     Overlay.Help, Overlay.Settings,
     -> Overlay.Records
+    // 별 강화는 단련에서 들어간다. 강화 화면으로 튕기면 왔던 길을 잃는다.
+    Overlay.Star -> Overlay.Training
     else -> Overlay.None
 }
 
@@ -161,10 +164,17 @@ private fun App(store: SaveStore) {
             onBack = { overlay = Overlay.None },
         )
 
+        Overlay.Training -> TrainingScreen(
+            state = state,
+            onUpgradeSkill = vm::upgradeSkill,
+            onOpenStar = { overlay = Overlay.Star },
+            onBack = { overlay = Overlay.None },
+        )
+
         Overlay.Star -> StarScreen(
             state = state,
             onStarUp = vm::starUp,
-            onBack = { overlay = Overlay.None },
+            onBack = { overlay = Overlay.Training },
         )
 
         Overlay.Craft -> CraftScreen(
@@ -240,9 +250,7 @@ private fun App(store: SaveStore) {
             onOpenQuests = { overlay = Overlay.Quests },
             onOpenMenu = { overlay = Overlay.Records },
             onDismissIdle = vm::dismissIdleReward,
-            onOpenStar = { overlay = Overlay.Star },
-            onOfferCodex = vm::offerToCodex,
-            onUpgradeSmithy = vm::upgradeSmithy,
+            onOpenTraining = { overlay = Overlay.Training },
             onAnimationEnd = vm::onAnimationFinished,
         )
     }

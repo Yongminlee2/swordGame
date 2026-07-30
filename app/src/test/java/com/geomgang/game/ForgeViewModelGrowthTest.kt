@@ -53,50 +53,70 @@ class ForgeViewModelGrowthTest {
         forgeStones = 9_999,
     )
 
+    /** 보관함에 검을 넣어 둔 판. 바치는 자리는 가방 하나뿐이다. */
+    private fun withStored(vararg swords: Sword) =
+        rich(sword = null).copy(storage = swords.toList())
+
     // --- 보너스 내역 ---
 
     @Test
     fun `보너스 출처가 화면 상태로 온다`() {
         val sources = vm(rich()).ui.value.bonusSources
         assertTrue(sources.any { it.label == "도감" })
-        assertTrue(sources.any { it.label == "대장간" })
+        assertTrue(sources.any { it.label == "스킬" })
         assertTrue(sources.any { it.label == "고유검" })
     }
 
     // --- 도감 수집 ---
 
+    /** 바치는 자리는 가방이다. 강화 화면에 버튼을 두면 그 화면이 강화에 집중하지 못한다. */
     @Test
-    fun `도감에 바치면 검이 사라지고 칸이 열린다`() {
-        val vm = vm(rich())
-        assertTrue(vm.ui.value.canOfferCodex)
+    fun `가방에서 바치면 검이 사라지고 칸이 열린다`() {
+        val vm = vm(withStored(Sword(WeaponFamily.STRAIGHT, 5)))
         val before = vm.ui.value.progress.codex.size
 
-        vm.offerToCodex()
+        vm.offerFromStorage(0)
 
-        assertNull(vm.ui.value.sword)
-        assertFalse(vm.ui.value.canOfferCodex)
+        assertTrue(vm.ui.value.storage.isEmpty())
         assertTrue(vm.ui.value.progress.codex.size > before)
     }
 
-    // --- 대장간 ---
+    @Test
+    fun `이미 찬 칸은 다시 바쳐도 늘지 않는다`() {
+        val vm = vm(
+            withStored(
+                Sword(WeaponFamily.STRAIGHT, 5),
+                Sword(WeaponFamily.STRAIGHT, 5),
+            ),
+        )
+        vm.offerFromStorage(0)
+        val filled = vm.ui.value.progress.codex.size
+
+        vm.offerFromStorage(0)
+
+        assertEquals(filled, vm.ui.value.progress.codex.size)
+        assertEquals(1, vm.ui.value.storage.size)
+    }
+
+    // --- 스킬 ---
 
     @Test
-    fun `대장간을 올리면 레벨이 오르고 골드가 빠진다`() {
+    fun `스킬을 올리면 레벨이 오르고 골드가 빠진다`() {
         val vm = vm(rich())
         val before = vm.ui.value.gold
 
-        vm.upgradeSmithy()
+        vm.upgradeSkill()
 
-        assertEquals(1, vm.ui.value.smithyLevel)
+        assertEquals(1, vm.ui.value.skillLevel)
         assertTrue(vm.ui.value.gold < before)
     }
 
     @Test
-    fun `대장간은 상한에서 멈춘다`() {
+    fun `스킬은 상한에서 멈춘다`() {
         val vm = vm(rich())
-        repeat(Smithy.MAX_LEVEL + 3) { vm.upgradeSmithy() }
-        assertEquals(Smithy.MAX_LEVEL, vm.ui.value.smithyLevel)
-        assertFalse(vm.ui.value.canUpgradeSmithy)
+        repeat(Smithy.MAX_LEVEL + 3) { vm.upgradeSkill() }
+        assertEquals(Smithy.MAX_LEVEL, vm.ui.value.skillLevel)
+        assertFalse(vm.ui.value.canUpgradeSkill)
     }
 
     // --- 계열 상한 ---
@@ -135,13 +155,13 @@ class ForgeViewModelGrowthTest {
     @Test
     fun `전설검을 바치면 해금되고 조각으로 되찾는다`() {
         val vm = vm(
-            rich(Sword(WeaponFamily.DRAGON, LegendForge.LEVEL))
+            withStored(Sword(WeaponFamily.DRAGON, LegendForge.LEVEL))
                 .copy(shards = LegendForge.RECRAFT_SHARDS),
         )
-        vm.offerToCodex()
+        vm.offerFromStorage(0)
 
         // 검은 도감으로 갔지만 해금은 남는다
-        assertNull(vm.ui.value.sword)
+        assertTrue(vm.ui.value.storage.isEmpty())
         assertTrue(vm.ui.value.legendUnlocked)
         assertTrue(vm.ui.value.canRecraftLegend)
 
@@ -170,8 +190,8 @@ class ForgeViewModelGrowthTest {
      */
     @Test
     fun `20강 낫검을 바쳐도 전설 칸은 열리지 않는다`() {
-        val vm = vm(rich(Sword(WeaponFamily.SCYTHE, 20)))
-        vm.offerToCodex()
+        val vm = vm(withStored(Sword(WeaponFamily.SCYTHE, 20)))
+        vm.offerFromStorage(0)
 
         val legendSlot = WeaponCatalog.slotFor(WeaponFamily.SCYTHE, LegendForge.LEVEL)
         assertFalse(legendSlot in Progress.entriesOf(vm.ui.value.progress))
@@ -181,9 +201,9 @@ class ForgeViewModelGrowthTest {
     /** 계열 안에서는 짝 열기가 그대로 산다. */
     @Test
     fun `낫검은 계열 칸 안에서 다음 칸도 연다`() {
-        val vm = vm(rich(Sword(WeaponFamily.SCYTHE, 5)))
+        val vm = vm(withStored(Sword(WeaponFamily.SCYTHE, 5)))
         val before = Progress.entriesOf(vm.ui.value.progress).size
-        vm.offerToCodex()
+        vm.offerFromStorage(0)
         assertEquals(before + 2, Progress.entriesOf(vm.ui.value.progress).size)
     }
 

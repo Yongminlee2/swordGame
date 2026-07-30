@@ -80,12 +80,13 @@ fun LegendSwordArt(
     }
 }
 
+/**
+ * 전설검 그림 한 장.
+ *
+ * 도감의 전설 구획은 단계마다 다른 그림을 쓰므로 자리가 서른 개다. `remember` 로는
+ * 자리마다 다시 읽으니 [SpriteCache] 에 맡긴다 — 128×128 열한 장이라 다 물고 있어도
+ * 0.7MB 다.
+ */
 @Composable
-fun rememberLegendBitmap(level: Int): ImageBitmap {
-    val resources = LocalContext.current.resources
-    val id = LegendArt.drawableFor(level)
-    return remember(id) {
-        val options = BitmapFactory.Options().apply { inScaled = false }
-        BitmapFactory.decodeResource(resources, id, options).asImageBitmap()
-    }
-}
+fun rememberLegendBitmap(level: Int): ImageBitmap =
+    rememberSheet(LegendArt.drawableFor(level))

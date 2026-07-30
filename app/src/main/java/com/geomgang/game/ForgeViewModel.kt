@@ -437,14 +437,17 @@ class ForgeViewModel(
     }
 
     /**
-     * 든 검을 도감에 바친다. 검은 사라지고 칸이 열린다.
+     * 보관함의 검을 도감에 바친다. 검은 사라지고 칸이 열린다.
      *
      * 지나가기만 하면 저절로 차던 것을 **누르는 행동**으로 바꿨다. 칸이 늘어날수록
      * 강화 확률이 오르므로, 아까운 검을 내려놓는 선택 자체가 성장이 된다.
+     *
+     * 바치는 자리는 **가방 하나뿐**이다. 강화 화면에도 버튼을 뒀더니 그 화면이
+     * 한 번의 강화에 집중하지 못했다. 든 검을 바치려면 먼저 보관함에 넣는다.
      */
-    fun offerToCodex() {
+    fun offerFromStorage(index: Int) {
         if (busy) return
-        val sword = game.sword ?: return
+        val sword = game.storage.getOrNull(index) ?: return
         if (!CodexOffer.canOffer(progress, sword)) return
 
         progress = CodexOffer.offer(progress, game.difficulty, sword)
@@ -453,29 +456,12 @@ class ForgeViewModel(
         // **계열 칸 안에서만이다.** +20 낫검의 "다음" 은 전설 칸인데, 전설 칸은
         // 전설검으로만 열려야 한다 - 안 그러면 전설검을 한 번도 못 만들어 본 사람의
         // 도감에 전설 칸이 차 있게 된다.
-        if (FamilyForge.of(sword).codexPair &&
-            WeaponCatalog.isFamilyArt(sword.level + 1)
-        ) {
+        if (FamilyForge.of(sword).codexPair && WeaponCatalog.isFamilyArt(sword.level + 1)) {
             val next = Sword(sword.family, sword.level + 1)
             if (CodexOffer.canOffer(progress, next)) {
                 progress = CodexOffer.offer(progress, game.difficulty, next)
             }
         }
-        progress = LegendForge.onOffered(progress, sword)
-        progress = Progress.refresh(progress)
-        game = game.copy(sword = null)
-        sound.purchase()
-        persist()
-        _ui.value = render()
-    }
-
-    /** 보관함의 검을 도감에 바친다. 손에 든 검을 내려놓지 않고도 칸을 채우는 길이다. */
-    fun offerFromStorage(index: Int) {
-        if (busy) return
-        val sword = game.storage.getOrNull(index) ?: return
-        if (!CodexOffer.canOffer(progress, sword)) return
-
-        progress = CodexOffer.offer(progress, game.difficulty, sword)
         progress = LegendForge.onOffered(progress, sword)
         progress = Progress.refresh(progress)
         game = game.copy(storage = game.storage.filterIndexed { i, _ -> i != index })
@@ -484,7 +470,8 @@ class ForgeViewModel(
         _ui.value = render()
     }
 
-    fun upgradeSmithy() {
+    /** 스킬을 한 칸 올린다. 도메인 이름은 [Smithy] 지만 화면에서는 "스킬"이다. */
+    fun upgradeSkill() {
         if (busy || !Smithy.canUpgrade(game, progress)) return
         val (nextGame, nextProgress) = Smithy.upgrade(game, progress)
         game = nextGame
@@ -1579,10 +1566,9 @@ class ForgeViewModel(
             } ?: 0,
             forgeBlockedReason = if (busy) null else forgeBlockedReason(),
             bonusSources = ForgeBonuses.sourcesOf(game, progress),
-            canOfferCodex = !busy && sword?.let { CodexOffer.canOffer(progress, it) } == true,
-            smithyLevel = progress.smithyLevel,
-            smithyPrice = Smithy.priceOf(game, progress.smithyLevel),
-            canUpgradeSmithy = !busy && Smithy.canUpgrade(game, progress),
+            skillLevel = progress.smithyLevel,
+            skillPrice = Smithy.priceOf(game, progress.smithyLevel),
+            canUpgradeSkill = !busy && Smithy.canUpgrade(game, progress),
             legendMissing = LegendForge.missingFor(game),
             canCraftLegend = !busy && LegendForge.canCraft(game, progress),
             canRecraftLegend = !busy && LegendForge.canRecraft(game, progress),

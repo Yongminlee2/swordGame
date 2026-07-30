@@ -228,27 +228,14 @@ fun SwordThumb(
 }
 
 /**
- * 스프라이트시트를 한 번만 읽어 재사용한다.
+ * 스프라이트시트.
  *
- * 검을 그리는 곳이 여러 군데라 매번 디코딩하면 낭비다.
- *
- * `inScaled = false` 가 중요하다. 켜 두면 안드로이드가 화면 밀도에 맞춰 비트맵을 늘려
- * 48×480 이 몇 배로 커지고, 그러면 16px 격자를 세는 [SwordSheet] 의 좌표가 전부 어긋난다.
+ * 읽기는 [SpriteCache] 가 프로세스 수준에서 한 번만 한다. 여기서 `remember` 를 쓰면
+ * **컴포저블 자리마다** 다시 읽게 되는데, 도감처럼 자리가 324개인 화면이 그걸 밟으면
+ * 스크롤이 그대로 멈춘다.
  */
 @Composable
-private fun rememberSheet2(): ImageBitmap {
-    val resources = LocalContext.current.resources
-    return remember {
-        val options = BitmapFactory.Options().apply { inScaled = false }
-        BitmapFactory.decodeResource(resources, R.drawable.sword_sheet2, options).asImageBitmap()
-    }
-}
+private fun rememberSheet2(): ImageBitmap = rememberSheet(R.drawable.sword_sheet2)
 
 @Composable
-private fun rememberSheet3(): ImageBitmap {
-    val resources = LocalContext.current.resources
-    return remember {
-        val options = BitmapFactory.Options().apply { inScaled = false }
-        BitmapFactory.decodeResource(resources, R.drawable.sword_sheet3, options).asImageBitmap()
-    }
-}
+private fun rememberSheet3(): ImageBitmap = rememberSheet(R.drawable.sword_sheet3)

@@ -1,6 +1,7 @@
 ﻿package com.geomgang.game.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -22,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.text.font.FontWeight
@@ -290,7 +293,14 @@ private fun SectionHeader(
  */
 @Composable
 private fun CodexCell(entry: CodexEntry, discovered: Boolean) {
-    Card(Modifier.fillMaxWidth()) {
+    // Card 가 아니라 Box 다. 그림자를 가진 칸이 324개면 그리는 값이 그만큼 붙는데,
+    // 칸을 가르는 데 필요한 것은 배경색 하나뿐이다.
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(6.dp))
+            .background(MaterialTheme.colorScheme.surface),
+    ) {
         Column(
             modifier = Modifier.padding(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,

@@ -30,7 +30,7 @@ data class BonusSource(
 /**
  * 강화 보너스를 모으는 **유일한 곳**.
  *
- * 출처가 넷(도감·대장간·고유검·든 검)인데 여러 군데서 더하면 왜 이 확률이 나왔는지
+ * 출처가 넷(도감·스킬·고유검·든 검)인데 여러 군데서 더하면 왜 이 확률이 나왔는지
  * 아무도 설명 못 하게 된다. 합산도 여기서만 하고, 화면이 출처별로 쪼개 보여 줄 수 있게
  * [sourcesOf] 로 낱개도 낸다.
  *
@@ -47,8 +47,9 @@ object ForgeBonuses {
             bonus = CodexOffer.bonusOf(progress),
         ),
         BonusSource(
-            label = "대장간",
-            detail = "Lv ${progress.smithyLevel}",
+            // 화면에서 읽는 말이 기준이다. 도메인 이름([Smithy])과 달라도 된다.
+            label = "스킬",
+            detail = "Lv ${progress.smithyLevel} / ${Smithy.MAX_LEVEL}",
             bonus = Smithy.bonusOf(progress),
         ),
         BonusSource(

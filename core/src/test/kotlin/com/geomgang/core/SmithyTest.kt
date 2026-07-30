@@ -58,10 +58,11 @@ class SmithyTest {
         assertEquals(state.gold - price, nextState.gold)
     }
 
+    /** 화면에서 읽는 이름은 "스킬" 이다. 도메인 이름([Smithy])과 달라도 된다. */
     @Test
-    fun `대장간이 강화 보너스 출처에 들어간다`() {
+    fun `스킬이 강화 보너스 출처에 들어간다`() {
         val leveled = ProgressState(smithyLevel = 3)
         assertTrue(ForgeBonuses.of(rich(), leveled).successRate > 0.0)
-        assertTrue(ForgeBonuses.sourcesOf(rich(), leveled).any { it.label == "대장간" })
+        assertTrue(ForgeBonuses.sourcesOf(rich(), leveled).any { it.label == "스킬" })
     }
 }

@@ -45,18 +45,24 @@ class FamilyUnlockTest {
         assertEquals(1, p.clearedZones.size)
     }
 
+    /**
+     * 예전 조건은 "고유검 1개 발견" 이었다. 고유검은 힌트만 있는 숨은 레시피인데
+     * 세검이 없으면 창검도 허검도 전설검도 없다 — 숨은 것 하나가 주 진행선을 잡고 있었다.
+     */
     @Test
-    fun `고유검을 발견하면 세검이 열린다`() {
+    fun `조합을 몇 번 하면 세검이 열린다`() {
         assertFalse(WeaponFamily.RAPIER in Progress.unlockedFamilies(fresh))
-        val found = Progress.onUniqueFound(fresh, "trinity")
-        assertTrue(WeaponFamily.RAPIER in Progress.unlockedFamilies(found))
+        val fused = ProgressState(
+            stats = Stats(fusions = Progress.RAPIER_UNLOCK_FUSIONS.toLong()),
+        )
+        assertTrue(WeaponFamily.RAPIER in Progress.unlockedFamilies(fused))
     }
 
     @Test
     fun `조합 전용 계열은 어떤 진행도에서도 상점에 나오지 않는다`() {
         val maxed = ProgressState(
             achievements = Achievement.entries.toSet(),
-            stats = Stats(bestLevelEver = 99),
+            stats = Stats(bestLevelEver = 99, fusions = 999),
             uniqueFound = UniqueSwords.RECIPES.map { it.id }.toSet(),
             clearedZones = Zone.entries.map { it.id }.toSet(),
         )
