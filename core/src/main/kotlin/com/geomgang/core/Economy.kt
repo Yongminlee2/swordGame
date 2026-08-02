@@ -78,25 +78,43 @@ object Economy {
      * [RateTable.MAX_FINITE_LEVEL] 까지는 예전 곡선 그대로고, 그 위는 완만해진다.
      */
     /**
-     * +11 부터의 판매가 증가율.
+     * +11~+14 의 판매가 증가율.
      *
      * v2.3에서 1.80 → 1.50. +10 위에서 1.80 을 끌고 가면 +20 한 자루가 1,400만이라
      * 후반 골드가 뜻을 잃는다. +10 아래는 그대로다 — 거긴 파산 나선을 막으려고
      * 시뮬레이션으로 맞춘 구간이라 손대지 않는다.
      */
-    private const val PRICE_GROWTH_HIGH = 1.50
+    private const val PRICE_GROWTH_MID = 1.50
 
-    /** 판매가 곡선이 완만해지기 시작하는 단계. */
-    private const val HIGH_BAND_START = 10
+    /**
+     * +15~+20 의 판매가 증가율.
+     *
+     * 여기는 **비용 증가율(1.45)보다 낮다.** 의도한 것이다 — 이 구간은 돈을 버는
+     * 구간이 아니라 조합 재료(+20)를 만드는 구간이고, 벌이는 +14 아래의 회전이 맡는다.
+     * 1.50 을 끝까지 끌고 가면 +20 한 자루가 226만이라 그 한 자루로 시즌1이 끝난다.
+     *
+     * 한계 증가율이 뒤집혔으므로 **경제가 도는지는 시뮬레이션이 지킨다**
+     * (`BalanceSimulationTest` 의 파산율 0%). 이 값을 만지면 반드시 그것부터 볼 것.
+     */
+    private const val PRICE_GROWTH_TOP = 1.20
+
+    /** 1.80 곡선이 끝나는 단계. 여기까지가 파산 나선 방지 구간이다. */
+    private const val LOW_BAND_END = 10
+
+    /** 1.50 곡선이 끝나는 단계. 이 위는 완만해진다. */
+    private const val MID_BAND_END = 14
 
     fun sellPrice(level: Int): Long {
         require(level >= 0) { "level must be >= 0, was $level" }
-        val low = level.coerceAtMost(HIGH_BAND_START)
-        val high = (level.coerceAtMost(RateTable.MAX_FINITE_LEVEL) - low).coerceAtLeast(0)
+        val low = level.coerceAtMost(LOW_BAND_END)
+        val mid = (level.coerceAtMost(MID_BAND_END) - LOW_BAND_END).coerceAtLeast(0)
+        val top = (level.coerceAtMost(RateTable.MAX_FINITE_LEVEL) - MID_BAND_END)
+            .coerceAtLeast(0)
         val endless = (level - RateTable.MAX_FINITE_LEVEL).coerceAtLeast(0)
         val value = PRICE_BASE *
             PRICE_GROWTH.pow(low.toDouble()) *
-            PRICE_GROWTH_HIGH.pow(high.toDouble()) *
+            PRICE_GROWTH_MID.pow(mid.toDouble()) *
+            PRICE_GROWTH_TOP.pow(top.toDouble()) *
             ENDLESS_PRICE_GROWTH.pow(endless.toDouble())
         return value.roundToLong()
     }

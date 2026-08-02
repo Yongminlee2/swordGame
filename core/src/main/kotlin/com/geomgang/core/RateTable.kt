@@ -105,13 +105,14 @@ object RateTable {
     /** 실패했을 때 파괴로 이어질 확률. 유지·하락 구간이면 0.0. */
     fun destroyChance(targetLevel: Int): Double {
         require(targetLevel >= 1) { "targetLevel must be >= 1, was $targetLevel" }
-        // v2.3에서 유한 구간을 낮췄다(0.40/0.60/0.80 → 0.25/0.40/0.55).
+        // v2.3에서 유한 구간을 두 번 낮췄다(0.40/0.60/0.80 → 0.25/0.40/0.55 → 다시 절반).
         // 시즌1이 길어진 것은 조합(계열마다 +20)이 맡는다 - 파괴까지 잦으면 길이가 아니라 고문이 된다.
+        // 계열 넷을 전부 +20까지 올려야 하는 지금, 파괴 한 번은 한 계열을 통째로 되돌린다.
         return when {
             targetLevel <= DROP_BAND_END -> 0.00
-            targetLevel <= 15 -> 0.25
-            targetLevel <= 18 -> 0.40
-            targetLevel <= MAX_FINITE_LEVEL -> 0.55
+            targetLevel <= 15 -> 0.125
+            targetLevel <= 18 -> 0.20
+            targetLevel <= MAX_FINITE_LEVEL -> 0.275
             else -> 1.00
         }
     }

@@ -52,7 +52,7 @@ data class ForgeOdds(
         /**
          * @param targetLevel 이번 시도로 **도달하려는** 단계 (현재 단계 + 1)
          * @param items 지금 켜 둔 아이템. 축복서는 성공률을 올리고,
-         *   행운부적은 실패의 결과 자체를 없앤다.
+         *   행운부적은 **하락만** 막는다 - 파괴 확률은 그대로다.
          * @param temperFails 이 단계에 쌓인 담금질. 성공률을 올린다.
          * @param bonus 쌓아 온 몫과 계열 특성을 더한 성공률 가산([ForgeBonuses]).
          * @param destroyGuard 파괴가 정해진 뒤 한 번 더 막을 확률. 막히면 단계가 그대로다.
@@ -82,17 +82,17 @@ data class ForgeOdds(
             )
             val fail = 1.0 - success
 
-            // 행운부적은 실패해도 단계를 지키므로 실패분이 전부 유지가 된다.
-            if (items.luckCharm) {
-                return ForgeOdds(success = success, stay = fail, drop = 0.0, destroy = 0.0)
-            }
-
             return when (RateTable.failureBand(targetLevel)) {
                 FailureBand.STAY ->
                     ForgeOdds(success, stay = fail, drop = 0.0, destroy = 0.0)
 
                 FailureBand.DROP ->
-                    ForgeOdds(success, stay = 0.0, drop = fail, destroy = 0.0)
+                    // 부적은 하락을 막는다. 이 구간의 실패는 전부 유지가 된다.
+                    if (items.luckCharm) {
+                        ForgeOdds(success, stay = fail, drop = 0.0, destroy = 0.0)
+                    } else {
+                        ForgeOdds(success, stay = 0.0, drop = fail, destroy = 0.0)
+                    }
 
                 FailureBand.DESTROY_OR_DROP -> {
                     val destroyShare = RateTable.destroyChance(targetLevel)
@@ -100,11 +100,16 @@ data class ForgeOdds(
                     // 파괴가 정해져도 방지 특성이 한 번 더 막는다. 막히면 단계가 그대로다.
                     val guarded = doomed * destroyGuard.coerceIn(0.0, 1.0)
                     val lost = doomed - guarded
+                    // 파괴를 면한 실패. 부적은 **여기만** 붙든다 —
+                    // 파괴 확률은 부적을 켜도 한 치도 줄지 않는다(v2.3).
+                    val survived = fail * (1.0 - destroyShare)
                     ForgeOdds(
                         success = success,
-                        stay = guarded,
+                        stay = guarded + if (items.luckCharm) survived else 0.0,
                         // 전설검은 부서지지 않고 +21 로 돌아간다 - 화면도 그렇게 말해야 한다.
-                        drop = fail * (1.0 - destroyShare) + if (legend) lost else 0.0,
+                        // 그 하락은 파괴 판정에서 나온 것이라 부적으로도 못 막는다.
+                        drop = (if (items.luckCharm) 0.0 else survived) +
+                            if (legend) lost else 0.0,
                         destroy = if (legend) 0.0 else lost,
                     )
                 }

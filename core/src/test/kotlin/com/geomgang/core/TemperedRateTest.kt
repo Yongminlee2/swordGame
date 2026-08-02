@@ -61,16 +61,22 @@ class TemperedRateTest {
         assertEquals(1.0, warm.success + warm.stay + warm.drop + warm.destroy, 1e-9)
     }
 
+    /**
+     * 무한 구간에서 부적은 아무것도 하지 못한다.
+     *
+     * 여기는 실패가 곧 파괴 판정이고([RateTable.destroyChance] 가 1.00),
+     * 부적은 **파괴를 면한 실패만** 붙든다(v2.3). 붙들 자리가 없다.
+     */
     @Test
-    fun `부적을 켜면 실패분이 전부 유지로 간다`() {
+    fun `무한 구간에서는 부적을 켜도 실패가 곧 파괴다`() {
         val odds = ForgeOdds.of(
             Difficulty.ENDLESS,
             45,
             UsedItems(luckCharm = true),
             temperFails = 30,
         )
-        assertEquals(0.0, odds.destroy, 1e-9)
+        assertEquals(0.0, odds.stay, 1e-9)
         assertEquals(0.0, odds.drop, 1e-9)
-        assertEquals(1.0 - odds.success, odds.stay, 1e-9)
+        assertEquals(1.0 - odds.success, odds.destroy, 1e-9)
     }
 }

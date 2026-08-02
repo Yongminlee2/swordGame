@@ -33,18 +33,27 @@ class EconomyTest {
 
     @Test
     fun `판매가가 스펙 표와 일치한다`() {
-        // +10 까지 round(110 * 1.8^level), 그 위는 1.50 곡선(v2.3)
+        // +10 까지 round(110 * 1.8^level), +11~14 는 1.50, +15~20 은 1.20 (v2.3)
         assertEquals(110L, Economy.sellPrice(0))
         assertEquals(198L, Economy.sellPrice(1))
         assertEquals(2079L, Economy.sellPrice(5))
         assertEquals(39275L, Economy.sellPrice(10))
-        assertEquals(298246L, Economy.sellPrice(15))
-        assertEquals(2264802L, Economy.sellPrice(20))
+        assertEquals(198830L, Economy.sellPrice(14))
+        assertEquals(238596L, Economy.sellPrice(15))
+        assertEquals(593704L, Economy.sellPrice(20))
     }
 
+    /**
+     * 벌이가 나는 구간은 +14 까지다.
+     *
+     * 여기서 한 단계를 올리면 판매가가 비용보다 빠르게 늘어 자본이 쌓인다.
+     * **+15 위는 일부러 뒤집혀 있다** — 조합 재료(+20)를 만드는 구간이지 돈을 버는
+     * 구간이 아니다. 그 구간까지 이 부등식을 요구하면 +20 한 자루로 시즌1이 끝난다.
+     * 경제가 실제로 도는지는 [com.geomgang.core.sim.BalanceSimulation] 의 파산율이 지킨다.
+     */
     @Test
-    fun `판매가는 비용보다 빠르게 증가한다`() {
-        for (level in 1..20) {
+    fun `벌이 구간에서는 판매가가 비용보다 빠르게 증가한다`() {
+        for (level in 1..14) {
             val priceRatio = Economy.sellPrice(level).toDouble() / Economy.sellPrice(level - 1)
             val costRatio = Economy.upgradeCost(level).toDouble() / Economy.upgradeCost(level - 1)
             assertTrue("level=$level price=$priceRatio cost=$costRatio", priceRatio > costRatio)

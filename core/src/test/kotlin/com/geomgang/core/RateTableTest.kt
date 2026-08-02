@@ -92,12 +92,12 @@ class RateTableTest {
     @Test
     fun `파괴 확률이 스펙 표와 일치한다`() {
         assertEquals(0.00, RateTable.destroyChance(12), eps)
-        assertEquals(0.25, RateTable.destroyChance(13), eps)
-        assertEquals(0.25, RateTable.destroyChance(15), eps)
-        assertEquals(0.40, RateTable.destroyChance(16), eps)
-        assertEquals(0.40, RateTable.destroyChance(18), eps)
-        assertEquals(0.55, RateTable.destroyChance(19), eps)
-        assertEquals(0.55, RateTable.destroyChance(20), eps)
+        assertEquals(0.125, RateTable.destroyChance(13), eps)
+        assertEquals(0.125, RateTable.destroyChance(15), eps)
+        assertEquals(0.20, RateTable.destroyChance(16), eps)
+        assertEquals(0.20, RateTable.destroyChance(18), eps)
+        assertEquals(0.275, RateTable.destroyChance(19), eps)
+        assertEquals(0.275, RateTable.destroyChance(20), eps)
     }
 
     @Test

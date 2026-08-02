@@ -34,16 +34,20 @@ class BalanceSimulationTest {
      *
      * 시즌1은 +20 을 여섯 번(기본 4계열 + 마검 + 성검) 넘는 여정이다(v2.3).
      * 시뮬레이터는 보너스 없는 맨손 플레이어의 한 세션(2,000회)만 본다 —
-     * 실제 플레이어는 스킬·도감·고유검 보너스를 영구히 쌓아 회차마다 빨라진다.
+     * 실제 플레이어는 스킬·도감·고유검 보너스를 영구히 쌓아 회차마다 빨라지고,
+     * 세션도 한 번으로 끝나지 않는다.
      *
      * 그래서 지키는 선은 둘이다. **길이 있다**(도달률 > 0) 와 **거저가 아니다**
-     * (도달률 < 15%). 위쪽 선이 무너지면 시즌1이 다시 짧아진 것이다.
+     * (도달률 < 5%). 위쪽 선이 무너지면 시즌1이 다시 짧아진 것이고,
+     * 아래쪽 선이 무너지면 한 세션으로는 상한이 아예 안 보이는 것이다.
+     *
+     * **막다른 길이 아니라는 증거는 파산율 0%** 다 — 「경제가 돌아가서…」 테스트다.
      */
     @Test
     fun `상한에 닿되 거저 닿지는 않는다`() {
         val r = report(Difficulty.NORMAL)
-        assertTrue("상한 도달률=${r.capRate}", r.capRate > 0.005)
-        assertTrue("상한 도달률=${r.capRate}", r.capRate < 0.15)
+        assertTrue("상한 도달률=${r.capRate}", r.capRate > 0.0005)
+        assertTrue("상한 도달률=${r.capRate}", r.capRate < 0.05)
         assertTrue("평균 시도 수=${r.averageAttempts}", r.averageAttempts > 500)
     }
 
@@ -101,7 +105,7 @@ class BalanceSimulationTest {
     fun `쉬움 모드는 상한을 볼 수 있는 길을 열어 준다`() {
         // +20 도달과 흑룡참 도감이 아무에게도 닿지 않으면 죽은 콘텐츠가 된다.
         val r = report(Difficulty.EASY)
-        assertTrue("쉬움 상한 도달률=${r.capRate}", r.capRate > 0.05)
+        assertTrue("쉬움 상한 도달률=${r.capRate}", r.capRate > 0.02)
     }
 
     companion object {

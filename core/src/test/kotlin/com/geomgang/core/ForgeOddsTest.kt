@@ -69,12 +69,29 @@ class ForgeOddsTest {
     }
 
     @Test
-    fun `행운부적을 켜면 하락도 파괴도 사라진다`() {
+    fun `행운부적을 켜면 하락만 사라진다`() {
         // 토글이 무엇을 사는 건지 눈으로 보여야 누를 이유가 생긴다.
         val o = odds(18, UsedItems(luckCharm = true))
         assertEquals(0.0, o.drop, 1e-9)
-        assertEquals(0.0, o.destroy, 1e-9)
-        assertEquals(1.0 - o.success, o.stay, 1e-9)
+        assertEquals(1.0 - o.success - o.destroy, o.stay, 1e-9)
+    }
+
+    /**
+     * **부적을 켜도 파괴 확률은 한 치도 줄지 않는다**(v2.3).
+     *
+     * 예전에는 부적이 실패의 결과를 통째로 없애 화면의 파괴율이 0%로 바뀌었다.
+     * 지금은 하락만 막으므로 그 표시는 거짓말이다 — 파괴를 막는 것은 방지권이다.
+     */
+    @Test
+    fun `부적은 파괴 확률 표시를 건드리지 않는다`() {
+        for (level in RateTable.DROP_BAND_END + 1..RateTable.MAX_FINITE_LEVEL) {
+            assertEquals(
+                "+$level",
+                odds(level).destroy,
+                odds(level, UsedItems(luckCharm = true)).destroy,
+                1e-9,
+            )
+        }
     }
 
     @Test
