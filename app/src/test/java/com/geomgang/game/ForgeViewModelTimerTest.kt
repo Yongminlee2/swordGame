@@ -59,7 +59,9 @@ class ForgeViewModelTimerTest {
                 gold = 1_000_000,
                 sword = Sword(WeaponFamily.STRAIGHT, 19),
                 inventory = Inventory(preventTickets = tickets),
-                bestLevel = 19,
+                // 강화석 요구는 용검 뒤에 산다(Unlocks). 이 클래스는 제한 시간 창이 관심사라
+                // 깊은 국면으로 두고 조각 줍기를 잰다.
+                bestLevel = com.geomgang.core.LegendForge.LEVEL,
                 // +20 목표는 재료 검 2자루와 강화석이 필수다(ForgeCost).
                 // 이 클래스의 관심사는 제한 시간 창이므로 넉넉히 채워 둔다.
                 storage = List(4) { Sword(WeaponFamily.STRAIGHT, 1) },

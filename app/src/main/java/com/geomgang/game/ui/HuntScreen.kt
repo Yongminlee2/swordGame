@@ -87,7 +87,7 @@ fun HuntScreen(
     if (hunt.bossFailed) {
         BossFailedDialog(hunt, onRetryBoss, onGiveUpBoss)
     } else if (hunt.zoneCleared) {
-        BossWonDialog(hunt, onStayInZone, onNextZone)
+        BossWonDialog(hunt, onStayInZone, onNextZone, onBack)
     }
 
     // 강화 화면과 같은 이유로 스크롤된다 - 이벤트 배너·금덩이 버튼·보스 도전이
@@ -631,6 +631,7 @@ private fun BossWonDialog(
     hunt: HuntUiState,
     onStay: () -> Unit,
     onNextZone: () -> Unit,
+    onGoHome: () -> Unit,
 ) {
     val reward = hunt.bossReward
     AlertDialog(
@@ -655,11 +656,14 @@ private fun BossWonDialog(
                 )
             }
         },
+        // 셋을 가로로 늘어놓으면 글자가 접힌다. 세로로 쌓아 각 줄을 온전히 읽게 한다.
+        // 보스를 잡은 뒤가 강화하러 돌아가기 가장 좋은 때다 — 그 문을 여기 둔다.
         confirmButton = {
-            TextButton(onClick = onNextZone) { Text("다음 구역으로") }
-        },
-        dismissButton = {
-            TextButton(onClick = onStay) { Text("이 구역 더 돌기") }
+            Column(horizontalAlignment = Alignment.End) {
+                TextButton(onClick = onNextZone) { Text("다음 구역으로") }
+                TextButton(onClick = onStay) { Text("이 구역 더 돌기") }
+                TextButton(onClick = onGoHome) { Text("🔨 홈으로 (강화하러)") }
+            }
         },
     )
 }

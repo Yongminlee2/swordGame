@@ -33,13 +33,13 @@ class EconomyTest {
 
     @Test
     fun `판매가가 스펙 표와 일치한다`() {
-        // round(60 * 1.8^level)
-        assertEquals(60L, Economy.sellPrice(0))
-        assertEquals(108L, Economy.sellPrice(1))
-        assertEquals(1134L, Economy.sellPrice(5))
-        assertEquals(21423L, Economy.sellPrice(10))
-        assertEquals(404798L, Economy.sellPrice(15))
-        assertEquals(7648942L, Economy.sellPrice(20))
+        // round(110 * 1.8^level)
+        assertEquals(110L, Economy.sellPrice(0))
+        assertEquals(198L, Economy.sellPrice(1))
+        assertEquals(2079L, Economy.sellPrice(5))
+        assertEquals(39275L, Economy.sellPrice(10))
+        assertEquals(742130L, Economy.sellPrice(15))
+        assertEquals(14023060L, Economy.sellPrice(20))
     }
 
     @Test
@@ -88,7 +88,7 @@ class EconomyTest {
         assertEquals(800L, Economy.priceOf(Item.PREVENT_TICKET))
         assertEquals(1200L, Economy.priceOf(Item.BLESSING_SCROLL))
         assertEquals(2000L, Economy.priceOf(Item.LUCK_CHARM))
-        assertEquals(100L, Economy.BASE_SWORD_PRICE)
+        assertEquals(160L, Economy.BASE_SWORD_PRICE)
     }
 
     @Test
@@ -107,7 +107,7 @@ class EconomyTest {
     @Test
     fun `기본 검 구매는 지정한 계열의 0단계 검을 준다`() {
         val after = Economy.buySword(state(gold = 300), WeaponFamily.CURVED)
-        assertEquals(200L, after.gold)
+        assertEquals(300L - Economy.BASE_SWORD_PRICE, after.gold)
         assertEquals(Sword(WeaponFamily.CURVED, 0), after.sword)
     }
 
@@ -149,7 +149,7 @@ class EconomyTest {
     fun `검 판매는 골드를 주고 검을 없앤다`() {
         val before = state(gold = 0, sword = Sword(WeaponFamily.STRAIGHT, 10))
         val after = Economy.sellSword(before)
-        assertEquals(21423L, after.gold)
+        assertEquals(39275L, after.gold)
         assertNull(after.sword)
     }
 
@@ -160,8 +160,10 @@ class EconomyTest {
 
     @Test
     fun `파산 판정은 세 조건이 모두 성립할 때만 참이다`() {
-        // 검 없음 + 골드 100 미만 + 조각 120 미만
-        assertTrue(Economy.needsBailout(state(gold = 99, shards = 119)))
+        // 검 없음 + 검 살 골드 없음 + 조각 120 미만
+        assertTrue(
+            Economy.needsBailout(state(gold = Economy.BASE_SWORD_PRICE - 1, shards = 119)),
+        )
         // 검이 있으면 아니다
         assertFalse(
             Economy.needsBailout(
@@ -169,7 +171,7 @@ class EconomyTest {
             ),
         )
         // 검을 살 골드가 있으면 아니다
-        assertFalse(Economy.needsBailout(state(gold = 100, shards = 0)))
+        assertFalse(Economy.needsBailout(state(gold = Economy.BASE_SWORD_PRICE, shards = 0)))
         // +5 검을 바꿀 조각이 있으면 아니다
         assertFalse(Economy.needsBailout(state(gold = 0, shards = 120)))
     }
@@ -194,10 +196,19 @@ class EconomyTest {
         assertEquals(rich, Economy.applyBailoutIfNeeded(rich))
     }
 
+    /**
+     * **사서 되파는 것으로 골드가 늘어서는 안 된다.**
+     *
+     * +0 검을 [Economy.BASE_SWORD_PRICE] 에 사서 [Economy.sellPrice] 로 되파는 순환이
+     * 이득이면 강화할 이유가 통째로 사라진다. 파산 구제가 밑을 받쳐 주므로 무한 순환이 된다.
+     * v2.2에서 판매가 바닥을 올렸다가 실제로 이 선을 넘었다.
+     */
     @Test
-    fun `구제 반복으로 골드를 불릴 수 없다`() {
-        // 사고(100) 되파는(60) 순환은 한 바퀴에 40 손해이고 구제 상한이 300이므로
-        // 몇 바퀴를 돌려도 골드가 300을 넘지 못한다.
+    fun `사서 되파는 것으로 골드가 늘지 않는다`() {
+        assertTrue(
+            "구매가=${Economy.BASE_SWORD_PRICE} 판매가=${Economy.sellPrice(0)}",
+            Economy.BASE_SWORD_PRICE > Economy.sellPrice(0),
+        )
         var s = state(gold = 0)
         repeat(50) {
             s = Economy.applyBailoutIfNeeded(s)

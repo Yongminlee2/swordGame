@@ -137,6 +137,14 @@ data class ForgeUiState(
     val canRecraftLegend: Boolean = false,
     /** 전설검을 한 번이라도 도감에 바쳤는지. 켜지면 조각으로 다시 벼릴 수 있다. */
     val legendUnlocked: Boolean = false,
+    /**
+     * 용검을 손에 쥔 뒤의 「깊은 국면」인지([com.geomgang.core.Unlocks]).
+     *
+     * 꺼져 있으면 조각·강화석이 화면에 없고 사냥터도 잠긴다. 초반은 골드 하나로
+     * **강화 → 판매 → 강화** 만 한다.
+     */
+    val deepUnlocked: Boolean = false,
+    val huntOpen: Boolean = false,
 ) {
     /** 방지권이든 줍기든 응답을 기다리는 중인지. */
     val awaitingDestroyChoice: Boolean get() = destroyPhase != DestroyPhase.None

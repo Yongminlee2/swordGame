@@ -242,6 +242,10 @@ fun ShopScreen(
         // 예전에는 "조합소"라는 별도 화면이었다. 그런데 하는 일이 상점과 똑같다 —
         // 화폐를 내고 물건을 받는다. 화폐가 골드가 아니라 조각일 뿐이라 여기로 옮겼다.
         // 덕분에 조합소는 이름 그대로 검을 조합하는 곳만 남았다.
+        //
+        // 용검 이전에는 통째로 감춘다. 그때는 조각이 아예 나오지 않으므로
+        // ([com.geomgang.core.Unlocks]) 살 수 없는 목록만 늘어놓게 된다.
+        if (!state.deepUnlocked) return@Column
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 Text("조각 교환", fontWeight = FontWeight.Bold)

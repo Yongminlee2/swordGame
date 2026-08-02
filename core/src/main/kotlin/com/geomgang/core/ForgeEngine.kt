@@ -235,9 +235,20 @@ object ForgeEngine {
         return maxOf(1, raw)
     }
 
-    /** 파편을 주워 조각을 얻고 파괴를 마무리한다. */
+    /**
+     * 파편을 주워 파괴를 마무리한다.
+     *
+     * 얻는 것은 조각인데, **용검 이전에는 골드로 준다**([Unlocks.shardsUsed]).
+     * 초반에 쓸 데가 없는 조각을 쥐여 주면 줍기 자체가 빈 동작이 된다.
+     */
     fun applySalvage(state: GameState, rng: Random): GameState {
         val pending = checkNotNull(state.pendingDestroy) { "no pending destroy to salvage" }
+        if (!Unlocks.shardsUsed(state)) {
+            return state.copy(
+                gold = state.gold + Unlocks.salvageGold(pending.level),
+                pendingDestroy = null,
+            )
+        }
         return state.copy(
             shards = state.shards + salvageAmount(pending.level, rng),
             pendingDestroy = null,

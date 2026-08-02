@@ -420,22 +420,32 @@ fun ForgeScreen(
             // 스킬과 특수강화는 「단련」 화면으로 옮겼다([TrainingScreen]).
             // 성장 장치를 여기 늘어놓으면 정작 강화 버튼이 아래로 밀린다.
             Spacer(Modifier.height(10.dp))
-            // 사냥이 강화 비용의 출처다. 강화 버튼 바로 아래에 둬서 왕복이 짧게 한다.
-            Button(
-                onClick = onOpenHunt,
-                enabled = !state.busy && state.sword != null,
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    contentColor = Color(0xFF10222E),
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-            ) {
+            // 사냥터는 **용검을 손에 쥔 뒤에** 열린다([com.geomgang.core.Unlocks]).
+            // 초반에 사냥이 골드를 벌어다 주면 검을 팔 이유가 사라지고,
+            // 그러면 이 게임의 심장인 "강화해서 팔고 또 강화한다" 가 통째로 묻힌다.
+            if (state.huntOpen) {
+                Button(
+                    onClick = onOpenHunt,
+                    enabled = !state.busy && state.sword != null,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = Color(0xFF10222E),
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                ) {
+                    Text(
+                        text = "⚔ 사냥터  %,d".format(state.attackPower),
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            } else {
                 Text(
-                    text = "⚔ 사냥터  %,d".format(state.attackPower),
-                    fontWeight = FontWeight.Bold,
+                    text = "🔒 사냥터는 용검을 벼린 뒤에 열린다",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f),
                 )
             }
             Spacer(Modifier.height(10.dp))

@@ -9,6 +9,12 @@ import org.junit.Test
 
 class ForgeCostTest {
 
+    /**
+     * 강화석을 실제로 먹는 판.
+     *
+     * `bestLevel` 을 용검 단계로 둔다 — 그 아래는 강화석을 아예 묻지 않는
+     * 초반 국면이라([Unlocks.stonesUsed]) 요구 표를 잴 수 없다.
+     */
     private fun state(
         level: Int,
         gold: Long = 1_000_000_000,
@@ -20,6 +26,7 @@ class ForgeCostTest {
         sword = Sword(WeaponFamily.STRAIGHT, level),
         storage = List(storage) { Sword(WeaponFamily.STRAIGHT, 1) },
         forgeStones = stones,
+        bestLevel = LegendForge.LEVEL,
     )
 
     @Test

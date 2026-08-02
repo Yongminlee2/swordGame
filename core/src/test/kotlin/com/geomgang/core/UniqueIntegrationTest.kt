@@ -14,7 +14,7 @@ class UniqueIntegrationTest {
     private fun stateWith(storage: List<Sword>, essences: Map<String, Int> = emptyMap()) =
         GameState(
             difficulty = Difficulty.ENDLESS,
-            gold = 1_000_000,
+            gold = 1_000_000_000,
             storage = storage,
             essences = essences,
         )
@@ -106,7 +106,7 @@ class UniqueIntegrationTest {
         val roll = base + 0.01 // 기본으로는 실패, 보정으로는 성공
         val origin = GameState(
             difficulty = Difficulty.ENDLESS,
-            gold = 1_000_000,
+            gold = 1_000_000_000,
             sword = Sword(WeaponFamily.STRAIGHT, level, uniqueId = "origin"),
             forgeStones = 50,
         )

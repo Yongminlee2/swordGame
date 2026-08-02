@@ -32,12 +32,14 @@ class ForgeEngineTest {
 
     // --- 재료 요구 (v1.4) ---
 
+    /** 강화석을 실제로 먹는 판. `bestLevel` 이 용검 단계여야 요구가 산다([Unlocks]). */
     private fun materialState(level: Int, stones: Int, storage: Int) = GameState(
         difficulty = Difficulty.ENDLESS,
         gold = 1_000_000_000,
         sword = Sword(WeaponFamily.STRAIGHT, level),
         storage = List(storage) { Sword(WeaponFamily.STRAIGHT, 1) },
         forgeStones = stones,
+        bestLevel = LegendForge.LEVEL,
     )
 
     @Test

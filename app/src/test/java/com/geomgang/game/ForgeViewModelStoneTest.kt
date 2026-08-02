@@ -58,6 +58,8 @@ class ForgeViewModelStoneTest {
                 sword = Sword(WeaponFamily.STRAIGHT, level),
                 storage = List(storage) { Sword(WeaponFamily.STRAIGHT, 1) },
                 forgeStones = stones,
+                // 강화석은 용검 뒤의 화폐다(Unlocks) - 이 클래스의 관심사가 그 요구다.
+                bestLevel = com.geomgang.core.LegendForge.LEVEL,
             ),
         )
         return ForgeViewModel(store, Difficulty.ENDLESS, rng)

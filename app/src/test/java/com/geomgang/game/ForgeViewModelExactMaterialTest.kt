@@ -70,7 +70,8 @@ class ForgeViewModelExactMaterialTest {
                 gold = req.gold,
                 sword = Sword(WeaponFamily.STRAIGHT, level),
                 forgeStones = req.stones,
-                bestLevel = level,
+                // 강화석 요구를 재는 클래스다. 용검 뒤여야 요구가 산다(Unlocks).
+                bestLevel = maxOf(level, com.geomgang.core.LegendForge.LEVEL),
             ),
         )
         return ForgeViewModel(store, Difficulty.ENDLESS, rng)

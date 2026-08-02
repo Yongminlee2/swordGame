@@ -12,8 +12,15 @@ import kotlin.math.roundToLong
  */
 object Economy {
 
-    /** 상점에서 파는 +0 검의 가격. */
-    const val BASE_SWORD_PRICE: Long = 100
+    /**
+     * 상점에서 파는 +0 검의 가격.
+     *
+     * **+0 판매가([PRICE_BASE])보다 반드시 비싸야 한다.** 싸지면 사서 되파는 것만으로
+     * 골드가 불어나 강화할 이유가 사라진다. v2.2에서 판매가 바닥을 110 으로 올리면서
+     * 100 이던 이 값이 그 아래로 내려갔고, 파산 구제까지 겹쳐 무한 순환이 생겼다.
+     * `EconomyTest` 의 「사서 되파는 것으로 골드가 늘지 않는다」가 이 선을 지킨다.
+     */
+    const val BASE_SWORD_PRICE: Long = 160
 
     const val PREVENT_TICKET_PRICE: Long = 800
     const val BLESSING_SCROLL_PRICE: Long = 1_200
@@ -25,7 +32,17 @@ object Economy {
     private const val COST_BASE = 30.0
     private const val COST_GROWTH = 1.45
 
-    private const val PRICE_BASE = 60.0
+    /**
+     * 판매가의 바닥값.
+     *
+     * v2.2에서 60 → 110. 용검 이전에는 **검을 파는 것이 유일한 수입**이 됐다
+     * ([Unlocks]) — 사냥터가 잠기고 강화석도 안 먹으니 골드 한 축으로만 돈다.
+     *
+     * 증가율(1.80)이 아니라 바닥값을 올렸다. 증가율은 +20 에서 12.7배로 부풀어
+     * 후반 골드가 뜻을 잃는 진짜 출처가 된다. 바닥값은 곡선 모양을 그대로 두고
+     * 한 바퀴의 벌이만 키운다.
+     */
+    private const val PRICE_BASE = 110.0
 
     /**
      * 판매가 증가율.

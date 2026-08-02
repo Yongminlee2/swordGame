@@ -4,10 +4,12 @@ import android.graphics.BitmapFactory
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.keyframes
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -97,18 +99,13 @@ fun MonsterSprite(
         else -> null
     }
 
-    Canvas(modifier.size(side)) {
-        val dst = IntSize(size.width.toInt(), size.height.toInt())
-        val dstOffset = IntOffset(shake.value.toInt(), 0)
-        drawImage(
-            image = sheet,
-            srcOffset = src,
-            srcSize = IntSize(MonsterSheet.CELL, MonsterSheet.CELL),
-            dstOffset = dstOffset,
-            dstSize = dst,
-            filterQuality = FilterQuality.None,
-        )
-        if (tint != null) {
+    // 자리는 [base] 로 **고정**하고 그림만 [side] 로 줄인다.
+    // 예전에는 Canvas 자체가 줄어서 몬스터를 때릴수록 위쪽 상자가 함께 작아졌고,
+    // 손가락을 두던 자리가 판마다 움직였다. 작아지는 것은 그림이지 과녁이 아니다.
+    Box(modifier.size(base), contentAlignment = Alignment.Center) {
+        Canvas(Modifier.size(side)) {
+            val dst = IntSize(size.width.toInt(), size.height.toInt())
+            val dstOffset = IntOffset(shake.value.toInt(), 0)
             drawImage(
                 image = sheet,
                 srcOffset = src,
@@ -116,8 +113,18 @@ fun MonsterSprite(
                 dstOffset = dstOffset,
                 dstSize = dst,
                 filterQuality = FilterQuality.None,
-                colorFilter = ColorFilter.tint(tint),
             )
+            if (tint != null) {
+                drawImage(
+                    image = sheet,
+                    srcOffset = src,
+                    srcSize = IntSize(MonsterSheet.CELL, MonsterSheet.CELL),
+                    dstOffset = dstOffset,
+                    dstSize = dst,
+                    filterQuality = FilterQuality.None,
+                    colorFilter = ColorFilter.tint(tint),
+                )
+            }
         }
     }
 }

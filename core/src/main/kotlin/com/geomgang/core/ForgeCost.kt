@@ -80,10 +80,15 @@ object ForgeCost {
      *
      * 계열 특성의 강화석 감면([FamilyForge.stoneRelief])이 여기 들어 있다. 판정은
      * 감면을 쓰는데 화면은 안 쓰면, 창검이 낼 수 있는데도 "모자라다"고 뜬다.
+     *
+     * **용검 이전에는 강화석을 묻지 않는다**([Unlocks.stonesUsed]). 초반의 강화는
+     * 골드 하나로 돌아야 한다 — 재료가 모자라 강화대를 떠나는 순간
+     * "강화해서 팔고 또 강화한다" 는 고리가 끊긴다.
      */
     fun requirementOf(state: GameState): ForgeRequirement? {
         val sword = state.sword ?: return null
-        return requirementFor(sword.level, FamilyForge.of(sword).stoneRelief)
+        val req = requirementFor(sword.level, FamilyForge.of(sword).stoneRelief)
+        return if (Unlocks.stonesUsed(state)) req else req.copy(stones = 0)
     }
 
     /** 지금 상태로 요구를 낼 수 있는지. */

@@ -22,15 +22,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geomgang.game.ForgeUiState
 
-/** 지금 가진 재화. */
+/**
+ * 지금 가진 재화.
+ *
+ * @property deep 용검을 벼린 뒤인지. 그 전에는 조각·강화석이 화면에 없다 —
+ *   쓰지도 않는 숫자를 두 칸이나 이고 있으면 초반이 복잡해 보이기만 한다.
+ */
 data class Wallet(
     val gold: Long,
     val shards: Int,
     val stones: Int,
     val tickets: Int,
+    val deep: Boolean,
 )
 
-fun ForgeUiState.wallet(): Wallet = Wallet(gold, shards, forgeStones, preventTickets)
+fun ForgeUiState.wallet(): Wallet =
+    Wallet(gold, shards, forgeStones, preventTickets, deepUnlocked)
 
 /**
  * 강화 화면 위에 올라오는 화면들의 공통 머리.
@@ -71,8 +78,10 @@ fun WalletBar(wallet: Wallet, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         WalletItem("💰", "골드", compactGold(wallet.gold))
-        WalletItem("💎", "조각", "${wallet.shards}")
-        WalletItem("🪨", "강화석", "${wallet.stones}")
+        if (wallet.deep) {
+            WalletItem("💎", "조각", "${wallet.shards}")
+            WalletItem("🪨", "강화석", "${wallet.stones}")
+        }
         WalletItem("🛡", "방지권", "${wallet.tickets}")
     }
 }

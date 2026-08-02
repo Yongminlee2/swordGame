@@ -74,13 +74,23 @@ class ForgeRecoveryTest {
         assertEquals(1, ForgeEngine.salvageAmount(0, ScriptedRandom(0.0)))
     }
 
+    /** 조각은 용검 뒤의 화폐다([Unlocks.shardsUsed]) — 그 전에는 줍기가 골드를 준다. */
     @Test
     fun `줍기는 조각을 더하고 파괴 대기를 해제한다`() {
-        val before = destroyed(level = 10)
+        val before = destroyed(level = 10).copy(bestLevel = LegendForge.LEVEL)
         val after = ForgeEngine.applySalvage(before, ScriptedRandom(0.5))
         assertEquals(20, after.shards)
         assertNull(after.pendingDestroy)
         assertNull(after.sword)
+    }
+
+    @Test
+    fun `초반 줍기는 골드를 준다`() {
+        val before = destroyed(level = 10)
+        val after = ForgeEngine.applySalvage(before, ScriptedRandom(0.5))
+        assertEquals(0, after.shards)
+        assertEquals(before.gold + Unlocks.salvageGold(10), after.gold)
+        assertNull(after.pendingDestroy)
     }
 
     @Test(expected = IllegalStateException::class)

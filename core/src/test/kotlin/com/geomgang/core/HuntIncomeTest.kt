@@ -57,8 +57,8 @@ class HuntIncomeTest {
     /**
      * 검을 파는 것이 사냥을 압도하면 안 된다.
      *
-     * 판매가 지수 1.80 은 사냥이 없던 시절 값이다. 그대로 끌고 가면 +44 검 한 자루가
-     * 사냥 1만 바퀴치가 됐다.
+     * 사냥이 열리는 것은 용검 뒤다([Unlocks.huntOpen]). 그때부터는 두 수입이 나란히
+     * 서야 하는데, 판매가가 한없이 부풀면 사냥터가 장식이 된다.
      */
     @Test
     fun `무한 구간 판매가가 사냥을 압도하지 않는다`() {
@@ -67,26 +67,31 @@ class HuntIncomeTest {
             val runs = Economy.sellPrice(level) / topRun
             assertTrue(
                 "+$level 판매가 = 사냥 %.0f 바퀴치".format(runs),
-                runs < 100,
+                runs < 200,
             )
         }
     }
 
-    /** 유한 구간 판매가는 예전 1.80 곡선 그대로다 — 밸런스 시뮬레이션이 지키는 구간이다. */
+    /**
+     * 유한 구간은 1.80 곡선 모양 그대로다 — 바닥값만 올렸다.
+     *
+     * v2.2에서 60 → 110. 용검 이전에는 검을 파는 것이 유일한 수입이라
+     * 한 바퀴의 벌이를 키워야 했다. 곡선을 세우는 것은 여전히 증가율이다.
+     */
     @Test
-    fun `유한 구간 판매가는 그대로다`() {
+    fun `유한 구간은 바닥값만 올라간 같은 곡선이다`() {
         for (level in 0..RateTable.MAX_FINITE_LEVEL) {
-            val old = Math.round(60.0 * Math.pow(1.80, level.toDouble()))
-            assertEquals("+$level", old, Economy.sellPrice(level))
+            val expected = Math.round(110.0 * Math.pow(1.80, level.toDouble()))
+            assertEquals("+$level", expected, Economy.sellPrice(level))
         }
     }
 
-    /** 무한 구간은 완만해진다. 같은 단계에서 예전보다 반드시 싸야 한다. */
+    /** 무한 구간은 완만해진다. 같은 단계에서 유한 곡선을 이어 갔을 때보다 반드시 싸야 한다. */
     @Test
-    fun `무한 구간 판매가는 예전보다 싸다`() {
+    fun `무한 구간 판매가는 유한 곡선보다 싸다`() {
         for (level in RateTable.MAX_FINITE_LEVEL + 1..50) {
-            val old = 60.0 * Math.pow(1.80, level.toDouble())
-            assertTrue("+$level", Economy.sellPrice(level) < old)
+            val straight = 110.0 * Math.pow(1.80, level.toDouble())
+            assertTrue("+$level", Economy.sellPrice(level) < straight)
         }
     }
 }

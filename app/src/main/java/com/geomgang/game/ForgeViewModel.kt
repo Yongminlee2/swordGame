@@ -50,6 +50,7 @@ import com.geomgang.core.Sword
 import com.geomgang.core.SwordDrop
 import com.geomgang.core.Timing
 import com.geomgang.core.UniqueSwords
+import com.geomgang.core.Unlocks
 import com.geomgang.core.UsedItems
 import com.geomgang.core.WeaponCatalog
 import com.geomgang.core.WeaponFamily
@@ -297,7 +298,9 @@ class ForgeViewModel(
         val targetLevel = sword.level + 1
         val cost = Economy.upgradeCost(sword.level)
         val forge = FamilyForge.of(sword)
-        val req = ForgeCost.requirementFor(sword.level, forge.stoneRelief)
+        // 실제로 내는 요구다. 용검 이전에는 강화석이 0 이다([Unlocks.stonesUsed]) —
+        // 여기서 원본 표를 쓰면 없는 강화석을 빼서 음수가 된다.
+        val req = checkNotNull(ForgeCost.requirementOf(game))
 
         // 강화석은 성패와 무관하게 소모된다. 판정 전에 먼저 뺀다.
         if (req.stones > 0) {
@@ -1559,10 +1562,10 @@ class ForgeViewModel(
             storage = game.storage,
             storageCapacity = Storage.CAPACITY,
             forgeStones = game.forgeStones,
-            requiredStones = game.sword?.let {
-                ForgeCost.requirementFor(it.level, forge.stoneRelief).stones
-            } ?: 0,
+            requiredStones = ForgeCost.requirementOf(game)?.stones ?: 0,
             forgeBlockedReason = if (busy) null else forgeBlockedReason(),
+            deepUnlocked = Unlocks.legendReached(game),
+            huntOpen = Unlocks.huntOpen(game),
             bonusSources = ForgeBonuses.sourcesOf(game, progress),
             skillLevel = progress.smithyLevel,
             skillPrice = Smithy.priceOf(game, progress.smithyLevel),

@@ -24,15 +24,37 @@ class BalanceSimulationTest {
     @Test
     fun `일반 모드 평균 최고 단계가 목표 구간 안에 있다`() {
         val r = report(Difficulty.NORMAL)
-        // v2.1에서 1~20강 확률을 올렸다. 목표 구간도 함께 올라간다.
-        assertTrue("평균 최고 단계=${r.averageBestLevel}", r.averageBestLevel in 14.0..20.0)
+        // v2.1에서 1~20강 확률을 올렸고, v2.2에서 강화석 요구가 초반에 빠졌다.
+        assertTrue("평균 최고 단계=${r.averageBestLevel}", r.averageBestLevel in 17.0..20.0)
     }
 
+    /**
+     * **+20 은 이제 목적지가 아니라 경유지다.**
+     *
+     * v2.2 전에는 +20 이 희소해야 했다. 지금은 계열이 거기서 끝나고 그 위는
+     * 조합으로만 가므로, 한 자루를 +20 까지 올리는 것 자체는 닿아야 정상이다.
+     * 진짜 벽은 **마검 +20 과 성검 +20 을 동시에 갖추는 것**이고, 시뮬레이터는
+     * 한 자루만 보므로 그 벽을 재지 못한다.
+     *
+     * 그래서 "흔하지 않다" 대신 **"거저가 아니다"** 를 지킨다 — 평균 시도 수다.
+     */
     @Test
-    fun `일반 모드에서 상한 도달이 가능하되 흔하지는 않다`() {
+    fun `상한에 닿되 거저 닿지는 않는다`() {
         val r = report(Difficulty.NORMAL)
-        assertTrue("상한 도달률=${r.capRate}", r.capRate > 0.0)
-        assertTrue("상한 도달률=${r.capRate}", r.capRate < 0.6)
+        assertTrue("상한 도달률=${r.capRate}", r.capRate > 0.3)
+        assertTrue("평균 시도 수=${r.averageAttempts}", r.averageAttempts > 500)
+    }
+
+    /**
+     * 확률표가 살아 있다는 증거.
+     *
+     * 판매가나 재료 요구를 손대도 지옥 난이도는 여전히 벽이어야 한다. 여기가 무너지면
+     * 경제를 만진 것이 아니라 **확률표를 망가뜨린 것**이다.
+     */
+    @Test
+    fun `지옥 난이도는 여전히 벽이다`() {
+        val r = report(Difficulty.HARD)
+        assertTrue("지옥 상한 도달률=${r.capRate}", r.capRate < 0.05)
     }
 
     @Test
