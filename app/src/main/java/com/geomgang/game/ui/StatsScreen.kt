@@ -96,10 +96,8 @@ fun StatsScreen(
                 HorizontalDivider(Modifier.padding(vertical = 6.dp))
                 StatRow("번 골드", "%,d".format(stats.goldEarned))
                 StatRow("쓴 골드", "%,d".format(stats.goldSpent))
-                // 조각은 시즌2 화폐다. 시즌1 화면에 보이면 "이건 어디서 얻지"만 남긴다.
-                if (deepUnlocked) {
-                    StatRow("모은 조각", "%,d".format(stats.shardsEarned))
-                }
+                // 조각은 시즌1부터의 화폐다(v2.3) - 파괴가 남기고 워프권이 먹는다.
+                StatRow("모은 조각", "%,d".format(stats.shardsEarned))
                 HorizontalDivider(Modifier.padding(vertical = 6.dp))
                 StatRow("방지권 사용", "${stats.preventUsed}회")
                 StatRow("방지권 놓침", "${stats.preventMissed}회")

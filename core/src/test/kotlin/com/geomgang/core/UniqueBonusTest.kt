@@ -27,7 +27,7 @@ class UniqueBonusTest {
         val all = ProgressState(uniqueFound = UniqueSwords.RECIPES.map { it.id }.toSet())
         val expected = UniqueSwords.PER_UNIQUE * UniqueSwords.RECIPES.size
         assertEquals(expected, UniqueSwords.holdingBonus(all).successRate, 1e-9)
-        assertEquals(expected, UniqueSwords.holdingBonus(all).destroyGuard, 1e-9)
+        assertEquals(expected, UniqueSwords.holdingBonus(all).dropGuard, 1e-9)
     }
 
     /** 모르는 id 가 섞여 있어도 실제 고유검만 센다. */

@@ -46,7 +46,7 @@ class RewardStackingTest {
         )
         val result = ForgeEngine.attempt(
             state, UsedItems.NONE, ScriptedRandom(0.0),
-            bonus = ForgeBonus(successRate = 0.5, destroyGuard = 0.5),
+            bonus = ForgeBonus(successRate = 0.5, dropGuard = 0.5),
         )
         // 성공했는지가 아니라 "상한을 넘는 확률로 판정되지 않았는지"가 관심사다.
         // 롤 0.0은 항상 성공이므로 예외 없이 통과하면 상한 계산이 유효한 것이다.

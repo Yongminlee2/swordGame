@@ -42,7 +42,7 @@ class CodexOfferTest {
         }
         val bonus = CodexOffer.bonusOf(p)
         assertEquals(CodexOffer.STEP_BONUS, bonus.successRate, 1e-9)
-        assertEquals(CodexOffer.STEP_BONUS, bonus.destroyGuard, 1e-9)
+        assertEquals(CodexOffer.STEP_BONUS, bonus.dropGuard, 1e-9)
     }
 
     @Test

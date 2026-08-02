@@ -23,24 +23,44 @@ data class Recipe(
  */
 object Recipes {
 
-    /** +5 검 교환가. [Economy.needsBailout]이 파산 판정 기준으로 함께 쓴다. */
+    /** +5 워프권 교환가. [Economy.needsBailout]이 파산 판정 기준으로 함께 쓴다. */
     const val SWORD5_SHARD_COST: Int = 120
 
     /** 조각을 강화석으로 바꾸는 값. 강화석은 고단계 강화의 화폐다. */
     const val STONE_SHARD_COST: Int = 20
 
+    /**
+     * 워프권 값은 줍기 회수량([ForgeEngine.SALVAGE_MULTIPLIER] = 단계×3)에 맞춰져 있다.
+     * +13 파괴가 평균 39조각이니 +5 는 파괴 세 번, +10 은 열 번, +15 는 스무 번쯤.
+     * **어떤 워프권도 그 단계 파괴 한 번의 조각보다 싸지면 안 된다** — 싸지면
+     * 파괴→줍기→워프가 손해가 아니라 순환 이득이 된다.
+     */
     val ALL: List<Recipe> = listOf(
         Recipe("stone", "강화석", STONE_SHARD_COST, RecipeReward.GrantStone(1)),
         Recipe("prevent", "방지권", 10, RecipeReward.GrantItem(Item.PREVENT_TICKET, 1)),
         Recipe("blessing", "축복서", 30, RecipeReward.GrantItem(Item.BLESSING_SCROLL, 1)),
         Recipe("luck", "행운부적", 60, RecipeReward.GrantItem(Item.LUCK_CHARM, 1)),
-        Recipe("sword5", "+5 검", SWORD5_SHARD_COST, RecipeReward.GrantSword(5)),
-        Recipe("sword10", "+10 검", 400, RecipeReward.GrantSword(10)),
+        Recipe("sword5", "워프권 +5", SWORD5_SHARD_COST, RecipeReward.GrantSword(5)),
+        Recipe("sword10", "워프권 +10", 400, RecipeReward.GrantSword(10)),
+        Recipe("sword15", "워프권 +15", 850, RecipeReward.GrantSword(15)),
     )
 
     fun byId(id: String): Recipe =
         ALL.firstOrNull { it.id == id }
             ?: throw IllegalArgumentException("unknown recipe id: $id")
+
+    /**
+     * 지금 국면에서 열려 있는 교환. 시즌1(용검 이전)은 **워프권뿐이다.**
+     *
+     * 강화석은 시즌2 재료라 당연히 잠그고, 소모품(방지권 10조각 등)도 잠근다 —
+     * 열어 두면 파괴 한 번(조각 30~60)이 방지권 서너 장이 되어, 소모품 골드값을
+     * 10배 올려 세운 「파괴 구간은 벽」이 조각 뒷문으로 무너진다.
+     */
+    fun availableIn(deep: Boolean): List<Recipe> =
+        if (deep) ALL else ALL.filter { it.reward is RecipeReward.GrantSword }
+
+    fun availableIn(state: GameState): List<Recipe> =
+        availableIn(Unlocks.legendReached(state))
 
     /**
      * 교환으로 받는 검의 계열.
@@ -64,6 +84,8 @@ object Recipes {
     }
 
     fun canCraft(state: GameState, recipe: Recipe): Boolean {
+        // 시즌 게이트는 여기서 지킨다 - UI만 가리면 시뮬레이터·저장 복구 경로가 새 나간다.
+        if (recipe !in availableIn(state)) return false
         if (state.shards < recipe.shardCost) return false
         // 검을 주는 교환은 빈손일 때만 가능하다. 들고 있는 검을 덮어쓰지 않는다.
         if (recipe.reward is RecipeReward.GrantSword && state.sword != null) return false

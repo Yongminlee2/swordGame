@@ -87,7 +87,7 @@ private fun SkillCard(state: ForgeUiState, onUpgrade: () -> Unit) {
             Spacer(Modifier.height(10.dp))
             // 지금 몇 % 를 받고 있는지 먼저 말한다. 다음 한 칸의 값어치가 거기서 읽힌다.
             Text(
-                text = "지금  성공률 +%.2f%%p  ·  파괴방지 +%.2f%%p".format(
+                text = "지금  성공률 +%.2f%%p  ·  하락방지 +%.2f%%p".format(
                     state.skillLevel * Smithy.PER_LEVEL * 100,
                     state.skillLevel * Smithy.PER_LEVEL * 100,
                 ),
@@ -205,9 +205,9 @@ private fun BonusCard(sources: List<BonusSource>) {
                             },
                         )
                         Text(
-                            text = "방지 +%.2f%%p".format(source.bonus.destroyGuard * 100),
+                            text = "방지 +%.2f%%p".format(source.bonus.dropGuard * 100),
                             fontSize = 12.sp,
-                            color = if (source.bonus.destroyGuard > 0) {
+                            color = if (source.bonus.dropGuard > 0) {
                                 Color(0xFF7FA8D4)
                             } else {
                                 MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)

@@ -25,8 +25,9 @@ import com.geomgang.game.ForgeUiState
 /**
  * 지금 가진 재화.
  *
- * @property deep 용검을 벼린 뒤인지. 그 전에는 조각·강화석이 화면에 없다 —
- *   쓰지도 않는 숫자를 두 칸이나 이고 있으면 초반이 복잡해 보이기만 한다.
+ * @property deep 용검을 조합한 뒤인지. 그 전에는 강화석이 화면에 없다.
+ *   조각은 시즌1부터 보인다(v2.3) — 파괴가 남기는 조각이 워프권의 값이라
+ *   쓸 데가 처음부터 있다.
  */
 data class Wallet(
     val gold: Long,
@@ -78,8 +79,8 @@ fun WalletBar(wallet: Wallet, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         WalletItem("💰", "골드", compactGold(wallet.gold))
+        WalletItem("💎", "조각", "${wallet.shards}")
         if (wallet.deep) {
-            WalletItem("💎", "조각", "${wallet.shards}")
             WalletItem("🪨", "강화석", "${wallet.stones}")
         }
         WalletItem("🛡", "방지권", "${wallet.tickets}")

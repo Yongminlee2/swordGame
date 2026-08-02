@@ -4,15 +4,15 @@ package com.geomgang.core
  * 강화에 얹히는 보너스.
  *
  * @property successRate 성공률에 더하는 몫. 0.012 는 1.2%p 다
- * @property destroyGuard 파괴 판정을 무효로 돌릴 확률
+ * @property dropGuard 파괴 판정을 무효로 돌릴 확률
  */
 data class ForgeBonus(
     val successRate: Double = 0.0,
-    val destroyGuard: Double = 0.0,
+    val dropGuard: Double = 0.0,
 ) {
     operator fun plus(other: ForgeBonus): ForgeBonus = ForgeBonus(
         successRate = successRate + other.successRate,
-        destroyGuard = destroyGuard + other.destroyGuard,
+        dropGuard = dropGuard + other.dropGuard,
     )
 
     companion object {
@@ -62,7 +62,7 @@ object ForgeBonuses {
             BonusSource(
                 label = if (state.sword?.isLegend() == true) "전설검" else "계열",
                 detail = forge.blurb,
-                bonus = ForgeBonus(forge.successBonus, forge.destroyGuard),
+                bonus = ForgeBonus(forge.successBonus, forge.dropGuard),
             )
         },
     ) + listOfNotNull(

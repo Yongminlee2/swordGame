@@ -46,6 +46,6 @@ object Smithy {
 
     fun bonusOf(progress: ProgressState): ForgeBonus {
         val value = PER_LEVEL * progress.smithyLevel.coerceIn(0, MAX_LEVEL)
-        return ForgeBonus(successRate = value, destroyGuard = value)
+        return ForgeBonus(successRate = value, dropGuard = value)
     }
 }

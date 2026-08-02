@@ -8,17 +8,19 @@ import org.junit.Test
 class RecipesTest {
 
     private fun state(shards: Int, sword: Sword? = null) =
-        GameState(Difficulty.NORMAL, shards = shards, sword = sword)
+        // 소모품·강화석 교환은 깊은 국면에서만 열린다(v2.3) - 기본 상태를 그쪽에 둔다
+        GameState(Difficulty.NORMAL, shards = shards, sword = sword, bestLevel = LegendForge.LEVEL)
 
     @Test
-    fun `교환식은 6종이고 스펙 조각 가격과 일치한다`() {
-        assertEquals(6, Recipes.ALL.size)
+    fun `교환식은 7종이고 스펙 조각 가격과 일치한다`() {
+        assertEquals(7, Recipes.ALL.size)
         assertEquals(Recipes.STONE_SHARD_COST, Recipes.byId("stone").shardCost)
         assertEquals(10, Recipes.byId("prevent").shardCost)
         assertEquals(30, Recipes.byId("blessing").shardCost)
         assertEquals(60, Recipes.byId("luck").shardCost)
         assertEquals(120, Recipes.byId("sword5").shardCost)
         assertEquals(400, Recipes.byId("sword10").shardCost)
+        assertEquals(850, Recipes.byId("sword15").shardCost)
     }
 
     @Test
@@ -51,7 +53,8 @@ class RecipesTest {
 
     @Test
     fun `검 교환으로 최고 기록이 갱신된다`() {
-        val before = state(shards = 400)
+        // 워프권은 시즌1에도 열려 있으므로 초반 상태로 확인한다
+        val before = GameState(Difficulty.NORMAL, shards = 400)
         val after = Recipes.craft(before, Recipes.byId("sword10"), WeaponFamily.STRAIGHT)
         assertEquals(10, after.bestLevel)
     }

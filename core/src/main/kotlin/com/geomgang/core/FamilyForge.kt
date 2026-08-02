@@ -18,7 +18,7 @@ fun Sword.isLegend(): Boolean = level > RateTable.MAX_FINITE_LEVEL
  * 합산되지 않는다 — **든 검에만** 붙는다. 그래서 "무엇을 들고 올릴까" 가 선택이 된다.
  *
  * @param successBonus   성공률 가산
- * @param destroyGuard   파괴 판정을 무효로 돌릴 확률
+ * @param dropGuard   파괴 판정을 무효로 돌릴 확률
  * @param temperCapBonus 담금질 상한 가산
  * @param costMult       강화 비용 배수
  * @param stoneRelief    강화석 요구를 줄이는 개수
@@ -29,7 +29,7 @@ fun Sword.isLegend(): Boolean = level > RateTable.MAX_FINITE_LEVEL
  */
 enum class FamilyForge(
     val successBonus: Double = 0.0,
-    val destroyGuard: Double = 0.0,
+    val dropGuard: Double = 0.0,
     val temperCapBonus: Double = 0.0,
     val costMult: Double = 1.0,
     val stoneRelief: Int = 0,
@@ -51,19 +51,19 @@ enum class FamilyForge(
      */
     STRAIGHT(blurb = "기준. 특별할 것도 모자랄 것도 없다"),
     CURVED(successBonus = 0.004, blurb = "조금 더 잘 붙는다"),
-    GREAT(destroyGuard = 0.03, blurb = "잘 부서지지 않는다"),
+    GREAT(dropGuard = 0.03, blurb = "잘 부서지지 않는다"),
     RAPIER(costMult = 0.7, blurb = "가벼워서 벼리는 값이 싸다"),
-    TWIN(successBonus = 0.003, destroyGuard = 0.015, blurb = "성공률과 내구가 조금씩"),
+    TWIN(successBonus = 0.003, dropGuard = 0.015, blurb = "성공률과 내구가 조금씩"),
     DEMON(salvageMult = 2.0, blurb = "부서져도 조각을 두 배로 줍는다"),
     HOLY(blessingMult = 1.5, blurb = "축복서가 더 잘 듣는다"),
-    DRAGON(successBonus = 0.002, destroyGuard = 0.02, blurb = "단단하고 조금 잘 붙는다"),
+    DRAGON(successBonus = 0.002, dropGuard = 0.02, blurb = "단단하고 조금 잘 붙는다"),
     SCYTHE(codexPair = true, blurb = "도감에 바치면 다음 칸도 함께 열린다"),
     AXE(costMult = 0.8, blurb = "강화 비용이 싸다"),
     SPEAR(stoneRelief = 2, blurb = "강화석이 두 개 덜 든다"),
-    SPIRIT(destroyGuard = 0.025, blurb = "정령이 부서짐을 막아 준다"),
+    SPIRIT(dropGuard = 0.025, blurb = "정령이 부서짐을 막아 준다"),
     FUSED(
         successBonus = 0.0025,
-        destroyGuard = 0.015,
+        dropGuard = 0.015,
         costMult = 0.9,
         salvageMult = 1.5,
         blessingMult = 1.25,
@@ -79,7 +79,7 @@ enum class FamilyForge(
      */
     LEGEND(
         successBonus = 0.03,
-        destroyGuard = 0.03,
+        dropGuard = 0.03,
         temperCapBonus = 0.20,
         blurb = "전설검. 벼림의 끝",
     ),

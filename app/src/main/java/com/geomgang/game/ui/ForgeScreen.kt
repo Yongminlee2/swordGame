@@ -149,12 +149,8 @@ fun ForgeScreen(
 
         is DestroyPhase.Salvage -> DestroyDialog(
             title = "파편이 흩어진다",
-            // 시즌1 줍기는 골드를 준다([Unlocks.shardsUsed]) - 조각이라고 말하면 거짓말이다.
-            body = if (state.deepUnlocked) {
-                "지금 주우면 조각을 회수한다. 놓치면 아무것도 남지 않는다."
-            } else {
-                "지금 주우면 골드를 회수한다. 놓치면 아무것도 남지 않는다."
-            },
+            // 줍기는 시즌 무관 조각을 준다(v2.3) - 조각이 워프권의 값이다.
+            body = "지금 주우면 조각을 회수한다. 놓치면 아무것도 남지 않는다.",
             progress = phase.progress,
             confirmLabel = "파편 줍기",
             confirmEnabled = true,
@@ -312,7 +308,7 @@ fun ForgeScreen(
                 Spacer(Modifier.height(8.dp))
                 TemperBar(temper)
             }
-            if (state.bonusSources.any { it.bonus.successRate > 0 || it.bonus.destroyGuard > 0 }) {
+            if (state.bonusSources.any { it.bonus.successRate > 0 || it.bonus.dropGuard > 0 }) {
                 Spacer(Modifier.height(8.dp))
                 BonusBreakdown(state.bonusSources)
             }
@@ -724,7 +720,7 @@ private fun IconEntry(
 private fun BonusBreakdown(sources: List<BonusSource>) {
     if (sources.isEmpty()) return
     val success = sources.sumOf { it.bonus.successRate }
-    val guard = sources.sumOf { it.bonus.destroyGuard }
+    val guard = sources.sumOf { it.bonus.dropGuard }
     val earned = success > 0 || guard > 0
 
     Row(
@@ -737,7 +733,7 @@ private fun BonusBreakdown(sources: List<BonusSource>) {
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
         )
         Text(
-            text = "성공 +%.2f%%p  ·  파괴방지 +%.2f%%p".format(success * 100, guard * 100),
+            text = "성공 +%.2f%%p  ·  하락방지 +%.2f%%p".format(success * 100, guard * 100),
             fontSize = 11.sp,
             color = if (earned) {
                 Color(0xFF7FD48A)

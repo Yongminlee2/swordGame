@@ -60,13 +60,14 @@ class ForgeRecoveryTest {
     // --- 줍기 ---
 
     @Test
-    fun `조각 회수량은 단계의 두 배에 0점7에서 1점3 배 흔들림이 붙는다`() {
-        // level 10, jitter 최소(난수 0.0) → floor(10 * 2 * 0.7) = 14
-        assertEquals(14, ForgeEngine.salvageAmount(10, ScriptedRandom(0.0)))
-        // jitter 중앙(난수 0.5) → floor(10 * 2 * 1.0) = 20
-        assertEquals(20, ForgeEngine.salvageAmount(10, ScriptedRandom(0.5)))
-        // jitter 최대(난수 1.0) → floor(10 * 2 * 1.3) = 26
-        assertEquals(26, ForgeEngine.salvageAmount(10, ScriptedRandom(1.0)))
+    fun `조각 회수량은 단계의 세 배에 0점7에서 1점3 배 흔들림이 붙는다`() {
+        // v2.3 - 조각이 워프권의 값이 되면서 배수를 2에서 3으로 올렸다
+        // level 10, jitter 최소(난수 0.0) → floor(10 * 3 * 0.7) = 21
+        assertEquals(21, ForgeEngine.salvageAmount(10, ScriptedRandom(0.0)))
+        // jitter 중앙(난수 0.5) → floor(10 * 3 * 1.0) = 30
+        assertEquals(30, ForgeEngine.salvageAmount(10, ScriptedRandom(0.5)))
+        // jitter 최대(난수 1.0) → floor(10 * 3 * 1.3) = 39
+        assertEquals(39, ForgeEngine.salvageAmount(10, ScriptedRandom(1.0)))
     }
 
     @Test
@@ -74,22 +75,22 @@ class ForgeRecoveryTest {
         assertEquals(1, ForgeEngine.salvageAmount(0, ScriptedRandom(0.0)))
     }
 
-    /** 조각은 용검 뒤의 화폐다([Unlocks.shardsUsed]) — 그 전에는 줍기가 골드를 준다. */
+    /** 조각은 시즌을 가리지 않는다(v2.3) — 파괴의 재가 워프권의 값이다. */
     @Test
     fun `줍기는 조각을 더하고 파괴 대기를 해제한다`() {
         val before = destroyed(level = 10).copy(bestLevel = LegendForge.LEVEL)
         val after = ForgeEngine.applySalvage(before, ScriptedRandom(0.5))
-        assertEquals(20, after.shards)
+        assertEquals(30, after.shards)
         assertNull(after.pendingDestroy)
         assertNull(after.sword)
     }
 
     @Test
-    fun `초반 줍기는 골드를 준다`() {
-        val before = destroyed(level = 10)
+    fun `시즌1 줍기도 골드가 아니라 조각을 준다`() {
+        val before = destroyed(level = 10) // bestLevel < 21
         val after = ForgeEngine.applySalvage(before, ScriptedRandom(0.5))
-        assertEquals(0, after.shards)
-        assertEquals(before.gold + Unlocks.salvageGold(10), after.gold)
+        assertEquals(30, after.shards)
+        assertEquals(before.gold, after.gold)
         assertNull(after.pendingDestroy)
     }
 

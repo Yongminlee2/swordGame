@@ -13,7 +13,7 @@ class ForgeBonusTest {
     fun `아무것도 없으면 보너스가 0이다`() {
         val bonus = ForgeBonuses.of(fresh, empty)
         assertEquals(0.0, bonus.successRate, 1e-9)
-        assertEquals(0.0, bonus.destroyGuard, 1e-9)
+        assertEquals(0.0, bonus.dropGuard, 1e-9)
     }
 
     @Test

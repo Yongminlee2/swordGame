@@ -171,18 +171,22 @@ class WardCharmTest {
         assertEquals(LegendForge.LEVEL, result.state.sword?.level)
     }
 
-    /** 방지 굴림이 먼저다. 그게 성공하면 각인은 아껴진다. */
+    /**
+     * 하락방지 보너스는 파괴에 손대지 못한다(v2.3). 전설검이 미끄러지면
+     * 보너스가 아무리 높아도 각인이 그 몫을 한다 - 그리고 쓰이면 사라진다.
+     */
     @Test
-    fun `파괴방지가 막으면 각인은 남는다`() {
+    fun `하락방지 보너스는 전설검의 미끄러짐을 막지 못한다`() {
         val before = state(power = 0, ward = true, level = 40)
         val result = ForgeEngine.attempt(
             before,
             UsedItems.NONE,
-            // 셋째 값 0.0 = 방지 굴림 성공
-            ScriptedRandom(0.999, 0.0, 0.0),
+            ScriptedRandom(0.999, 0.0),
+            bonus = ForgeBonus(dropGuard = 1.0), // 하락방지 100% 라도
         )
-        assertTrue("결과=$result", result is ForgeResult.Stay)
-        assertTrue("각인은 그대로여야 한다", result.state.wardCharm)
+        assertTrue("결과=$result", result is ForgeResult.Drop)
+        assertEquals(39, result.state.sword?.level)
+        assertFalse("각인이 대신 쓰였어야 한다", result.state.wardCharm)
     }
 
     /** 계열 검은 각인과 무관하게 부서진다. */

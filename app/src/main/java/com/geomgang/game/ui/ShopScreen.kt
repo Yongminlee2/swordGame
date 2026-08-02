@@ -244,22 +244,28 @@ fun ShopScreen(
         // --- 조각 교환 ---
         // 예전에는 "조합소"라는 별도 화면이었다. 그런데 하는 일이 상점과 똑같다 —
         // 화폐를 내고 물건을 받는다. 화폐가 골드가 아니라 조각일 뿐이라 여기로 옮겼다.
-        // 덕분에 조합소는 이름 그대로 검을 조합하는 곳만 남았다.
         //
-        // 용검 이전에는 통째로 감춘다. 그때는 조각이 아예 나오지 않으므로
-        // ([com.geomgang.core.Unlocks]) 살 수 없는 목록만 늘어놓게 된다.
-        if (!state.deepUnlocked) return@Column
+        // 시즌1부터 보인다(v2.3). 파괴가 남기는 조각으로 워프권을 사는 것이
+        // 시즌1 재기의 축이다 - 무엇이 열려 있는지는 [Recipes.availableIn]이 정한다.
+        val recipes = Recipes.availableIn(state.deepUnlocked)
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 Text("조각 교환", fontWeight = FontWeight.Bold)
                 Text(
                     text = "파괴된 검에서 주운 조각으로 바꾼다. " +
-                        "골드가 바닥나도 여기서 다시 일어설 수 있다.",
+                        "워프권은 그 단계에서 시작하는 새 검이다 — 파괴의 재가 재기의 밑천이 된다.",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
                 )
+                if (!state.deepUnlocked) {
+                    Text(
+                        text = "강화석·소모품 교환은 용검을 조합하면 열린다.",
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    )
+                }
                 Spacer(Modifier.height(4.dp))
-                Recipes.ALL.forEachIndexed { index, recipe ->
+                recipes.forEachIndexed { index, recipe ->
                     if (index > 0) HorizontalDivider(Modifier.padding(vertical = 4.dp))
                     RecipeRow(
                         recipe = recipe,

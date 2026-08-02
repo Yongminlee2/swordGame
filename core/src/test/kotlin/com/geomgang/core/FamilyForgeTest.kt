@@ -35,7 +35,7 @@ class FamilyForgeTest {
     fun `검이 없으면 아무 특성도 없다`() {
         val none = FamilyForge.of(null)
         assertEquals(0.0, none.successBonus, 1e-9)
-        assertEquals(0.0, none.destroyGuard, 1e-9)
+        assertEquals(0.0, none.dropGuard, 1e-9)
         assertEquals(1.0, none.costMult, 1e-9)
     }
 
@@ -45,7 +45,7 @@ class FamilyForgeTest {
         val others = FamilyForge.entries
             .filter { it != FamilyForge.LEGEND && it != FamilyForge.NONE }
         assertTrue(others.all { FamilyForge.LEGEND.successBonus >= it.successBonus })
-        assertTrue(others.all { FamilyForge.LEGEND.destroyGuard >= it.destroyGuard })
+        assertTrue(others.all { FamilyForge.LEGEND.dropGuard >= it.dropGuard })
     }
 
     @Test
@@ -72,7 +72,7 @@ class FamilyForgeTest {
     fun `든 검이 보너스 출처에 들어간다`() {
         val holding = GameState(Difficulty.ENDLESS, sword = Sword(WeaponFamily.GREAT, 5))
         assertTrue(ForgeBonuses.sourcesOf(holding, ProgressState()).any { it.label == "계열" })
-        assertTrue(ForgeBonuses.of(holding, ProgressState()).destroyGuard > 0.0)
+        assertTrue(ForgeBonuses.of(holding, ProgressState()).dropGuard > 0.0)
     }
 
     @Test

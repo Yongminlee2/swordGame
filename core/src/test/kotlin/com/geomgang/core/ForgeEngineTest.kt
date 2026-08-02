@@ -268,8 +268,9 @@ class ForgeEngineTest {
 
     @Test
     fun `축복서 없이 같은 난수면 실패한다`() {
+        // +10 목표는 이제 파괴 구간이다(v2.3) - 파괴 판정 난수까지 하나 더 준다
         val before = state(level = 9)
-        val result = ForgeEngine.attempt(before, UsedItems.NONE, ScriptedRandom(0.50))
+        val result = ForgeEngine.attempt(before, UsedItems.NONE, ScriptedRandom(0.50, 0.99))
         assertFalse(result is ForgeResult.Success)
     }
 

@@ -42,7 +42,12 @@ class ForgeStoneSourceTest {
     fun `조각을 강화석으로 바꿀 수 있다`() {
         val recipe = Recipes.byId("stone")
         assertEquals(Recipes.STONE_SHARD_COST, recipe.shardCost)
-        val state = GameState(difficulty = Difficulty.ENDLESS, shards = 100)
+        // 강화석 교환은 깊은 국면 전용이다(v2.3)
+        val state = GameState(
+            difficulty = Difficulty.ENDLESS,
+            shards = 100,
+            bestLevel = LegendForge.LEVEL,
+        )
         val after = Recipes.craft(state, recipe, WeaponFamily.STRAIGHT)
         assertEquals(1, after.forgeStones)
         assertEquals(100 - Recipes.STONE_SHARD_COST, after.shards)
@@ -55,6 +60,7 @@ class ForgeStoneSourceTest {
             difficulty = Difficulty.ENDLESS,
             shards = 100,
             sword = Sword(WeaponFamily.STRAIGHT, 5),
+            bestLevel = LegendForge.LEVEL,
         )
         assertTrue(Recipes.canCraft(state, recipe))
     }

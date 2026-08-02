@@ -1572,7 +1572,7 @@ class ForgeViewModel(
                 pendingItems,
                 Tempering.failsFor(game, targetLevel),
                 bonus = bonus.successRate + forge.successBonus,
-                destroyGuard = bonus.destroyGuard + forge.destroyGuard,
+                dropGuard = bonus.dropGuard + forge.dropGuard,
                 legend = sword?.isLegend() == true,
                 temperCapBonus = forge.temperCapBonus,
                 blessingMult = forge.blessingMult,

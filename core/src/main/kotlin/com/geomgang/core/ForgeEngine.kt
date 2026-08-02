@@ -152,25 +152,20 @@ object ForgeEngine {
             )
         }
 
-        // 행운부적은 **하락만** 막는다(v2.3). 파괴까지 막으면 방지권이 설 자리가 없다 -
-        // 부적은 단계를 지키는 물건, 방지권은 검을 살리는 물건으로 역할을 갈랐다.
+        // 하락을 막는 것 둘: 행운부적(소모품)과 하락방지 보너스(도감·스킬·고유검·계열).
+        // **파괴를 막는 것은 방지권뿐이다**(v2.3) - 보너스가 파괴까지 막던 시절에는
+        // 방지권이 설 자리가 없었고, 파괴가 조각(워프의 연료)을 남기는 지금은
+        // 파괴를 확률로 뭉개면 조각 경제까지 마른다.
         return when (RateTable.failureBand(targetLevel)) {
             FailureBand.STAY -> ForgeResult.Stay(failed, sword.level)
 
             FailureBand.DROP ->
-                if (items.luckCharm) ForgeResult.Stay(failed, sword.level) else drop(failed, sword)
+                dropOrGuard(failed, sword, items, bonus.dropGuard + forge.dropGuard, rng)
 
             FailureBand.DESTROY_OR_DROP ->
                 if (rng.nextDouble() < RateTable.destroyChance(targetLevel)) {
-                    // 파괴가 정해진 뒤 한 번 더 굴린다. 방지권보다 먼저이고 소모품이 아니다.
-                    // 순서를 여기 둔 이유: 파괴가 안 났으면 굴릴 이유가 없어 난수만 낭비된다.
-                    val guard = bonus.destroyGuard + forge.destroyGuard
-                    if (guard > 0 && rng.nextDouble() < guard) {
-                        ForgeResult.Stay(failed, sword.level)
-                    } else if (WardCharm.protects(failed, sword)) {
+                    if (WardCharm.protects(failed, sword)) {
                         // 수호 각인 - 전설검이 미끄러지는 것을 한 번 붙든다.
-                        // 방지 굴림이 실패한 **뒤에** 본다. 앞에 두면 굴려 보지도 않고
-                        // 공짜로 태워진다.
                         val guarded = sword.copy(level = maxOf(LegendForge.LEVEL, sword.level - 1))
                         ForgeResult.Drop(
                             state = failed.copy(sword = guarded, wardCharm = false),
@@ -193,17 +188,38 @@ object ForgeEngine {
                             preventable = failed.inventory.preventTickets > 0,
                         )
                     }
-                } else if (items.luckCharm) {
-                    // 파괴는 면했다. 부적이 하락을 막아 단계가 그대로다.
-                    ForgeResult.Stay(failed, sword.level)
                 } else {
-                    drop(failed, sword)
+                    // 파괴는 면했다. 남은 것은 하락 - 부적과 하락방지 보너스가 붙들 수 있다.
+                    dropOrGuard(failed, sword, items, bonus.dropGuard + forge.dropGuard, rng)
                 }
         }
     }
 
-    /** 조각 회수량 = 단계 × 이 값 × 흔들림. */
-    const val SALVAGE_MULTIPLIER: Int = 2
+    /**
+     * 하락이 정해진 자리에서 마지막으로 붙드는 판정.
+     *
+     * 부적이 먼저다 - 켰다면 이미 값을 치렀으니 난수 없이 확정으로 막는다.
+     * 그다음이 하락방지 보너스(도감·스킬·고유검·계열)의 확률 굴림이다.
+     */
+    private fun dropOrGuard(
+        failed: GameState,
+        sword: Sword,
+        items: UsedItems,
+        dropGuard: Double,
+        rng: Random,
+    ): ForgeResult = when {
+        items.luckCharm -> ForgeResult.Stay(failed, sword.level)
+        dropGuard > 0 && rng.nextDouble() < dropGuard -> ForgeResult.Stay(failed, sword.level)
+        else -> drop(failed, sword)
+    }
+
+    /**
+     * 조각 회수량 = 단계 × 이 값 × 흔들림.
+     *
+     * v2.3에서 2 → 3. 파괴가 워프권([Recipes])의 연료가 되면서 조각이 시즌1의
+     * 재기 화폐가 됐다 - 회수량이 짜면 "모아서 워프한다"는 고리가 체감되지 않는다.
+     */
+    const val SALVAGE_MULTIPLIER: Int = 3
 
     private const val SALVAGE_JITTER_MIN = 0.7
     private const val SALVAGE_JITTER_MAX = 1.3
@@ -237,19 +253,13 @@ object ForgeEngine {
     }
 
     /**
-     * 파편을 주워 파괴를 마무리한다.
+     * 파편을 주워 파괴를 마무리한다. 얻는 것은 **조각**이다 - 시즌1에서도.
      *
-     * 얻는 것은 조각인데, **용검 이전에는 골드로 준다**([Unlocks.shardsUsed]).
-     * 초반에 쓸 데가 없는 조각을 쥐여 주면 줍기 자체가 빈 동작이 된다.
+     * 한때 용검 이전에는 골드로 바꿔 줬다. 지금은 조각이 곧 워프권([Recipes])이라
+     * 시즌1에도 쓸 데가 확실하다 - 파괴가 재기의 밑천이 되는 것이 이 경제의 핵심이다.
      */
     fun applySalvage(state: GameState, rng: Random): GameState {
         val pending = checkNotNull(state.pendingDestroy) { "no pending destroy to salvage" }
-        if (!Unlocks.shardsUsed(state)) {
-            return state.copy(
-                gold = state.gold + Unlocks.salvageGold(pending.level),
-                pendingDestroy = null,
-            )
-        }
         return state.copy(
             shards = state.shards + salvageAmount(pending.level, rng),
             pendingDestroy = null,

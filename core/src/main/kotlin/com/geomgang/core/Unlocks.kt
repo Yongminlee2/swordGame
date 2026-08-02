@@ -27,18 +27,8 @@ object Unlocks {
     /** 강화석이 강화 요구에 등장하는지. 초반 강화는 골드만 먹는다. */
     fun stonesUsed(state: GameState): Boolean = legendReached(state)
 
-    /** 조각이 화폐로 도는지. 초반에는 파편을 주워도 골드가 나온다. */
-    fun shardsUsed(state: GameState): Boolean = legendReached(state)
-
-    /**
-     * 초반 줍기가 주는 골드.
-     *
-     * 조각 한 개를 같은 단계 검 판매가의 이 비율로 환산한다. 조각으로 받던 값어치를
-     * 골드로 옮기되, 그냥 파는 것보다는 못하게 둔다 — 파괴는 여전히 손해여야 한다.
-     */
-    const val SALVAGE_GOLD_RATIO: Double = 0.35
-
-    /** 초반 줍기 보상. [ForgeEngine.applySalvage] 가 조각 대신 이것을 준다. */
-    fun salvageGold(level: Int): Long =
-        (Economy.sellPrice(level) * SALVAGE_GOLD_RATIO).toLong().coerceAtLeast(1)
+    // 조각은 시즌을 가리지 않는다(v2.3). 파괴가 남기는 조각이 워프권([Recipes])의
+    // 값이라 시즌1에도 쓸 데가 처음부터 있다 - 「초반 줍기는 골드」 규칙과
+    // salvageGold 환산은 그때 함께 사라졌다. 시즌1 조각의 **쓸 곳**만 워프권으로
+    // 제한한다([Recipes.availableIn]).
 }

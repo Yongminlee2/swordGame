@@ -52,6 +52,7 @@ class ForgeViewModelEconomyTest {
         sword: Sword? = Sword(WeaponFamily.STRAIGHT, 3),
         inventory: Inventory = Inventory(),
         rng: Random = alwaysSucceed(),
+        bestLevel: Int = 0,
     ): ForgeViewModel {
         val store = SaveStore(tmp.root)
         store.saveGame(
@@ -61,6 +62,7 @@ class ForgeViewModelEconomyTest {
                 shards = shards,
                 sword = sword,
                 inventory = inventory,
+                bestLevel = bestLevel,
             ),
         )
         return ForgeViewModel(store, Difficulty.NORMAL, rng)
@@ -98,7 +100,8 @@ class ForgeViewModelEconomyTest {
 
     @Test
     fun `조각을 바꾸면 조각이 줄고 아이템이 생긴다`() = runTest(dispatcher) {
-        val vm = vm(shards = 50)
+        // 소모품 교환은 깊은 국면 전용이다(v2.3)
+        val vm = vm(shards = 50, bestLevel = 21)
         vm.craft("prevent")
         assertEquals(40, vm.ui.value.shards)
         assertEquals(1, vm.ui.value.preventTickets)
@@ -106,7 +109,7 @@ class ForgeViewModelEconomyTest {
 
     @Test
     fun `조각이 모자라면 바뀌지 않는다`() = runTest(dispatcher) {
-        val vm = vm(shards = 5)
+        val vm = vm(shards = 5, bestLevel = 21)
         vm.craft("prevent")
         assertEquals(5, vm.ui.value.shards)
         assertEquals(0, vm.ui.value.preventTickets)

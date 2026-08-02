@@ -83,7 +83,9 @@ class RateTableTest {
         assertEquals(FailureBand.STAY, RateTable.failureBand(1))
         assertEquals(FailureBand.STAY, RateTable.failureBand(5))
         assertEquals(FailureBand.DROP, RateTable.failureBand(6))
-        assertEquals(FailureBand.DROP, RateTable.failureBand(12))
+        assertEquals(FailureBand.DROP, RateTable.failureBand(9))
+        // v2.3 - 파괴는 +10부터다. 조각(워프의 연료)이 더 일찍 흐르게 한다.
+        assertEquals(FailureBand.DESTROY_OR_DROP, RateTable.failureBand(10))
         assertEquals(FailureBand.DESTROY_OR_DROP, RateTable.failureBand(13))
         assertEquals(FailureBand.DESTROY_OR_DROP, RateTable.failureBand(20))
         assertEquals(FailureBand.DESTROY_OR_DROP, RateTable.failureBand(21))
@@ -91,7 +93,9 @@ class RateTableTest {
 
     @Test
     fun `파괴 확률이 스펙 표와 일치한다`() {
-        assertEquals(0.00, RateTable.destroyChance(12), eps)
+        assertEquals(0.00, RateTable.destroyChance(9), eps)
+        assertEquals(0.10, RateTable.destroyChance(10), eps)
+        assertEquals(0.10, RateTable.destroyChance(12), eps)
         assertEquals(0.125, RateTable.destroyChance(13), eps)
         assertEquals(0.125, RateTable.destroyChance(15), eps)
         assertEquals(0.20, RateTable.destroyChance(16), eps)

@@ -59,7 +59,7 @@ class FamilyForgeEffectTest {
     fun `직검은 아무 특전도 없다`() {
         val straight = FamilyForge.of(Sword(WeaponFamily.STRAIGHT, 5))
         assertEquals(0.0, straight.successBonus, 1e-9)
-        assertEquals(0.0, straight.destroyGuard, 1e-9)
+        assertEquals(0.0, straight.dropGuard, 1e-9)
         assertEquals(1.0, straight.costMult, 1e-9)
         assertEquals(0, straight.stoneRelief)
     }
@@ -82,13 +82,17 @@ class FamilyForgeEffectTest {
         assertTrue("plain=$plain holy=$holy", holy > plain)
     }
 
-    /** 대검은 파괴 판정을 확률적으로 넘긴다. 여러 번 굴리면 살아남는 판이 나온다. */
+    /**
+     * 대검의 방어 특성은 **하락**을 확률적으로 붙든다(v2.3 - 파괴는 방지권만 막는다).
+     * 하락 구간에서 여러 번 굴리면 유지로 살아남는 판이 나온다.
+     */
     @Test
-    fun `대검은 파괴를 넘길 때가 있다`() {
+    fun `대검은 하락을 넘길 때가 있다`() {
         val rng = Random(11)
         var survived = 0
         repeat(400) {
-            val r = ForgeEngine.attempt(at(WeaponFamily.GREAT, 30), UsedItems.NONE, rng)
+            // +8 -> 목표 +9 는 하락 구간이다
+            val r = ForgeEngine.attempt(at(WeaponFamily.GREAT, 8), UsedItems.NONE, rng)
             if (r is ForgeResult.Stay) survived++
         }
         assertTrue("살아남은 판=$survived", survived > 0)

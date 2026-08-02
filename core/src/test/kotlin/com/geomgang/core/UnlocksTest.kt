@@ -28,13 +28,12 @@ class UnlocksTest {
         assertTrue(Unlocks.legendReached(LegendForge.LEVEL + 9))
     }
 
-    /** 계열이 +20 에서 끝나므로 +21 을 밟았다는 것은 용검을 벼렸다는 뜻이다. */
+    /** 계열이 +20 에서 끝나므로 +21 을 밟았다는 것은 용검을 조합했다는 뜻이다. */
     @Test
     fun `계열 상한까지 올려도 초반 국면이다`() {
         val s = state(bestLevel = RateTable.MAX_FINITE_LEVEL)
         assertFalse(Unlocks.huntOpen(s))
         assertFalse(Unlocks.stonesUsed(s))
-        assertFalse(Unlocks.shardsUsed(s))
     }
 
     // --- 강화석 ---
@@ -63,21 +62,10 @@ class UnlocksTest {
 
     // --- 조각 ---
 
+    /** 조각은 시즌을 가리지 않는다(v2.3) — 파괴의 재가 워프권의 값이다. */
     @Test
-    fun `초반 줍기는 조각 대신 골드를 준다`() {
+    fun `시즌1 줍기도 조각을 준다`() {
         val destroyed = state(bestLevel = 15).copy(
-            sword = null,
-            gold = 0,
-            pendingDestroy = PendingDestroy(WeaponFamily.STRAIGHT, 12),
-        )
-        val after = ForgeEngine.applySalvage(destroyed, Random(1))
-        assertEquals(0, after.shards)
-        assertEquals(Unlocks.salvageGold(12), after.gold)
-    }
-
-    @Test
-    fun `용검 뒤 줍기는 조각을 준다`() {
-        val destroyed = state(bestLevel = LegendForge.LEVEL).copy(
             sword = null,
             gold = 0,
             pendingDestroy = PendingDestroy(WeaponFamily.STRAIGHT, 12),
@@ -87,12 +75,19 @@ class UnlocksTest {
         assertEquals(0L, after.gold)
     }
 
-    /** 파괴는 여전히 손해여야 한다. 주워 든 골드가 판매가를 넘으면 파괴가 이득이 된다. */
+    /** 시즌1 조각의 쓸 곳은 워프권뿐이다 — 소모품·강화석 교환은 시즌2 몫이다. */
     @Test
-    fun `줍기 골드는 판매가보다 적다`() {
-        for (level in 1..RateTable.MAX_FINITE_LEVEL) {
-            assertTrue("level=$level", Unlocks.salvageGold(level) < Economy.sellPrice(level))
-        }
+    fun `시즌1 조각 교환은 워프권만 열린다`() {
+        val early = state(bestLevel = 15).copy(sword = null, shards = 10_000)
+        val open = Recipes.availableIn(early)
+        assertTrue(open.isNotEmpty())
+        assertTrue(open.all { it.reward is RecipeReward.GrantSword })
+        // canCraft 도 같은 게이트를 지킨다 - UI만 가리면 다른 경로로 샌다
+        assertFalse(Recipes.canCraft(early, Recipes.byId("prevent")))
+        assertTrue(Recipes.canCraft(early, Recipes.byId("sword15")))
+
+        val deep = early.copy(bestLevel = LegendForge.LEVEL)
+        assertTrue(Recipes.canCraft(deep, Recipes.byId("prevent")))
     }
 
     // --- 자리비움 ---

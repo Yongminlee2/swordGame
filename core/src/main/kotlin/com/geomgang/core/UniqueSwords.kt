@@ -198,6 +198,6 @@ object UniqueSwords {
     fun holdingBonus(progress: ProgressState): ForgeBonus {
         val known = progress.uniqueFound.count { byId(it) != null }
         val value = PER_UNIQUE * known
-        return ForgeBonus(successRate = value, destroyGuard = value)
+        return ForgeBonus(successRate = value, dropGuard = value)
     }
 }

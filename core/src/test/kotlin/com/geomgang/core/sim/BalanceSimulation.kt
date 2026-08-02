@@ -72,7 +72,9 @@ object BalanceSimulation {
     private const val WAR_CHEST = 50_000L
 
     /** 자금 모으기 국면에서 검을 파는 단계. */
-    private const val FARM_SELL_LEVEL = 10
+    // v2.3 - 파괴가 +10부터 시작하므로 안전하게 +9에서 판다. +10을 노리면
+    // 자금 모으기 판의 10%가 통째로 부서진다.
+    private const val FARM_SELL_LEVEL = 9
 
     /** 유지하려는 방지권 재고. */
     private const val PREVENT_STOCK = 5
@@ -114,12 +116,15 @@ object BalanceSimulation {
                 continue
             }
 
-            // 2. 검 확보
+            // 2. 검 확보. 조각이 넉넉하면 가장 높은 워프권부터 쓴다(v2.3) -
+            // 파괴가 남긴 조각으로 +15/+10/+5 에서 다시 시작하는 것이 이 경제의 축이다.
             if (state.sword == null) {
-                val sword5 = Recipes.byId("sword5")
+                val warp = listOf("sword15", "sword10", "sword5")
+                    .map { Recipes.byId(it) }
+                    .firstOrNull { Recipes.canCraft(state, it) }
                 state = when {
-                    Recipes.canCraft(state, sword5) ->
-                        Recipes.craft(state, sword5, WeaponFamily.STRAIGHT)
+                    warp != null ->
+                        Recipes.craft(state, warp, WeaponFamily.STRAIGHT)
 
                     Economy.canBuySword(state) ->
                         Economy.buySword(state, WeaponFamily.STRAIGHT)

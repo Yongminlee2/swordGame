@@ -51,6 +51,6 @@ object CodexOffer {
         val entries = WeaponCatalog.ENTRIES.toSet()
         val steps = Progress.entriesOf(progress).count { it in entries } / SLOT_STEP
         val value = (steps * STEP_BONUS).coerceAtMost(MAX_BONUS)
-        return ForgeBonus(successRate = value, destroyGuard = value)
+        return ForgeBonus(successRate = value, dropGuard = value)
     }
 }

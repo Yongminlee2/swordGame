@@ -14,7 +14,9 @@ class CraftManyTest {
     private val stone = Recipes.byId("stone")
     private val sword5 = Recipes.byId("sword5")
 
+    // 소모품·강화석 교환은 깊은 국면 전용이다(v2.3)
     private fun state(shards: Int, sword: Sword? = null) = GameState(
+        bestLevel = LegendForge.LEVEL,
         difficulty = Difficulty.ENDLESS,
         shards = shards,
         sword = sword,
