@@ -4,8 +4,18 @@
     <!-- 진동은 런타임 요청이 없는 권한이다. 선언만 하면 된다. -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!--
+        allowBackup 은 꺼 둔다.
+
+        켜 두면 구글이 files/ 를 통째로 백업했다가 **재설치할 때 되살린다.**
+        앱을 지우고 새로 깔아도 세이브·도감이 돌아와서, 앱을 켜기도 전에 files/ 에
+        save_endless.json 이 들어 있었다 — 초기화가 안 되는 것처럼 보인 진짜 이유다.
+
+        출시 전에 다시 켤지 정한다. 켜면 기기를 바꿔도 진행도가 따라가는 이점이 있지만,
+        되살아난 세이브와 지금 세이브가 부딪히는 경우를 함께 설계해야 한다.
+    -->
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="false"
