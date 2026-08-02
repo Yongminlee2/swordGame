@@ -11,19 +11,17 @@ package com.geomgang.core
  */
 object CodexOffer {
 
-    /** 보너스가 한 계단 오르는 칸 수. */
-    const val SLOT_STEP: Int = 10
-
     /**
-     * 한 계단이 주는 몫. 0.002 는 0.2%p 다.
+     * 칸 하나가 주는 몫. 0.0002 는 0.02%p 다.
      *
-     * v2.1에서 칸이 324→156으로 줄면서 0.1%p 그대로면 성장 축 하나가 반토막 난다.
-     * 계단값을 두 배로 올려 만점을 +3.0%p 언저리에 유지한다.
+     * 계단식(10칸마다 0.2%p)이었는데 **아홉 칸을 바쳐도 숫자가 0에서 꿈쩍하지
+     * 않았다** — 검을 태워 바쳤는데 아무 일도 없는 것처럼 보이면 도감은 함정으로
+     * 읽힌다. 한 칸마다 오르게 바꿨다. 총량은 같다(10칸 = 0.2%p).
      */
-    const val STEP_BONUS: Double = 0.002
+    const val PER_SLOT_BONUS: Double = 0.0002
 
-    /** 다 채웠을 때의 몫. 156칸이면 15계단 × 0.2%p = 3.0%p. */
-    val MAX_BONUS: Double = (WeaponCatalog.ENTRIES.size / SLOT_STEP) * STEP_BONUS
+    /** 다 채웠을 때의 몫. 156칸 × 0.02%p = 3.12%p. */
+    val MAX_BONUS: Double = WeaponCatalog.ENTRIES.size * PER_SLOT_BONUS
 
     /** 이 검이 여는 도감 칸. */
     fun slotOf(sword: Sword): CodexEntry =
@@ -44,13 +42,13 @@ object CodexOffer {
     fun offer(progress: ProgressState, difficulty: Difficulty, sword: Sword): ProgressState =
         Progress.refresh(Progress.registerSword(progress, difficulty, sword))
 
-    /** 채운 칸 수로 정해지는 보너스. 성공률과 파괴방지가 같은 크기다. */
+    /** 채운 칸 수로 정해지는 보너스. 성공률과 하락방지가 같은 크기다. */
     fun bonusOf(progress: ProgressState): ForgeBonus {
         // 노출된 칸만 센다. 옛 세이브가 채운 숨긴 계열 칸이 보너스를 부풀리면
         // 화면의 "n / 156" 과 확률이 서로 다른 말을 하게 된다.
         val entries = WeaponCatalog.ENTRIES.toSet()
-        val steps = Progress.entriesOf(progress).count { it in entries } / SLOT_STEP
-        val value = (steps * STEP_BONUS).coerceAtMost(MAX_BONUS)
+        val filled = Progress.entriesOf(progress).count { it in entries }
+        val value = (filled * PER_SLOT_BONUS).coerceAtMost(MAX_BONUS)
         return ForgeBonus(successRate = value, dropGuard = value)
     }
 }

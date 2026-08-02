@@ -34,24 +34,24 @@ class CodexOfferTest {
         assertFalse(CodexOffer.canOffer(after, sword))
     }
 
+    /**
+     * **한 칸마다** 보너스가 오른다(v2.3).
+     *
+     * 계단식(10칸마다)이었을 때는 아홉 칸을 바쳐도 숫자가 0이라
+     * "도감에 넣었는데 왜 +가 없냐"는 말이 실기기에서 실제로 나왔다.
+     */
     @Test
-    fun `열 칸마다 보너스가 한 계단 오른다`() {
+    fun `한 칸마다 보너스가 오른다`() {
         var p = empty
-        for (level in 0 until 10) {
+        p = CodexOffer.offer(p, Difficulty.ENDLESS, Sword(WeaponFamily.STRAIGHT, 0))
+        assertEquals(CodexOffer.PER_SLOT_BONUS, CodexOffer.bonusOf(p).successRate, 1e-9)
+
+        for (level in 1 until 10) {
             p = CodexOffer.offer(p, Difficulty.ENDLESS, Sword(WeaponFamily.STRAIGHT, level))
         }
         val bonus = CodexOffer.bonusOf(p)
-        assertEquals(CodexOffer.STEP_BONUS, bonus.successRate, 1e-9)
-        assertEquals(CodexOffer.STEP_BONUS, bonus.dropGuard, 1e-9)
-    }
-
-    @Test
-    fun `아홉 칸으로는 아직 오르지 않는다`() {
-        var p = empty
-        for (level in 0 until 9) {
-            p = CodexOffer.offer(p, Difficulty.ENDLESS, Sword(WeaponFamily.STRAIGHT, level))
-        }
-        assertEquals(0.0, CodexOffer.bonusOf(p).successRate, 1e-9)
+        assertEquals(CodexOffer.PER_SLOT_BONUS * 10, bonus.successRate, 1e-9)
+        assertEquals(CodexOffer.PER_SLOT_BONUS * 10, bonus.dropGuard, 1e-9)
     }
 
     /** 전체를 다 채워도 상한을 넘지 않는다. */
