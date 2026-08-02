@@ -67,8 +67,13 @@ fun StorageScreen(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
             )
+            // 조각은 시즌2 화폐다. 시즌1에 보여 주면 쓸 수 없는 숫자만 하나 는다.
             Text(
-                text = "골드 %,d · 조각 %,d".format(state.gold, state.shards),
+                text = if (state.deepUnlocked) {
+                    "골드 %,d · 조각 %,d".format(state.gold, state.shards)
+                } else {
+                    "골드 %,d".format(state.gold)
+                },
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
             )
@@ -214,18 +219,22 @@ private fun StorageRow(
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 RowAction(
                     // 자릿수를 다 적으면 버튼 안에서 접힌다. 지갑 줄과 같은 축약을 쓴다.
-                    label = "💰 ${compactGold(Economy.sellPrice(sword.level))}",
+                    label = "💰 ${compactGold(Economy.sellPrice(sword))}",
                     enabled = !state.busy,
                     modifier = Modifier.weight(1f),
                     onClick = onSell,
                 )
-                RowAction(
-                    label = "🔨 ${Storage.scrapShards(sword)}",
-                    // 전설검을 부수면 다시 벼릴 값의 5분의 1도 안 나온다([Storage.canScrap]).
-                    enabled = !state.busy && Storage.canScrap(sword),
-                    modifier = Modifier.weight(1f),
-                    onClick = onScrap,
-                )
+                // 분해는 조각·강화석을 주는 시즌2 창구다. 시즌1에는 자리도 없다 -
+                // 쓸 수 없는 재화를 주는 버튼은 함정이다.
+                if (state.deepUnlocked) {
+                    RowAction(
+                        label = "🔨 ${Storage.scrapShards(sword)}",
+                        // 전설검을 부수면 다시 벼릴 값의 5분의 1도 안 나온다([Storage.canScrap]).
+                        enabled = !state.busy && Storage.canScrap(sword),
+                        modifier = Modifier.weight(1f),
+                        onClick = onScrap,
+                    )
+                }
                 RowAction(
                     label = "📖 도감",
                     // 이미 찬 칸이면 잠긴다. 검만 사라지고 얻는 게 없으면 함정이다.

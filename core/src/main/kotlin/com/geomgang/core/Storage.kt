@@ -50,12 +50,12 @@ object Storage {
         )
     }
 
-    /** 보관함의 검을 판다. */
+    /** 보관함의 검을 판다. 계열 배수가 붙는다 — 조합검은 더 비싸다. */
     fun sell(state: GameState, index: Int): GameState {
         require(index in state.storage.indices) { "no sword at $index" }
         val sword = state.storage[index]
         return state.copy(
-            gold = state.gold + Economy.sellPrice(sword.level),
+            gold = state.gold + Economy.sellPrice(sword),
             storage = state.storage.toMutableList().apply { removeAt(index) },
         )
     }

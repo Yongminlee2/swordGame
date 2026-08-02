@@ -110,9 +110,11 @@ class StorageTest {
 
     @Test
     fun `보관함에서 팔면 골드가 들어온다`() {
-        val s = state(storage = listOf(Sword(WeaponFamily.CURVED, 10)))
+        val sword = Sword(WeaponFamily.CURVED, 10)
+        val s = state(storage = listOf(sword))
         val after = Storage.sell(s, 0)
-        assertEquals(Economy.sellPrice(10), after.gold)
+        // 계열 배수가 붙은 값이다 - 곡도는 직검보다 조금 더 쳐 준다
+        assertEquals(Economy.sellPrice(sword), after.gold)
         assertTrue(after.storage.isEmpty())
     }
 

@@ -179,7 +179,12 @@ private fun RecipeList(state: ForgeUiState) {
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFFFFD54A),
             )
-            UniqueSwords.RECIPES.forEach { recipe ->
+            // 정수를 요구하는 레시피는 시즌2(용검 뒤)부터 보인다. 시즌1은 사냥터가
+            // 잠겨 정수를 얻을 길이 없다 - 만들 수 없는 목록만 늘어놓게 된다.
+            val visible = UniqueSwords.RECIPES.filter {
+                state.deepUnlocked || it.essences.isEmpty()
+            }
+            visible.forEach { recipe ->
                 val found = recipe.id in state.progress.uniqueFound
                 // **정수 요구는 숨기지 않는다.** 이건 비밀이 아니라 값이다.
                 // 어떤 검을 섞는지가 수수께끼고, 정수는 "얼마를 내야 하는지" 다.
@@ -210,19 +215,21 @@ private fun RecipeList(state: ForgeUiState) {
             }
 
             // 정수는 보스가 준다. 어디서 오는지도 한 줄로 말해 준다 —
-            // 그러지 않으면 "이 숫자는 어디서 났지" 로 끝난다.
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = if (state.essences.isEmpty()) {
-                    "정수는 사냥터 보스가 준다. 고유검 조합의 촉매다."
-                } else {
-                    "보유 정수 — " + state.essences.entries.joinToString(" · ") {
-                        "${Zone.fromId(it.key).displayName} ${it.value}"
-                    }
-                },
-                fontSize = 10.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-            )
+            // 그러지 않으면 "이 숫자는 어디서 났지" 로 끝난다. 시즌2 이야기다.
+            if (state.deepUnlocked) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = if (state.essences.isEmpty()) {
+                        "정수는 사냥터 보스가 준다. 고유검 조합의 촉매다."
+                    } else {
+                        "보유 정수 — " + state.essences.entries.joinToString(" · ") {
+                            "${Zone.fromId(it.key).displayName} ${it.value}"
+                        }
+                    },
+                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                )
+            }
         }
     }
 }

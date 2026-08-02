@@ -32,7 +32,7 @@ object HelpTopics {
             "🗡", "계열",
             "상점에 나오는 것은 기본 4계열뿐이고, 시작은 직검 하나다.\n" +
                 "곡도는 +${Progress.CURVED_UNLOCK_LEVEL} 달성, " +
-                "대검은 구역 ${Progress.GREAT_UNLOCK_ZONES}곳 클리어, " +
+                "대검은 검 파괴 ${Progress.GREAT_UNLOCK_DESTROYS}회 겪기, " +
                 "세검은 조합 ${Progress.RAPIER_UNLOCK_FUSIONS}회로 열린다.\n" +
                 "마검·성검은 조합으로 만들고, 그 둘을 +${LegendForge.MATERIAL_LEVEL}까지 " +
                 "올려 합치면 용검(전설, +${LegendForge.LEVEL})이다.",

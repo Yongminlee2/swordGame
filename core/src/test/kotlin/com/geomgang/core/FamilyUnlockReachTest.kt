@@ -53,12 +53,13 @@ class FamilyUnlockReachTest {
     @Test
     fun `전설 재료로 가는 길에 숨은 조건이 없다`() {
         // 상점에서 살 수 있는 기본 계열은 전부 드러난 조건으로 열린다
+        // 전부 시즌1 활동이다 - 사냥(구역)을 요구하는 고리가 하나라도 있으면 데드락이다
         val reachable = ProgressState(
             stats = Stats(
                 bestLevelEver = Progress.CURVED_UNLOCK_LEVEL,
                 fusions = Progress.RAPIER_UNLOCK_FUSIONS.toLong(),
+                destroys = Progress.GREAT_UNLOCK_DESTROYS.toLong(),
             ),
-            clearedZones = Zone.entries.take(Progress.GREAT_UNLOCK_ZONES).map { it.id }.toSet(),
         )
         for (family in WeaponFamily.BASICS) {
             assertTrue("$family 가 안 열렸다", Progress.basicFamilyUnlocked(reachable, family))

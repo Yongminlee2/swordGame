@@ -168,6 +168,8 @@ fun ShopScreen(
 
         // --- 재료 ---
         // 골드는 남고 강화석은 모자란 상태가 후반의 기본값이다. 둘을 잇는다.
+        // 시즌1은 강화석을 아예 안 먹으므로([Unlocks.stonesUsed]) 칸째로 감춘다.
+        if (state.deepUnlocked) {
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 Text("재료", fontWeight = FontWeight.Bold)
@@ -205,6 +207,7 @@ fun ShopScreen(
         }
 
         Spacer(Modifier.height(12.dp))
+        }
 
         // --- 아이템 ---
         Card(Modifier.fillMaxWidth()) {

@@ -28,14 +28,16 @@ class FamilyUnlockTest {
         assertTrue(WeaponFamily.CURVED in Progress.unlockedFamilies(after))
     }
 
+    /**
+     * 예전 조건은 "구역 3곳 클리어" 였다. 사냥터가 시즌2(용검 뒤)로 밀리면서
+     * 대검 → 성검 → 용검 사슬이 데드락이 됐다 — 시즌1 활동(파괴)으로 바꿨다.
+     */
     @Test
-    fun `구역 셋을 깨면 대검이 열린다`() {
-        var p = fresh
-        p = Progress.onZoneCleared(p, "meadow")
-        p = Progress.onZoneCleared(p, "forest")
-        assertFalse(WeaponFamily.GREAT in Progress.unlockedFamilies(p))
-        p = Progress.onZoneCleared(p, "cave")
-        assertTrue(WeaponFamily.GREAT in Progress.unlockedFamilies(p))
+    fun `파괴를 세 번 겪으면 대검이 열린다`() {
+        val two = ProgressState(stats = Stats(destroys = 2))
+        assertFalse(WeaponFamily.GREAT in Progress.unlockedFamilies(two))
+        val three = ProgressState(stats = Stats(destroys = Progress.GREAT_UNLOCK_DESTROYS.toLong()))
+        assertTrue(WeaponFamily.GREAT in Progress.unlockedFamilies(three))
     }
 
     @Test
@@ -62,7 +64,7 @@ class FamilyUnlockTest {
     fun `조합 전용 계열은 어떤 진행도에서도 상점에 나오지 않는다`() {
         val maxed = ProgressState(
             achievements = Achievement.entries.toSet(),
-            stats = Stats(bestLevelEver = 99, fusions = 999),
+            stats = Stats(bestLevelEver = 99, fusions = 999, destroys = 999),
             uniqueFound = UniqueSwords.RECIPES.map { it.id }.toSet(),
             clearedZones = Zone.entries.map { it.id }.toSet(),
         )

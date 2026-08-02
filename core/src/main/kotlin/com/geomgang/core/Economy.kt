@@ -87,6 +87,40 @@ object Economy {
         return value.roundToLong()
     }
 
+    /**
+     * 계열 판매 배수 — **계열이 가격에 나타나는 유일한 자리.**
+     *
+     * 같은 단계면 계열 무관 같은 값이었다. 조합검(마검·성검)을 만들어도 판매가가
+     * 그대로라 조합의 값어치가 가격에 없었다. 기본 4계열은 해금 조건이 어려운
+     * 순으로 조금씩, 조합검은 재료 두 자루와 조합비의 값을 쳐서 크게 오른다.
+     *
+     * **불변식 둘. 깨뜨리면 화폐가 무너진다.**
+     * - 기본 4계열 +0 판매가 < 구매가([BASE_SWORD_PRICE]) — 사서 되팔면 손해여야 한다.
+     * - 조합해 팔기 < 재료 둘을 그냥 팔기 — 1.8 곡선의 볼록성과 평균 단계가 지킨다.
+     *   조합은 가격표가 아니라 계보를 위한 것이고, 프리미엄은 손해를 덜어 줄 뿐이다.
+     *
+     * 직검이 1.0 인 것은 시뮬레이터가 직검으로만 돌기 때문이다 — 기준이 움직이면
+     * 그 모형이 재려던 것이 흐려진다. 숨긴 계열도 값을 갖는다(옛 세이브 보유분).
+     */
+    fun familyMult(family: WeaponFamily): Double = when (family) {
+        WeaponFamily.STRAIGHT -> 1.00
+        WeaponFamily.CURVED -> 1.05
+        WeaponFamily.GREAT -> 1.10
+        WeaponFamily.RAPIER -> 1.15
+        WeaponFamily.DEMON -> 1.50
+        WeaponFamily.HOLY -> 1.65
+        WeaponFamily.DRAGON -> 2.00
+        WeaponFamily.TWIN, WeaponFamily.SCYTHE -> 1.20
+        WeaponFamily.AXE, WeaponFamily.SPEAR -> 1.25
+        WeaponFamily.SPIRIT -> 1.60
+        WeaponFamily.FUSED -> 1.70
+        WeaponFamily.VOID -> 1.80
+    }
+
+    /** 이 검을 팔았을 때 받는 골드. 단계 곡선에 계열 배수를 얹는다. */
+    fun sellPrice(sword: Sword): Long =
+        (sellPrice(sword.level) * familyMult(sword.family)).roundToLong()
+
     fun priceOf(item: Item): Long = when (item) {
         Item.PREVENT_TICKET -> PREVENT_TICKET_PRICE
         Item.BLESSING_SCROLL -> BLESSING_SCROLL_PRICE
@@ -147,7 +181,7 @@ object Economy {
     fun sellSword(state: GameState): GameState {
         val sword = state.sword
         check(canSellSword(state) && sword != null) { "no sword to sell" }
-        return state.copy(gold = state.gold + sellPrice(sword.level), sword = null)
+        return state.copy(gold = state.gold + sellPrice(sword), sword = null)
     }
 
     /**

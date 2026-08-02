@@ -1243,7 +1243,7 @@ class ForgeViewModel(
 
     fun sellSword() {
         if (busy || !Economy.canSellSword(game)) return
-        val price = Economy.sellPrice(game.sword?.level ?: 0)
+        val price = game.sword?.let { Economy.sellPrice(it) } ?: 0
         game = Economy.sellSword(game)
         progress = Progress.refresh(Progress.onSell(progress, price))
         applyBailout()
@@ -1329,7 +1329,7 @@ class ForgeViewModel(
     /** 보관함의 검을 판다. */
     fun sellFromStorage(index: Int) {
         if (busy || index !in game.storage.indices) return
-        val price = Economy.sellPrice(game.storage[index].level)
+        val price = Economy.sellPrice(game.storage[index])
         game = Storage.sell(game, index)
         progress = Progress.refresh(Progress.onSell(progress, price))
         sound.purchase()
@@ -1543,7 +1543,7 @@ class ForgeViewModel(
             luckCharms = game.inventory.luckCharms,
             bestLevel = game.bestLevel,
             upgradeCost = Economy.upgradeCost(level),
-            sellPrice = Economy.sellPrice(level),
+            sellPrice = sword?.let { Economy.sellPrice(it) } ?: 0,
             // 성공률만이 아니라 하락·파괴까지 한 곳에서 낸다. 화면이 다시 계산하면
             // 규칙이 두 군데가 되고 반드시 어긋난다.
             odds = ForgeOdds.of(

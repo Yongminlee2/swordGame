@@ -184,8 +184,15 @@ object Progress {
     /** 곡도가 열리는 최고 단계. */
     const val CURVED_UNLOCK_LEVEL = 10
 
-    /** 대검이 열리는 데 필요한 서로 다른 구역 클리어 수. */
-    const val GREAT_UNLOCK_ZONES = 3
+    /**
+     * 대검이 열리는 데 필요한 누적 파괴 수.
+     *
+     * 예전 조건은 "구역 3곳 클리어" 였다. 그런데 사냥터는 용검 뒤에 열리는데
+     * 대검 → 성검 → 용검 사슬이라 **시즌1에서 용검에 영영 닿을 수 없는 데드락**이었다.
+     * 파괴는 +13부터 자연히 겪는 시즌1 활동이고, 검을 잃은 자리에서 새 계열이
+     * 열리는 것이라 위로도 된다.
+     */
+    const val GREAT_UNLOCK_DESTROYS = 3
 
     /**
      * 세검이 열리는 데 필요한 조합 횟수.
@@ -210,7 +217,7 @@ object Progress {
     fun basicFamilyUnlocked(p: ProgressState, family: WeaponFamily): Boolean = when (family) {
         WeaponFamily.STRAIGHT -> true
         WeaponFamily.CURVED -> p.stats.bestLevelEver >= CURVED_UNLOCK_LEVEL
-        WeaponFamily.GREAT -> p.clearedZones.size >= GREAT_UNLOCK_ZONES
+        WeaponFamily.GREAT -> p.stats.destroys >= GREAT_UNLOCK_DESTROYS
         WeaponFamily.RAPIER -> p.stats.fusions >= RAPIER_UNLOCK_FUSIONS
         else -> false
     }
@@ -221,8 +228,8 @@ object Progress {
         return when (family) {
             WeaponFamily.CURVED -> "아무 검 +$CURVED_UNLOCK_LEVEL 달성"
             WeaponFamily.GREAT ->
-                "구역 ${GREAT_UNLOCK_ZONES}곳 클리어 " +
-                    "(${p.clearedZones.size}/$GREAT_UNLOCK_ZONES)"
+                "검 파괴 ${GREAT_UNLOCK_DESTROYS}회 겪기 " +
+                    "(${p.stats.destroys}/$GREAT_UNLOCK_DESTROYS)"
 
             WeaponFamily.RAPIER ->
                 "조합소에서 조합 ${RAPIER_UNLOCK_FUSIONS}회 " +

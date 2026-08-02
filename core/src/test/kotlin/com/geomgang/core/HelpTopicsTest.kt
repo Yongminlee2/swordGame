@@ -40,7 +40,7 @@ class HelpTopicsTest {
     fun `계열 설명이 실제 해금 조건을 말한다`() {
         val body = HelpTopics.ALL.first { it.title == "계열" }.body
         assertTrue(body.contains("+${Progress.CURVED_UNLOCK_LEVEL}"))
-        assertTrue(body.contains("${Progress.GREAT_UNLOCK_ZONES}"))
+        assertTrue(body.contains("${Progress.GREAT_UNLOCK_DESTROYS}"))
     }
 
     @Test
