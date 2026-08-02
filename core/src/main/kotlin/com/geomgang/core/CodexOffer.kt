@@ -12,16 +12,30 @@ package com.geomgang.core
 object CodexOffer {
 
     /**
-     * 칸 하나가 주는 몫. 0.0002 는 0.02%p 다.
+     * 어느 칸이든 주는 바탕 몫. 0.0001 은 0.01%p 다.
      *
      * 계단식(10칸마다 0.2%p)이었는데 **아홉 칸을 바쳐도 숫자가 0에서 꿈쩍하지
      * 않았다** — 검을 태워 바쳤는데 아무 일도 없는 것처럼 보이면 도감은 함정으로
-     * 읽힌다. 한 칸마다 오르게 바꿨다. 총량은 같다(10칸 = 0.2%p).
+     * 읽힌다. 바탕 몫이 있어 어떤 칸을 채워도 화면의 소수 둘째 자리가 움직인다.
      */
-    const val PER_SLOT_BONUS: Double = 0.0002
+    const val PER_SLOT_BONUS: Double = 0.0001
 
-    /** 다 채웠을 때의 몫. 156칸 × 0.02%p = 3.12%p. */
-    val MAX_BONUS: Double = WeaponCatalog.ENTRIES.size * PER_SLOT_BONUS
+    /**
+     * 칸의 **단계당** 더해지는 몫. 0.00002 는 0.002%p 다.
+     *
+     * 같은 한 칸이라도 +20 검은 +0 검보다 훨씬 비싸다 — 바치는 값이 다른데
+     * 보너스가 같으면 깊은 칸을 채울 이유가 흐려진다. +0 = 0.01%p,
+     * +10 = 0.03%p, +20 = 0.05%p. 도감 만점은 약 +5%p 로, 균일 0.02%p
+     * 시절(+3.12%p)보다 커졌다 — 깊은 칸의 값을 쳐 준 만큼이다.
+     */
+    const val PER_LEVEL_BONUS: Double = 0.00002
+
+    /** 칸 하나의 몫 = 바탕 + 깊이. */
+    fun slotBonus(entry: CodexEntry): Double =
+        PER_SLOT_BONUS + entry.level * PER_LEVEL_BONUS
+
+    /** 다 채웠을 때의 몫. */
+    val MAX_BONUS: Double = WeaponCatalog.ENTRIES.sumOf { slotBonus(it) }
 
     /** 이 검이 여는 도감 칸. */
     fun slotOf(sword: Sword): CodexEntry =
@@ -42,13 +56,15 @@ object CodexOffer {
     fun offer(progress: ProgressState, difficulty: Difficulty, sword: Sword): ProgressState =
         Progress.refresh(Progress.registerSword(progress, difficulty, sword))
 
-    /** 채운 칸 수로 정해지는 보너스. 성공률과 하락방지가 같은 크기다. */
+    /** 채운 칸들의 몫 합. 성공률과 하락방지가 같은 크기다. */
     fun bonusOf(progress: ProgressState): ForgeBonus {
         // 노출된 칸만 센다. 옛 세이브가 채운 숨긴 계열 칸이 보너스를 부풀리면
         // 화면의 "n / 156" 과 확률이 서로 다른 말을 하게 된다.
         val entries = WeaponCatalog.ENTRIES.toSet()
-        val filled = Progress.entriesOf(progress).count { it in entries }
-        val value = (filled * PER_SLOT_BONUS).coerceAtMost(MAX_BONUS)
+        val value = Progress.entriesOf(progress)
+            .filter { it in entries }
+            .sumOf { slotBonus(it) }
+            .coerceAtMost(MAX_BONUS)
         return ForgeBonus(successRate = value, dropGuard = value)
     }
 }

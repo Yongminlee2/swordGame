@@ -50,8 +50,28 @@ class CodexOfferTest {
             p = CodexOffer.offer(p, Difficulty.ENDLESS, Sword(WeaponFamily.STRAIGHT, level))
         }
         val bonus = CodexOffer.bonusOf(p)
-        assertEquals(CodexOffer.PER_SLOT_BONUS * 10, bonus.successRate, 1e-9)
-        assertEquals(CodexOffer.PER_SLOT_BONUS * 10, bonus.dropGuard, 1e-9)
+        // 0..9 열 칸 = 바탕 10칸 + 깊이 (0+1+..+9)
+        val expected = CodexOffer.PER_SLOT_BONUS * 10 + CodexOffer.PER_LEVEL_BONUS * 45
+        assertEquals(expected, bonus.successRate, 1e-9)
+        assertEquals(expected, bonus.dropGuard, 1e-9)
+    }
+
+    /** 같은 한 칸이라도 깊은 검이 더 준다 — 바치는 값이 다르면 보너스도 달라야 한다. */
+    @Test
+    fun `깊은 칸이 얕은 칸보다 더 준다`() {
+        val shallow = CodexOffer.bonusOf(
+            CodexOffer.offer(empty, Difficulty.ENDLESS, Sword(WeaponFamily.STRAIGHT, 0)),
+        )
+        val deep = CodexOffer.bonusOf(
+            CodexOffer.offer(empty, Difficulty.ENDLESS, Sword(WeaponFamily.STRAIGHT, 20)),
+        )
+        assertTrue(deep.successRate > shallow.successRate)
+        // +20 = 바탕 0.01%p + 깊이 0.04%p = 0.05%p
+        assertEquals(
+            CodexOffer.PER_SLOT_BONUS + 20 * CodexOffer.PER_LEVEL_BONUS,
+            deep.successRate,
+            1e-9,
+        )
     }
 
     /** 전체를 다 채워도 상한을 넘지 않는다. */
