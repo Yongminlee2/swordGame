@@ -441,13 +441,9 @@ fun ForgeScreen(
                         fontWeight = FontWeight.Bold,
                     )
                 }
-            } else {
-                Text(
-                    text = "🔒 사냥터는 용검을 벼린 뒤에 열린다",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f),
-                )
             }
+            // 잠긴 동안에는 **아무것도 두지 않는다.** 자물쇠 한 줄이 초반 내내 붙어 있으면
+            // 아직 손도 못 댈 것을 계속 들여다보게 된다. 열릴 때 나타나면 그걸로 족하다.
             Spacer(Modifier.height(10.dp))
             // 회랑은 사냥터 안으로 갔다. 퀘스트는 v2.1에서 숨겼다 — 다섯 개면 한 줄에 선다.
             val enabled = !state.busy

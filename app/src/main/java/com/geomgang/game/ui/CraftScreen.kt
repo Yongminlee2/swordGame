@@ -67,56 +67,65 @@ fun CraftScreen(
     ) {
         ScreenHeader(title = "조합소", onBack = onBack, wallet = state.wallet())
 
-        Text(
-            text = "보관함의 검 여러 자루를 녹여 한 자루로 만든다",
-            fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-        )
+        // **화면 전체가 하나의 목록이다.** 예전에는 조합법·전설 칸·조합 패널이
+        // 고정으로 쌓이고 재료 목록만 남는 높이에서 스크롤됐다. 위 칸이 늘어나자
+        // 재료 목록이 화면 밖으로 밀려 **아래로 내려갈 수가 없었다.**
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            item {
+                Text(
+                    text = "보관함의 검 두 자루를 녹여 한 자루로 만든다",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                )
+            }
 
-        // 조합법을 화면에 항상 적는다. "뭘 섞어야 하는지" 를 외우게 하면
-        // 조합소가 아니라 암기장이 된다.
-        Spacer(Modifier.height(10.dp))
-        RecipeList(state)
+            // 조합법을 화면에 항상 적는다. "뭘 섞어야 하는지" 를 외우게 하면
+            // 조합소가 아니라 암기장이 된다.
+            item { RecipeList(state) }
 
-        // 재료가 모자라 아래가 잘려 나가도 이 칸은 남는다 - 무엇을 모아야 하는지가
-        // 바로 그때 가장 필요한 정보다.
-        Spacer(Modifier.height(10.dp))
-        LegendPanel(
-            missing = state.legendMissing,
-            canCraft = state.canCraftLegend,
-            canRecraft = state.canRecraftLegend,
-            unlocked = state.legendUnlocked,
-            shards = state.shards,
-            handsFull = state.sword != null,
-            onCraft = onCraftLegend,
-            onRecraft = onRecraftLegend,
-        )
+            // 재료가 모자라도 이 칸은 남는다 - 무엇을 모아야 하는지가
+            // 바로 그때 가장 필요한 정보다.
+            item {
+                LegendPanel(
+                    missing = state.legendMissing,
+                    canCraft = state.canCraftLegend,
+                    canRecraft = state.canRecraftLegend,
+                    unlocked = state.legendUnlocked,
+                    shards = state.shards,
+                    handsFull = state.sword != null,
+                    onCraft = onCraftLegend,
+                    onRecraft = onRecraftLegend,
+                )
+            }
 
-        if (state.storage.size < Fusion.MIN_MATERIALS) {
-            Spacer(Modifier.height(16.dp))
-            Text(
-                text = "재료가 모자라다. 보관함에 검이 " +
-                    "${Fusion.MIN_MATERIALS}자루는 있어야 한다.\n" +
-                    "사냥에서 몬스터가 검을 떨어뜨린다 — 보스는 반드시 준다.",
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
-            )
-            return@Column
-        }
+            if (state.storage.size < Fusion.MIN_MATERIALS) {
+                item {
+                    Text(
+                        text = "재료가 모자라다. 보관함에 검이 " +
+                            "${Fusion.MIN_MATERIALS}자루는 있어야 한다.\n" +
+                            "상점에서 검을 사 보관함에 넣을 수 있다.",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
+                    )
+                }
+                return@LazyColumn
+            }
 
-        Spacer(Modifier.height(12.dp))
-        FusionPanel(
-            state = state,
-            picked = picked,
-            onFuse = {
-                onFuse(picked.toList())
-                picked = emptySet()
-            },
-            onClear = { picked = emptySet() },
-        )
+            item {
+                FusionPanel(
+                    state = state,
+                    picked = picked,
+                    onFuse = {
+                        onFuse(picked.toList())
+                        picked = emptySet()
+                    },
+                    onClear = { picked = emptySet() },
+                )
+            }
 
-        Spacer(Modifier.height(12.dp))
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             itemsIndexed(state.storage) { index, sword ->
                 MaterialRow(
                     sword = sword,
@@ -165,20 +174,24 @@ private fun RecipeList(state: ForgeUiState) {
             )
             UniqueSwords.RECIPES.forEach { recipe ->
                 val found = recipe.id in state.progress.uniqueFound
-                val essenceText = recipe.essences.entries.joinToString(" ") {
-                    "+ ${Zone.fromId(it.key).displayName} 정수 ${it.value}"
+                // **정수 요구는 숨기지 않는다.** 이건 비밀이 아니라 값이다.
+                // 어떤 검을 섞는지가 수수께끼고, 정수는 "얼마를 내야 하는지" 다.
+                // 감춰 두면 사냥에서 모은 정수가 뭐에 쓰이는지 알 길이 없다.
+                val essenceText = recipe.essences.entries.joinToString(" + ") {
+                    val have = state.essences[it.key] ?: 0
+                    "${Zone.fromId(it.key).displayName} 정수 ${it.value} ($have)"
                 }
                 Text(
                     text = if (found) {
-                        // 발견했으면 정확한 식을 보여 준다. 정수 요구까지.
                         recipe.needs.joinToString(" + ") { (family, minLevel, count) ->
                             val name = family?.displayName ?: "아무 검"
                             val level = if (minLevel > 0) " +$minLevel↑" else ""
                             if (count > 1) "$name$level ×$count" else "$name$level"
-                        } + (if (essenceText.isEmpty()) "" else " $essenceText") +
+                        } + (if (essenceText.isEmpty()) "" else " + $essenceText") +
                             "  =  ✦ ${recipe.name}"
                     } else {
-                        "??? — ${recipe.hint}"
+                        "??? — ${recipe.hint}" +
+                            (if (essenceText.isEmpty()) "" else "  [$essenceText]")
                     },
                     fontSize = 11.sp,
                     color = if (found) {
@@ -188,6 +201,21 @@ private fun RecipeList(state: ForgeUiState) {
                     },
                 )
             }
+
+            // 정수는 보스가 준다. 어디서 오는지도 한 줄로 말해 준다 —
+            // 그러지 않으면 "이 숫자는 어디서 났지" 로 끝난다.
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = if (state.essences.isEmpty()) {
+                    "정수는 사냥터 보스가 준다. 고유검 조합의 촉매다."
+                } else {
+                    "보유 정수 — " + state.essences.entries.joinToString(" · ") {
+                        "${Zone.fromId(it.key).displayName} ${it.value}"
+                    }
+                },
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+            )
         }
     }
 }
