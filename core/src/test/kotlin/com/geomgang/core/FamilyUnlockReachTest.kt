@@ -16,33 +16,33 @@ import org.junit.Test
 class FamilyUnlockReachTest {
 
     @Test
-    fun `세검은 조합 횟수로 열린다`() {
+    fun `세검은 강화 단계로 열린다`() {
         val none = ProgressState()
         assertFalse(Progress.basicFamilyUnlocked(none, WeaponFamily.RAPIER))
 
-        val fused = ProgressState(
-            stats = Stats(fusions = Progress.RAPIER_UNLOCK_FUSIONS.toLong()),
+        val reached = ProgressState(
+            stats = Stats(bestLevelEver = Progress.RAPIER_UNLOCK_LEVEL),
         )
-        assertTrue(Progress.basicFamilyUnlocked(fused, WeaponFamily.RAPIER))
+        assertTrue(Progress.basicFamilyUnlocked(reached, WeaponFamily.RAPIER))
     }
 
     /** 고유검을 하나도 못 찾아도 세검은 열려야 한다. */
     @Test
     fun `세검은 고유검과 무관하다`() {
-        val fused = ProgressState(
-            stats = Stats(fusions = Progress.RAPIER_UNLOCK_FUSIONS.toLong()),
+        val reached = ProgressState(
+            stats = Stats(bestLevelEver = Progress.RAPIER_UNLOCK_LEVEL),
             uniqueFound = emptySet(),
         )
-        assertTrue(Progress.basicFamilyUnlocked(fused, WeaponFamily.RAPIER))
-        assertNull(Progress.basicFamilyHint(fused, WeaponFamily.RAPIER))
+        assertTrue(Progress.basicFamilyUnlocked(reached, WeaponFamily.RAPIER))
+        assertNull(Progress.basicFamilyHint(reached, WeaponFamily.RAPIER))
     }
 
-    /** 잠긴 동안에는 몇 번 남았는지가 보여야 한다. */
+    /** 잠긴 동안에는 무엇을 해야 하는지가 보여야 한다. */
     @Test
-    fun `세검 힌트가 진행도를 담는다`() {
+    fun `세검 힌트가 조건을 담는다`() {
         val hint = Progress.basicFamilyHint(ProgressState(), WeaponFamily.RAPIER)
         assertNotNull(hint)
-        assertTrue("힌트=$hint", hint!!.contains("0/${Progress.RAPIER_UNLOCK_FUSIONS}"))
+        assertTrue("힌트=$hint", hint!!.contains("+${Progress.RAPIER_UNLOCK_LEVEL}"))
     }
 
     /**
@@ -56,8 +56,10 @@ class FamilyUnlockReachTest {
         // 전부 시즌1 활동이다 - 사냥(구역)을 요구하는 고리가 하나라도 있으면 데드락이다
         val reachable = ProgressState(
             stats = Stats(
-                bestLevelEver = Progress.CURVED_UNLOCK_LEVEL,
-                fusions = Progress.RAPIER_UNLOCK_FUSIONS.toLong(),
+                bestLevelEver = maxOf(
+                    Progress.CURVED_UNLOCK_LEVEL,
+                    Progress.RAPIER_UNLOCK_LEVEL,
+                ),
                 destroys = Progress.GREAT_UNLOCK_DESTROYS.toLong(),
             ),
         )
@@ -67,7 +69,14 @@ class FamilyUnlockReachTest {
 
         // 그 넷로 전설 재료 둘(마검·성검)이 전부 만들어진다
         for (material in LegendForge.MATERIALS) {
-            assertTrue("$material", FusionTable.ALL.any { it.result == material })
+            assertTrue("$material", Refinery.RECIPES.any { it.result == material })
+        }
+
+        // 계열 조합의 재료도 전부 기본 4계열이다 - 숨은 고리가 없어야 한다
+        for (recipe in Refinery.RECIPES) {
+            for (family in recipe.materials) {
+                assertTrue("$family 는 기본 계열이 아니다", family in WeaponFamily.BASICS)
+            }
         }
     }
 }

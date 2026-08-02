@@ -120,34 +120,37 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
                     )
                     Text(
                         text = "기본 4계열(직검·곡도·대검·세검)만 상점에 나온다. " +
-                            "마검·성검은 조합으로, 용검은 그 둘 +20을 합쳐 얻는다.",
+                            "마검·성검은 +20 두 자루의 조합으로, " +
+                            "용검은 그 둘 +20을 합쳐 얻는다.",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
                     )
                 }
             }
             items(
-                items = com.geomgang.core.FusionTable.ALL,
+                items = com.geomgang.core.Refinery.RECIPES,
                 span = { GridItemSpan(maxLineSpan) },
-            ) { entry ->
+            ) { recipe ->
                 Card(Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier.padding(10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         LevelThumb(
-                            family = entry.result,
+                            family = recipe.result,
                             level = 6,
                             size = 36.dp,
                         )
                         Column(Modifier.padding(start = 10.dp)) {
                             Text(
-                                text = entry.result.displayName,
+                                text = recipe.result.displayName,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                             )
                             Text(
-                                text = entry.hint,
+                                text = recipe.materials.joinToString(" + ") {
+                                    "${it.displayName}+${com.geomgang.core.Refinery.MATERIAL_LEVEL}"
+                                },
                                 fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                             )

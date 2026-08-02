@@ -33,13 +33,13 @@ class EconomyTest {
 
     @Test
     fun `판매가가 스펙 표와 일치한다`() {
-        // round(110 * 1.8^level)
+        // +10 까지 round(110 * 1.8^level), 그 위는 1.50 곡선(v2.3)
         assertEquals(110L, Economy.sellPrice(0))
         assertEquals(198L, Economy.sellPrice(1))
         assertEquals(2079L, Economy.sellPrice(5))
         assertEquals(39275L, Economy.sellPrice(10))
-        assertEquals(742130L, Economy.sellPrice(15))
-        assertEquals(14023060L, Economy.sellPrice(20))
+        assertEquals(298246L, Economy.sellPrice(15))
+        assertEquals(2264802L, Economy.sellPrice(20))
     }
 
     @Test

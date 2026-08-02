@@ -98,37 +98,40 @@ class UniqueIntegrationTest {
 
     // --- 강화 ---
 
+    /** 고유검은 벼려진 그대로다(v2.3) — 강화대에 오르지 않는다. */
     @Test
-    fun `시작의 검은 성공률이 3%p 높다`() {
-        // 성공 경계 - 기본 확률로는 실패하고 +3%p 면 성공하는 롤을 찾는다
-        val level = 14
-        val base = RateTable.successRate(Difficulty.ENDLESS, level + 1, blessing = false)
-        val roll = base + 0.01 // 기본으로는 실패, 보정으로는 성공
-        val origin = GameState(
-            difficulty = Difficulty.ENDLESS,
-            gold = 1_000_000_000,
-            sword = Sword(WeaponFamily.STRAIGHT, level, uniqueId = "origin"),
-            forgeStones = 50,
-        )
-        val result = ForgeEngine.attempt(origin, UsedItems.NONE, ScriptedRandom(roll))
-        assertTrue(result is ForgeResult.Success)
-    }
-
-    @Test
-    fun `불사조는 파괴 대신 3단계를 잃고 살아나며 고유의 힘을 잃는다`() {
-        val level = 17 // 파괴 가능 구간
+    fun `고유검은 강화할 수 없다`() {
         val state = GameState(
             difficulty = Difficulty.ENDLESS,
-            gold = 10_000_000,
-            sword = Sword(WeaponFamily.HOLY, level, uniqueId = "phoenix"),
+            gold = 1_000_000_000,
+            sword = Sword(WeaponFamily.STRAIGHT, 14, uniqueId = "origin"),
             forgeStones = 50,
         )
-        // 난수: 성공 판정 실패(1.0) -> 파괴 판정 성공(0.0)
-        val result = ForgeEngine.attempt(state, UsedItems.NONE, ScriptedRandom(1.0, 0.0))
-        assertTrue(result is ForgeResult.Drop)
-        val sword = result.state.sword!!
-        assertEquals(level - UniqueSwords.REVIVE_LEVEL_LOSS, sword.level)
-        assertNull(sword.uniqueId)
-        assertNull(result.state.pendingDestroy)
+        assertFalse(ForgeEngine.canAttempt(state, UsedItems.NONE))
+    }
+
+    /** 시작의 검은 **지니고만 있어도** 강화 보너스를 준다 — 보관함에 있어도 된다. */
+    @Test
+    fun `시작의 검은 소유만으로 성공률 3%p 를 더한다`() {
+        val without = GameState(
+            difficulty = Difficulty.ENDLESS,
+            sword = Sword(WeaponFamily.STRAIGHT, 5),
+        )
+        val with = without.copy(
+            storage = listOf(Sword(WeaponFamily.STRAIGHT, 10, uniqueId = "origin")),
+        )
+        val progress = ProgressState()
+        val delta = ForgeBonuses.of(with, progress).successRate -
+            ForgeBonuses.of(without, progress).successRate
+        assertEquals(UniqueSwords.ORIGIN_FORGE_BONUS, delta, 1e-9)
+    }
+
+    /** 불사조는 사냥 골드를 부른다 — 되살아나는 검이 아니다(v2.3). */
+    @Test
+    fun `불사조는 사냥 골드를 늘린다`() {
+        val plain = Sword(WeaponFamily.HOLY, 17)
+        val phoenix = plain.copy(uniqueId = "phoenix")
+        assertEquals(1.25, UniqueSwords.goldMultOf(phoenix), 1e-9)
+        assertEquals(1.0, UniqueSwords.goldMultOf(plain), 1e-9)
     }
 }

@@ -36,8 +36,9 @@ class RewardStackingTest {
 
     @Test
     fun `강화 성공률 보정 총합이 상한 아래다`() {
-        // 쌓아 온 보너스 + 시작의 검 3%p + 축복서를 다 겹쳐도 MAX_SUCCESS_RATE 가 막는다
-        val sword = Sword(WeaponFamily.STRAIGHT, 0, uniqueId = "origin")
+        // 쌓아 온 보너스 + 소유 보너스 + 축복서를 다 겹쳐도 MAX_SUCCESS_RATE 가 막는다
+        // (고유검은 강화대에 오르지 않으므로(v2.3) 평범한 검으로 잰다)
+        val sword = Sword(WeaponFamily.STRAIGHT, 0)
         val state = GameState(
             difficulty = Difficulty.ENDLESS,
             gold = 1_000_000,

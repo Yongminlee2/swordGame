@@ -10,7 +10,10 @@ enum class Item(val id: String, val displayName: String) {
     /** 다음 1회 성공률을 [RateTable.BLESSING_BONUS] 만큼 올린다. */
     BLESSING_SCROLL("blessing", "축복서"),
 
-    /** 다음 1회 실패해도 하락·파괴가 일어나지 않는다. */
+    /**
+     * 다음 1회 실패해도 **하락만** 막는다. 파괴는 그대로다(v2.3) —
+     * 부적이 파괴까지 막으면 방지권이 죽은 물건이 된다.
+     */
     LUCK_CHARM("luck", "행운부적"),
 }
 
@@ -238,7 +241,8 @@ data class GameState(
  * 설명하지 못했다. 이제 값(골드)이 선택을 가른다. 둘 다 켜면 두 장이 나간다.
  *
  * - 축복서 — 이번 판 확률만 올린다
- * - 부적 — 실패해도 부서지지 않지만 **담금질은 오른다**
+ * - 부적 — 실패해도 **하락만** 막는다. 파괴는 못 막는다(v2.3) — 그건 방지권의 몫이다.
+ *   담금질은 오른다.
  */
 data class UsedItems(
     val blessing: Boolean = false,

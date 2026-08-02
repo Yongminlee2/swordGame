@@ -77,12 +77,26 @@ object Economy {
      *
      * [RateTable.MAX_FINITE_LEVEL] 까지는 예전 곡선 그대로고, 그 위는 완만해진다.
      */
+    /**
+     * +11 부터의 판매가 증가율.
+     *
+     * v2.3에서 1.80 → 1.50. +10 위에서 1.80 을 끌고 가면 +20 한 자루가 1,400만이라
+     * 후반 골드가 뜻을 잃는다. +10 아래는 그대로다 — 거긴 파산 나선을 막으려고
+     * 시뮬레이션으로 맞춘 구간이라 손대지 않는다.
+     */
+    private const val PRICE_GROWTH_HIGH = 1.50
+
+    /** 판매가 곡선이 완만해지기 시작하는 단계. */
+    private const val HIGH_BAND_START = 10
+
     fun sellPrice(level: Int): Long {
         require(level >= 0) { "level must be >= 0, was $level" }
-        val finite = level.coerceAtMost(RateTable.MAX_FINITE_LEVEL)
-        val endless = (level - finite).coerceAtLeast(0)
+        val low = level.coerceAtMost(HIGH_BAND_START)
+        val high = (level.coerceAtMost(RateTable.MAX_FINITE_LEVEL) - low).coerceAtLeast(0)
+        val endless = (level - RateTable.MAX_FINITE_LEVEL).coerceAtLeast(0)
         val value = PRICE_BASE *
-            PRICE_GROWTH.pow(finite.toDouble()) *
+            PRICE_GROWTH.pow(low.toDouble()) *
+            PRICE_GROWTH_HIGH.pow(high.toDouble()) *
             ENDLESS_PRICE_GROWTH.pow(endless.toDouble())
         return value.roundToLong()
     }

@@ -73,23 +73,23 @@ class HuntIncomeTest {
     }
 
     /**
-     * 유한 구간은 1.80 곡선 모양 그대로다 — 바닥값만 올렸다.
+     * +10 까지는 1.80 곡선 모양 그대로다 — 바닥값만 올렸다.
      *
-     * v2.2에서 60 → 110. 용검 이전에는 검을 파는 것이 유일한 수입이라
-     * 한 바퀴의 벌이를 키워야 했다. 곡선을 세우는 것은 여전히 증가율이다.
+     * 이 구간은 파산 나선을 막으려고 시뮬레이션으로 맞춘 구간이라 손대지 않는다.
+     * +11 부터는 1.50 으로 완만해진다(v2.3) — +10 위 판매가가 너무 높았다.
      */
     @Test
-    fun `유한 구간은 바닥값만 올라간 같은 곡선이다`() {
-        for (level in 0..RateTable.MAX_FINITE_LEVEL) {
+    fun `+10까지는 바닥값만 올라간 같은 곡선이다`() {
+        for (level in 0..10) {
             val expected = Math.round(110.0 * Math.pow(1.80, level.toDouble()))
             assertEquals("+$level", expected, Economy.sellPrice(level))
         }
     }
 
-    /** 무한 구간은 완만해진다. 같은 단계에서 유한 곡선을 이어 갔을 때보다 반드시 싸야 한다. */
+    /** +11 부터는 1.80 곡선을 이어 갔을 때보다 반드시 싸야 한다. */
     @Test
-    fun `무한 구간 판매가는 유한 곡선보다 싸다`() {
-        for (level in RateTable.MAX_FINITE_LEVEL + 1..50) {
+    fun `+11 위 판매가는 옛 곡선보다 싸다`() {
+        for (level in 11..50) {
             val straight = 110.0 * Math.pow(1.80, level.toDouble())
             assertTrue("+$level", Economy.sellPrice(level) < straight)
         }

@@ -57,12 +57,19 @@ class UniqueSwordsTest {
     }
 
     @Test
-    fun `시작의 검 - 직검 둘`() {
+    fun `시작의 검 - 깊이 벼린 직검 둘`() {
+        // +10 하한(v2.3) - 직검 두 자루 값에 영구 보너스는 너무 쌌다
         val recipe = UniqueSwords.match(
-            swords(WeaponFamily.STRAIGHT to 0, WeaponFamily.STRAIGHT to 1),
+            swords(WeaponFamily.STRAIGHT to 10, WeaponFamily.STRAIGHT to 12),
             emptyMap(),
         )
         assertEquals("origin", recipe?.id)
+
+        val shallow = UniqueSwords.match(
+            swords(WeaponFamily.STRAIGHT to 0, WeaponFamily.STRAIGHT to 1),
+            emptyMap(),
+        )
+        assertNull(shallow)
     }
 
     // --- 목록 규칙 ---

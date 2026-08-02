@@ -29,8 +29,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geomgang.core.Fusion
-import com.geomgang.core.FusionTable
 import com.geomgang.core.LegendForge
+import com.geomgang.core.Refinery
 import com.geomgang.core.Sword
 import com.geomgang.core.SwordNames
 import com.geomgang.core.UniqueSwords
@@ -51,6 +51,7 @@ import com.geomgang.game.ForgeUiState
 fun CraftScreen(
     state: ForgeUiState,
     onFuse: (List<Int>) -> Unit,
+    onRefine: (Int) -> Unit,
     onCraftLegend: () -> Unit,
     onRecraftLegend: () -> Unit,
     onBuyWard: () -> Unit,
@@ -77,7 +78,7 @@ fun CraftScreen(
         ) {
             item {
                 Text(
-                    text = "보관함의 검 두 자루를 녹여 한 자루로 만든다",
+                    text = "끝까지 벼린 두 자루를 바치면 새 계열이 된다",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                 )
@@ -93,8 +94,15 @@ fun CraftScreen(
                 item { AltarPanel(state, onBuyWard) }
             }
 
-            // 재료가 모자라도 이 칸은 남는다 - 무엇을 모아야 하는지가
+            // 계열 조합 - 재료가 모자라도 칸은 남는다. 무엇을 모아야 하는지가
             // 바로 그때 가장 필요한 정보다.
+            itemsIndexed(state.refine) { index, status ->
+                RefinePanel(
+                    status = status,
+                    onRefine = { onRefine(index) },
+                )
+            }
+
             item {
                 LegendPanel(
                     missing = state.legendMissing,
@@ -165,13 +173,22 @@ private fun RecipeList(state: ForgeUiState) {
         Column(Modifier.padding(12.dp)) {
             Text("조합법", fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(4.dp))
-            FusionTable.ALL.forEach { entry ->
+            Refinery.RECIPES.forEach { recipe ->
                 Text(
-                    text = "${entry.hint}  =  ${entry.result.displayName}",
+                    text = recipe.materials.joinToString(" + ") {
+                        "${it.displayName}+${Refinery.MATERIAL_LEVEL}"
+                    } + "  =  ${recipe.result.displayName} +${recipe.resultLevel}",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
                 )
             }
+            Text(
+                text = LegendForge.MATERIALS.joinToString(" + ") {
+                    "${it.displayName}+${LegendForge.MATERIAL_LEVEL}"
+                } + "  =  용검 +${LegendForge.LEVEL} (전설)",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+            )
             Spacer(Modifier.height(8.dp))
             Text(
                 text = "고유검 — 특별한 조합은 특별한 검이 된다",
@@ -310,6 +327,57 @@ private fun AltarPanel(state: ForgeUiState, onBuyWard: () -> Unit) {
 }
 
 /**
+ * 계열 조합 한 칸 — +20 두 자루를 태워 새 계열 +1 을 얻는다.
+ *
+ * 재료를 고르게 하지 않는다. 레시피가 정확히 한 가지 조합이라 고를 것이 없고,
+ * 조건이 되는 순간 버튼만 누르면 되는 것이 맞다. 결과는 보관함으로 들어간다.
+ */
+@Composable
+private fun RefinePanel(
+    status: com.geomgang.game.RefineStatus,
+    onRefine: () -> Unit,
+) {
+    val recipe = status.recipe
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp)) {
+            Text(
+                text = "${recipe.result.displayName} 조합",
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Text(
+                text = "끝까지 벼린 두 자루가 ${recipe.result.displayName} " +
+                    "+${recipe.resultLevel} 이 된다. 결과는 보관함으로 들어간다.",
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+            )
+            Spacer(Modifier.height(8.dp))
+            recipe.materials.forEach { family ->
+                val have = family !in status.missing
+                Text(
+                    text = "${if (have) "✓" else "✗"} ${family.displayName} " +
+                        "+${Refinery.MATERIAL_LEVEL} (보관함)",
+                    fontSize = 12.sp,
+                    color = if (have) {
+                        Color(0xFF7FD48A)
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    },
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            Button(
+                onClick = onRefine,
+                enabled = status.canCraft,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("조합")
+            }
+        }
+    }
+}
+
+/**
  * 용검(전설) 벼리기.
  *
  * 재료가 모자라도 **무엇이 필요한지 늘 보여 준다.** 목표가 보여야 모으고 싶어진다.
@@ -401,7 +469,8 @@ private fun FusionPanel(
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
             Text(
-                text = "재료 두 자루를 고른다 (${picked.size}/2) · 결과 단계는 둘의 평균",
+                text = "특별한 조합(고유검) — 재료 두 자루를 직접 골라 빚는다 " +
+                    "(${picked.size}/2)",
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
             )
@@ -440,7 +509,7 @@ private fun FusionPanel(
                             )
                         }
                         Text(
-                            text = "비용 %,d골드 · 계열을 맞추면 한 단계 더".format(cost),
+                            text = "비용 %,d골드".format(cost),
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         )
@@ -453,6 +522,16 @@ private fun FusionPanel(
                         }
                     }
                 }
+            }
+
+            // 두 자루를 골랐는데 아무것도 안 나오면, 왜 안 되는지 화면이 말해야 한다.
+            if (preview == null && materials.size == Fusion.MIN_MATERIALS) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = "맞는 레시피가 없다 — 위 힌트를 다시 읽어 보자",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
             }
 
             Spacer(Modifier.height(8.dp))

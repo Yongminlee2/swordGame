@@ -26,11 +26,12 @@ class SaveStoreTest {
     )
 
     @Test
-    fun `저장한 적 없는 모드는 빈 상태로 시작한다`() {
+    fun `저장한 적 없는 모드는 직검 한 자루와 1000골드로 시작한다`() {
+        // v2.3 - 처음부터 상점에서 검을 사게 하지 않는다. 손에 직검이 들려 있다.
         val fresh = store().loadGame(Difficulty.NORMAL)
         assertEquals(Difficulty.NORMAL, fresh.difficulty)
-        assertEquals(0L, fresh.gold)
-        assertNull(fresh.sword)
+        assertEquals(1_000L, fresh.gold)
+        assertEquals(Sword(WeaponFamily.STRAIGHT, 0), fresh.sword)
     }
 
     @Test
@@ -165,7 +166,7 @@ class SaveStoreTest {
         File(tmp.root, "save_normal.json").writeText("깨짐")
         File(tmp.root, "save_normal.json.bak").writeText("이것도 깨짐")
         val recovered = s.loadGame(Difficulty.NORMAL)
-        assertEquals(0L, recovered.gold)
+        assertEquals(1_000L, recovered.gold)
         assertEquals(Difficulty.NORMAL, recovered.difficulty)
     }
 
@@ -186,7 +187,7 @@ class SaveStoreTest {
 
         s.resetGame(Difficulty.NORMAL)
 
-        assertEquals(0L, s.loadGame(Difficulty.NORMAL).gold)
+        assertEquals(1_000L, s.loadGame(Difficulty.NORMAL).gold)
         assertEquals(7L, s.loadGame(Difficulty.HARD).gold)
         // 도감·업적은 초기화의 영향을 받지 않는다. 이게 이 게임의 재도전 동력이다.
         assertTrue(Achievement.REACH_10 in s.loadProgress().achievements)
@@ -198,7 +199,7 @@ class SaveStoreTest {
         s.saveGame(sample())
         s.saveGame(sample().copy(gold = 999))
         s.resetGame(Difficulty.NORMAL)
-        assertEquals(0L, s.loadGame(Difficulty.NORMAL).gold)
+        assertEquals(1_000L, s.loadGame(Difficulty.NORMAL).gold)
     }
 
     @Test

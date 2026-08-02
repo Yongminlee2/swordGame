@@ -34,16 +34,18 @@ object HelpTopics {
             "상점에 나오는 것은 기본 4계열뿐이고, 시작은 직검 하나다.\n" +
                 "곡도는 +${Progress.CURVED_UNLOCK_LEVEL} 달성, " +
                 "대검은 검 파괴 ${Progress.GREAT_UNLOCK_DESTROYS}회 겪기, " +
-                "세검은 조합 ${Progress.RAPIER_UNLOCK_FUSIONS}회로 열린다.\n" +
-                "마검·성검은 조합으로 만들고, 그 둘을 +${LegendForge.MATERIAL_LEVEL}까지 " +
-                "올려 합치면 용검(전설, +${LegendForge.LEVEL})이다.",
+                "세검은 +${Progress.RAPIER_UNLOCK_LEVEL} 달성으로 열린다.\n" +
+                "직검+20과 곡도+20을 조합하면 마검 +1, 대검+20과 세검+20은 성검 +1. " +
+                "마검·성검을 다시 +${LegendForge.MATERIAL_LEVEL}까지 올려 합치면 " +
+                "용검(전설, +${LegendForge.LEVEL})이다.",
         ),
         HelpTopic(
             "⚗", "조합",
-            "보관함의 검 두 자루를 녹여 한 자루로 만든다. " +
-                "결과 단계는 두 단계의 평균이다.\n" +
-                "무엇을 넣으면 무엇이 나오는지는 조합소 화면에 적혀 있다.\n" +
-                "숨은 레시피도 있다 — 고유검 ${UniqueSwords.RECIPES.size}종은 힌트만 보고 찾아야 한다.",
+            "+${Refinery.MATERIAL_LEVEL} 두 자루를 태워 새 계열의 +1 을 얻는다. " +
+                "끝까지 올린 두 자루를 바치는 의식이다.\n" +
+                "무엇을 바치면 무엇이 나오는지는 조합소 화면에 적혀 있다.\n" +
+                "숨은 레시피도 있다 — 고유검 ${UniqueSwords.RECIPES.size}종은 힌트만 보고 찾아야 한다. " +
+                "고유검은 벼려진 그대로라 강화할 수 없다.",
         ),
         HelpTopic(
             "⚔", "사냥",

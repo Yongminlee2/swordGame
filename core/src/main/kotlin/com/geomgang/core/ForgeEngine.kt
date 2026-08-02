@@ -70,6 +70,9 @@ object ForgeEngine {
         // 계열은 +20 에서 끝난다. 그 위는 조합으로만 간다([LegendForge]).
         if (!LegendForge.canForge(sword)) return false
 
+        // 고유검은 벼려진 그대로다. 그 자체로 완성이라 강화대에 올리지 않는다.
+        if (sword.uniqueId != null) return false
+
         val max = state.difficulty.maxLevel
         if (max != null && sword.level >= max) return false
 
@@ -134,7 +137,7 @@ object ForgeEngine {
                 bonus.successRate + forge.successBonus,
                 forge.temperCapBonus,
                 forge.blessingMult,
-            ) + UniqueSwords.forgeBonusOf(sword)
+            )
             ).coerceAtMost(RateTable.MAX_SUCCESS_RATE)
         if (rng.nextDouble() < successRate) {
             return ForgeResult.Success(
@@ -149,15 +152,13 @@ object ForgeEngine {
             )
         }
 
-        // 행운부적은 실패의 결과 자체를 무효화한다. 파괴 판정 난수도 소비하지 않는다.
-        if (items.luckCharm) {
-            return ForgeResult.Stay(failed, sword.level)
-        }
-
+        // 행운부적은 **하락만** 막는다(v2.3). 파괴까지 막으면 방지권이 설 자리가 없다 -
+        // 부적은 단계를 지키는 물건, 방지권은 검을 살리는 물건으로 역할을 갈랐다.
         return when (RateTable.failureBand(targetLevel)) {
             FailureBand.STAY -> ForgeResult.Stay(failed, sword.level)
 
-            FailureBand.DROP -> drop(failed, sword)
+            FailureBand.DROP ->
+                if (items.luckCharm) ForgeResult.Stay(failed, sword.level) else drop(failed, sword)
 
             FailureBand.DESTROY_OR_DROP ->
                 if (rng.nextDouble() < RateTable.destroyChance(targetLevel)) {
@@ -166,18 +167,6 @@ object ForgeEngine {
                     val guard = bonus.destroyGuard + forge.destroyGuard
                     if (guard > 0 && rng.nextDouble() < guard) {
                         ForgeResult.Stay(failed, sword.level)
-                    } else if (UniqueSwords.canRevive(sword)) {
-                        // 불사조 - 파괴 대신 한 번 되살아난다. 대가로 단계를 잃고
-                        // 고유의 힘도 재가 된다(uniqueId 소멸). 난수 소비는 파괴와 동일.
-                        val revived = sword.copy(
-                            level = (sword.level - UniqueSwords.REVIVE_LEVEL_LOSS)
-                                .coerceAtLeast(0),
-                            uniqueId = null,
-                        )
-                        ForgeResult.Drop(
-                            state = failed.copy(sword = revived),
-                            newLevel = revived.level,
-                        )
                     } else if (WardCharm.protects(failed, sword)) {
                         // 수호 각인 - 전설검이 미끄러지는 것을 한 번 붙든다.
                         // 방지 굴림이 실패한 **뒤에** 본다. 앞에 두면 굴려 보지도 않고
@@ -204,6 +193,9 @@ object ForgeEngine {
                             preventable = failed.inventory.preventTickets > 0,
                         )
                     }
+                } else if (items.luckCharm) {
+                    // 파괴는 면했다. 부적이 하락을 막아 단계가 그대로다.
+                    ForgeResult.Stay(failed, sword.level)
                 } else {
                     drop(failed, sword)
                 }

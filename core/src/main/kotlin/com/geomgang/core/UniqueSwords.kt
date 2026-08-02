@@ -28,9 +28,6 @@ data class UniqueRecipe(
  */
 object UniqueSwords {
 
-    /** 불사조가 파괴를 대신 받을 때 잃는 단계. */
-    const val REVIVE_LEVEL_LOSS = 3
-
     /**
      * 레시피 6종. 전부 **재료 두 자루**다 — 조합이 두 자루라서.
      *
@@ -58,7 +55,7 @@ object UniqueSwords {
                 Triple(WeaponFamily.DEMON, 12, 1),
             ),
             essences = mapOf("volcano" to 3),
-            blurb = "파괴될 때 한 번, 재가 되는 대신 되살아난다",
+            blurb = "불사조의 온기가 금을 부른다 — 사냥 골드 +25%",
         ),
         UniqueRecipe(
             id = "trinity", name = "삼위일체",
@@ -77,10 +74,11 @@ object UniqueSwords {
         ),
         UniqueRecipe(
             id = "origin", name = "시작의 검",
-            hint = "처음의 검 둘이 처음으로 돌아가면…",
+            // +10 하한: 직검 두 자루 값(320골드)에 영구 보너스는 너무 쌌다
+            hint = "깊이 벼린 처음의 검 둘이 처음으로 돌아가면…",
             resultFamily = WeaponFamily.STRAIGHT,
-            needs = listOf(Triple(WeaponFamily.STRAIGHT, 0, 2)),
-            blurb = "장착 중 강화 성공률 +3%p",
+            needs = listOf(Triple(WeaponFamily.STRAIGHT, 10, 2)),
+            blurb = "지니고만 있어도 강화 성공률 +3%p",
         ),
         // 탐식자는 마검 아무 둘 - 심연(+16 하한)보다 뒤라야 +16 둘이 여기로 새지 않는다
         UniqueRecipe(
@@ -161,11 +159,22 @@ object UniqueSwords {
     fun maxHpRatioOf(sword: Sword?): Double =
         if (sword?.uniqueId == "abyss_eater") 0.02 else 0.0
 
-    fun goldMultOf(sword: Sword?): Double = if (sword?.uniqueId == "bloom") 1.5 else 1.0
+    fun goldMultOf(sword: Sword?): Double = when (sword?.uniqueId) {
+        "phoenix" -> 1.25
+        "bloom" -> 1.5
+        else -> 1.0
+    }
 
-    fun forgeBonusOf(sword: Sword?): Double = if (sword?.uniqueId == "origin") 0.03 else 0.0
+    /**
+     * 시작의 검 - **지니고만 있어도** 강화 성공률 +3%p.
+     *
+     * 고유검은 강화대에 오르지 않으므로(v2.3) "장착 중" 보너스는 죽은 말이 됐다.
+     * 소유로 바꿨다 - 팔면 사라진다는 긴장은 그대로다.
+     */
+    fun originOwned(state: GameState): Boolean =
+        state.sword?.uniqueId == "origin" || state.storage.any { it.uniqueId == "origin" }
 
-    fun canRevive(sword: Sword?): Boolean = sword?.uniqueId == "phoenix"
+    const val ORIGIN_FORGE_BONUS: Double = 0.03
 
     /**
      * 고유검 한 종류를 발견한 값. 0.005 는 0.5%p 다.

@@ -33,6 +33,17 @@ data class TemperUi(
     val maxPercent: Double,
 )
 
+/**
+ * 계열 조합([com.geomgang.core.Refinery]) 레시피 하나의 준비 상태.
+ *
+ * @property missing 아직 +20 이 안 된 재료 계열. 비어 있으면 재료는 다 모였다.
+ */
+data class RefineStatus(
+    val recipe: com.geomgang.core.RefineRecipe,
+    val missing: List<WeaponFamily>,
+    val canCraft: Boolean,
+)
+
 /** 강화 화면이 그리는 데 필요한 것 전부. 도메인 상태를 화면 언어로 옮긴 것이다. */
 data class ForgeUiState(
     val difficulty: Difficulty,
@@ -131,6 +142,11 @@ data class ForgeUiState(
     val skillLevel: Int = 0,
     val skillPrice: Long = 0,
     val canUpgradeSkill: Boolean = false,
+    /**
+     * 계열 조합([com.geomgang.core.Refinery]) 레시피별 준비 상태.
+     * 재료가 모자라도 목록에 남는다 — 무엇을 모아야 하는지가 그때 가장 필요한 정보다.
+     */
+    val refine: List<RefineStatus> = emptyList(),
     /** 전설검 재료 중 아직 없는 것. 목표가 보여야 모으고 싶어진다. */
     val legendMissing: List<WeaponFamily> = emptyList(),
     val canCraftLegend: Boolean = false,

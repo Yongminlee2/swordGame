@@ -65,31 +65,20 @@ object Fusion {
     /**
      * 재료 둘로 만들어지는 검. 만들어지는 것이 없으면 null.
      *
-     * 우선순위는 둘이다.
-     * 1. **숨은 고유검 레시피** — 재료·정수가 [UniqueSwords] 와 맞으면 고유검
-     * 2. **조합표**([FusionTable]) — 계열 집합이 표에 있으면 그 계열
+     * v2.3부터 여기서 나오는 것은 **고유검뿐**이다. 계열 조합(마검·성검·용검)은
+     * [Refinery]·[LegendForge] 의 전용 칸이 한다 — 평균 단계로 물려받는 일반
+     * 조합은 계열 넘기를 너무 가볍게 만들어서 걷어냈다.
      *
-     * 결과 단계 = **(a + b) ÷ 2 내림.** 고유검만 최고 단계를 따른다 —
-     * 레시피가 이미 단계 하한을 요구하므로 평균으로 또 깎으면 이중 벌이다.
-     * 별은 이어지지 않는다 — 녹여서 새로 만드는 것이므로 0부터다.
+     * 고유검은 재료 최고 단계를 따른다. 별은 이어지지 않는다.
      */
     fun resultOrNull(materials: List<Sword>, essences: Map<String, Int> = emptyMap()): Sword? {
         if (materials.size != MIN_MATERIALS) return null
-
-        UniqueSwords.match(materials, essences)?.let { recipe ->
-            return Sword(
-                family = recipe.resultFamily,
-                level = materials.maxOf { it.level },
-                stars = 0,
-                uniqueId = recipe.id,
-            )
-        }
-
-        val family = FusionTable.resultFor(materials.map { it.family }.toSet()) ?: return null
+        val recipe = UniqueSwords.match(materials, essences) ?: return null
         return Sword(
-            family = family,
-            level = materials.sumOf { it.level } / 2,
+            family = recipe.resultFamily,
+            level = materials.maxOf { it.level },
             stars = 0,
+            uniqueId = recipe.id,
         )
     }
 

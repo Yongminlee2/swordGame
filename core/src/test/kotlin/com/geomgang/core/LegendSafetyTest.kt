@@ -39,7 +39,8 @@ class LegendSafetyTest {
 
     @Test
     fun `평범한 검은 녹인다`() {
-        val state = stateWith(Sword(WeaponFamily.STRAIGHT, 5), Sword(WeaponFamily.STRAIGHT, 6))
+        // v2.3부터 조합은 고유검 레시피만 남았다 - 시작의 검(직검 +10 둘)으로 확인한다.
+        val state = stateWith(Sword(WeaponFamily.STRAIGHT, 10), Sword(WeaponFamily.STRAIGHT, 12))
         assertTrue(Fusion.meltable(state.storage[0]))
         assertTrue(Fusion.canFuse(state, listOf(0, 1)))
     }

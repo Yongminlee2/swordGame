@@ -274,13 +274,30 @@ class ForgeEngineTest {
     }
 
     @Test
-    fun `행운부적은 파괴구간 실패를 유지로 바꾼다`() {
+    fun `행운부적은 파괴를 면한 실패를 유지로 바꾼다`() {
         val before = state(level = 19, inventory = Inventory(luckCharms = 1))
-        // 파괴 확률 0.80 구간이지만 부적이 실패 자체의 결과를 무효화한다
-        val result = ForgeEngine.attempt(before, UsedItems(luckCharm = true), ScriptedRandom(0.99))
+        // 난수: 성공 실패(0.99) → 파괴 판정 통과(0.99 > 0.55). 부적은 하락만 막는다.
+        val result = ForgeEngine.attempt(
+            before,
+            UsedItems(luckCharm = true),
+            ScriptedRandom(0.99, 0.99),
+        )
         assertTrue(result is ForgeResult.Stay)
         assertEquals(19, result.state.sword?.level)
         assertEquals(0, result.state.inventory.luckCharms)
+    }
+
+    /** 부적이 파괴까지 막으면 방지권이 죽은 물건이 된다(v2.3) — 파괴는 그대로다. */
+    @Test
+    fun `행운부적이 있어도 파괴는 일어난다`() {
+        val before = state(level = 19, inventory = Inventory(luckCharms = 1))
+        // 난수: 성공 실패(0.99) → 파괴 판정 적중(0.10 < 0.55)
+        val result = ForgeEngine.attempt(
+            before,
+            UsedItems(luckCharm = true),
+            ScriptedRandom(0.99, 0.10),
+        )
+        assertTrue(result is ForgeResult.Destroyed)
     }
 
     @Test
@@ -292,11 +309,12 @@ class ForgeEngineTest {
     }
 
     @Test
-    fun `행운부적을 쓰면 파괴 판정 난수를 소비하지 않는다`() {
+    fun `행운부적을 써도 파괴 판정 난수는 굴린다`() {
+        // v2.3 - 부적은 하락만 막으므로 파괴 판정은 언제나 돈다.
         val before = state(level = 19, inventory = Inventory(luckCharms = 1))
-        val rng = ScriptedRandom(0.99)
+        val rng = ScriptedRandom(0.99, 0.99)
         ForgeEngine.attempt(before, UsedItems(luckCharm = true), rng)
-        assertEquals(1, rng.consumed)
+        assertEquals(2, rng.consumed)
     }
 
     // --- 방어 ---

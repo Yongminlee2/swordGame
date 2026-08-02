@@ -50,14 +50,15 @@ class FamilyUnlockTest {
     /**
      * 예전 조건은 "고유검 1개 발견" 이었다. 고유검은 힌트만 있는 숨은 레시피인데
      * 세검이 없으면 창검도 허검도 전설검도 없다 — 숨은 것 하나가 주 진행선을 잡고 있었다.
+     * v2.3에서 일반 조합이 사라져 "조합 1회" 도 못 쓰게 됐다. 지금은 강화 단계다.
      */
     @Test
-    fun `조합을 몇 번 하면 세검이 열린다`() {
+    fun `깊이 강화하면 세검이 열린다`() {
         assertFalse(WeaponFamily.RAPIER in Progress.unlockedFamilies(fresh))
-        val fused = ProgressState(
-            stats = Stats(fusions = Progress.RAPIER_UNLOCK_FUSIONS.toLong()),
+        val reached = ProgressState(
+            stats = Stats(bestLevelEver = Progress.RAPIER_UNLOCK_LEVEL),
         )
-        assertTrue(WeaponFamily.RAPIER in Progress.unlockedFamilies(fused))
+        assertTrue(WeaponFamily.RAPIER in Progress.unlockedFamilies(reached))
     }
 
     @Test
@@ -84,26 +85,35 @@ class FamilyUnlockTest {
         assertNull(Progress.basicFamilyHint(fresh, WeaponFamily.STRAIGHT))
     }
 
+    /**
+     * v2.3부터 계열 조합은 [Refinery]다 — +20 두 자루가 새 계열 +1 이 된다.
+     * 아무 단계나 섞어 평균을 내던 옛 조합은 없다.
+     */
     @Test
-    fun `조합이 조합표대로 계열을 만든다`() {
-        // 직검 + 곡도 -> 마검, 단계는 평균 내림
-        val demon = Fusion.resultOrNull(
+    fun `계열 조합표가 마검과 성검을 만든다`() {
+        val results = Refinery.RECIPES.associate { it.materials.toSet() to it }
+
+        val demon = results[setOf(WeaponFamily.STRAIGHT, WeaponFamily.CURVED)]
+        assertEquals(WeaponFamily.DEMON, demon?.result)
+        assertEquals(1, demon?.resultLevel)
+
+        val holy = results[setOf(WeaponFamily.GREAT, WeaponFamily.RAPIER)]
+        assertEquals(WeaponFamily.HOLY, holy?.result)
+        assertEquals(1, holy?.resultLevel)
+    }
+
+    /** 낮은 단계 두 자루는 아무것도 되지 않는다 — 계열 조합은 +20 의식이다. */
+    @Test
+    fun `평균 조합은 사라졌다`() {
+        val result = Fusion.resultOrNull(
             listOf(Sword(WeaponFamily.STRAIGHT, 3), Sword(WeaponFamily.CURVED, 5)),
         )
-        assertEquals(WeaponFamily.DEMON, demon?.family)
-        assertEquals(4, demon?.level)
-
-        // 대검 + 세검 -> 성검
-        val holy = Fusion.resultOrNull(
-            listOf(Sword(WeaponFamily.GREAT, 8), Sword(WeaponFamily.RAPIER, 6)),
-        )
-        assertEquals(WeaponFamily.HOLY, holy?.family)
+        assertNull(result)
     }
 
     @Test
-    fun `고유검 레시피가 조합표보다 먼저다`() {
-        // 성검 둘 +10 이상은 삼위일체(고유검)다. 조합표에는 {성검} 항목이 없지만
-        // 있더라도 고유검이 이긴다는 것을 확인한다.
+    fun `고유검 레시피는 조합으로 남아 있다`() {
+        // 성검 둘 +10 이상은 삼위일체(고유검)다.
         val result = Fusion.resultOrNull(
             listOf(
                 Sword(WeaponFamily.HOLY, 10),

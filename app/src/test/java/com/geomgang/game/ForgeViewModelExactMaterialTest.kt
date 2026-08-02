@@ -138,12 +138,9 @@ class ForgeViewModelExactMaterialTest {
         vm.resetProgress()
 
         val ui = vm.ui.value
-        assertEquals("검이 사라져야 한다", null, ui.sword)
-        assertTrue(
-            "골드 ${ui.gold} 로는 검을 살 수 없다 - 아무것도 못 하는 판이 된다",
-            ui.gold >= Economy.BASE_SWORD_PRICE,
-        )
-        assertTrue(ui.canBuySword)
+        // v2.3 - 초기화는 새 시작이다: 직검 한 자루와 1,000골드가 손에 들려 있다.
+        assertEquals("손에 직검 +0 이 있어야 한다", Sword(WeaponFamily.STRAIGHT, 0), ui.sword)
+        assertEquals(1_000L, ui.gold)
     }
 
     @Test

@@ -187,6 +187,7 @@ private fun App(store: SaveStore) {
         Overlay.Craft -> CraftScreen(
             state = state,
             onFuse = vm::fuse,
+            onRefine = vm::refine,
             onCraftLegend = vm::craftLegend,
             onRecraftLegend = vm::recraftLegend,
             onBuyWard = vm::buyWardCharm,

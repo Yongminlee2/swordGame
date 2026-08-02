@@ -42,6 +42,7 @@ import com.geomgang.core.IdleReward
 import com.geomgang.core.IdleRewards
 import com.geomgang.core.QuestKind
 import com.geomgang.core.Recipes
+import com.geomgang.core.Refinery
 import com.geomgang.core.SaveStore
 import com.geomgang.core.Settings
 import com.geomgang.core.Skill
@@ -1354,6 +1355,22 @@ class ForgeViewModel(
         _ui.value = render()
     }
 
+    /**
+     * 계열 조합 — +20 두 자루를 태워 새 계열 +1 을 얻는다([Refinery]).
+     *
+     * 조합 횟수로 세지 않는다. 업적 「조합 10회」는 고유검 조합의 몫이고,
+     * 계열 조합은 게임에 몇 번 없는 사건이라 카운터가 뜻이 없다.
+     */
+    fun refine(index: Int) {
+        val recipe = Refinery.RECIPES.getOrNull(index) ?: return
+        if (busy || !Refinery.canCraft(game, recipe)) return
+        game = Refinery.craft(game, recipe)
+        sound.uniqueBorn() // 새 계열의 탄생은 사건이어야 한다
+        haptics.newRecord()
+        persist()
+        _ui.value = render()
+    }
+
     /** 별을 하나 올려 본다. 실패해도 검은 부서지지 않는다. */
     fun starUp() {
         if (busy || !StarForce.canAfford(game)) return
@@ -1520,6 +1537,9 @@ class ForgeViewModel(
      */
     private fun forgeBlockedReason(): String? {
         val sword = game.sword ?: return ForgeCost.missingText(game)
+        if (sword.uniqueId != null) {
+            return "고유검은 벼려진 그대로다 — 강화하지 않는다"
+        }
         if (!LegendForge.canForge(sword)) {
             return "계열은 +${LegendForge.MATERIAL_LEVEL}이 끝이다. 조합소에서 전설검으로 넘어간다"
         }
@@ -1585,6 +1605,13 @@ class ForgeViewModel(
             skillLevel = progress.smithyLevel,
             skillPrice = Smithy.priceOf(game, progress.smithyLevel),
             canUpgradeSkill = !busy && Smithy.canUpgrade(game, progress),
+            refine = Refinery.RECIPES.map {
+                RefineStatus(
+                    recipe = it,
+                    missing = Refinery.missingFor(game, it),
+                    canCraft = !busy && Refinery.canCraft(game, it),
+                )
+            },
             legendMissing = LegendForge.missingFor(game),
             canCraftLegend = !busy && LegendForge.canCraft(game, progress),
             canRecraftLegend = !busy && LegendForge.canRecraft(game, progress),

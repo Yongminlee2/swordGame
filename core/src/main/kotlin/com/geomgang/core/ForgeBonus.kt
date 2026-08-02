@@ -65,6 +65,17 @@ object ForgeBonuses {
                 bonus = ForgeBonus(forge.successBonus, forge.destroyGuard),
             )
         },
+    ) + listOfNotNull(
+        // 시작의 검은 지니고만 있어도 값을 한다. 팔면 이 줄이 사라진다.
+        if (UniqueSwords.originOwned(state)) {
+            BonusSource(
+                label = "시작의 검",
+                detail = "소유 중",
+                bonus = ForgeBonus(successRate = UniqueSwords.ORIGIN_FORGE_BONUS),
+            )
+        } else {
+            null
+        },
     )
 
     fun of(state: GameState, progress: ProgressState): ForgeBonus =

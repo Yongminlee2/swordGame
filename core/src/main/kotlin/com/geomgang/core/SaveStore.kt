@@ -27,7 +27,20 @@ class SaveStore(private val dir: File) {
 
     fun loadGame(difficulty: Difficulty): GameState =
         read(gameFile(difficulty)) { json.decodeFromString(GameState.serializer(), it) }
-            ?: GameState(difficulty)
+            ?: newGame(difficulty)
+
+    /**
+     * 갓 시작한 판.
+     *
+     * 직검 한 자루를 쥐고 골드 1,000 으로 시작한다. 예전에는 빈손 + 300 이라
+     * 첫 행동이 "상점에 가서 검을 산다" 였는데, 이 게임의 첫 행동은
+     * **강화 버튼을 누르는 것**이어야 한다.
+     */
+    fun newGame(difficulty: Difficulty): GameState = GameState(
+        difficulty = difficulty,
+        gold = 1_000,
+        sword = Sword(WeaponFamily.STRAIGHT, 0),
+    )
 
     fun saveGame(state: GameState) {
         write(gameFile(state.difficulty), json.encodeToString(GameState.serializer(), state))

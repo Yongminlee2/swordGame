@@ -42,12 +42,18 @@ class ForgeEngineTemperTest {
         assertEquals(8, result.state.temperFails)
     }
 
-    /** 부적 실패도 담금질을 올린다. 이게 없으면 부적은 그냥 손해 없는 굴림이 된다. */
+    /**
+     * 부적을 써도 담금질은 오른다.
+     *
+     * v2.3부터 부적은 하락만 막는다. 무한 구간 실패는 항상 파괴 판정(1.00)이라
+     * 부적이 개입할 자리가 없고, 전설검은 단계를 잃는 것으로 대가를 치른다 —
+     * 그 실패도 담금질에는 쌓여야 다음 도전이 가벼워진다.
+     */
     @Test
     fun `부적을 쓴 실패도 담금질을 올린다`() {
         val state = endless(44).copy(inventory = Inventory(luckCharms = 1))
         val result = ForgeEngine.attempt(state, UsedItems(luckCharm = true), alwaysFail())
-        assertTrue("결과=$result", result is ForgeResult.Stay)
+        assertTrue("결과=$result", result is ForgeResult.Drop)
         assertEquals(1, result.state.temperFails)
     }
 

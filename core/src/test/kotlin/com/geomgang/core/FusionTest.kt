@@ -25,42 +25,24 @@ class FusionTest {
     private fun sw(level: Int, family: WeaponFamily = WeaponFamily.STRAIGHT, stars: Int = 0) =
         Sword(family, level, stars)
 
-    // ---------------- 조합 (v2.1: 두 자루, 평균, 표 필수) ----------------
+    // ---------------- 조합 (v2.3: 고유검 레시피 전용) ----------------
+    // 계열 조합(마검·성검)은 [Refinery]의 몫이 됐다. 여기 조합은 고유검만 만든다.
 
     @Test
-    fun `직검과 곡도는 마검이 되고 단계는 평균 내림이다`() {
+    fun `고유검 레시피와 맞으면 조합된다`() {
+        // 삼위일체 - 성검 +10 둘
         val result = Fusion.resultOrNull(
-            listOf(sw(5, WeaponFamily.STRAIGHT), sw(2, WeaponFamily.CURVED)),
+            listOf(sw(10, WeaponFamily.HOLY), sw(12, WeaponFamily.HOLY)),
         )
-        assertEquals(WeaponFamily.DEMON, result?.family)
-        assertEquals(3, result?.level) // (5+2)/2 내림
-    }
-
-    @Test
-    fun `대검과 세검은 성검이 된다`() {
-        val result = Fusion.resultOrNull(
-            listOf(sw(10, WeaponFamily.GREAT), sw(8, WeaponFamily.RAPIER)),
-        )
+        assertEquals("trinity", result?.uniqueId)
         assertEquals(WeaponFamily.HOLY, result?.family)
-        assertEquals(9, result?.level)
-    }
-
-    /** 조합은 계열을 만드는 장치다. 단계는 절대 재료 최고치를 넘지 않는다. */
-    @Test
-    fun `조합으로 단계가 오르지 않는다`() {
-        val result = Fusion.resultOrNull(
-            listOf(sw(20, WeaponFamily.STRAIGHT), sw(20, WeaponFamily.CURVED)),
-        )
-        assertEquals(20, result?.level)
     }
 
     @Test
-    fun `표에 없는 조합은 만들어지지 않는다`() {
-        // 직검+직검은 표에 없지만 고유검(시작의 검) 레시피가 있어 여기서 못 쓴다
-        assertNull(Fusion.resultOrNull(listOf(sw(5, WeaponFamily.CURVED), sw(5, WeaponFamily.CURVED))))
-        assertNull(
-            Fusion.resultOrNull(listOf(sw(5, WeaponFamily.STRAIGHT), sw(5, WeaponFamily.GREAT))),
-        )
+    fun `레시피와 안 맞으면 아무것도 안 된다`() {
+        // 옛 조합표(직검+곡도=마검, 대검+세검=성검)는 사라졌다
+        assertNull(Fusion.resultOrNull(listOf(sw(5, WeaponFamily.STRAIGHT), sw(2, WeaponFamily.CURVED))))
+        assertNull(Fusion.resultOrNull(listOf(sw(10, WeaponFamily.GREAT), sw(8, WeaponFamily.RAPIER))))
         // 마검+성검도 일반 조합으로는 안 된다 - 용검은 전설 칸 전용이다.
         // (정수를 갖추면 불사조 레시피가 잡지만, 그건 고유검이지 용검이 아니다)
         assertNull(
@@ -70,13 +52,22 @@ class FusionTest {
         assertFalse(Fusion.canFuse(s, listOf(0, 1)))
     }
 
+    /** 조합은 검을 만드는 장치다. 단계는 절대 재료 최고치를 넘지 않는다. */
+    @Test
+    fun `조합으로 단계가 오르지 않는다`() {
+        val result = Fusion.resultOrNull(
+            listOf(sw(10, WeaponFamily.HOLY), sw(12, WeaponFamily.HOLY)),
+        )
+        assertEquals(12, result?.level)
+    }
+
     @Test
     fun `조합 결과에는 별이 이어지지 않는다`() {
         // 녹여서 새로 만드는 것이므로 0부터다
         val result = Fusion.resultOrNull(
             listOf(
-                sw(12, WeaponFamily.STRAIGHT, stars = 4),
-                sw(11, WeaponFamily.CURVED, stars = 3),
+                sw(10, WeaponFamily.HOLY, stars = 4),
+                sw(12, WeaponFamily.HOLY, stars = 3),
             ),
         )
         assertEquals(0, result?.stars)
@@ -84,43 +75,50 @@ class FusionTest {
 
     @Test
     fun `재료가 한 자루면 조합할 수 없다`() {
-        val s = state(storage = listOf(sw(5)))
+        val s = state(storage = listOf(sw(10, WeaponFamily.HOLY)))
         assertFalse(Fusion.canFuse(s, listOf(0)))
     }
 
     @Test
     fun `세 자루도 조합할 수 없다`() {
         val s = state(
-            storage = listOf(sw(5), sw(5, WeaponFamily.CURVED), sw(5, WeaponFamily.GREAT)),
+            storage = listOf(
+                sw(10, WeaponFamily.HOLY),
+                sw(11, WeaponFamily.HOLY),
+                sw(12, WeaponFamily.HOLY),
+            ),
         )
         assertFalse(Fusion.canFuse(s, listOf(0, 1, 2)))
     }
 
     @Test
     fun `같은 자리를 두 번 넣을 수 없다`() {
-        val s = state(storage = listOf(sw(5), sw(6)))
+        val s = state(storage = listOf(sw(10, WeaponFamily.HOLY), sw(12, WeaponFamily.HOLY)))
         assertFalse(Fusion.canFuse(s, listOf(0, 0)))
     }
 
     @Test
     fun `골드가 모자라면 조합할 수 없다`() {
-        val s = state(storage = listOf(sw(15), sw(15, WeaponFamily.CURVED)), gold = 1)
+        val s = state(
+            storage = listOf(sw(10, WeaponFamily.HOLY), sw(12, WeaponFamily.HOLY)),
+            gold = 1,
+        )
         assertFalse(Fusion.canFuse(s, listOf(0, 1)))
     }
 
     @Test
     fun `조합하면 재료가 사라지고 결과가 보관함에 들어온다`() {
-        val s = state(storage = listOf(sw(5, WeaponFamily.STRAIGHT), sw(4, WeaponFamily.CURVED)))
+        val s = state(storage = listOf(sw(10, WeaponFamily.HOLY), sw(12, WeaponFamily.HOLY)))
         val after = Fusion.fuse(s, listOf(0, 1))
         assertEquals(1, after.storage.size)
-        assertEquals(WeaponFamily.DEMON, after.storage.first().family)
-        assertEquals(4, after.storage.first().level) // (5+4)/2 내림
+        assertEquals("trinity", after.storage.first().uniqueId)
+        assertEquals(12, after.storage.first().level)
     }
 
     @Test
     fun `조합은 골드를 쓴다`() {
         val s = state(
-            storage = listOf(sw(10, WeaponFamily.GREAT), sw(9, WeaponFamily.RAPIER)),
+            storage = listOf(sw(10, WeaponFamily.HOLY), sw(12, WeaponFamily.HOLY)),
             gold = 1_000_000,
         )
         val cost = Fusion.cost(s, listOf(0, 1))
@@ -130,7 +128,7 @@ class FusionTest {
 
     @Test
     fun `미리보기가 실제 결과와 같다`() {
-        val s = state(storage = listOf(sw(7, WeaponFamily.GREAT), sw(6, WeaponFamily.RAPIER)))
+        val s = state(storage = listOf(sw(10, WeaponFamily.HOLY), sw(12, WeaponFamily.HOLY)))
         val preview = Fusion.preview(s, listOf(0, 1))
         val actual = Fusion.fuse(s, listOf(0, 1)).storage.last()
         assertEquals(preview, actual)

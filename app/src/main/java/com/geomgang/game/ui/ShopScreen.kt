@@ -375,7 +375,7 @@ private fun Reason(text: String) {
 private fun Item.hint(): String = when (this) {
     Item.PREVENT_TICKET -> "파괴 직후 눌러 검을 되살린다"
     Item.BLESSING_SCROLL -> "다음 1회 성공률 +10%p"
-    Item.LUCK_CHARM -> "다음 1회 실패해도 하락·파괴 없음"
+    Item.LUCK_CHARM -> "다음 1회 실패해도 하락 없음 (파괴는 방지권으로)"
 }
 
 private fun ForgeUiState.ownedCountOf(item: Item): Int = when (item) {
