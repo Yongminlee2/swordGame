@@ -204,7 +204,7 @@ class ForgeViewModelGrowthTest {
     @Test
     fun `전설검 확률 표시에 파괴가 없다`() {
         val odds = vm(rich(Sword(WeaponFamily.STRAIGHT, 30))).ui.value.odds
-        assertEquals(0.0, odds.destroy, 1e-9)
+        assertEquals(0, odds.destroy)
         assertTrue(odds.drop > 0)
     }
 }

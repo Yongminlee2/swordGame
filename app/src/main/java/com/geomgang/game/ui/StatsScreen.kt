@@ -158,11 +158,11 @@ private fun RateRow(level: Int, expected: Double, observed: Double?, tries: Long
     val diff = observed?.let { it - expected }
     Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
         Cell("+$level", 0.18f)
-        Cell("%.2f%%".format(expected * 100), 0.22f)
-        Cell(observed?.let { "%.2f%%".format(it * 100) } ?: "—", 0.24f)
+        Cell("%.0f%%".format(expected * 100), 0.22f)
+        Cell(observed?.let { "%.1f%%".format(it * 100) } ?: "—", 0.24f)
         Cell(if (tries > 0) "$tries" else "—", 0.20f)
         Cell(
-            text = diff?.let { "%+.2f".format(it * 100) } ?: "",
+            text = diff?.let { "%+.1f".format(it * 100) } ?: "",
             weight = 0.16f,
             color = when {
                 diff == null -> Color.Unspecified

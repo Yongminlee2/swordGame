@@ -96,16 +96,12 @@ class ForgeOddsTest {
 
     @Test
     fun `백분율은 반올림해도 합이 100이다`() {
-        // 화면은 소수 둘째 자리 %로 쓴다(v2.3 - 도감 한 장의 +0.1%p 가 보여야 한다).
-        // 46.00+30.25+23.75 가 99.99나 100.01이 되면 눈에 띈다.
+        // 화면은 정수 %로 쓴다. 62+30+8 이 99나 101이 되면 눈에 띈다.
+        // 소수 둘째 자리로 가 봤다가 되돌렸다 - 46.00% 는 정보가 아니라 소음이었다.
+        // 도감·고유검이 얼마나 올려 줬는지는 강화 화면의 보너스 내역이 말한다.
         for (level in 1..60) {
             val p = odds(level).percents()
-            val hundredths = Math.round((p.success + p.stay + p.drop + p.destroy) * 100)
-            assertEquals("+$level", 10_000L, hundredths)
-            // 각 항목도 0.01 단위여야 한다 - 화면이 %.2f 로 자르면서 합이 어긋나면 안 된다
-            for (v in listOf(p.success, p.stay, p.drop, p.destroy)) {
-                assertEquals("+$level $v", Math.round(v * 100) / 100.0, v, 1e-9)
-            }
+            assertEquals("+$level", 100, p.success + p.stay + p.drop + p.destroy)
         }
     }
 }

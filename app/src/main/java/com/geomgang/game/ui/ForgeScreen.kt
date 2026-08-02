@@ -297,15 +297,15 @@ fun ForgeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                Stat("🎯", "성공", "%.2f%%".format(state.odds.success), MaterialTheme.colorScheme.primary)
+                Stat("🎯", "성공", "${state.odds.success}%", MaterialTheme.colorScheme.primary)
                 if (state.odds.stay > 0) {
-                    Stat("＝", "유지", "%.2f%%".format(state.odds.stay))
+                    Stat("＝", "유지", "${state.odds.stay}%")
                 }
                 if (state.odds.drop > 0) {
-                    Stat("↓", "하락", "%.2f%%".format(state.odds.drop), Color(0xFFE0A060))
+                    Stat("↓", "하락", "${state.odds.drop}%", Color(0xFFE0A060))
                 }
                 if (state.odds.destroy > 0) {
-                    Stat("💥", "파괴", "%.2f%%".format(state.odds.destroy), MaterialTheme.colorScheme.error)
+                    Stat("💥", "파괴", "${state.odds.destroy}%", MaterialTheme.colorScheme.error)
                 }
             }
             state.temper?.let { temper ->
@@ -713,36 +713,64 @@ private fun IconEntry(
 /**
  * 확률이 어디서 왔는지.
  *
- * 합계만 보여 주면 "왜 이 숫자인지" 알 수 없고, 그러면 도감이나 대장간을 올릴 이유가
- * 손에 잡히지 않는다.
+ * 합계만 보여 주면 "왜 이 숫자인지" 알 수 없고, 그러면 도감이나 스킬을 올릴 이유가
+ * 손에 잡히지 않는다. **큰 확률은 정수 %로 굵게, 잔돈은 여기에** — 성공률 자체를
+ * 소수 둘째 자리로 적어 봤더니(v2.3) 읽기만 나빴다. 46.00% 는 정보가 아니라 소음이다.
+ *
+ * **0인 줄도 지우지 않는다.** 예전에는 아직 아무것도 못 모은 출처를 숨겼는데,
+ * 그러면 새 판에서는 목록이 통째로 비어 "도감에 바치면 확률이 오른다"는 사실 자체가
+ * 화면에서 사라졌다. 0.00%p 로 서 있어야 그 줄이 자라는 것이 보인다.
  */
 @Composable
 private fun BonusBreakdown(sources: List<BonusSource>) {
+    if (sources.isEmpty()) return
+    val totalSuccess = sources.sumOf { it.bonus.successRate }
+    val totalGuard = sources.sumOf { it.bonus.destroyGuard }
+
     Column(Modifier.fillMaxWidth()) {
-        sources.filter { it.bonus.successRate > 0 || it.bonus.destroyGuard > 0 }.forEach { source ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = "${source.label}  ${source.detail}",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
-                )
-                Text(
-                    text = buildList {
-                        if (source.bonus.successRate > 0) {
-                            add("성공 +%.2f%%p".format(source.bonus.successRate * 100))
-                        }
-                        if (source.bonus.destroyGuard > 0) {
-                            add("파괴방지 +%.2f%%p".format(source.bonus.destroyGuard * 100))
-                        }
-                    }.joinToString("  "),
-                    fontSize = 11.sp,
-                    color = Color(0xFF7FD48A),
-                )
-            }
+        Text(
+            text = "강화 보너스 — 무엇이 얼마나 올려 주는지",
+            fontSize = 10.sp,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f),
+        )
+        Spacer(Modifier.height(2.dp))
+        sources.forEach { source ->
+            BonusRow(
+                label = "${source.label}  ${source.detail}",
+                success = source.bonus.successRate,
+                guard = source.bonus.destroyGuard,
+                bold = false,
+            )
         }
+        Spacer(Modifier.height(2.dp))
+        BonusRow(label = "합계", success = totalSuccess, guard = totalGuard, bold = true)
+    }
+}
+
+/** 보너스 한 줄. 0 이면 흐리게 두어 "아직 안 모았다"가 보이게 한다. */
+@Composable
+private fun BonusRow(label: String, success: Double, guard: Double, bold: Boolean) {
+    val earned = success > 0 || guard > 0
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = if (bold) 0.8f else 0.55f),
+        )
+        Text(
+            text = "성공 +%.2f%%p  ·  파괴방지 +%.2f%%p".format(success * 100, guard * 100),
+            fontSize = 11.sp,
+            fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
+            color = if (earned) {
+                Color(0xFF7FD48A)
+            } else {
+                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.35f)
+            },
+        )
     }
 }
 
