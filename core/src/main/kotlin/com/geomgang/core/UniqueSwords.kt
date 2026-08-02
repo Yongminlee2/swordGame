@@ -46,7 +46,7 @@ object UniqueSwords {
     val RECIPES: List<UniqueRecipe> = listOf(
         UniqueRecipe(
             id = "abyss_eater", name = "심연을 삼킨 검",
-            hint = "가장 어두운 것 둘을 깊이 벼려, 심연의 정수에 담그면…",
+            hint = "가장 어두운 것 둘을 +12까지 강화해 심연의 정수에 담그면…",
             resultFamily = WeaponFamily.DEMON,
             needs = listOf(Triple(WeaponFamily.DEMON, 12, 2)),
             essences = mapOf("abyss" to 5),
@@ -67,28 +67,28 @@ object UniqueSwords {
         UniqueRecipe(
             id = "origin", name = "시작의 검",
             // +10 하한: 직검 두 자루 값(320골드)에 영구 보너스는 너무 쌌다
-            hint = "처음 쥔 곧은 검 둘을 +10까지 벼려 맞대면…",
+            hint = "처음 쥔 곧은 검 둘을 +10까지 강화해 맞대면…",
             resultFamily = WeaponFamily.STRAIGHT,
             needs = listOf(Triple(WeaponFamily.STRAIGHT, 10, 2)),
             blurb = "지니고만 있어도 강화 성공률 +3%p",
         ),
         UniqueRecipe(
             id = "glutton", name = "탐식자",
-            hint = "굶주린 굽은 날 둘을 +12까지 벼려 서로를 집어삼키게 하면…",
+            hint = "굶주린 굽은 날 둘을 +12까지 강화해 서로를 집어삼키게 하면…",
             resultFamily = WeaponFamily.DEMON,
             needs = listOf(Triple(WeaponFamily.CURVED, 12, 2)),
             blurb = "조각을 2배로 챙긴다",
         ),
         UniqueRecipe(
             id = "tempest", name = "폭풍우",
-            hint = "가장 빠르고 가는 것 둘을 +12까지 벼려 겹치면…",
+            hint = "가장 빠르고 가는 것 둘을 +12까지 강화해 겹치면…",
             resultFamily = WeaponFamily.RAPIER,
             needs = listOf(Triple(WeaponFamily.RAPIER, 12, 2)),
             blurb = "손이 30% 더 빨라진다",
         ),
         UniqueRecipe(
             id = "trinity", name = "삼위일체",
-            hint = "가장 무겁고 큰 것 둘을 +14까지 벼려 포개면…",
+            hint = "가장 무겁고 큰 것 둘을 +14까지 강화해 포개면…",
             resultFamily = WeaponFamily.HOLY,
             needs = listOf(Triple(WeaponFamily.GREAT, 14, 2)),
             blurb = "보스에게 40% 더 아프다",

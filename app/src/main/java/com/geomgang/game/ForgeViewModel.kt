@@ -1538,7 +1538,7 @@ class ForgeViewModel(
     private fun forgeBlockedReason(): String? {
         val sword = game.sword ?: return ForgeCost.missingText(game)
         if (sword.uniqueId != null) {
-            return "고유검은 벼려진 그대로다 — 강화하지 않는다"
+            return "고유검은 완성된 검이다 — 강화할 수 없다"
         }
         if (!LegendForge.canForge(sword)) {
             return "계열은 +${LegendForge.MATERIAL_LEVEL}이 끝이다. 조합소에서 전설검으로 넘어간다"

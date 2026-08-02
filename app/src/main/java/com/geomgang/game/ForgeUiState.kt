@@ -60,9 +60,9 @@ data class ForgeUiState(
      * 이번 강화가 어떻게 끝날 수 있는지. 성공·유지·하락·파괴 넷을 더하면 100이다.
      *
      * 켜 둔 아이템이 반영된 값이다 — 축복서를 켜면 성공률이 오르고,
-     * 행운부적을 켜면 하락·파괴가 0이 된다.
+     * 행운부적을 켜면 **하락만** 0이 된다. 파괴는 부적으로 못 막는다(v2.3).
      */
-    val odds: OddsPercent = OddsPercent(0, 0, 0, 0),
+    val odds: OddsPercent = OddsPercent(0.0, 0.0, 0.0, 0.0),
     /** 담금질. 무한 구간에서만 채워진다. */
     val temper: TemperUi? = null,
     /** 이번 성공이 최고 기록을 갈아치웠는지. */
@@ -151,7 +151,7 @@ data class ForgeUiState(
     val legendMissing: List<WeaponFamily> = emptyList(),
     val canCraftLegend: Boolean = false,
     val canRecraftLegend: Boolean = false,
-    /** 전설검을 한 번이라도 도감에 바쳤는지. 켜지면 조각으로 다시 벼릴 수 있다. */
+    /** 전설검을 한 번이라도 도감에 바쳤는지. 켜지면 조각으로 다시 조합할 수 있다. */
     val legendUnlocked: Boolean = false,
     /**
      * 용검을 손에 쥔 뒤의 「깊은 국면」인지([com.geomgang.core.Unlocks]).

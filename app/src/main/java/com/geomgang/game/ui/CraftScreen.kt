@@ -78,7 +78,7 @@ fun CraftScreen(
         ) {
             item {
                 Text(
-                    text = "끝까지 벼린 두 자루를 바치면 새 계열이 된다",
+                    text = "+${Refinery.MATERIAL_LEVEL} 두 자루를 조합하면 새 계열이 된다",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                 )
@@ -346,7 +346,7 @@ private fun RefinePanel(
                 color = MaterialTheme.colorScheme.primary,
             )
             Text(
-                text = "끝까지 벼린 두 자루가 ${recipe.result.displayName} " +
+                text = "+${Refinery.MATERIAL_LEVEL} 두 자루가 ${recipe.result.displayName} " +
                     "+${recipe.resultLevel} 이 된다. 결과는 보관함으로 들어간다.",
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
@@ -395,10 +395,10 @@ private fun LegendPanel(
 ) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
-            Text("용검 벼리기 — 전설", fontWeight = FontWeight.Bold, color = Color(0xFFFFD54A))
+            Text("용검 조합 — 전설", fontWeight = FontWeight.Bold, color = Color(0xFFFFD54A))
             Text(
                 text = "계열은 +${LegendForge.MATERIAL_LEVEL}에서 끝난다. " +
-                    "어둠과 빛을 끝까지 벼려 합치면 용이 된다 (+${LegendForge.LEVEL}).",
+                    "마검과 성검을 +${LegendForge.MATERIAL_LEVEL}까지 올려 조합하면 용이 된다 (+${LegendForge.LEVEL}).",
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
             )
@@ -428,7 +428,7 @@ private fun LegendPanel(
                 Spacer(Modifier.height(4.dp))
             }
             Button(onClick = onCraft, enabled = canCraft, modifier = Modifier.fillMaxWidth()) {
-                Text("재료로 벼리기")
+                Text("재료로 조합")
             }
             // 한 번 넘은 벽을 두 번 넘으라고 하면 아무도 두 번째 도전을 하지 않는다.
             if (unlocked) {
@@ -439,7 +439,7 @@ private fun LegendPanel(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(
-                        text = "💎 ${LegendForge.RECRAFT_SHARDS}로 다시 벼리기  (보유 $shards)",
+                        text = "💎 ${LegendForge.RECRAFT_SHARDS}로 다시 조합  (보유 $shards)",
                         fontSize = 13.sp,
                     )
                 }

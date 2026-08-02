@@ -223,6 +223,7 @@ private fun App(store: SaveStore) {
         Overlay.Stats -> StatsScreen(
             difficulty = state.difficulty,
             progress = state.progress,
+            deepUnlocked = state.deepUnlocked,
             onBack = { overlay = Overlay.Records },
         )
 

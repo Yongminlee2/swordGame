@@ -297,15 +297,15 @@ fun ForgeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                Stat("🎯", "성공", "${state.odds.success}%", MaterialTheme.colorScheme.primary)
+                Stat("🎯", "성공", "%.2f%%".format(state.odds.success), MaterialTheme.colorScheme.primary)
                 if (state.odds.stay > 0) {
-                    Stat("＝", "유지", "${state.odds.stay}%")
+                    Stat("＝", "유지", "%.2f%%".format(state.odds.stay))
                 }
                 if (state.odds.drop > 0) {
-                    Stat("↓", "하락", "${state.odds.drop}%", Color(0xFFE0A060))
+                    Stat("↓", "하락", "%.2f%%".format(state.odds.drop), Color(0xFFE0A060))
                 }
                 if (state.odds.destroy > 0) {
-                    Stat("💥", "파괴", "${state.odds.destroy}%", MaterialTheme.colorScheme.error)
+                    Stat("💥", "파괴", "%.2f%%".format(state.odds.destroy), MaterialTheme.colorScheme.error)
                 }
             }
             state.temper?.let { temper ->
@@ -337,9 +337,9 @@ fun ForgeScreen(
 
             if (!state.awaitingDestroyChoice) {
                 Spacer(Modifier.height(8.dp))
-                // 배타는 UsedItems 가 지킨다 - 한쪽을 켜면 다른 쪽이 저절로 내려간다.
+                // 배타는 v2.1에서 풀렸다 - 함께 켤 수 있고, 값(골드)이 선택을 가른다.
                 Text(
-                    text = "둘 중 하나만 걸 수 있다",
+                    text = "둘 다 함께 켤 수 있다 · 켠 것은 이번 강화에 쓰인다",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                 )
@@ -732,10 +732,10 @@ private fun BonusBreakdown(sources: List<BonusSource>) {
                 Text(
                     text = buildList {
                         if (source.bonus.successRate > 0) {
-                            add("성공 +%.1f%%p".format(source.bonus.successRate * 100))
+                            add("성공 +%.2f%%p".format(source.bonus.successRate * 100))
                         }
                         if (source.bonus.destroyGuard > 0) {
-                            add("파괴방지 +%.1f%%p".format(source.bonus.destroyGuard * 100))
+                            add("파괴방지 +%.2f%%p".format(source.bonus.destroyGuard * 100))
                         }
                     }.joinToString("  "),
                     fontSize = 11.sp,
@@ -767,7 +767,7 @@ private fun FamilyCapNotice() {
         Spacer(Modifier.height(2.dp))
         Text(
             text = "+${LegendForge.MATERIAL_LEVEL} 위는 강화로 가지 않는다. " +
-                "조합소에서 전설검으로 벼린다",
+                "조합소에서 전설검으로 조합한다",
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
         )

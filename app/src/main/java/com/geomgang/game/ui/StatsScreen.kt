@@ -39,6 +39,8 @@ import kotlin.math.abs
 fun StatsScreen(
     difficulty: Difficulty,
     progress: ProgressState,
+    /** 용검 이후의 깊은 국면인지. 시즌1에는 조각·사냥·강화석 항목이 통째로 없다. */
+    deepUnlocked: Boolean,
     onBack: () -> Unit,
 ) {
     val stats = progress.stats
@@ -94,7 +96,10 @@ fun StatsScreen(
                 HorizontalDivider(Modifier.padding(vertical = 6.dp))
                 StatRow("번 골드", "%,d".format(stats.goldEarned))
                 StatRow("쓴 골드", "%,d".format(stats.goldSpent))
-                StatRow("모은 조각", "%,d".format(stats.shardsEarned))
+                // 조각은 시즌2 화폐다. 시즌1 화면에 보이면 "이건 어디서 얻지"만 남긴다.
+                if (deepUnlocked) {
+                    StatRow("모은 조각", "%,d".format(stats.shardsEarned))
+                }
                 HorizontalDivider(Modifier.padding(vertical = 6.dp))
                 StatRow("방지권 사용", "${stats.preventUsed}회")
                 StatRow("방지권 놓침", "${stats.preventMissed}회")
@@ -104,24 +109,35 @@ fun StatsScreen(
             }
         }
 
-        Spacer(Modifier.height(16.dp))
-        Text("사냥과 수집", fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(8.dp))
+        // 사냥·강화석·회랑은 전부 용검 뒤의 세계다. 시즌1 통계에 0으로 늘어놓으면
+        // "내가 뭘 놓치고 있나"라는 잘못된 신호만 준다.
+        if (deepUnlocked) {
+            Spacer(Modifier.height(16.dp))
+            Text("사냥과 수집", fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(8.dp))
 
-        Card(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(12.dp)) {
-                StatRow("잡몹 처치", "%,d".format(stats.monsterKills))
-                StatRow("보스 처치", "%,d".format(stats.bossKills))
-                StatRow("이벤트 조우", "%,d".format(stats.eventsSeen))
-                HorizontalDivider(Modifier.padding(vertical = 6.dp))
-                StatRow("조합", "%,d".format(stats.fusions))
-                StatRow("별 강화 시도", "%,d".format(stats.starAttempts))
-                StatRow("최고 별", "★".repeat(stats.maxStars).ifEmpty { "없음" })
-                HorizontalDivider(Modifier.padding(vertical = 6.dp))
-                StatRow("스킬 발동", "%,d".format(stats.skillsTriggered))
-                StatRow("모은 강화석", "%,d".format(stats.stonesEarned))
-                StatRow("회랑 최고 층", "${stats.gauntletBestEver}층")
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(12.dp)) {
+                    StatRow("잡몹 처치", "%,d".format(stats.monsterKills))
+                    StatRow("보스 처치", "%,d".format(stats.bossKills))
+                    StatRow("이벤트 조우", "%,d".format(stats.eventsSeen))
+                    HorizontalDivider(Modifier.padding(vertical = 6.dp))
+                    StatRow("조합", "%,d".format(stats.fusions))
+                    StatRow("별 강화 시도", "%,d".format(stats.starAttempts))
+                    StatRow("최고 별", "★".repeat(stats.maxStars).ifEmpty { "없음" })
+                    HorizontalDivider(Modifier.padding(vertical = 6.dp))
+                    StatRow("스킬 발동", "%,d".format(stats.skillsTriggered))
+                    StatRow("모은 강화석", "%,d".format(stats.stonesEarned))
+                    StatRow("회랑 최고 층", "${stats.gauntletBestEver}층")
+                }
             }
+        } else {
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = "용검을 조합하면 사냥과 수집 통계가 열린다",
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f),
+            )
         }
     }
 }
@@ -142,11 +158,11 @@ private fun RateRow(level: Int, expected: Double, observed: Double?, tries: Long
     val diff = observed?.let { it - expected }
     Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
         Cell("+$level", 0.18f)
-        Cell("%.0f%%".format(expected * 100), 0.22f)
-        Cell(observed?.let { "%.1f%%".format(it * 100) } ?: "—", 0.24f)
+        Cell("%.2f%%".format(expected * 100), 0.22f)
+        Cell(observed?.let { "%.2f%%".format(it * 100) } ?: "—", 0.24f)
         Cell(if (tries > 0) "$tries" else "—", 0.20f)
         Cell(
-            text = diff?.let { "%+.1f".format(it * 100) } ?: "",
+            text = diff?.let { "%+.2f".format(it * 100) } ?: "",
             weight = 0.16f,
             color = when {
                 diff == null -> Color.Unspecified

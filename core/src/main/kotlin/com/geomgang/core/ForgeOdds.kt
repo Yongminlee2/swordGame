@@ -1,11 +1,16 @@
 package com.geomgang.core
 
-/** 화면에 쓰는 정수 백분율. 넷을 더하면 100이다. */
+/**
+ * 화면에 쓰는 백분율. 0.01%p 단위로 반올림되어 있고 넷을 더하면 정확히 100이다.
+ *
+ * 정수 %였을 때는 도감 한 장(+0.1%p 수준)의 변화가 반올림에 통째로 삼켜졌다 -
+ * 쌓는 재미는 숫자가 움직이는 것이 보여야 생긴다.
+ */
 data class OddsPercent(
-    val success: Int,
-    val stay: Int,
-    val drop: Int,
-    val destroy: Int,
+    val success: Double,
+    val stay: Double,
+    val drop: Double,
+    val destroy: Double,
 )
 
 /**
@@ -31,21 +36,23 @@ data class ForgeOdds(
      * 나머지를 큰 쪽부터 채운 뒤, 남는 오차는 **가장 큰 항목**이 흡수한다.
      */
     fun percents(): OddsPercent {
-        val s = Math.round(success * 100).toInt()
-        val st = Math.round(stay * 100).toInt()
-        val dr = Math.round(drop * 100).toInt()
-        val de = Math.round(destroy * 100).toInt()
-        val gap = 100 - (s + st + dr + de)
-        if (gap == 0) return OddsPercent(s, st, dr, de)
+        // 만분율(0.01%p)로 반올림한 뒤 오차를 흡수한다. 단위만 촘촘해졌지 방법은 같다.
+        val s = Math.round(success * 10_000).toInt()
+        val st = Math.round(stay * 10_000).toInt()
+        val dr = Math.round(drop * 10_000).toInt()
+        val de = Math.round(destroy * 10_000).toInt()
+        val gap = 10_000 - (s + st + dr + de)
 
-        // 오차는 가장 큰 항목에 얹는다 - 큰 수에서 1%p 는 눈에 띄지 않는다.
+        // 오차는 가장 큰 항목에 얹는다 - 큰 수에서 0.01%p 는 눈에 띄지 않는다.
         val biggest = listOf(s, st, dr, de).max()
-        return when (biggest) {
-            s -> OddsPercent(s + gap, st, dr, de)
-            st -> OddsPercent(s, st + gap, dr, de)
-            dr -> OddsPercent(s, st, dr + gap, de)
-            else -> OddsPercent(s, st, dr, de + gap)
+        val (fs, fst, fdr, fde) = when {
+            gap == 0 -> listOf(s, st, dr, de)
+            biggest == s -> listOf(s + gap, st, dr, de)
+            biggest == st -> listOf(s, st + gap, dr, de)
+            biggest == dr -> listOf(s, st, dr + gap, de)
+            else -> listOf(s, st, dr, de + gap)
         }
+        return OddsPercent(fs / 100.0, fst / 100.0, fdr / 100.0, fde / 100.0)
     }
 
     companion object {
