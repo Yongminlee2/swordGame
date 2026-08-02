@@ -113,11 +113,11 @@ class FamilyUnlockTest {
 
     @Test
     fun `고유검 레시피는 조합으로 남아 있다`() {
-        // 성검 둘 +10 이상은 삼위일체(고유검)다.
+        // 대검 둘 +14 이상은 삼위일체(고유검)다.
         val result = Fusion.resultOrNull(
             listOf(
-                Sword(WeaponFamily.HOLY, 10),
-                Sword(WeaponFamily.HOLY, 11),
+                Sword(WeaponFamily.GREAT, 14),
+                Sword(WeaponFamily.GREAT, 15),
             ),
         )
         assertEquals("trinity", result?.uniqueId)

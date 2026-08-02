@@ -94,23 +94,24 @@ class EconomyTest {
 
     @Test
     fun `상점 가격이 스펙과 일치한다`() {
-        assertEquals(800L, Economy.priceOf(Item.PREVENT_TICKET))
-        assertEquals(1200L, Economy.priceOf(Item.BLESSING_SCROLL))
-        assertEquals(2000L, Economy.priceOf(Item.LUCK_CHARM))
+        // v2.3에서 10배. 방지권이 늘 사 두는 것이 아니라 고민거리가 되어야 한다.
+        assertEquals(8_000L, Economy.priceOf(Item.PREVENT_TICKET))
+        assertEquals(12_000L, Economy.priceOf(Item.BLESSING_SCROLL))
+        assertEquals(20_000L, Economy.priceOf(Item.LUCK_CHARM))
         assertEquals(160L, Economy.BASE_SWORD_PRICE)
     }
 
     @Test
     fun `아이템 구매는 골드를 차감하고 아이템을 준다`() {
-        val after = Economy.buyItem(state(gold = 1000), Item.PREVENT_TICKET)
-        assertEquals(200L, after.gold)
+        val after = Economy.buyItem(state(gold = 10_000), Item.PREVENT_TICKET)
+        assertEquals(2_000L, after.gold)
         assertEquals(1, after.inventory.preventTickets)
     }
 
     @Test
     fun `골드가 모자라면 아이템을 살 수 없다`() {
-        assertFalse(Economy.canBuyItem(state(gold = 799), Item.PREVENT_TICKET))
-        assertTrue(Economy.canBuyItem(state(gold = 800), Item.PREVENT_TICKET))
+        assertFalse(Economy.canBuyItem(state(gold = 7_999), Item.PREVENT_TICKET))
+        assertTrue(Economy.canBuyItem(state(gold = 8_000), Item.PREVENT_TICKET))
     }
 
     @Test

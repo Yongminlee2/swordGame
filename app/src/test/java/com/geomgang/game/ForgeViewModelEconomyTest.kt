@@ -86,7 +86,8 @@ class ForgeViewModelEconomyTest {
 
     @Test
     fun `축복서와 행운부적도 살 수 있다`() = runTest(dispatcher) {
-        val vm = vm(gold = 10_000)
+        // v2.3에서 소모품 값이 10배 - 축복서 12,000 + 부적 20,000
+        val vm = vm(gold = 100_000)
         vm.buyItem(Item.BLESSING_SCROLL)
         vm.buyItem(Item.LUCK_CHARM)
         assertEquals(1, vm.ui.value.blessingScrolls)

@@ -48,9 +48,11 @@ class ForgeViewModelUniqueTest {
                 difficulty = Difficulty.ENDLESS,
                 gold = 1_000_000,
                 sword = Sword(WeaponFamily.STRAIGHT, 3),
+                // 삼위일체는 v2.3에서 대검 +14 둘로 옮겨졌다 - 성검은 시즌1이
+                // 만들어 내지 못하는 재료라 고유검에 닿는 길이 없었다.
                 storage = listOf(
-                    Sword(WeaponFamily.HOLY, 10),
-                    Sword(WeaponFamily.HOLY, 12),
+                    Sword(WeaponFamily.GREAT, 14),
+                    Sword(WeaponFamily.GREAT, 16),
                 ),
             ),
         )
@@ -59,7 +61,7 @@ class ForgeViewModelUniqueTest {
         val ui = vm.ui.value
         val result = ui.storage.single()
         assertEquals("trinity", result.uniqueId)
-        assertEquals(12, result.level)
+        assertEquals(16, result.level)
         assertTrue("도감 미등록", "trinity" in ui.progress.uniqueFound)
     }
 }

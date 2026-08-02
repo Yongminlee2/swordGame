@@ -16,14 +16,23 @@ package com.geomgang.core
  */
 object Essences {
 
+    /** 가장 얕은 구역의 권장 단계. 무게의 원점이다. */
+    private val SHALLOWEST: Int = Zone.entries.minOf { it.recommendedLevel }
+
     /**
-     * 정수 한 개의 무게 = 그 구역 권장 레벨 + 1.
+     * 정수 한 개의 무게 = 가장 얕은 구역에서 얼마나 더 깊은가 + 1.
      *
-     * 초원(권장 0)이 1, 끝의 문(38)이 39다. 권장 레벨을 그대로 쓰는 이유는
-     * 그것이 이미 "얼마나 깊은가" 의 단일 출처이기 때문이다 — 따로 표를 두면
-     * 구역을 손볼 때마다 두 곳이 어긋난다.
+     * 초원이 1, 끝의 문이 39다. 권장 레벨을 쓰는 이유는 그것이 이미
+     * "얼마나 깊은가" 의 단일 출처이기 때문이다 — 따로 표를 두면 구역을 손볼 때마다
+     * 두 곳이 어긋난다.
+     *
+     * **원점을 빼는 이유**: v2.3에서 사냥터 사다리를 통째로 +15 올렸다(용검을 쥐어야
+     * 들어올 수 있는 곳이라 권장 0 짜리 구역은 뜻이 없었다). 권장 레벨을 그대로 쓰면
+     * 그때 정수 무게가 전부 15씩 뛰어 [WardCharm.COST] 가 조용히 헐값이 된다.
+     * 무게는 **구역 사이의 거리**여야지 사다리의 절대 높이여서는 안 된다.
      */
-    fun weightOf(zoneId: String): Int = Zone.fromId(zoneId).recommendedLevel + 1
+    fun weightOf(zoneId: String): Int =
+        Zone.fromId(zoneId).recommendedLevel - SHALLOWEST + 1
 
     /** 지금 가진 정수를 전부 무게로 환산한 값. */
     fun powerOf(essences: Map<String, Int>): Int =

@@ -31,8 +31,14 @@ object UniqueSwords {
     /**
      * 레시피 6종. 전부 **재료 두 자루**다 — 조합이 두 자루라서.
      *
-     * **정의 순서가 우선순위다.** 조건이 좁은 것(단계 하한·정수)이 앞이다.
-     * 심연(마검+16 둘)이 탐식자(마검 아무 둘)보다 앞에 있어야 +16 둘이 탐식자로 새지 않는다.
+     * **정의 순서가 우선순위다.** 정수를 요구하는 것(시즌2)이 앞이다.
+     *
+     * **재료는 시즌1이 실제로 만들어 내는 것이어야 한다(v2.3).** 예전에는 넷이
+     * 마검·성검을 요구했는데, 조합이 「+20 두 자루의 의식」이 되면서 마검 한 자루가
+     * 기본 검 +20 두 자루 값이 됐다 — 마검 둘을 요구하는 레시피는 기본 검 +20 을
+     * **네 자루** 태우라는 말이었다. 그래서 고유검에 닿는 길이 사실상 없었다.
+     * 지금은 기본 4계열이 하나씩 맡는다: 직검·곡도·세검·대검.
+     * 마검·성검을 쓰는 둘은 정수까지 필요한 시즌2 몫으로 남긴다.
      *
      * v2.1에서 숨긴 계열을 쓰는 4종(용왕의 송곳니·절단자·행운아·개화)을 내렸다.
      * git 이력에 있다 — 계열을 되살릴 때 함께 되살린다.
@@ -42,7 +48,7 @@ object UniqueSwords {
             id = "abyss_eater", name = "심연을 삼킨 검",
             hint = "가장 어두운 것 둘을 깊이 벼려, 심연의 정수에 담그면…",
             resultFamily = WeaponFamily.DEMON,
-            needs = listOf(Triple(WeaponFamily.DEMON, 16, 2)),
+            needs = listOf(Triple(WeaponFamily.DEMON, 12, 2)),
             essences = mapOf("abyss" to 5),
             blurb = "적 최대체력의 2%를 추가로 벤다",
         ),
@@ -57,36 +63,35 @@ object UniqueSwords {
             essences = mapOf("volcano" to 3),
             blurb = "불사조의 온기가 금을 부른다 — 사냥 골드 +25%",
         ),
-        UniqueRecipe(
-            id = "trinity", name = "삼위일체",
-            hint = "성스러운 것 둘이 한 곳에 모이면…",
-            resultFamily = WeaponFamily.HOLY,
-            needs = listOf(Triple(WeaponFamily.HOLY, 10, 2)),
-            blurb = "보스에게 40% 더 아프다",
-        ),
-        UniqueRecipe(
-            id = "tempest", name = "폭풍우",
-            hint = "가장 빠른 것 둘과 설원의 정수…",
-            resultFamily = WeaponFamily.RAPIER,
-            needs = listOf(Triple(WeaponFamily.RAPIER, 0, 2)),
-            essences = mapOf("snowfield" to 2),
-            blurb = "손이 30% 더 빨라진다",
-        ),
+        // --- 아래 넷은 기본 4계열 하나씩. 시즌1에서 손에 넣을 수 있는 것들이다. ---
         UniqueRecipe(
             id = "origin", name = "시작의 검",
             // +10 하한: 직검 두 자루 값(320골드)에 영구 보너스는 너무 쌌다
-            hint = "깊이 벼린 처음의 검 둘이 처음으로 돌아가면…",
+            hint = "처음 쥔 곧은 검 둘을 +10까지 벼려 맞대면…",
             resultFamily = WeaponFamily.STRAIGHT,
             needs = listOf(Triple(WeaponFamily.STRAIGHT, 10, 2)),
             blurb = "지니고만 있어도 강화 성공률 +3%p",
         ),
-        // 탐식자는 마검 아무 둘 - 심연(+16 하한)보다 뒤라야 +16 둘이 여기로 새지 않는다
         UniqueRecipe(
             id = "glutton", name = "탐식자",
-            hint = "굶주린 마검 둘이 서로를 집어삼키면…",
+            hint = "굶주린 굽은 날 둘을 +12까지 벼려 서로를 집어삼키게 하면…",
             resultFamily = WeaponFamily.DEMON,
-            needs = listOf(Triple(WeaponFamily.DEMON, 0, 2)),
+            needs = listOf(Triple(WeaponFamily.CURVED, 12, 2)),
             blurb = "조각을 2배로 챙긴다",
+        ),
+        UniqueRecipe(
+            id = "tempest", name = "폭풍우",
+            hint = "가장 빠르고 가는 것 둘을 +12까지 벼려 겹치면…",
+            resultFamily = WeaponFamily.RAPIER,
+            needs = listOf(Triple(WeaponFamily.RAPIER, 12, 2)),
+            blurb = "손이 30% 더 빨라진다",
+        ),
+        UniqueRecipe(
+            id = "trinity", name = "삼위일체",
+            hint = "가장 무겁고 큰 것 둘을 +14까지 벼려 포개면…",
+            resultFamily = WeaponFamily.HOLY,
+            needs = listOf(Triple(WeaponFamily.GREAT, 14, 2)),
+            blurb = "보스에게 40% 더 아프다",
         ),
     )
 

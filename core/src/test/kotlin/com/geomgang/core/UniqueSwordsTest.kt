@@ -14,9 +14,9 @@ class UniqueSwordsTest {
     // --- 매칭 ---
 
     @Test
-    fun `삼위일체 - 성검 둘 10단계 이상`() {
+    fun `삼위일체 - 대검 둘 14단계 이상`() {
         val recipe = UniqueSwords.match(
-            swords(WeaponFamily.HOLY to 10, WeaponFamily.HOLY to 12),
+            swords(WeaponFamily.GREAT to 14, WeaponFamily.GREAT to 16),
             emptyMap(),
         )
         assertEquals("trinity", recipe?.id)
@@ -26,7 +26,7 @@ class UniqueSwordsTest {
     fun `단계가 모자라면 불발`() {
         assertNull(
             UniqueSwords.match(
-                swords(WeaponFamily.HOLY to 9, WeaponFamily.HOLY to 12),
+                swords(WeaponFamily.GREAT to 13, WeaponFamily.GREAT to 16),
                 emptyMap(),
             ),
         )
@@ -34,16 +34,17 @@ class UniqueSwordsTest {
 
     @Test
     fun `정수가 모자라면 불발`() {
-        val materials = swords(WeaponFamily.DEMON to 16, WeaponFamily.DEMON to 17)
-        // 심연은 abyss 정수 5가 필요하다. 4로는 탐식자(정수 없음)로 떨어진다.
-        assertEquals("glutton", UniqueSwords.match(materials, mapOf("abyss" to 4))?.id)
+        val materials = swords(WeaponFamily.DEMON to 12, WeaponFamily.DEMON to 13)
+        // 심연은 abyss 정수 5가 필요하다. 모자라면 받아 줄 레시피가 없다 -
+        // v2.3에서 탐식자가 곡도로 옮겨져 마검 둘을 받는 레시피는 심연뿐이다.
+        assertNull(UniqueSwords.match(materials, mapOf("abyss" to 4)))
         assertEquals("abyss_eater", UniqueSwords.match(materials, mapOf("abyss" to 5))?.id)
     }
 
     @Test
-    fun `탐식자 - 마검 아무 둘`() {
+    fun `탐식자 - 곡도 둘 12단계 이상`() {
         val recipe = UniqueSwords.match(
-            swords(WeaponFamily.DEMON to 3, WeaponFamily.DEMON to 5),
+            swords(WeaponFamily.CURVED to 12, WeaponFamily.CURVED to 14),
             emptyMap(),
         )
         assertEquals("glutton", recipe?.id)
@@ -104,11 +105,21 @@ class UniqueSwordsTest {
         }
     }
 
-    /** 구체 레시피(단계 하한·정수)가 넓은 레시피보다 앞이어야 재료가 새지 않는다. */
+    /**
+     * 시즌1에서 손에 넣을 수 있는 길이 반드시 있어야 한다.
+     *
+     * v2.3 이전에는 여섯 중 넷이 마검·성검을 요구했는데, 그 둘이 「+20 두 자루의
+     * 의식」이 되면서 고유검에 닿는 길이 사실상 사라졌다. 기본 4계열로 만들 수 있는
+     * 레시피가 없어지면 같은 일이 다시 일어난다.
+     */
     @Test
-    fun `심연이 탐식자보다 앞이다`() {
-        val ids = UniqueSwords.RECIPES.map { it.id }
-        assertTrue(ids.indexOf("abyss_eater") < ids.indexOf("glutton"))
+    fun `기본 4계열마다 정수 없는 레시피가 하나씩 있다`() {
+        val basicOnly = UniqueSwords.RECIPES.filter { recipe ->
+            recipe.essences.isEmpty() &&
+                recipe.needs.all { (family, _, _) -> family in WeaponFamily.BASICS }
+        }
+        val families = basicOnly.flatMap { it.needs.mapNotNull { need -> need.first } }.toSet()
+        assertEquals(WeaponFamily.BASICS.toSet(), families)
     }
 
     // --- 보유 보너스 ---

@@ -44,7 +44,7 @@ class ForgeViewModelQuestTest {
         override fun nextDouble(): Double = 1.0
     }
 
-    private fun vm(sword: Sword? = Sword(WeaponFamily.STRAIGHT, 3)): ForgeViewModel {
+    private fun vm(sword: Sword? = Sword(WeaponFamily.STRAIGHT, 19)): ForgeViewModel {
         val store = SaveStore(tmp.root)
         store.saveGame(GameState(difficulty = Difficulty.ENDLESS, gold = 0, sword = sword))
         return ForgeViewModel(store, Difficulty.ENDLESS, QueueRandom())
@@ -68,7 +68,7 @@ class ForgeViewModelQuestTest {
     fun `잡몹 처치가 처치 퀘스트 진행도를 올린다`() = runTest(dispatcher) {
         val v = vm()
         v.enterZone(Zone.MEADOW)
-        v.tapTarget() // +3 직검이 들쥐(체력 16)를 한 방에 잡는다
+        v.tapTarget() // +19 직검이 들쥐를 한 방에 잡는다 (초원 권장 +15)
         val ui = v.ui.value
         v.leaveHunt()
         val killIndex = ui.quests.daily.indexOfFirst { it.kind == QuestKind.KILL }

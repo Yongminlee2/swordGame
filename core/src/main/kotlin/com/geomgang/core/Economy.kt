@@ -22,9 +22,24 @@ object Economy {
      */
     const val BASE_SWORD_PRICE: Long = 160
 
-    const val PREVENT_TICKET_PRICE: Long = 800
-    const val BLESSING_SCROLL_PRICE: Long = 1_200
-    const val LUCK_CHARM_PRICE: Long = 2_000
+    /**
+     * 소모품 고정가 — 시즌1(+20 이하)에서 실제로 내는 값이다([GoldShop.itemPrice]).
+     *
+     * v2.3에서 10배 올렸다(800/1,200/2,000 → 지금 값). 예전 값은 +5 검 한 자루 값이라
+     * **고민거리가 아니라 그냥 늘 채워 두는 것**이었다. 실제로
+     * [com.geomgang.core.sim.BalanceSimulation] 은 방지권을 다섯 장까지 상시 비축한다 —
+     * 살 수 있으면 무조건 산다. 파괴가 나도 매번 되살리니 파괴 구간이 벽이 아니었다.
+     * **파괴 구간을 다시 벽으로 만드는 손잡이가 여기다.**
+     *
+     * 얼마나 올릴지는 시뮬레이션이 정했다. 100,000/160,000/250,000 으로 잡아 봤더니
+     * 20,000판 중 +20 도달이 **0명**이 되고 최고 단계 자체가 17에서 멈췄다 — 그건
+     * 어려워진 것이 아니라 길이 막힌 것이다. 10배가 **천장(+20)이 남아 있는 가장 비싼
+     * 값**이었다. 여기를 만지면 반드시 시뮬레이션부터 돌리고, 최고 단계가
+     * [RateTable.MAX_FINITE_LEVEL] 인지부터 볼 것.
+     */
+    const val PREVENT_TICKET_PRICE: Long = 8_000
+    const val BLESSING_SCROLL_PRICE: Long = 12_000
+    const val LUCK_CHARM_PRICE: Long = 20_000
 
     /** 파산 구제가 채워 주는 골드. */
     const val BAILOUT_GOLD: Long = 300

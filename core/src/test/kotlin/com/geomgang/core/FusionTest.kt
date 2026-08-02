@@ -30,9 +30,9 @@ class FusionTest {
 
     @Test
     fun `고유검 레시피와 맞으면 조합된다`() {
-        // 삼위일체 - 성검 +10 둘
+        // 삼위일체 - 대검 +14 둘
         val result = Fusion.resultOrNull(
-            listOf(sw(10, WeaponFamily.HOLY), sw(12, WeaponFamily.HOLY)),
+            listOf(sw(14, WeaponFamily.GREAT), sw(16, WeaponFamily.GREAT)),
         )
         assertEquals("trinity", result?.uniqueId)
         assertEquals(WeaponFamily.HOLY, result?.family)
@@ -56,9 +56,9 @@ class FusionTest {
     @Test
     fun `조합으로 단계가 오르지 않는다`() {
         val result = Fusion.resultOrNull(
-            listOf(sw(10, WeaponFamily.HOLY), sw(12, WeaponFamily.HOLY)),
+            listOf(sw(14, WeaponFamily.GREAT), sw(16, WeaponFamily.GREAT)),
         )
-        assertEquals(12, result?.level)
+        assertEquals(16, result?.level)
     }
 
     @Test
@@ -66,8 +66,8 @@ class FusionTest {
         // 녹여서 새로 만드는 것이므로 0부터다
         val result = Fusion.resultOrNull(
             listOf(
-                sw(10, WeaponFamily.HOLY, stars = 4),
-                sw(12, WeaponFamily.HOLY, stars = 3),
+                sw(14, WeaponFamily.GREAT, stars = 4),
+                sw(16, WeaponFamily.GREAT, stars = 3),
             ),
         )
         assertEquals(0, result?.stars)
@@ -75,7 +75,7 @@ class FusionTest {
 
     @Test
     fun `재료가 한 자루면 조합할 수 없다`() {
-        val s = state(storage = listOf(sw(10, WeaponFamily.HOLY)))
+        val s = state(storage = listOf(sw(14, WeaponFamily.GREAT)))
         assertFalse(Fusion.canFuse(s, listOf(0)))
     }
 
@@ -84,8 +84,8 @@ class FusionTest {
         val s = state(
             storage = listOf(
                 sw(10, WeaponFamily.HOLY),
-                sw(11, WeaponFamily.HOLY),
-                sw(12, WeaponFamily.HOLY),
+                sw(15, WeaponFamily.GREAT),
+                sw(16, WeaponFamily.GREAT),
             ),
         )
         assertFalse(Fusion.canFuse(s, listOf(0, 1, 2)))
@@ -93,14 +93,14 @@ class FusionTest {
 
     @Test
     fun `같은 자리를 두 번 넣을 수 없다`() {
-        val s = state(storage = listOf(sw(10, WeaponFamily.HOLY), sw(12, WeaponFamily.HOLY)))
+        val s = state(storage = listOf(sw(14, WeaponFamily.GREAT), sw(16, WeaponFamily.GREAT)))
         assertFalse(Fusion.canFuse(s, listOf(0, 0)))
     }
 
     @Test
     fun `골드가 모자라면 조합할 수 없다`() {
         val s = state(
-            storage = listOf(sw(10, WeaponFamily.HOLY), sw(12, WeaponFamily.HOLY)),
+            storage = listOf(sw(14, WeaponFamily.GREAT), sw(16, WeaponFamily.GREAT)),
             gold = 1,
         )
         assertFalse(Fusion.canFuse(s, listOf(0, 1)))
@@ -108,17 +108,17 @@ class FusionTest {
 
     @Test
     fun `조합하면 재료가 사라지고 결과가 보관함에 들어온다`() {
-        val s = state(storage = listOf(sw(10, WeaponFamily.HOLY), sw(12, WeaponFamily.HOLY)))
+        val s = state(storage = listOf(sw(14, WeaponFamily.GREAT), sw(16, WeaponFamily.GREAT)))
         val after = Fusion.fuse(s, listOf(0, 1))
         assertEquals(1, after.storage.size)
         assertEquals("trinity", after.storage.first().uniqueId)
-        assertEquals(12, after.storage.first().level)
+        assertEquals(16, after.storage.first().level)
     }
 
     @Test
     fun `조합은 골드를 쓴다`() {
         val s = state(
-            storage = listOf(sw(10, WeaponFamily.HOLY), sw(12, WeaponFamily.HOLY)),
+            storage = listOf(sw(14, WeaponFamily.GREAT), sw(16, WeaponFamily.GREAT)),
             gold = 1_000_000,
         )
         val cost = Fusion.cost(s, listOf(0, 1))
@@ -128,7 +128,7 @@ class FusionTest {
 
     @Test
     fun `미리보기가 실제 결과와 같다`() {
-        val s = state(storage = listOf(sw(10, WeaponFamily.HOLY), sw(12, WeaponFamily.HOLY)))
+        val s = state(storage = listOf(sw(14, WeaponFamily.GREAT), sw(16, WeaponFamily.GREAT)))
         val preview = Fusion.preview(s, listOf(0, 1))
         val actual = Fusion.fuse(s, listOf(0, 1)).storage.last()
         assertEquals(preview, actual)

@@ -1,6 +1,7 @@
 package com.geomgang.core.sim
 
 import com.geomgang.core.Difficulty
+import com.geomgang.core.RateTable
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -24,9 +25,10 @@ class BalanceSimulationTest {
     @Test
     fun `일반 모드 평균 최고 단계가 목표 구간 안에 있다`() {
         val r = report(Difficulty.NORMAL)
-        // v2.3에서 +10 위 판매가를 깎았다(1.80 → 1.50). 시즌1은 +20 여섯 자루의
-        // 여정이라 한 세션의 평균이 낮아진 것이 맞다 - 대신 파산율이 0이어야 한다.
-        assertTrue("평균 최고 단계=${r.averageBestLevel}", r.averageBestLevel in 15.0..18.0)
+        // v2.3에서 +10 위 판매가를 깎고(1.80 → 1.50 → 1.20) 소모품 값을 10배 올렸다.
+        // 시즌1은 +20 여섯 자루의 여정이라 한 세션의 평균이 낮아진 것이 맞다 -
+        // 대신 파산율이 0이어야 한다.
+        assertTrue("평균 최고 단계=${r.averageBestLevel}", r.averageBestLevel in 14.0..18.0)
     }
 
     /**
@@ -37,16 +39,22 @@ class BalanceSimulationTest {
      * 실제 플레이어는 스킬·도감·고유검 보너스를 영구히 쌓아 회차마다 빨라지고,
      * 세션도 한 번으로 끝나지 않는다.
      *
-     * 그래서 지키는 선은 둘이다. **길이 있다**(도달률 > 0) 와 **거저가 아니다**
-     * (도달률 < 5%). 위쪽 선이 무너지면 시즌1이 다시 짧아진 것이고,
-     * 아래쪽 선이 무너지면 한 세션으로는 상한이 아예 안 보이는 것이다.
+     * 그래서 지키는 선은 둘이다.
+     *
+     * **길이 있다** — 최고 단계가 [RateTable.MAX_FINITE_LEVEL] 에 닿는다. 도달률이
+     * 아니라 최고 단계로 재는 이유: 도달률은 소모품 값 한 번에 0.17% ↔ 0.01% 로
+     * 흔들리는 꼬리 통계라 회귀를 알려 주지 못한다. **최고 단계가 20 아래로 내려가면
+     * 그건 어려워진 것이 아니라 길이 막힌 것이다** — 소모품 값을 125배로 올렸을 때
+     * 실제로 17에서 멈췄고, 그러면 용검에 영영 못 간다.
+     *
+     * **거저가 아니다** — 도달률 5% 미만. 이 선이 무너지면 시즌1이 다시 짧아진 것이다.
      *
      * **막다른 길이 아니라는 증거는 파산율 0%** 다 — 「경제가 돌아가서…」 테스트다.
      */
     @Test
     fun `상한에 닿되 거저 닿지는 않는다`() {
         val r = report(Difficulty.NORMAL)
-        assertTrue("상한 도달률=${r.capRate}", r.capRate > 0.0005)
+        assertEquals("최고 도달=${r.maxBestLevel}", RateTable.MAX_FINITE_LEVEL, r.maxBestLevel)
         assertTrue("상한 도달률=${r.capRate}", r.capRate < 0.05)
         assertTrue("평균 시도 수=${r.averageAttempts}", r.averageAttempts > 500)
     }
@@ -105,7 +113,7 @@ class BalanceSimulationTest {
     fun `쉬움 모드는 상한을 볼 수 있는 길을 열어 준다`() {
         // +20 도달과 흑룡참 도감이 아무에게도 닿지 않으면 죽은 콘텐츠가 된다.
         val r = report(Difficulty.EASY)
-        assertTrue("쉬움 상한 도달률=${r.capRate}", r.capRate > 0.02)
+        assertTrue("쉬움 상한 도달률=${r.capRate}", r.capRate > 0.001)
     }
 
     companion object {

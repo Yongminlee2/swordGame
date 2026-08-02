@@ -22,12 +22,12 @@ class UniqueIntegrationTest {
     @Test
     fun `레시피와 맞으면 조합이 고유검을 만든다`() {
         val state = stateWith(
-            listOf(Sword(WeaponFamily.HOLY, 10), Sword(WeaponFamily.HOLY, 12)),
+            listOf(Sword(WeaponFamily.GREAT, 14), Sword(WeaponFamily.GREAT, 16)),
         )
         val fused = Fusion.fuse(state, listOf(0, 1))
         val result = fused.storage.single()
         assertEquals("trinity", result.uniqueId)
-        assertEquals(12, result.level) // 고유검은 재료 중 최고 단계
+        assertEquals(16, result.level) // 고유검은 재료 중 최고 단계
         assertEquals(WeaponFamily.HOLY, result.family)
     }
 

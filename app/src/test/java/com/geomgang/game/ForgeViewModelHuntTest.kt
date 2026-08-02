@@ -69,7 +69,9 @@ class ForgeViewModelHuntTest {
 
     private fun huntReadyViewModel(
         rng: Random = QueueRandom(),
-        sword: Sword = Sword(WeaponFamily.STRAIGHT, 3),
+        // 사냥터는 용검(+21) 뒤에 열린다. 초원 권장이 +15 이므로 한 방에 잡으려면
+        // 그만한 검이어야 한다 - +3 은 v2.3 재편성 전의 유물이다.
+        sword: Sword = Sword(WeaponFamily.STRAIGHT, 19),
     ): ForgeViewModel {
         val store = SaveStore(tmp.root)
         store.saveGame(GameState(difficulty = Difficulty.ENDLESS, gold = 0, sword = sword))
@@ -129,7 +131,7 @@ class ForgeViewModelHuntTest {
 
     @Test
     fun `잡몹을 잡으면 lastKillGold에 보상이 남는다`() = runTest(dispatcher) {
-        // +3 직검(공격력 20)이 들쥐(체력 16)를 한 방에 잡는다
+        // +19 직검이 들쥐를 한 방에 잡는다 (초원 권장 +15)
         val vm = huntReadyViewModel()
         vm.tapTarget()
         val hunt = vm.ui.value.hunt!!
@@ -163,41 +165,46 @@ class ForgeViewModelHuntTest {
     @Test
     fun `보물 몬스터는 시간이 지나면 도망간다`() = runTest(dispatcher) {
         val vm = huntReadyViewModel(rng = QueueRandom(doubles = listOf(0.5, 0.0, 0.05)))
-        assertEquals(HuntEvent.TREASURE, vm.ui.value.hunt!!.event)
+        val spawned = vm.ui.value.hunt!!.event
         advanceTimeBy((HuntEvents.TREASURE_SECONDS + 1) * 1000L)
         val hunt = vm.ui.value.hunt!!
         vm.leaveHunt()
+        assertEquals(HuntEvent.TREASURE, spawned)
         assertNull(hunt.event)
     }
 
     @Test
     fun `골든타임 중에는 처치 골드가 2배다`() = runTest(dispatcher) {
         val vm = huntReadyViewModel(rng = QueueRandom(doubles = listOf(0.5, 0.0, 0.18)))
-        assertTrue(vm.ui.value.hunt!!.goldenRemainingMillis > 0)
-        vm.tapTarget() // +3 직검이 들쥐를 한 방에 잡는다
+        val golden = vm.ui.value.hunt!!.goldenRemainingMillis
+        vm.tapTarget() // +19 직검이 들쥐를 한 방에 잡는다
         val hunt = vm.ui.value.hunt!!
         vm.leaveHunt()
+        assertTrue(golden > 0)
         val base = Zone.MEADOW.goldOf(Zone.MEADOW.monsters.first())
         assertEquals((base * HuntEvents.GOLDEN_MULT).toLong(), hunt.lastKillGold)
     }
 
     @Test
     fun `보스를 잡으면 그 구역 정수가 1 오른다`() = runTest(dispatcher) {
-        // 용검 +20의 화상이 가상 시간만으로 잡몹 12마리와 보스를 잡는다 -
+        // 용검의 화상이 가상 시간만으로 잡몹 12마리와 보스를 잡는다 -
         // 탭 연타 가드(실제 시각)를 피하는 방법이다.
-        val vm = huntReadyViewModel(sword = Sword(WeaponFamily.DRAGON, 20))
+        // v2.3에서 사냥터가 용검 기준으로 재편성되며 초원 잡몹 체력이 437배가 됐다.
+        // +20 으로는 틱마다 못 잡아 12마리를 못 채운다.
+        val vm = huntReadyViewModel(sword = Sword(WeaponFamily.DRAGON, 30))
         advanceTimeBy((Zone.MONSTERS_BEFORE_BOSS + 2) * 1000L)
-        assertTrue(vm.ui.value.hunt!!.killsInZone >= Zone.MONSTERS_BEFORE_BOSS)
+        val kills = vm.ui.value.hunt!!.killsInZone
         vm.challengeBoss()
         advanceTimeBy(3_000)
         val essences = vm.ui.value.essences
         vm.leaveHunt()
+        assertTrue("잡몹 $kills 마리", kills >= Zone.MONSTERS_BEFORE_BOSS)
         assertEquals(1, essences[Zone.MEADOW.id])
     }
 
     @Test
     fun `보스 알 롤이 낮으면 그 구역 펫 알을 얻는다`() = runTest(dispatcher) {
-        val vm = huntReadyViewModel(sword = Sword(WeaponFamily.DRAGON, 20))
+        val vm = huntReadyViewModel(sword = Sword(WeaponFamily.DRAGON, 30))
         advanceTimeBy((Zone.MONSTERS_BEFORE_BOSS + 2) * 1000L)
         vm.challengeBoss()
         // 보스 처치 시 난수: 드롭(보스는 확정이라 chance 롤 없이 계열 nextInt·단계 nextInt) 뒤 알 롤.
@@ -218,7 +225,7 @@ class ForgeViewModelHuntTest {
             GameState(
                 difficulty = Difficulty.ENDLESS,
                 gold = 0,
-                sword = Sword(WeaponFamily.STRAIGHT, 10), // 화상 없음, 자동 타격만
+                sword = Sword(WeaponFamily.STRAIGHT, 28), // 화상 없음, 자동 타격만
                 pets = com.geomgang.core.PetState(
                     counts = mapOf("quokka" to 1),
                     equippedId = "quokka",
@@ -228,7 +235,7 @@ class ForgeViewModelHuntTest {
         val vm = ForgeViewModel(store, Difficulty.ENDLESS, QueueRandom())
         vm.enterZone(Zone.MEADOW)
         val before = vm.ui.value.hunt!!.killsInZone
-        // 공격력 346의 10%면 들쥐(체력 16)를 틱마다 잡는다 - 처치 수로 확인한다
+        // 펫은 공격력의 일부로 때린다 - 틱마다 들쥐를 잡을 만큼은 된다
         advanceTimeBy(2_100)
         val after = vm.ui.value.hunt!!.killsInZone
         vm.leaveHunt()
