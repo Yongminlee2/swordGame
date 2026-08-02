@@ -169,8 +169,9 @@ private fun StarCard(state: ForgeUiState, onOpenStar: () -> Unit) {
 /**
  * 확률이 어디서 왔는지.
  *
- * 강화 화면에도 같은 내역이 있지만 거기는 **지금 굴림에 붙는 값**만 짧게 보여 준다.
- * 여기는 채운 칸과 못 채운 칸을 함께 두어 "다음에 무엇을 올릴지"를 고르는 자리다.
+ * 강화 화면에는 **합계 한 줄**만 있다 — 거기는 누르는 곳이지 읽는 곳이 아니다.
+ * 출처별로 쪼갠 이 표는 여기에만 둔다. 채운 칸과 못 채운 칸을 함께 두어
+ * "다음에 무엇을 올릴지"를 고르는 자리이기 때문이다.
  */
 @Composable
 private fun BonusCard(sources: List<BonusSource>) {
