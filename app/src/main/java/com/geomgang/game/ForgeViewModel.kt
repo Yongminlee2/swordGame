@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.geomgang.core.Difficulty
 import com.geomgang.core.Economy
+import com.geomgang.core.Essences
 import com.geomgang.core.FamilyForge
 import com.geomgang.core.ForgeBonuses
 import com.geomgang.core.ForgeCost
@@ -52,6 +53,7 @@ import com.geomgang.core.Timing
 import com.geomgang.core.UniqueSwords
 import com.geomgang.core.Unlocks
 import com.geomgang.core.UsedItems
+import com.geomgang.core.WardCharm
 import com.geomgang.core.WeaponCatalog
 import com.geomgang.core.WeaponFamily
 import com.geomgang.core.Zone
@@ -467,6 +469,15 @@ class ForgeViewModel(
         progress = LegendForge.onOffered(progress, sword)
         progress = Progress.refresh(progress)
         game = game.copy(storage = game.storage.filterIndexed { i, _ -> i != index })
+        sound.purchase()
+        persist()
+        _ui.value = render()
+    }
+
+    /** 정수를 태워 수호 각인을 산다. 전설검이 미끄러질 때 한 번 붙들어 준다. */
+    fun buyWardCharm() {
+        if (busy || !WardCharm.canBuy(game)) return
+        game = WardCharm.buy(game)
         sound.purchase()
         persist()
         _ui.value = render()
@@ -1566,6 +1577,10 @@ class ForgeViewModel(
             forgeBlockedReason = if (busy) null else forgeBlockedReason(),
             deepUnlocked = Unlocks.legendReached(game),
             huntOpen = Unlocks.huntOpen(game),
+            essencePower = Essences.powerOf(game.essences),
+            wardCharm = game.wardCharm,
+            wardCharmCost = WardCharm.COST,
+            canBuyWardCharm = !busy && WardCharm.canBuy(game),
             bonusSources = ForgeBonuses.sourcesOf(game, progress),
             skillLevel = progress.smithyLevel,
             skillPrice = Smithy.priceOf(game, progress.smithyLevel),

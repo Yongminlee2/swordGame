@@ -311,6 +311,16 @@ fun ForgeScreen(
                 Spacer(Modifier.height(8.dp))
                 BonusBreakdown(state.bonusSources)
             }
+            // 각인은 지녔을 때만 말한다. 없을 때 자리를 잡아 두면 늘 빈 줄이다.
+            if (state.wardCharm && state.sword?.isLegend() == true) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = "🛡 수호 각인 — 미끄러져도 한 단계만 잃는다",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFC79BFF),
+                )
+            }
             Spacer(Modifier.height(6.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),

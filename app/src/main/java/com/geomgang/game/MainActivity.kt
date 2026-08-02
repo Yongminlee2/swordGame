@@ -189,6 +189,7 @@ private fun App(store: SaveStore) {
             onFuse = vm::fuse,
             onCraftLegend = vm::craftLegend,
             onRecraftLegend = vm::recraftLegend,
+            onBuyWard = vm::buyWardCharm,
             onBack = { overlay = Overlay.None },
         )
 

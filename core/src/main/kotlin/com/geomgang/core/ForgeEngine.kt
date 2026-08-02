@@ -178,9 +178,18 @@ object ForgeEngine {
                             state = failed.copy(sword = revived),
                             newLevel = revived.level,
                         )
+                    } else if (WardCharm.protects(failed, sword)) {
+                        // 수호 각인 - 전설검이 미끄러지는 것을 한 번 붙든다.
+                        // 방지 굴림이 실패한 **뒤에** 본다. 앞에 두면 굴려 보지도 않고
+                        // 공짜로 태워진다.
+                        val guarded = sword.copy(level = maxOf(LegendForge.LEVEL, sword.level - 1))
+                        ForgeResult.Drop(
+                            state = failed.copy(sword = guarded, wardCharm = false),
+                            newLevel = guarded.level,
+                        )
                     } else if (sword.isLegend()) {
-                        // 전설검은 사라지지 않는다. 재료 넷을 다시 모으는 것은 몇 시간을
-                        // 지우는 일이라 누를 엄두가 안 난다. 단계를 잃는 것으로 충분하다.
+                        // 전설검은 사라지지 않는다. 재료 둘을 다시 +20 까지 올리는 것은
+                        // 몇 시간을 지우는 일이라 누를 엄두가 안 난다. 단계를 잃는 것으로 충분하다.
                         ForgeResult.Drop(
                             state = failed.copy(sword = sword.copy(level = LegendForge.LEVEL)),
                             newLevel = LegendForge.LEVEL,

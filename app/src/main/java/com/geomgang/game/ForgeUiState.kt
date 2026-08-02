@@ -145,6 +145,12 @@ data class ForgeUiState(
      */
     val deepUnlocked: Boolean = false,
     val huntOpen: Boolean = false,
+    /** 가진 정수를 전부 무게로 환산한 값([com.geomgang.core.Essences]). */
+    val essencePower: Int = 0,
+    /** 수호 각인을 지녔는지. 한 장뿐이라 개수가 아니다. */
+    val wardCharm: Boolean = false,
+    val wardCharmCost: Int = 0,
+    val canBuyWardCharm: Boolean = false,
 ) {
     /** 방지권이든 줍기든 응답을 기다리는 중인지. */
     val awaitingDestroyChoice: Boolean get() = destroyPhase != DestroyPhase.None

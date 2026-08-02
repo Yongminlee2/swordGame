@@ -53,6 +53,7 @@ fun CraftScreen(
     onFuse: (List<Int>) -> Unit,
     onCraftLegend: () -> Unit,
     onRecraftLegend: () -> Unit,
+    onBuyWard: () -> Unit,
     onBack: () -> Unit,
 ) {
     var picked by remember { mutableStateOf(setOf<Int>()) }
@@ -85,6 +86,12 @@ fun CraftScreen(
             // 조합법을 화면에 항상 적는다. "뭘 섞어야 하는지" 를 외우게 하면
             // 조합소가 아니라 암기장이 된다.
             item { RecipeList(state) }
+
+            // 제단은 정수가 하나라도 있을 때만 나온다. 초반에는 사냥터가 잠겨 있어
+            // 정수 자체가 없으므로, 없는 자원의 가게를 미리 보여 줄 이유가 없다.
+            if (state.essencePower > 0 || state.wardCharm) {
+                item { AltarPanel(state, onBuyWard) }
+            }
 
             // 재료가 모자라도 이 칸은 남는다 - 무엇을 모아야 하는지가
             // 바로 그때 가장 필요한 정보다.
@@ -215,6 +222,81 @@ private fun RecipeList(state: ForgeUiState) {
                 },
                 fontSize = 10.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+            )
+        }
+    }
+}
+
+/**
+ * 제단 — 정수를 태워 수호 각인을 산다.
+ *
+ * 정수는 깊은 구역일수록 무겁다([Essences]). 여기가 그 무게가 값어치로 바뀌는
+ * 유일한 자리라, 정수력 합계를 크게 적어 "얼마나 모았는지" 를 먼저 보여 준다.
+ */
+@Composable
+private fun AltarPanel(state: ForgeUiState, onBuyWard: () -> Unit) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("제단", fontWeight = FontWeight.Bold, color = Color(0xFFC79BFF))
+                Text(
+                    text = "정수력 ${state.essencePower}",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFC79BFF),
+                )
+            }
+            Text(
+                text = "깊은 구역의 정수일수록 무겁다. 초원 1 · 끝의 문 39.",
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+            )
+            Spacer(Modifier.height(10.dp))
+
+            Text("🛡 수호 각인", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text(
+                text = "전설검이 미끄러질 때 한 번 붙든다 — " +
+                    "+${LegendForge.LEVEL} 복귀 대신 한 단계만 잃는다. 쓰면 사라진다.",
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            )
+            Spacer(Modifier.height(8.dp))
+
+            // 한 장뿐이라는 것이 이 장치의 전부다. 지녔을 때는 살 자리도 없어야
+            // "쌓아 두는 것" 이라는 오해가 안 생긴다.
+            if (state.wardCharm) {
+                Text(
+                    text = "✓ 각인을 지니고 있다",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF7FD48A),
+                )
+            } else {
+                Button(
+                    onClick = onBuyWard,
+                    enabled = state.canBuyWardCharm,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("정수력 ${state.wardCharmCost} 로 새기기")
+                }
+                if (!state.canBuyWardCharm) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "정수력 ${state.wardCharmCost - state.essencePower} 만큼 더 모아야 한다",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = "얕은 구역 정수부터 태운다 — 고유검이 찾는 깊은 정수는 남겨 둔다.",
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
             )
         }
     }
