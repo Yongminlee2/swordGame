@@ -98,18 +98,41 @@ class UnlocksTest {
     // --- 자리비움 ---
 
     /**
-     * 자리비움은 "사냥꾼이 대신 벌어 둔 것" 이다. 사냥터가 잠긴 시즌1에 이게 새면
-     * "강화해서 팔기" 가 유일한 수입이라는 시즌1의 약속이 깨진다.
+     * 시즌1에도 자리비움은 있다. 다만 **대장간이 벌어 준 골드**다 —
+     * 사냥터가 없으니 가리킬 구역이 없고, 화폐가 하나뿐이니 강화석도 없다.
      */
     @Test
-    fun `시즌1에는 자리비움 보상이 없다`() {
-        val early = state(bestLevel = RateTable.MAX_FINITE_LEVEL)
-        assertEquals(null, IdleRewards.rewardFor(early, 3600))
+    fun `시즌1 자리비움은 골드만 준다`() {
+        val early = state(bestLevel = 15)
+        val reward = requireNotNull(IdleRewards.rewardFor(early, 3600))
+        assertEquals(null, reward.zone)
+        assertEquals(0, reward.stones)
+        assertTrue("gold=${reward.gold}", reward.gold > 0)
+    }
+
+    /** 진행도에 매단다 — 고정값은 초반에 과하고 후반에 먼지가 된다. */
+    @Test
+    fun `시즌1 자리비움은 진행도를 따라 커진다`() {
+        val low = requireNotNull(IdleRewards.rewardFor(state(bestLevel = 5), 3600)).gold
+        val high = requireNotNull(IdleRewards.rewardFor(state(bestLevel = 15), 3600)).gold
+        assertTrue("low=$low high=$high", high > low)
+    }
+
+    /** 자리비움은 덤이다. 한 자루 파는 것보다 한참 아래여야 한다. */
+    @Test
+    fun `시즌1 자리비움은 검 한 자루 판 값을 넘지 않는다`() {
+        for (level in 5..RateTable.MAX_FINITE_LEVEL) {
+            val full = requireNotNull(
+                IdleRewards.rewardFor(state(bestLevel = level), IdleRewards.MAX_SECONDS),
+            )
+            assertTrue("level=$level 자리비움=${full.gold}", full.gold < Economy.sellPrice(level))
+        }
     }
 
     @Test
-    fun `용검 뒤에는 자리비움 보상이 돌아온다`() {
+    fun `용검 뒤에는 구역이 벌어 준다`() {
         val deep = state(bestLevel = LegendForge.LEVEL)
-        assertTrue(IdleRewards.rewardFor(deep, 3600) != null)
+        val reward = requireNotNull(IdleRewards.rewardFor(deep, 3600))
+        assertTrue(reward.zone != null)
     }
 }

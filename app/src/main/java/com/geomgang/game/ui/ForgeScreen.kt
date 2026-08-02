@@ -504,8 +504,10 @@ private fun IdleRewardDialog(reward: IdleReward, onDismiss: () -> Unit) {
         text = {
             Column {
                 Text(
+                    // 시즌1에는 가리킬 구역이 없다 - 대장간이 대신 일한 것이다.
                     text = "${IdleRewards.durationText(reward.seconds)} 동안 " +
-                        "${reward.zone.displayName}에서 벌어 두었다.",
+                        (reward.zone?.let { "${it.displayName}에서" } ?: "대장간에서") +
+                        " 벌어 두었다.",
                     fontSize = 14.sp,
                 )
                 Spacer(Modifier.height(10.dp))

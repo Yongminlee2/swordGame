@@ -6,9 +6,15 @@ package com.geomgang.core
  * @param seconds 실제로 인정된 시간(상한이 이미 적용된 값)
  * @param zone 이 보상을 계산한 기준 구역
  */
+/**
+ * 자리를 비운 사이 쌓인 것.
+ *
+ * @property zone 어느 구역이 벌어 줬는지. **시즌1에는 null** — 사냥터가 없고
+ *   대장간이 대신 일한 것이라 가리킬 구역이 없다.
+ */
 data class IdleReward(
     val seconds: Long,
-    val zone: Zone,
+    val zone: Zone?,
     val gold: Long,
     val stones: Int,
 )
@@ -43,6 +49,18 @@ object IdleRewards {
     const val STONES_PER_HOUR = 3
 
     /**
+     * 시즌1 자리비움을 [MAX_SECONDS] 꽉 채웠을 때 주는 골드 = 지금 검 판매가의 이 비율.
+     *
+     * **판매가에 매단다.** 강화 비용에 매달아 봤더니 저단계에서 판매가의 아홉 배가
+     * 나왔다 — 비용은 1.45배씩, 판매가는 1.80배씩 자라기 때문이다. 시즌1의 수입은
+     * "검을 파는 것" 하나이므로 그 단위로 재야 크기가 맞는다.
+     *
+     * 0.3 이면 하룻밤을 꼬박 비워도 **한 자루 판 값의 3분의 1**이다.
+     * 자리비움은 덤이어야 한다.
+     */
+    const val FORGE_RATIO = 0.3
+
+    /**
      * 보상 계산의 기준이 되는 구역.
      *
      * 깬 구역이 없으면 첫 구역이다 — 시작하자마자 앱을 껐다 켜도 무언가는 쌓인다.
@@ -57,15 +75,24 @@ object IdleRewards {
      * [MAX_SECONDS] 가 막는다.
      */
     fun rewardFor(state: GameState, elapsedSeconds: Long): IdleReward? {
-        // 자리비움은 "사냥꾼이 대신 벌어 둔 것" 이다. 사냥터가 잠긴 시즌1에는
-        // 벌어 줄 사냥꾼이 없다 - 여기서 골드가 새면 "강화해서 팔기" 가
-        // 유일한 수입이라는 시즌1의 약속이 깨진다. 강화석은 말할 것도 없다.
-        if (!Unlocks.huntOpen(state)) return null
         val seconds = elapsedSeconds.coerceIn(0, MAX_SECONDS)
         if (seconds < MIN_SECONDS) return null
+        val minutes = seconds / 60
+
+        // 시즌1에는 벌어다 줄 사냥꾼이 없다. 대신 **대장간이 일한다** —
+        // 골드만, 지금 강화 한 번 값에 맞춰. 화폐가 하나뿐인 국면이라
+        // 강화석·조각을 주면 쓸 수도 없는 것이 쌓인다.
+        if (!Unlocks.huntOpen(state)) {
+            val full = Economy.sellPrice(state.bestLevel) * FORGE_RATIO
+            return IdleReward(
+                seconds = seconds,
+                zone = null,
+                gold = (full * seconds / MAX_SECONDS).toLong(),
+                stones = 0,
+            )
+        }
 
         val zone = baseZone(state)
-        val minutes = seconds / 60
         val gold = zone.baseGold * KILLS_PER_MINUTE * minutes
         val stones = (seconds / 3600).toInt() * STONES_PER_HOUR
 

@@ -74,11 +74,15 @@ object HelpTopics {
         ),
         HelpTopic(
             "🌙", "자리비움",
-            "앱을 꺼 둔 사이에도 조금씩 쌓인다. 깬 구역 중 가장 깊은 곳이 기준이고, " +
-                "1분마다 그 구역 잡몹 ${IdleRewards.KILLS_PER_MINUTE}마리 값이 붙는다.\n" +
-                "${IdleRewards.durationText(IdleRewards.MAX_SECONDS)}까지만 쌓이고, " +
-                "한 시간마다 강화석 ${IdleRewards.STONES_PER_HOUR}개가 함께 온다.\n" +
-                "손으로 잡는 편이 훨씬 빠르다 — 자리비움은 덤이다.",
+            "앱을 꺼 둔 사이에도 조금씩 쌓인다. " +
+                "${IdleRewards.durationText(IdleRewards.MAX_SECONDS)}까지만 쌓인다.\n" +
+                "용검 전에는 대장간이 벌어 둔 골드가 온다 — " +
+                "꽉 채우면 지금 검 판매가의 " +
+                "${(IdleRewards.FORGE_RATIO * 100).toInt()}%다.\n" +
+                "용검 뒤에는 깬 구역 중 가장 깊은 곳이 기준이 되어 " +
+                "1분마다 잡몹 ${IdleRewards.KILLS_PER_MINUTE}마리 값과 " +
+                "시간당 강화석 ${IdleRewards.STONES_PER_HOUR}개가 온다.\n" +
+                "손으로 하는 편이 훨씬 빠르다 — 자리비움은 덤이다.",
         ),
         HelpTopic(
             "🐾", "펫",
