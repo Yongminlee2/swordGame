@@ -61,6 +61,8 @@ class ForgeViewModelIdleTest {
                 gold = gold,
                 sword = Sword(WeaponFamily.STRAIGHT, 0),
                 adventure = AdventureState(clearedZoneIds = cleared),
+                // 자리비움은 시즌2 장치다(Unlocks). 이 클래스는 그 배선이 관심사다.
+                bestLevel = com.geomgang.core.LegendForge.LEVEL,
             ),
         )
     }

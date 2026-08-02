@@ -139,7 +139,7 @@ fun ForgeScreen(
             body = if (state.canPrevent) {
                 "방지권을 쓰면 그대로 되살아난다."
             } else {
-                "방지권이 없다. 시간이 지나면 파편이라도 주울 수 있다."
+                "방지권이 없다. 시간이 지나면 잔해라도 건질 수 있다."
             },
             progress = phase.progress,
             confirmLabel = "방지권 사용 · ${state.preventTickets}장",
@@ -149,7 +149,12 @@ fun ForgeScreen(
 
         is DestroyPhase.Salvage -> DestroyDialog(
             title = "파편이 흩어진다",
-            body = "지금 주우면 조각을 회수한다. 놓치면 아무것도 남지 않는다.",
+            // 시즌1 줍기는 골드를 준다([Unlocks.shardsUsed]) - 조각이라고 말하면 거짓말이다.
+            body = if (state.deepUnlocked) {
+                "지금 주우면 조각을 회수한다. 놓치면 아무것도 남지 않는다."
+            } else {
+                "지금 주우면 골드를 회수한다. 놓치면 아무것도 남지 않는다."
+            },
             progress = phase.progress,
             confirmLabel = "파편 줍기",
             confirmEnabled = true,

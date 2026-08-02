@@ -94,4 +94,22 @@ class UnlocksTest {
             assertTrue("level=$level", Unlocks.salvageGold(level) < Economy.sellPrice(level))
         }
     }
+
+    // --- 자리비움 ---
+
+    /**
+     * 자리비움은 "사냥꾼이 대신 벌어 둔 것" 이다. 사냥터가 잠긴 시즌1에 이게 새면
+     * "강화해서 팔기" 가 유일한 수입이라는 시즌1의 약속이 깨진다.
+     */
+    @Test
+    fun `시즌1에는 자리비움 보상이 없다`() {
+        val early = state(bestLevel = RateTable.MAX_FINITE_LEVEL)
+        assertEquals(null, IdleRewards.rewardFor(early, 3600))
+    }
+
+    @Test
+    fun `용검 뒤에는 자리비움 보상이 돌아온다`() {
+        val deep = state(bestLevel = LegendForge.LEVEL)
+        assertTrue(IdleRewards.rewardFor(deep, 3600) != null)
+    }
 }

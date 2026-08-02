@@ -57,6 +57,10 @@ object IdleRewards {
      * [MAX_SECONDS] 가 막는다.
      */
     fun rewardFor(state: GameState, elapsedSeconds: Long): IdleReward? {
+        // 자리비움은 "사냥꾼이 대신 벌어 둔 것" 이다. 사냥터가 잠긴 시즌1에는
+        // 벌어 줄 사냥꾼이 없다 - 여기서 골드가 새면 "강화해서 팔기" 가
+        // 유일한 수입이라는 시즌1의 약속이 깨진다. 강화석은 말할 것도 없다.
+        if (!Unlocks.huntOpen(state)) return null
         val seconds = elapsedSeconds.coerceIn(0, MAX_SECONDS)
         if (seconds < MIN_SECONDS) return null
 

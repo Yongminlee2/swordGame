@@ -14,6 +14,8 @@ class IdleRewardsTest {
             gold = gold,
             forgeStones = stones,
             adventure = AdventureState(clearedZoneIds = cleared),
+            // 자리비움은 시즌2(용검 뒤) 장치다(Unlocks) - 이 클래스의 관심사가 그 계산이다.
+            bestLevel = LegendForge.LEVEL,
         )
 
     @Test
