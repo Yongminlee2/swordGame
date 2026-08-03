@@ -167,7 +167,7 @@ private fun App(store: SaveStore) {
             onBuyStone = vm::buyStone,
             onSellSword = vm::sellSword,
             onBuyItem = vm::buyItem,
-            onCraft = vm::craft,
+            onCraft = { id, count, family -> vm.craft(id, count, family) },
             onBack = { overlay = Overlay.None },
         )
 

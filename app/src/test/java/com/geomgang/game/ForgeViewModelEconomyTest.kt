@@ -126,7 +126,7 @@ class ForgeViewModelEconomyTest {
         val vm = vm(shards = 200, sword = null)
         vm.craft("sword5")
         assertEquals(Sword(WeaponFamily.STRAIGHT, 5), vm.ui.value.sword)
-        assertEquals(80, vm.ui.value.shards)
+        assertEquals(200 - com.geomgang.core.Recipes.SWORD5_SHARD_COST, vm.ui.value.shards)
     }
 
     @Test

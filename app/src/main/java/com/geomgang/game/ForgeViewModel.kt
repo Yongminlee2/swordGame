@@ -1224,19 +1224,24 @@ class ForgeViewModel(
     /**
      * 조각 교환.
      *
-     * 검을 주는 교환이면 계열은 [Recipes.familyFor] 가 정한다 — 화면이 고르게
-     * 하지 않는다. 계열끼리 성능이 같아서 고를 이유가 없었고, 지금은 도감이
-     * 덜 찬 계열이 먼저 나온다.
+     * 워프권(검을 주는 교환)은 **화면이 계열을 고른다**([chosen]). 예전에는
+     * 자동으로 골라 줬는데, 그때는 계열끼리 성능이 같아 고를 이유가 없었다.
+     * 지금은 판매가([Economy.familyMult])·강화 특성([FamilyForge])·도감 칸이
+     * 계열마다 다르다 — 고르는 것이 진짜 선택이 됐다.
+     *
+     * 안 고르면(또는 잠긴 계열을 넘기면) 예전처럼 도감이 덜 찬 계열이 나온다.
      */
-    fun craft(recipeId: String, count: Int = 1) {
+    fun craft(recipeId: String, count: Int = 1, chosen: WeaponFamily? = null) {
         if (busy) return
         val recipe = Recipes.ALL.firstOrNull { it.id == recipeId } ?: return
         if (!Recipes.canCraft(game, recipe)) return
-        val family = Recipes.familyFor(
-            unlocked = Progress.unlockedFamilies(progress),
-            incomplete = Progress.incompleteFamilies(progress),
-            roll = rng.nextInt(WeaponFamily.entries.size),
-        )
+        val unlocked = Progress.unlockedFamilies(progress)
+        val family = chosen?.takeIf { it in unlocked }
+            ?: Recipes.familyFor(
+                unlocked = unlocked,
+                incomplete = Progress.incompleteFamilies(progress),
+                roll = rng.nextInt(WeaponFamily.entries.size),
+            )
         game = Recipes.craftMany(game, recipe, count, family)
         persist()
         _ui.value = render()

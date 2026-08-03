@@ -18,9 +18,10 @@ class RecipesTest {
         assertEquals(10, Recipes.byId("prevent").shardCost)
         assertEquals(30, Recipes.byId("blessing").shardCost)
         assertEquals(60, Recipes.byId("luck").shardCost)
-        assertEquals(120, Recipes.byId("sword5").shardCost)
-        assertEquals(400, Recipes.byId("sword10").shardCost)
-        assertEquals(850, Recipes.byId("sword15").shardCost)
+        // v2.3 - 워프권 값 인하(120/400/850 -> 50/150/400). 파괴 두 번·다섯 번·열 번쯤이다
+        assertEquals(50, Recipes.byId("sword5").shardCost)
+        assertEquals(150, Recipes.byId("sword10").shardCost)
+        assertEquals(400, Recipes.byId("sword15").shardCost)
     }
 
     @Test
@@ -45,7 +46,7 @@ class RecipesTest {
 
     @Test
     fun `검 교환은 지정한 계열의 검을 준다`() {
-        val before = state(shards = 130)
+        val before = state(shards = 60)
         val after = Recipes.craft(before, Recipes.byId("sword5"), WeaponFamily.DRAGON)
         assertEquals(10, after.shards)
         assertEquals(Sword(WeaponFamily.DRAGON, 5), after.sword)

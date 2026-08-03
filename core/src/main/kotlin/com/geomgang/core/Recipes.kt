@@ -24,16 +24,26 @@ data class Recipe(
 object Recipes {
 
     /** +5 워프권 교환가. [Economy.needsBailout]이 파산 판정 기준으로 함께 쓴다. */
-    const val SWORD5_SHARD_COST: Int = 120
+    const val SWORD5_SHARD_COST: Int = 50
 
     /** 조각을 강화석으로 바꾸는 값. 강화석은 고단계 강화의 화폐다. */
     const val STONE_SHARD_COST: Int = 20
 
     /**
-     * 워프권 값은 줍기 회수량([ForgeEngine.SALVAGE_MULTIPLIER] = 단계×3)에 맞춰져 있다.
-     * +13 파괴가 평균 39조각이니 +5 는 파괴 세 번, +10 은 열 번, +15 는 스무 번쯤.
-     * **어떤 워프권도 그 단계 파괴 한 번의 조각보다 싸지면 안 된다** — 싸지면
-     * 파괴→줍기→워프가 손해가 아니라 순환 이득이 된다.
+     * 워프권 값 — **파괴 몇 번치인가**로 읽는다.
+     *
+     * 줍기 회수량은 단계×3([ForgeEngine.SALVAGE_MULTIPLIER])이라 +10~15 파괴 한 번이
+     * 30~45조각이다. 그러니 +5 는 파괴 두 번, +10 은 다섯 번, +15 는 열 번쯤이다.
+     *
+     * 120/400/850 이었는데 **너무 비쌌다.** 파괴는 +10~15 에서 10~12.5% 로만 나므로
+     * 파괴 한 번을 겪는 데도 시도 수백 번이 든다 — 850조각은 워프권을 재기의 도구가
+     * 아니라 거의 못 사는 사치품으로 만들었다.
+     *
+     * **아래로도 선이 있다.** 어떤 워프권도 그 단계 파괴 한 번의 조각보다 싸면 안 된다
+     * (+10 파괴 최대 39조각 < +5 워프 50). 싸지면 파괴→줍기→워프가 순환 이득이 된다.
+     *
+     * 시즌2 소모품(방지권 10·축복서 30·부적 60)과도 자릿수를 맞췄다 —
+     * 워프 +10(150)이 부적 두 장 반쯤이다. 한쪽만 헐값이면 조각의 뜻이 흐려진다.
      */
     val ALL: List<Recipe> = listOf(
         Recipe("stone", "강화석", STONE_SHARD_COST, RecipeReward.GrantStone(1)),
@@ -41,8 +51,8 @@ object Recipes {
         Recipe("blessing", "축복서", 30, RecipeReward.GrantItem(Item.BLESSING_SCROLL, 1)),
         Recipe("luck", "행운부적", 60, RecipeReward.GrantItem(Item.LUCK_CHARM, 1)),
         Recipe("sword5", "워프권 +5", SWORD5_SHARD_COST, RecipeReward.GrantSword(5)),
-        Recipe("sword10", "워프권 +10", 400, RecipeReward.GrantSword(10)),
-        Recipe("sword15", "워프권 +15", 850, RecipeReward.GrantSword(15)),
+        Recipe("sword10", "워프권 +10", 150, RecipeReward.GrantSword(10)),
+        Recipe("sword15", "워프권 +15", 400, RecipeReward.GrantSword(15)),
     )
 
     fun byId(id: String): Recipe =
@@ -63,15 +73,15 @@ object Recipes {
         availableIn(Unlocks.legendReached(state))
 
     /**
-     * 교환으로 받는 검의 계열.
+     * 워프권을 **안 고르고** 샀을 때의 계열.
      *
-     * 예전에는 화면이 직접 고르게 했다. 그런데 계열은 확률에도 경제에도 전혀
-     * 관여하지 않아 **무엇을 고르든 결과가 같다.** 결과가 바뀌지 않는 선택은
-     * 손만 한 번 더 가게 한다.
+     * 한때 이 함수가 유일한 길이었다. 그때는 계열이 확률에도 경제에도 관여하지 않아
+     * 무엇을 고르든 결과가 같았고, 바뀌지 않는 선택은 손만 한 번 더 가게 했다.
      *
-     * 그래서 고르는 대신 [incomplete] — 도감이 덜 찬 계열 — 을 먼저 준다.
-     * 남은 게 없으면 열린 계열 전부에서 고른다. 무작위지만 [roll] 을 밖에서
-     * 넣으므로 테스트가 결과를 고정할 수 있다.
+     * 지금은 계열마다 판매가([Economy.familyMult])·강화 특성([FamilyForge])·도감 칸이
+     * 달라서 화면이 직접 고른다. 이 함수는 안 골랐을 때의 기본값으로 남는다 —
+     * [incomplete](도감이 덜 찬 계열)를 먼저 주고, 없으면 열린 계열 전부에서 고른다.
+     * 무작위지만 [roll] 을 밖에서 넣으므로 테스트가 결과를 고정할 수 있다.
      */
     fun familyFor(
         unlocked: List<WeaponFamily>,

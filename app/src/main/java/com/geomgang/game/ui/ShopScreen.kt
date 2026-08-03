@@ -48,7 +48,7 @@ fun ShopScreen(
     onBuyStone: () -> Unit,
     onSellSword: () -> Unit,
     onBuyItem: (Item) -> Unit,
-    onCraft: (recipeId: String, count: Int) -> Unit,
+    onCraft: (recipeId: String, count: Int, family: WeaponFamily?) -> Unit,
     onBack: () -> Unit,
 ) {
     var family by remember { mutableStateOf(state.unlockedFamilies.first()) }
@@ -253,7 +253,8 @@ fun ShopScreen(
                 Text("조각 교환", fontWeight = FontWeight.Bold)
                 Text(
                     text = "파괴된 검에서 주운 조각으로 바꾼다. " +
-                        "워프권은 그 단계에서 시작하는 새 검이다 — 파괴의 재가 재기의 밑천이 된다.",
+                        "워프권은 그 단계에서 시작하는 새 검이다 — 파괴의 재가 재기의 밑천이 된다.\n" +
+                        "계열은 위 「검」 칸에서 고른 것을 따라간다.",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
                 )
@@ -270,7 +271,9 @@ fun ShopScreen(
                     RecipeRow(
                         recipe = recipe,
                         state = state,
-                        onCraft = { count -> onCraft(recipe.id, count) },
+                        // 워프권은 위에서 고른 계열로 나온다 - 나머지는 계열과 무관하다
+                        chosenFamily = family,
+                        onCraft = { count -> onCraft(recipe.id, count, family) },
                     )
                 }
             }
@@ -281,13 +284,15 @@ fun ShopScreen(
 /**
  * 조각 교환 한 줄.
  *
- * 검을 주는 교환도 계열을 묻지 않는다 — 계열끼리 성능이 같아 고를 이유가 없었고,
- * 지금은 [Recipes.familyFor] 가 도감이 덜 찬 계열을 먼저 준다.
+ * 워프권(검을 주는 교환)은 **맨 위 「검」 칸에서 고른 계열**로 나온다.
+ * 계열마다 판매가·강화 특성·도감 칸이 다르므로 고르는 것이 진짜 선택이다 —
+ * 골드로 사는 검과 고르개를 함께 쓰므로 화면에 고르개가 두 벌 생기지 않는다.
  */
 @Composable
 private fun RecipeRow(
     recipe: Recipe,
     state: ForgeUiState,
+    chosenFamily: WeaponFamily,
     onCraft: (count: Int) -> Unit,
 ) {
     val grantsSword = recipe.reward is RecipeReward.GrantSword
@@ -309,7 +314,7 @@ private fun RecipeRow(
             val reason = when {
                 blockedBySword -> "검을 들고 있으면 바꿀 수 없다"
                 !enough -> "조각 ${recipe.shardCost - state.shards}개 부족"
-                grantsSword -> "도감이 덜 찬 계열로 나온다"
+                grantsSword -> "위에서 고른 ${chosenFamily.displayName}(으)로 나온다"
                 else -> null
             }
             if (reason != null) {

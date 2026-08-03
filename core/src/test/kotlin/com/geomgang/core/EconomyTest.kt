@@ -170,9 +170,14 @@ class EconomyTest {
 
     @Test
     fun `파산 판정은 세 조건이 모두 성립할 때만 참이다`() {
-        // 검 없음 + 검 살 골드 없음 + 조각 120 미만
+        // 검 없음 + 검 살 골드 없음 + 워프권(+5) 살 조각 미만
         assertTrue(
-            Economy.needsBailout(state(gold = Economy.BASE_SWORD_PRICE - 1, shards = 119)),
+            Economy.needsBailout(
+                state(
+                    gold = Economy.BASE_SWORD_PRICE - 1,
+                    shards = Recipes.SWORD5_SHARD_COST - 1,
+                ),
+            ),
         )
         // 검이 있으면 아니다
         assertFalse(
@@ -183,7 +188,7 @@ class EconomyTest {
         // 검을 살 골드가 있으면 아니다
         assertFalse(Economy.needsBailout(state(gold = Economy.BASE_SWORD_PRICE, shards = 0)))
         // +5 검을 바꿀 조각이 있으면 아니다
-        assertFalse(Economy.needsBailout(state(gold = 0, shards = 120)))
+        assertFalse(Economy.needsBailout(state(gold = 0, shards = Recipes.SWORD5_SHARD_COST)))
     }
 
     @Test
