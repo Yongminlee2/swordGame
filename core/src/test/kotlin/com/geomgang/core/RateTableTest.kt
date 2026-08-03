@@ -10,11 +10,12 @@ class RateTableTest {
 
     @Test
     fun `기준 성공률은 스펙 표와 일치한다`() {
+        // v2.3 - +10~+20 을 올렸다(46/22/5% -> 50/28/10%)
         assertEquals(0.95, RateTable.baseSuccessRate(1), eps)
         assertEquals(0.75, RateTable.baseSuccessRate(5), eps)
-        assertEquals(0.46, RateTable.baseSuccessRate(10), eps)
-        assertEquals(0.22, RateTable.baseSuccessRate(15), eps)
-        assertEquals(0.05, RateTable.baseSuccessRate(20), eps)
+        assertEquals(0.50, RateTable.baseSuccessRate(10), eps)
+        assertEquals(0.28, RateTable.baseSuccessRate(15), eps)
+        assertEquals(0.10, RateTable.baseSuccessRate(20), eps)
     }
 
     @Test
@@ -28,9 +29,9 @@ class RateTableTest {
 
     @Test
     fun `난이도 배수가 적용된다`() {
-        assertEquals(0.46, RateTable.successRate(Difficulty.NORMAL, 10), eps)
-        assertEquals(0.46 * 0.75, RateTable.successRate(Difficulty.HARD, 10), eps)
-        assertEquals(0.46 * 1.25, RateTable.successRate(Difficulty.EASY, 10), eps)
+        assertEquals(0.50, RateTable.successRate(Difficulty.NORMAL, 10), eps)
+        assertEquals(0.50 * 0.75, RateTable.successRate(Difficulty.HARD, 10), eps)
+        assertEquals(0.50 * 1.25, RateTable.successRate(Difficulty.EASY, 10), eps)
     }
 
     @Test
@@ -41,9 +42,9 @@ class RateTableTest {
 
     @Test
     fun `축복서는 난이도 배수를 적용한 뒤에 더해진다`() {
-        // 지옥 +10: 0.46 * 0.75 = 0.345, 여기에 +0.10
-        assertEquals(0.46 * 0.75 + 0.10, RateTable.successRate(Difficulty.HARD, 10, blessing = true), eps)
-        assertEquals(0.56, RateTable.successRate(Difficulty.NORMAL, 10, blessing = true), eps)
+        // 지옥 +10: 0.50 * 0.75 = 0.375, 여기에 +0.10
+        assertEquals(0.50 * 0.75 + 0.10, RateTable.successRate(Difficulty.HARD, 10, blessing = true), eps)
+        assertEquals(0.60, RateTable.successRate(Difficulty.NORMAL, 10, blessing = true), eps)
     }
 
     @Test
@@ -53,8 +54,8 @@ class RateTableTest {
 
     @Test
     fun `무한 모드는 21단계부터 직전의 85퍼센트로 감쇠한다`() {
-        assertEquals(0.05 * 0.85, RateTable.successRate(Difficulty.ENDLESS, 21), eps)
-        assertEquals(0.05 * 0.85 * 0.85, RateTable.successRate(Difficulty.ENDLESS, 22), eps)
+        assertEquals(0.10 * 0.85, RateTable.successRate(Difficulty.ENDLESS, 21), eps)
+        assertEquals(0.10 * 0.85 * 0.85, RateTable.successRate(Difficulty.ENDLESS, 22), eps)
     }
 
     @Test

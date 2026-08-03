@@ -52,7 +52,7 @@ object Recipes {
         Recipe("luck", "행운부적", 60, RecipeReward.GrantItem(Item.LUCK_CHARM, 1)),
         Recipe("sword5", "워프권 +5", SWORD5_SHARD_COST, RecipeReward.GrantSword(5)),
         Recipe("sword10", "워프권 +10", 150, RecipeReward.GrantSword(10)),
-        Recipe("sword15", "워프권 +15", 400, RecipeReward.GrantSword(15)),
+        Recipe("sword15", "워프권 +15", 250, RecipeReward.GrantSword(15)),
     )
 
     fun byId(id: String): Recipe =
