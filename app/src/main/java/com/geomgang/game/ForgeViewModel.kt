@@ -1503,7 +1503,8 @@ class ForgeViewModel(
          * 이 단계 위부터 신기록을 축하한다.
          *
          * 새 세이브는 처음 열 판이 전부 신기록이라 문턱이 없으면 연출이 금방 값을 잃는다.
-         * [com.geomgang.core.StarForce.MIN_LEVEL] 과 같은 값이라 규칙이 한 벌로 읽힌다.
+         * 한때 [com.geomgang.core.StarForce.MIN_LEVEL] 과 같은 값이었는데, 별이 용검
+         * 전용이 되면서(v2.3) 갈라졌다 — 신기록 문턱은 파괴가 시작되는 +10 그대로다.
          */
         const val MIN_RECORD_LEVEL = 10
 

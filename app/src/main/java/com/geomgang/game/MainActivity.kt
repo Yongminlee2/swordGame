@@ -9,11 +9,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geomgang.core.Difficulty
 import com.geomgang.core.SaveStore
+import com.geomgang.core.WeaponFamily
 import com.geomgang.game.feel.HapticEngine
 import com.geomgang.game.feel.systemVibrator
 import com.geomgang.game.sound.SoundEngine
@@ -90,6 +92,9 @@ private fun App(store: SaveStore) {
     var overlay by remember { mutableStateOf(Overlay.None) }
     // 도감은 강화 화면과 기록 메뉴 두 곳에서 열린다. 들어온 곳으로 돌아가야 한다.
     var codexOrigin by remember { mutableStateOf(Overlay.Records) }
+    // 상점에서 고른 계열. **화면 밖에 둬야** 나갔다 와도 고른 것이 남는다 —
+    // 상점 안에 remember 로 두면 화면을 닫는 순간 첫 계열로 되돌아갔다.
+    var shopFamily by rememberSaveable { mutableStateOf(WeaponFamily.STRAIGHT.name) }
 
     BackHandler(enabled = !state.busy) {
         when {
@@ -162,6 +167,9 @@ private fun App(store: SaveStore) {
 
         Overlay.Shop -> ShopScreen(
             state = state,
+            family = WeaponFamily.entries.firstOrNull { it.name == shopFamily }
+                ?: state.unlockedFamilies.first(),
+            onSelectFamily = { shopFamily = it.name },
             onBuySword = vm::buySword,
             onBuySwordToStorage = vm::buySwordToStorage,
             onBuyStone = vm::buyStone,

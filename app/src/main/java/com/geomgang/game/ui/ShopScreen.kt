@@ -43,6 +43,12 @@ import com.geomgang.game.ForgeUiState
 @Composable
 fun ShopScreen(
     state: ForgeUiState,
+    /**
+     * 고른 계열. **상점 밖에서 들고 있는다** — 안에서 remember 로 두면
+     * 화면을 닫는 순간 첫 계열로 되돌아갔다.
+     */
+    family: WeaponFamily,
+    onSelectFamily: (WeaponFamily) -> Unit,
     onBuySword: (WeaponFamily) -> Unit,
     onBuySwordToStorage: (WeaponFamily) -> Unit,
     onBuyStone: () -> Unit,
@@ -51,8 +57,6 @@ fun ShopScreen(
     onCraft: (recipeId: String, count: Int, family: WeaponFamily?) -> Unit,
     onBack: () -> Unit,
 ) {
-    var family by remember { mutableStateOf(state.unlockedFamilies.first()) }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -85,7 +89,7 @@ fun ShopScreen(
                 FamilyPicker(
                     families = state.unlockedFamilies,
                     selected = family,
-                    onSelect = { family = it },
+                    onSelect = onSelectFamily,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 // 아직 잠긴 기본 계열의 조건을 알려 준다. 나머지 10계열은 조합 전용이라

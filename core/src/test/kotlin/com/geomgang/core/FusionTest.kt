@@ -191,21 +191,21 @@ class FusionTest {
 
     @Test
     fun `별에는 상한이 있다`() {
-        assertFalse(StarForce.canStar(sw(15, stars = StarForce.MAX_STARS)))
+        assertFalse(StarForce.canStar(sw(25, stars = StarForce.MAX_STARS)))
     }
 
     @Test
     fun `별이 오르면 공격력이 오른다`() {
-        val plain = Combat.attackPower(sw(15, stars = 0))
-        val starred = Combat.attackPower(sw(15, stars = 3))
+        val plain = Combat.attackPower(sw(25, stars = 0))
+        val starred = Combat.attackPower(sw(25, stars = 3))
         assertTrue("$plain -> $starred", starred > plain)
     }
 
     @Test
     fun `별이 많을수록 비싸고 어려워진다`() {
         for (stars in 0 until StarForce.MAX_STARS - 1) {
-            val a = sw(15, stars = stars)
-            val b = sw(15, stars = stars + 1)
+            val a = sw(25, stars = stars)
+            val b = sw(25, stars = stars + 1)
             assertTrue("조각", StarForce.shardCost(b) > StarForce.shardCost(a))
             assertTrue("확률", StarForce.successRate(b) <= StarForce.successRate(a))
         }
@@ -213,7 +213,7 @@ class FusionTest {
 
     @Test
     fun `별 강화는 성공하면 별이 하나 오른다`() {
-        val s = state(sword = sw(15, stars = 1))
+        val s = state(sword = sw(25, stars = 1))
         val result = StarForce.attempt(s, alwaysSucceed())
         assertTrue(result is StarForce.Result.Up)
         assertEquals(2, result.state.sword?.stars)
@@ -221,7 +221,7 @@ class FusionTest {
 
     @Test
     fun `별 강화는 실패하면 별이 하나 줄지만 검은 부서지지 않는다`() {
-        val s = state(sword = sw(15, stars = 2))
+        val s = state(sword = sw(25, stars = 2))
         val result = StarForce.attempt(s, alwaysFail())
         assertTrue(result is StarForce.Result.Down)
         assertEquals(1, result.state.sword?.stars)
@@ -230,14 +230,14 @@ class FusionTest {
 
     @Test
     fun `별이 없을 때 실패해도 음수가 되지 않는다`() {
-        val s = state(sword = sw(15, stars = 0))
+        val s = state(sword = sw(25, stars = 0))
         val result = StarForce.attempt(s, alwaysFail())
         assertEquals(0, result.state.sword?.stars)
     }
 
     @Test
     fun `별 강화 비용은 성패와 무관하게 빠진다`() {
-        val sword = sw(15, stars = 1)
+        val sword = sw(25, stars = 1)
         val s = state(sword = sword, gold = 5_000_000, shards = 5_000)
         val expectedGold = 5_000_000 - StarForce.goldCost(sword)
         val expectedShards = 5_000 - StarForce.shardCost(sword)
@@ -248,8 +248,8 @@ class FusionTest {
 
     @Test
     fun `조각이나 골드가 모자라면 별을 올릴 수 없다`() {
-        assertFalse(StarForce.canAfford(state(sword = sw(15), shards = 0)))
-        assertFalse(StarForce.canAfford(state(sword = sw(15), gold = 0)))
+        assertFalse(StarForce.canAfford(state(sword = sw(25), shards = 0)))
+        assertFalse(StarForce.canAfford(state(sword = sw(25), gold = 0)))
     }
 
     @Test
@@ -260,7 +260,7 @@ class FusionTest {
 
     @Test
     fun `별이 없으면 공격력 배수가 1이다`() {
-        assertEquals(1.0, StarForce.attackMultiplier(sw(15, stars = 0)), 1e-9)
+        assertEquals(1.0, StarForce.attackMultiplier(sw(25, stars = 0)), 1e-9)
         assertEquals(1.0, StarForce.attackMultiplier(null), 1e-9)
     }
 

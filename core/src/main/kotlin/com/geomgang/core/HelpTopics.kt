@@ -64,7 +64,10 @@ object HelpTopics {
         ),
         HelpTopic(
             "★", "특수강화",
-            "+${StarForce.MIN_LEVEL}부터 별을 붙일 수 있다. 최대 ${StarForce.MAX_STARS}개.\n" +
+            "용검(+${StarForce.MIN_LEVEL})부터 별을 붙일 수 있다. " +
+                "최대 ${StarForce.MAX_STARS}개.\n" +
+                "계열 검은 +${RateTable.MAX_FINITE_LEVEL}에서 조합 재료가 되므로 " +
+                "별을 붙여도 곧 사라진다 — 그래서 용검부터다.\n" +
                 "실패해도 검은 부서지지 않는다 — 별 하나를 잃을 뿐이다.\n" +
                 "강화 단계와 별개의 계층이라 파괴의 공포가 겹치지 않는다.",
         ),
