@@ -11,14 +11,13 @@ sealed interface DestroyPhase {
         override val progress: Float get() = 0f
     }
 
-    /** 방지권을 쓸 수 있는 창이 열려 있다. */
-    data class Prevent(val remainingMillis: Long, val totalMillis: Long) : DestroyPhase {
-        override val progress: Float
-            get() = (remainingMillis.toFloat() / totalMillis).coerceIn(0f, 1f)
-    }
-
-    /** 파편을 주울 수 있는 창이 열려 있다. */
-    data class Salvage(val remainingMillis: Long, val totalMillis: Long) : DestroyPhase {
+    /**
+     * 방지권과 줍기를 **함께** 고를 수 있는 창이 열려 있다.
+     *
+     * 한때 Prevent 와 Salvage 두 단계였다. 방지권 창을 흘려보내야 줍기 창이
+     * 열려서, 방지권을 안 쓸 작정이어도 기다려야 했다. 하나로 합쳤다.
+     */
+    data class Choice(val remainingMillis: Long, val totalMillis: Long) : DestroyPhase {
         override val progress: Float
             get() = (remainingMillis.toFloat() / totalMillis).coerceIn(0f, 1f)
     }

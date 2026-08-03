@@ -8,11 +8,16 @@ package com.geomgang.core
  */
 object Timing {
 
-    /** 파괴 직후 방지권을 쓸 수 있는 시간. 이 짧음이 이 게임의 핵심 긴장이다. */
-    const val PREVENT_WINDOW_MILLIS: Long = 2_500
-
-    /** 파괴가 확정된 뒤 파편을 주울 수 있는 시간. */
-    const val SALVAGE_WINDOW_MILLIS: Long = 3_000
+    /**
+     * 파괴 직후 **방지권과 줍기를 함께 고를 수 있는** 시간.
+     *
+     * 예전에는 창이 둘이었다 — 방지권 2.5초를 흘려보내야 줍기 3초가 열렸다.
+     * 방지권을 안 쓸 작정이어도 첫 창이 끝나기를 기다려야 했고, 같은 자리에서
+     * 팝업이 두 번 뜨는 것이 번거로웠다. 이제 한 창에서 왼쪽·오른쪽을 고른다.
+     *
+     * 이 짧음이 이 게임의 핵심 긴장이다.
+     */
+    const val DESTROY_WINDOW_MILLIS: Long = 3_000
 
     /** 카운트다운 갱신 간격. */
     const val TICK_MILLIS: Long = 50

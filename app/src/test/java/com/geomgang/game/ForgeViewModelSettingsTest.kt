@@ -121,7 +121,7 @@ class ForgeViewModelSettingsTest {
     fun `자동사용이 꺼져 있으면 창이 열린다`() = runTest(dispatcher) {
         val vm = vm(level = 19, tickets = 1, rng = alwaysDestroy())
         vm.forge()
-        assertTrue(vm.ui.value.destroyPhase is DestroyPhase.Prevent)
+        assertTrue(vm.ui.value.destroyPhase is DestroyPhase.Choice)
     }
 
     // --- 설정 ---

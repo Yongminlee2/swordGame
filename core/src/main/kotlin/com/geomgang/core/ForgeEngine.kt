@@ -178,6 +178,16 @@ object ForgeEngine {
                             state = failed.copy(sword = sword.copy(level = LegendForge.LEVEL)),
                             newLevel = LegendForge.LEVEL,
                         )
+                    } else if (sword.family in LegendForge.MATERIALS) {
+                        // 조합검(마검·성검)도 사라지지 않는다 — **+1 로 남는다.**
+                        //
+                        // 이 둘은 기본 검 +20 두 자루를 태워야 나온다. 통째로 잃으면
+                        // 그 몇 시간이 한 번에 지워져서 "한 번 파괴되면 답이 없다"가 된다.
+                        // 계열이 남으니 다시 올리면 되고, 잃은 단계만큼은 여전히 아프다.
+                        ForgeResult.Drop(
+                            state = failed.copy(sword = sword.copy(level = MATERIAL_FLOOR)),
+                            newLevel = MATERIAL_FLOOR,
+                        )
                     } else {
                         ForgeResult.Destroyed(
                             state = failed.copy(
@@ -212,6 +222,14 @@ object ForgeEngine {
         dropGuard > 0 && rng.nextDouble() < dropGuard -> ForgeResult.Stay(failed, sword.level)
         else -> drop(failed, sword)
     }
+
+    /**
+     * 조합검(마검·성검)이 파괴됐을 때 남는 단계.
+     *
+     * [Refinery] 가 내놓는 단계와 같다 — 조합 직후로 되돌아가는 셈이라
+     * "다시 여기서부터"가 규칙 하나로 읽힌다.
+     */
+    const val MATERIAL_FLOOR: Int = 1
 
     /**
      * 조각 회수량 = 단계 × 이 값 × 흔들림.

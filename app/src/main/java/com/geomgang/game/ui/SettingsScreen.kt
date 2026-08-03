@@ -101,7 +101,7 @@ fun SettingsScreen(
                     Column(Modifier.weight(1f)) {
                         Text("방지권 자동 사용", fontWeight = FontWeight.Medium)
                         Text(
-                            text = "파괴되면 ${Timing.PREVENT_WINDOW_MILLIS / 1000.0}초 창을 " +
+                            text = "파괴되면 ${Timing.DESTROY_WINDOW_MILLIS / 1000.0}초 창을 " +
                                 "열지 않고 바로 방지권을 쓴다",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),

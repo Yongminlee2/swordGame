@@ -338,7 +338,9 @@ class ForgeViewModel(
     /**
      * 파괴 직후 제한 시간 창을 연다.
      *
-     * 방지권이 있으면 먼저 되살릴 기회를 주고, 없거나 놓치면 줍기로 넘어간다.
+     * **창은 하나다.** 그 안에서 방지권(되살리기)과 줍기(조각) 중 하나를 고른다 —
+     * 예전에는 방지권 창을 흘려보내야 줍기 창이 열려서, 방지권을 쓸 생각이 없어도
+     * 기다려야 했다.
      */
     private fun openDestroyWindow() {
         // 자동사용이 켜져 있으면 창을 열지 않고 즉시 되살린다.
@@ -348,18 +350,8 @@ class ForgeViewModel(
             closeDestroyWindow()
             return
         }
-        if (ForgeEngine.canPrevent(game)) {
-            runWindow(Timing.PREVENT_WINDOW_MILLIS) { remaining, total ->
-                DestroyPhase.Prevent(remaining, total)
-            }
-        } else {
-            openSalvageWindow()
-        }
-    }
-
-    private fun openSalvageWindow() {
-        runWindow(Timing.SALVAGE_WINDOW_MILLIS) { remaining, total ->
-            DestroyPhase.Salvage(remaining, total)
+        runWindow(Timing.DESTROY_WINDOW_MILLIS) { remaining, total ->
+            DestroyPhase.Choice(remaining, total)
         }
     }
 
@@ -395,14 +387,13 @@ class ForgeViewModel(
 
     private fun onWindowExpired() {
         when (phase) {
-            is DestroyPhase.Prevent -> {
+            is DestroyPhase.Choice -> {
                 // 놓쳤을 뿐이므로 방지권은 소모하지 않는다. 기회만 사라진다.
-                progress = Progress.refresh(Progress.onPreventMissed(progress))
-                persist()
-                openSalvageWindow()
-            }
-
-            is DestroyPhase.Salvage -> {
+                // 쓸 방지권이 있었을 때만 「놓쳤다」로 센다 — 없었으면 고를 것이
+                // 애초에 하나뿐이었으니 놓친 것이 아니다.
+                if (ForgeEngine.canPrevent(game)) {
+                    progress = Progress.onPreventMissed(progress)
+                }
                 progress = Progress.refresh(Progress.onSalvageMissed(progress))
                 game = ForgeEngine.confirmDestroy(game)
                 closeDestroyWindow()

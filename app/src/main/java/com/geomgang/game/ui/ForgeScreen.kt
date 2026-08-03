@@ -134,27 +134,12 @@ fun ForgeScreen(
     // 모른 채 검이 사라진다. 창으로 묻되 **제한 시간은 그대로 둔다** - 2.5초의 긴장이
     // 이 게임의 핵심이고, 창은 그 긴장을 없애는 것이 아니라 보이게 하는 것이다.
     when (val phase = state.destroyPhase) {
-        is DestroyPhase.Prevent -> DestroyDialog(
-            title = "검이 부서졌다",
-            body = if (state.canPrevent) {
-                "방지권을 쓰면 그대로 되살아난다."
-            } else {
-                "방지권이 없다. 시간이 지나면 잔해라도 건질 수 있다."
-            },
+        is DestroyPhase.Choice -> DestroyDialog(
             progress = phase.progress,
-            confirmLabel = "방지권 사용 · ${state.preventTickets}장",
-            confirmEnabled = state.canPrevent,
-            onConfirm = onPrevent,
-        )
-
-        is DestroyPhase.Salvage -> DestroyDialog(
-            title = "파편이 흩어진다",
-            // 줍기는 시즌 무관 조각을 준다(v2.3) - 조각이 워프권의 값이다.
-            body = "지금 주우면 조각을 회수한다. 놓치면 아무것도 남지 않는다.",
-            progress = phase.progress,
-            confirmLabel = "파편 줍기",
-            confirmEnabled = true,
-            onConfirm = onSalvage,
+            canPrevent = state.canPrevent,
+            preventTickets = state.preventTickets,
+            onPrevent = onPrevent,
+            onSalvage = onSalvage,
         )
 
         DestroyPhase.None -> Unit
@@ -212,16 +197,23 @@ fun ForgeScreen(
             contentAlignment = Alignment.Center,
         ) {
             when (val phase = state.destroyPhase) {
-                is DestroyPhase.Prevent -> PreventRing(
-                    progress = phase.progress,
-                    enabled = state.canPrevent,
-                    onTap = onPrevent,
-                )
-
-                is DestroyPhase.Salvage -> SalvageShards(
-                    progress = phase.progress,
-                    onTap = onSalvage,
-                )
+                // 한 창에서 둘을 고른다 — **왼쪽이 되살리기, 오른쪽이 줍기다.**
+                // 예전에는 원이 먼저, 파편이 나중이라 방지권을 안 쓸 작정이어도
+                // 첫 창이 끝나기를 기다려야 했다.
+                is DestroyPhase.Choice -> Row(
+                    horizontalArrangement = Arrangement.spacedBy(24.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    PreventRing(
+                        progress = phase.progress,
+                        enabled = state.canPrevent,
+                        onTap = onPrevent,
+                    )
+                    SalvageShards(
+                        progress = phase.progress,
+                        onTap = onSalvage,
+                    )
+                }
 
                 // 표시 크기는 고정이다. 가변으로 두면 주변 UI(별 강화 바 등)가 나타날
                 // 때마다 검이 커졌다 작아졌다 해서 들쭉날쭉해 보인다.
@@ -238,8 +230,7 @@ fun ForgeScreen(
         // 이름·강화 단계는 가변 영역 밖이라 어떤 화면에서도 잘리지 않는다.
         Text(
             text = when (state.destroyPhase) {
-                is DestroyPhase.Prevent -> "지금 눌러야 한다"
-                is DestroyPhase.Salvage -> "파편이 흩어진다"
+                is DestroyPhase.Choice -> "지금 골라야 한다"
                 // 이름은 단계마다 다르다. 계열은 형태만 정하고 부제로 내려간다.
                 // 고유검은 고유 이름을 금색으로.
                 DestroyPhase.None -> state.sword?.let {
@@ -372,11 +363,10 @@ fun ForgeScreen(
         // 창이 열려 있으면 하단 버튼을 감춘다. 원과 파편을 눌러야 하기 때문이다.
         if (state.awaitingDestroyChoice) {
             Text(
-                text = when (state.destroyPhase) {
-                    is DestroyPhase.Prevent ->
-                        if (state.canPrevent) "원을 눌러 검을 살려라" else "방지권이 없다"
-
-                    else -> "파편을 눌러 조각을 회수한다"
+                text = if (state.canPrevent) {
+                    "왼쪽 원은 되살리기, 오른쪽 파편은 조각"
+                } else {
+                    "방지권이 없다 — 파편을 눌러 조각을 회수한다"
                 },
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
             )
@@ -544,12 +534,11 @@ private fun IdleRewardDialog(reward: IdleReward, onDismiss: () -> Unit) {
  */
 @Composable
 private fun DestroyDialog(
-    title: String,
-    body: String,
     progress: Float,
-    confirmLabel: String,
-    confirmEnabled: Boolean,
-    onConfirm: () -> Unit,
+    canPrevent: Boolean,
+    preventTickets: Int,
+    onPrevent: () -> Unit,
+    onSalvage: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = {},
@@ -558,22 +547,54 @@ private fun DestroyDialog(
             dismissOnClickOutside = false,
         ),
         title = {
-            Text(title, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+            Text(
+                text = "검이 부서졌다",
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.error,
+            )
         },
         text = {
             Column {
-                Text(body, fontSize = 14.sp)
+                Text(
+                    text = if (canPrevent) {
+                        "되살릴 것인가, 조각이라도 챙길 것인가."
+                    } else {
+                        "방지권이 없다. 지금 주우면 조각이라도 남는다."
+                    },
+                    fontSize = 14.sp,
+                )
                 Spacer(Modifier.height(12.dp))
                 LinearProgressIndicator(
                     progress = { progress },
                     modifier = Modifier.fillMaxWidth(),
                     color = MaterialTheme.colorScheme.error,
                 )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "시간을 넘기면 아무것도 남지 않는다",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                )
+            }
+        },
+        // 왼쪽이 되살리기, 오른쪽이 줍기다. 창 하나에서 둘을 한 번에 고른다 —
+        // AlertDialog 는 dismiss 를 왼쪽에 놓으므로 그 자리를 방지권이 쓴다.
+        dismissButton = {
+            TextButton(onClick = onPrevent, enabled = canPrevent) {
+                Text(
+                    text = "🛡 방지권 $preventTickets",
+                    fontWeight = FontWeight.Bold,
+                    color = if (canPrevent) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
+                    },
+                )
             }
         },
         confirmButton = {
-            TextButton(onClick = onConfirm, enabled = confirmEnabled) {
-                Text(confirmLabel, fontWeight = FontWeight.Bold)
+            TextButton(onClick = onSalvage) {
+                Text("💎 파편 줍기", fontWeight = FontWeight.Bold)
             }
         },
     )

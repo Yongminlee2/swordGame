@@ -71,20 +71,23 @@ class ForgeViewModelTimerTest {
         return ForgeViewModel(store, Difficulty.NORMAL, alwaysDestroy())
     }
 
+    /** 창은 하나다(v2.3) — 그 안에서 방지권과 줍기 중 하나를 고른다. */
     @Test
-    fun `방지권이 있으면 파괴 직후 방지권 창이 열린다`() = runTest(dispatcher) {
+    fun `파괴 직후 고르기 창이 하나 열린다`() = runTest(dispatcher) {
         val vm = vm(tickets = 1)
         vm.forge()
         val phase = vm.ui.value.destroyPhase
-        assertTrue("phase=$phase", phase is DestroyPhase.Prevent)
-        assertEquals(Timing.PREVENT_WINDOW_MILLIS, (phase as DestroyPhase.Prevent).totalMillis)
+        assertTrue("phase=$phase", phase is DestroyPhase.Choice)
+        assertEquals(Timing.DESTROY_WINDOW_MILLIS, (phase as DestroyPhase.Choice).totalMillis)
     }
 
     @Test
-    fun `방지권이 없으면 곧바로 줍기 창이 열린다`() = runTest(dispatcher) {
+    fun `방지권이 없어도 같은 창이 열린다`() = runTest(dispatcher) {
         val vm = vm(tickets = 0)
         vm.forge()
-        assertTrue(vm.ui.value.destroyPhase is DestroyPhase.Salvage)
+        assertTrue(vm.ui.value.destroyPhase is DestroyPhase.Choice)
+        // 방지권 쪽만 잠긴다 - 줍기는 그대로 고를 수 있다
+        assertEquals(false, vm.ui.value.canPrevent)
     }
 
     @Test
@@ -99,17 +102,16 @@ class ForgeViewModelTimerTest {
         assertEquals(0, vm.ui.value.preventTickets)
     }
 
+    /** 창이 하나이므로 놓치면 곧바로 끝난다 — 두 번째 기회는 없다. */
     @Test
-    fun `제한 시간이 지나면 방지권 창이 닫히고 줍기 창으로 넘어간다`() = runTest(dispatcher) {
+    fun `제한 시간이 지나면 창이 닫히고 아무것도 남지 않는다`() = runTest(dispatcher) {
         val vm = vm(tickets = 1)
         vm.forge()
-        advanceTimeBy(Timing.PREVENT_WINDOW_MILLIS + Timing.TICK_MILLIS * 2)
-        assertTrue(
-            "phase=${vm.ui.value.destroyPhase}",
-            vm.ui.value.destroyPhase is DestroyPhase.Salvage,
-        )
+        advanceTimeBy(Timing.DESTROY_WINDOW_MILLIS + Timing.TICK_MILLIS * 2)
+        assertEquals(DestroyPhase.None, vm.ui.value.destroyPhase)
         // 놓쳤을 뿐 방지권이 소모되지는 않는다
         assertEquals(1, vm.ui.value.preventTickets)
+        assertEquals(0, vm.ui.value.shards)
         assertNull(vm.ui.value.sword)
     }
 
@@ -117,10 +119,21 @@ class ForgeViewModelTimerTest {
     fun `남은 시간이 줄어든다`() = runTest(dispatcher) {
         val vm = vm(tickets = 1)
         vm.forge()
-        val first = (vm.ui.value.destroyPhase as DestroyPhase.Prevent).remainingMillis
+        val first = (vm.ui.value.destroyPhase as DestroyPhase.Choice).remainingMillis
         advanceTimeBy(500)
-        val later = (vm.ui.value.destroyPhase as DestroyPhase.Prevent).remainingMillis
+        val later = (vm.ui.value.destroyPhase as DestroyPhase.Choice).remainingMillis
         assertTrue("$first -> $later", later < first)
+    }
+
+    /** 방지권을 가진 채로도 줍기를 바로 고를 수 있다 — 기다릴 필요가 없다. */
+    @Test
+    fun `방지권이 있어도 곧바로 줍기를 고를 수 있다`() = runTest(dispatcher) {
+        val vm = vm(tickets = 1)
+        vm.forge()
+        vm.salvage()
+        assertEquals(DestroyPhase.None, vm.ui.value.destroyPhase)
+        assertTrue("shards=${vm.ui.value.shards}", vm.ui.value.shards > 0)
+        assertEquals("방지권은 그대로다", 1, vm.ui.value.preventTickets)
     }
 
     @Test
@@ -137,7 +150,7 @@ class ForgeViewModelTimerTest {
     fun `줍기를 놓치면 아무것도 얻지 못하고 창이 닫힌다`() = runTest(dispatcher) {
         val vm = vm(tickets = 0)
         vm.forge()
-        advanceTimeBy(Timing.SALVAGE_WINDOW_MILLIS + Timing.TICK_MILLIS * 2)
+        advanceTimeBy(Timing.DESTROY_WINDOW_MILLIS + Timing.TICK_MILLIS * 2)
         assertEquals(DestroyPhase.None, vm.ui.value.destroyPhase)
         assertEquals(0, vm.ui.value.shards)
         assertNull(vm.ui.value.sword)
@@ -147,7 +160,7 @@ class ForgeViewModelTimerTest {
     fun `창이 닫히면 잠금이 풀린다`() = runTest(dispatcher) {
         val vm = vm(tickets = 0)
         vm.forge()
-        advanceTimeBy(Timing.SALVAGE_WINDOW_MILLIS + Timing.TICK_MILLIS * 2)
+        advanceTimeBy(Timing.DESTROY_WINDOW_MILLIS + Timing.TICK_MILLIS * 2)
         assertEquals(false, vm.ui.value.busy)
         assertTrue(vm.ui.value.canBuySword)
     }
