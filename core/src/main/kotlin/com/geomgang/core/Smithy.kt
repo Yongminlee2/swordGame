@@ -16,20 +16,29 @@ object Smithy {
 
     const val MAX_LEVEL: Int = 15
 
-    /** 레벨 하나가 주는 몫. 0.002 는 0.2%p 다. 성공률과 파괴방지가 같은 크기다. */
+    /** 레벨 하나가 주는 몫. 0.002 는 0.2%p 다. 성공률과 하락방지가 같은 크기다. */
     const val PER_LEVEL: Double = 0.002
 
-    /** 첫 레벨 값 = 지금 강화 비용 × 이 값. */
-    private const val BASE_MULT = 5.0
+    /**
+     * 첫 레벨 값. **고정이다.**
+     *
+     * 한때 `강화 비용(최고 단계) × 5` 였다 — 검이 오를수록 같은 스킬 한 칸이
+     * 비싸졌다. 미루면 손해라 "지금 사야 하나"를 늘 계산해야 했고, 무엇보다
+     * **값이 왜 바뀌는지 화면이 설명하지 못했다.**
+     *
+     * 스킬은 영구 성장이라 값이 흔들릴 이유가 없다. 사다리는 레벨만 보고 오른다.
+     */
+    private const val BASE_PRICE = 2_000.0
 
-    /** 레벨마다 붙는 배수. */
+    /** 레벨마다 붙는 배수. Lv0 2,000 → Lv14 약 58만, 다 올리면 175만쯤이다. */
     private const val GROWTH = 1.5
 
-    /** [level] 에서 다음 레벨로 올리는 값. */
-    fun priceOf(state: GameState, level: Int): Long {
-        val base = Economy.upgradeCost(state.bestLevel) * BASE_MULT
-        return (base * GROWTH.pow(level.toDouble())).roundToLong().coerceAtLeast(1)
-    }
+    /** [level] 에서 다음 레벨로 올리는 값. **검 단계와 무관하다.** */
+    fun priceOf(level: Int): Long =
+        (BASE_PRICE * GROWTH.pow(level.toDouble())).roundToLong().coerceAtLeast(1)
+
+    /** 상태를 받는 옛 모양. 값은 [level] 만 본다. */
+    fun priceOf(state: GameState, level: Int): Long = priceOf(level)
 
     fun canUpgrade(state: GameState, progress: ProgressState): Boolean {
         if (progress.smithyLevel >= MAX_LEVEL) return false

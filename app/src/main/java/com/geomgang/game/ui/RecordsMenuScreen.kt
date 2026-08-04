@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geomgang.core.Achievement
+import com.geomgang.core.Progress
 import com.geomgang.core.ProgressState
 import com.geomgang.core.WeaponCatalog
 
@@ -35,7 +36,10 @@ fun RecordsMenuScreen(
     onOpenSettings: () -> Unit,
     onBack: () -> Unit,
 ) {
-    val codexCount = progress.codex.map { it.family to it.tier }.toSet().size
+    // 도감 화면([CodexScreen])과 **같은 셈법**이어야 한다.
+    // 예전에는 여기만 `계열 to 티어` 로 묶어 세고 있었다 — 티어가 곧 칸이던 시절의
+    // 공식이라, 칸이 단계별로 쪼개진 뒤로는 40칸이 4로 뭉개져 보였다.
+    val codexCount = Progress.entriesOf(progress).size
 
     Column(
         modifier = Modifier

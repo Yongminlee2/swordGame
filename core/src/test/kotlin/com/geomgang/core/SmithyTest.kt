@@ -37,10 +37,18 @@ class SmithyTest {
         assertTrue(Smithy.priceOf(s, 10) > Smithy.priceOf(s, 5))
     }
 
-    /** 고정값이면 초반엔 못 사고 후반엔 공짜가 된다. 지금 강화 비용에 연동한다. */
+    /**
+     * **값은 검 단계를 따라가지 않는다**(v2.3).
+     *
+     * 한때 `강화 비용(최고 단계) × 5` 였다 — 검이 오를수록 같은 스킬 한 칸이
+     * 비싸져서, 미루면 손해라 "지금 사야 하나"를 늘 계산해야 했다. 무엇보다
+     * 값이 왜 바뀌는지 화면이 설명하지 못했다. 스킬은 영구 성장이니 사다리는
+     * 레벨만 보고 오른다.
+     */
     @Test
-    fun `값이 최고 단계를 따라 오른다`() {
-        assertTrue(Smithy.priceOf(rich(40), 0) > Smithy.priceOf(rich(10), 0))
+    fun `값은 검 단계와 무관하다`() {
+        assertEquals(Smithy.priceOf(rich(10), 0), Smithy.priceOf(rich(40), 0))
+        assertEquals(Smithy.priceOf(rich(10), 7), Smithy.priceOf(rich(40), 7))
     }
 
     @Test

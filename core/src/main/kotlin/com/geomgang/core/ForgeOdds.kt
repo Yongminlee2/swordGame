@@ -64,6 +64,7 @@ data class ForgeOdds(
          * @param dropGuard 하락이 정해진 뒤 한 번 더 막을 확률. 막히면 단계가 그대로다.
          *   파괴에는 손대지 못한다 - 파괴를 막는 것은 방지권뿐이다(v2.3).
          * @param legend 전설검인지. 전설검은 부서지는 대신 [LegendForge.LEVEL] 로 돌아간다.
+         * @param materialRescue 조합검(마검·성검)이 파괴를 면할 확률. 면하면 +1 로 남는다.
          * @param temperCapBonus 담금질 상한 가산. 전설검만 갖는다.
          * @param blessingMult 축복서 효과 배수. 성검이 1.5배로 쓴다.
          */
@@ -75,6 +76,7 @@ data class ForgeOdds(
             bonus: Double = 0.0,
             dropGuard: Double = 0.0,
             legend: Boolean = false,
+            materialRescue: Double = 0.0,
             temperCapBonus: Double = 0.0,
             blessingMult: Double = 1.0,
         ): ForgeOdds {
@@ -102,7 +104,10 @@ data class ForgeOdds(
                 FailureBand.DESTROY_OR_DROP -> {
                     val destroyShare = RateTable.destroyChance(targetLevel)
                     // 파괴는 아무 보너스도 못 막는다 - 방지권(사후)만이 되살린다.
-                    val lost = fail * destroyShare
+                    val doomed = fail * destroyShare
+                    // 조합검은 그중 일부가 파괴 대신 +1 추락으로 빠진다([ForgeEngine]).
+                    val rescued = doomed * materialRescue.coerceIn(0.0, 1.0)
+                    val lost = doomed - rescued
                     // 파괴를 면한 실패가 하락이고, 부적·하락방지는 여기만 붙든다.
                     val survived = fail * (1.0 - destroyShare)
                     val saved =
@@ -111,8 +116,9 @@ data class ForgeOdds(
                         success = success,
                         stay = saved,
                         // 전설검은 부서지지 않고 +21 로 돌아간다 - 화면도 그렇게 말해야 한다.
-                        // 그 하락은 파괴 판정에서 나온 것이라 부적으로도 못 막는다.
-                        drop = (survived - saved) + if (legend) lost else 0.0,
+                        // 조합검이 살아남은 몫도 하락이다(+1 로 떨어진다).
+                        // 이 하락들은 파괴 판정에서 나온 것이라 부적으로도 못 막는다.
+                        drop = (survived - saved) + rescued + if (legend) lost else 0.0,
                         destroy = if (legend) 0.0 else lost,
                     )
                 }

@@ -1,5 +1,12 @@
 package com.geomgang.game.ui
 
+import androidx.compose.material3.AlertDialog
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.geomgang.core.LegendForge
+import com.geomgang.core.Refinery
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
@@ -53,6 +60,20 @@ fun StorageScreen(
     onOffer: (Int) -> Unit,
     onBack: () -> Unit,
 ) {
+    // 조합검(마검·성검)을 잃는 동작은 한 번 더 묻는다. 이 둘은 기본 검 +20
+    // 두 자루를 태워야 나오는 물건이라, 잘못 스친 손가락으로 사라지면 안 된다.
+    var pending by remember { mutableStateOf<PendingLoss?>(null) }
+    pending?.let { loss ->
+        ConfirmLossDialog(
+            loss = loss,
+            onConfirm = {
+                loss.action()
+                pending = null
+            },
+            onDismiss = { pending = null },
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -98,9 +119,11 @@ fun StorageScreen(
                     state = state,
                     sword = sword,
                     onEquip = { onEquip(index) },
-                    onSell = { onSell(index) },
-                    onScrap = { onScrap(index) },
-                    onOffer = { onOffer(index) },
+                    onSell = { guardLoss(sword, "판다", pending = { pending = it }) { onSell(index) } },
+                    onScrap = { guardLoss(sword, "부순다", pending = { pending = it }) { onScrap(index) } },
+                    onOffer = {
+                        guardLoss(sword, "도감에 바친다", pending = { pending = it }) { onOffer(index) }
+                    },
                 )
             }
         }
@@ -269,4 +292,68 @@ private fun swordLine(sword: Sword): String {
     val stars = if (sword.stars > 0) " " + "★".repeat(sword.stars) else ""
     return "+${sword.level}$stars · ${sword.family.displayName} · " +
         "공격력 %,d".format(Combat.attackPower(sword))
+}
+
+/**
+ * 되돌릴 수 없는 동작 하나. 확인창이 열려 있는 동안 무엇을 물을지 담는다.
+ *
+ * [action] 은 "예"를 눌렀을 때 실제로 부를 것이다 — 화면이 인덱스를 기억할
+ * 필요가 없도록 호출을 통째로 들고 있는다.
+ */
+private data class PendingLoss(
+    val sword: Sword,
+    val verb: String,
+    val action: () -> Unit,
+)
+
+/** 조합검인지. 마검·성검은 기본 검 +20 두 자루를 태워야 나온다. */
+private fun Sword.isRefined(): Boolean = family in LegendForge.MATERIALS
+
+/**
+ * 잃는 동작을 감싼다.
+ *
+ * 조합검이면 확인창을 세우고, 아니면 곧바로 실행한다 — 흔한 검까지 매번 물으면
+ * 확인창이 소음이 되어 정작 중요한 순간에도 손이 먼저 "예"를 누른다.
+ */
+private inline fun guardLoss(
+    sword: Sword,
+    verb: String,
+    pending: (PendingLoss) -> Unit,
+    noinline action: () -> Unit,
+) {
+    if (sword.isRefined()) pending(PendingLoss(sword, verb, action)) else action()
+}
+
+@Composable
+private fun ConfirmLossDialog(
+    loss: PendingLoss,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "${loss.sword.family.displayName} +${loss.sword.level}",
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFFFD54A),
+            )
+        },
+        text = {
+            Text(
+                text = "정말 ${loss.verb}?\n" +
+                    "조합검은 기본 검 +${Refinery.MATERIAL_LEVEL} 두 자루를 태워야 나온다 — " +
+                    "되돌릴 수 없다.",
+                fontSize = 13.sp,
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(loss.verb, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("그만두기") }
+        },
+    )
 }
