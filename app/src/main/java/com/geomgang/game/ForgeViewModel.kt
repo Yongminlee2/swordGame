@@ -1571,11 +1571,7 @@ class ForgeViewModel(
                 bonus = bonus.successRate + forge.successBonus,
                 dropGuard = bonus.dropGuard + forge.dropGuard,
                 legend = sword?.isLegend() == true,
-                materialRescue = if (sword != null && sword.family in LegendForge.MATERIALS) {
-                    ForgeEngine.MATERIAL_RESCUE_CHANCE
-                } else {
-                    0.0
-                },
+                materialSurvives = sword != null && sword.family in LegendForge.MATERIALS,
                 temperCapBonus = forge.temperCapBonus,
                 blessingMult = forge.blessingMult,
             ).percents(),

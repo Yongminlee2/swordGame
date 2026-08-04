@@ -178,16 +178,14 @@ object ForgeEngine {
                             state = failed.copy(sword = sword.copy(level = LegendForge.LEVEL)),
                             newLevel = LegendForge.LEVEL,
                         )
-                    } else if (
-                        sword.family in LegendForge.MATERIALS &&
-                        rng.nextDouble() < MATERIAL_RESCUE_CHANCE
-                    ) {
-                        // 조합검(마검·성검)은 **확률로** 살아남아 +1 로 남는다.
+                    } else if (sword.family in LegendForge.MATERIALS) {
+                        // 조합검(마검·성검)은 **부서지지 않는다.** 언제나 +1 로 남는다.
                         //
                         // 이 둘은 기본 검 +20 두 자루를 태워야 나온다. 통째로 잃으면
                         // 그 몇 시간이 한 번에 지워져서 "한 번 파괴되면 답이 없다"가 된다.
-                        // 그렇다고 확정으로 살려 두면 이 둘만 파괴가 없는 검이 되어
-                        // 화면의 파괴 확률이 거짓말이 된다 — 반은 살고 반은 부서진다.
+                        // 절반만 살리는 확률로도 해 봤는데 그 절반이 너무 아팠다 —
+                        // 전설검과 같은 규칙(부서지는 대신 바닥으로)으로 통일한다.
+                        // 화면도 이 사실대로 파괴 0% 라고 말한다([ForgeOdds]).
                         ForgeResult.Drop(
                             state = failed.copy(sword = sword.copy(level = MATERIAL_FLOOR)),
                             newLevel = MATERIAL_FLOOR,
@@ -235,14 +233,9 @@ object ForgeEngine {
      */
     const val MATERIAL_FLOOR: Int = 1
 
-    /**
-     * 조합검이 파괴 판정에서 살아남을 확률.
-     *
-     * 확정(1.0)으로 두었더니 이 둘만 파괴가 없는 검이 되어, 화면이 말하는
-     * 파괴 확률이 거짓이 됐다. 반으로 낮춰 **반은 살고 반은 부서지게** 한다 —
-     * 통째로 잃는 참사는 절반으로 줄되, 파괴는 여전히 파괴다.
-     */
-    const val MATERIAL_RESCUE_CHANCE: Double = 0.5
+    /** 이 계열은 파괴되지 않고 [MATERIAL_FLOOR] 로 떨어진다. 전설검과 같은 규칙이다. */
+    fun survivesDestroy(sword: Sword): Boolean =
+        sword.isLegend() || sword.family in LegendForge.MATERIALS
 
     /**
      * 조각 회수량 = 단계 × 이 값 × 흔들림.
