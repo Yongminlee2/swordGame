@@ -1,5 +1,9 @@
 package com.geomgang.game
 
+import androidx.compose.ui.Modifier
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.safeDrawingPadding
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -67,10 +71,22 @@ private val ONLY_MODE = Difficulty.ENDLESS
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // targetSdk 35 부터 **edge-to-edge 가 강제**다 - 앱이 상태바·내비게이션 바
+        // 아래까지 그려진다. 끌 수 없으므로 명시적으로 켜 두고, 인셋은 아래에서 뺀다.
+        enableEdgeToEdge()
         setContent {
             SwordForgeTheme {
                 Surface {
-                    App(SaveStore(filesDir))
+                    // **인셋은 여기 한 곳에서만 뺀다.**
+                    //
+                    // 화면마다 각자 처리하면 스무 개 넘는 화면 중 하나는 반드시 빠뜨리고,
+                    // 그 화면의 맨 아래 버튼이 내비게이션 바에 먹힌다. Surface 한 겹에서
+                    // 빼면 모든 화면이 한 번에 안전해진다.
+                    //
+                    // safeDrawing 은 상태바·내비게이션 바·디스플레이 컷아웃(노치)을 함께 본다.
+                    Box(Modifier.safeDrawingPadding()) {
+                        App(SaveStore(filesDir))
+                    }
                 }
             }
         }
