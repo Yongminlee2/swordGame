@@ -3,10 +3,9 @@
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** 고유검 패시브가 조합·전투·강화에 실제로 배선됐는지. */
+/** 고유검 패시브가 조합·강화·사냥 보상에 실제로 배선됐는지. */
 class UniqueIntegrationTest {
 
     // --- 조합 ---
@@ -73,29 +72,6 @@ class UniqueIntegrationTest {
         assertFalse(Fusion.canFuse(state, listOf(0, 1)))
     }
 
-    // --- 전투 ---
-
-    @Test
-    fun `삼위일체는 보스에게만 더 아프다`() {
-        val plain = Sword(WeaponFamily.HOLY, 15)
-        val trinity = plain.copy(uniqueId = "trinity")
-        assertEquals(
-            Combat.hit(plain, 0, isBoss = false).damage,
-            Combat.hit(trinity, 0, isBoss = false).damage,
-        )
-        assertTrue(
-            Combat.hit(trinity, 0, isBoss = true).damage >
-                Combat.hit(plain, 0, isBoss = true).damage,
-        )
-    }
-
-    @Test
-    fun `폭풍우는 손이 빨라진다`() {
-        val plain = Sword(WeaponFamily.RAPIER, 10)
-        val tempest = plain.copy(uniqueId = "tempest")
-        assertTrue(Combat.minTapMillis(tempest) < Combat.minTapMillis(plain))
-    }
-
     // --- 강화 ---
 
     /** 고유검은 벼려진 그대로다(v2.3) — 강화대에 오르지 않는다. */
@@ -124,6 +100,49 @@ class UniqueIntegrationTest {
         val delta = ForgeBonuses.of(with, progress).successRate -
             ForgeBonuses.of(without, progress).successRate
         assertEquals(UniqueSwords.ORIGIN_FORGE_BONUS, delta, 1e-9)
+    }
+
+    /**
+     * 탐식자·폭풍우·삼위일체도 시작의 검과 같은 방식으로 값을 한다(v2.4).
+     *
+     * 원래는 조각 두 배·공격 속도·보스 데미지로 전투에서만 값을 했는데, 셋 다
+     * 시즌1에서 손에 넣을 수 있는데도 사냥터가 잠겨 있어(deepUnlocked) 얻자마자
+     * 죽은 능력이었다. 소유만으로 강화 성공률을 주도록 바꿨다.
+     */
+    @Test
+    fun `탐식자는 소유만으로 성공률 2%p 를 더한다`() {
+        val without = GameState(difficulty = Difficulty.ENDLESS, sword = Sword(WeaponFamily.STRAIGHT, 5))
+        val with = without.copy(
+            storage = listOf(Sword(WeaponFamily.DEMON, 12, uniqueId = "glutton")),
+        )
+        val progress = ProgressState()
+        val delta = ForgeBonuses.of(with, progress).successRate -
+            ForgeBonuses.of(without, progress).successRate
+        assertEquals(UniqueSwords.GLUTTON_FORGE_BONUS, delta, 1e-9)
+    }
+
+    @Test
+    fun `폭풍우는 소유만으로 성공률 2%p 를 더한다`() {
+        val without = GameState(difficulty = Difficulty.ENDLESS, sword = Sword(WeaponFamily.STRAIGHT, 5))
+        val with = without.copy(
+            storage = listOf(Sword(WeaponFamily.RAPIER, 12, uniqueId = "tempest")),
+        )
+        val progress = ProgressState()
+        val delta = ForgeBonuses.of(with, progress).successRate -
+            ForgeBonuses.of(without, progress).successRate
+        assertEquals(UniqueSwords.TEMPEST_FORGE_BONUS, delta, 1e-9)
+    }
+
+    @Test
+    fun `삼위일체는 소유만으로 성공률을 더한다`() {
+        val without = GameState(difficulty = Difficulty.ENDLESS, sword = Sword(WeaponFamily.STRAIGHT, 5))
+        val with = without.copy(
+            storage = listOf(Sword(WeaponFamily.GREAT, 14, uniqueId = "trinity")),
+        )
+        val progress = ProgressState()
+        val delta = ForgeBonuses.of(with, progress).successRate -
+            ForgeBonuses.of(without, progress).successRate
+        assertEquals(UniqueSwords.TRINITY_FORGE_BONUS, delta, 1e-9)
     }
 
     /** 불사조는 사냥 골드를 부른다 — 되살아나는 검이 아니다(v2.3). */

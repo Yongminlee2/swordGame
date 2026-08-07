@@ -94,6 +94,26 @@ class ForgeOddsTest {
         }
     }
 
+    /**
+     * 전설검만 파괴를 하락으로 접어 보여준다 — +21 이라는 여전히 높은 자리로
+     * 돌아가서다. 마검·성검(조합검)은 부서지지 않아도 +1 로 떨어져 사실상
+     * 파괴와 같은 손해이므로, 화면은 이걸 평범한 검처럼 파괴로 보여준다(v2.4) —
+     * "하락… +1" 이라는 문구가 버그처럼 보인다는 지적을 반영했다.
+     */
+    @Test
+    fun `전설검만 파괴를 하락으로 접고 조합검은 파괴 그대로 보여준다`() {
+        val level = RateTable.DROP_BAND_END + 1
+        val material = ForgeOdds.of(Difficulty.ENDLESS, level)
+        val legend = ForgeOdds.of(Difficulty.ENDLESS, level, legend = true)
+        val fail = 1.0 - material.success
+
+        assertEquals(fail * RateTable.destroyChance(level), material.destroy, 1e-9)
+        assertTrue("조합검은 파괴가 하락에 숨지 않아야 한다", material.destroy > 0.0)
+
+        assertEquals(0.0, legend.destroy, 1e-9)
+        assertEquals(material.destroy, legend.drop - material.drop, 1e-9)
+    }
+
     @Test
     fun `백분율은 반올림해도 합이 100이다`() {
         // 화면은 정수 %로 쓴다. 62+30+8 이 99나 101이 되면 눈에 띈다.

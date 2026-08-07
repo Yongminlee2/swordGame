@@ -63,8 +63,10 @@ data class ForgeOdds(
          * @param bonus 쌓아 온 몫과 계열 특성을 더한 성공률 가산([ForgeBonuses]).
          * @param dropGuard 하락이 정해진 뒤 한 번 더 막을 확률. 막히면 단계가 그대로다.
          *   파괴에는 손대지 못한다 - 파괴를 막는 것은 방지권뿐이다(v2.3).
-         * @param legend 전설검인지. 전설검은 부서지는 대신 [LegendForge.LEVEL] 로 돌아간다.
-         * @param materialSurvives 조합검(마검·성검)인지. 이 둘은 부서지지 않고 +1 로 남는다.
+         * @param legend 전설검인지. 전설검만 부서지는 대신 [LegendForge.LEVEL] 이라는 여전히
+         *   높은 자리로 돌아가 화면도 하락으로 보여준다. 마검·성검(조합검)도 부서지지
+         *   않지만 +1 로 떨어져 사실상 파괴와 같은 손해라, 화면은 평범한 검처럼
+         *   파괴로 보여준다(v2.4) - 그래서 별도 매개변수가 필요 없다.
          * @param temperCapBonus 담금질 상한 가산. 전설검만 갖는다.
          * @param blessingMult 축복서 효과 배수. 성검이 1.5배로 쓴다.
          */
@@ -76,7 +78,6 @@ data class ForgeOdds(
             bonus: Double = 0.0,
             dropGuard: Double = 0.0,
             legend: Boolean = false,
-            materialSurvives: Boolean = false,
             temperCapBonus: Double = 0.0,
             blessingMult: Double = 1.0,
         ): ForgeOdds {
@@ -105,9 +106,6 @@ data class ForgeOdds(
                     val destroyShare = RateTable.destroyChance(targetLevel)
                     // 파괴는 아무 보너스도 못 막는다 - 방지권(사후)만이 되살린다.
                     val doomed = fail * destroyShare
-                    // 조합검은 부서지는 대신 +1 로 떨어진다([ForgeEngine]) - 전설검과 같다.
-                    val rescued = if (materialSurvives) doomed else 0.0
-                    val lost = doomed - rescued
                     // 파괴를 면한 실패가 하락이고, 부적·하락방지는 여기만 붙든다.
                     val survived = fail * (1.0 - destroyShare)
                     val saved =
@@ -115,11 +113,10 @@ data class ForgeOdds(
                     ForgeOdds(
                         success = success,
                         stay = saved,
-                        // 전설검은 부서지지 않고 +21 로 돌아간다 - 화면도 그렇게 말해야 한다.
-                        // 조합검이 살아남은 몫도 하락이다(+1 로 떨어진다).
-                        // 이 하락들은 파괴 판정에서 나온 것이라 부적으로도 못 막는다.
-                        drop = (survived - saved) + rescued + if (legend) lost else 0.0,
-                        destroy = if (legend) 0.0 else lost,
+                        // 전설검만 하락으로 접는다 - +21 이라는 여전히 높은 자리로 돌아가서다.
+                        // 마검·성검은 +1 로 떨어져 사실상 파괴와 같은 손해라 접지 않는다(v2.4).
+                        drop = (survived - saved) + if (legend) doomed else 0.0,
+                        destroy = if (legend) 0.0 else doomed,
                     )
                 }
             }

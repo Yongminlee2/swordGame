@@ -152,8 +152,7 @@ object Combat {
         if (sword == null) return Hit(0, 0)
         val style = FamilyStyle.of(sword.family)
         val comboBonus = (style.comboGain * combo).coerceAtMost(MAX_COMBO_BONUS)
-        val bossBonus =
-            if (isBoss) style.bossBonus * UniqueSwords.bossBonusOf(sword) else 1.0
+        val bossBonus = if (isBoss) style.bossBonus else 1.0
         val crit = critRoll < CRIT_CHANCE + UniqueSwords.critBonusOf(sword)
         val maxHpBonus = targetMaxHp * (style.maxHpRatio + UniqueSwords.maxHpRatioOf(sword))
         val plain = attackPower(sword) * (1.0 + comboBonus) * bossBonus + maxHpBonus
@@ -190,17 +189,12 @@ object Combat {
     }
 
     fun minTapMillis(sword: Sword?): Long =
-        sword?.let {
-            (FamilyStyle.of(it.family).minTapMillis * UniqueSwords.tapIntervalMultOf(it))
-                .roundToLong()
-        } ?: 150
+        sword?.let { FamilyStyle.of(it.family).minTapMillis } ?: 150
 
     /** 잡몹을 잡았을 때 얻는 조각. 계열·고유검 보정이 붙는다. */
     fun shardReward(sword: Sword?, base: Int): Int {
         if (base == 0) return 0
-        val mult = sword?.let {
-            FamilyStyle.of(it.family).shardBonus * UniqueSwords.shardMultOf(it)
-        } ?: 1.0
+        val mult = sword?.let { FamilyStyle.of(it.family).shardBonus } ?: 1.0
         return (base * mult).roundToLong().toInt().coerceAtLeast(1)
     }
 

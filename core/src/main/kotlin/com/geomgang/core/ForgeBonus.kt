@@ -66,17 +66,15 @@ object ForgeBonuses {
             )
         },
     ) + listOfNotNull(
-        // 시작의 검은 지니고만 있어도 값을 한다. 팔면 이 줄이 사라진다.
-        if (UniqueSwords.originOwned(state)) {
-            BonusSource(
-                label = "시작의 검",
-                detail = "소유 중",
-                bonus = ForgeBonus(successRate = UniqueSwords.ORIGIN_FORGE_BONUS),
-            )
-        } else {
-            null
-        },
+        // 시즌1 고유검 넷은 지니고만 있어도 값을 한다. 팔면 이 줄이 사라진다.
+        ownedUniqueSource("시작의 검", UniqueSwords.originOwned(state), UniqueSwords.ORIGIN_FORGE_BONUS),
+        ownedUniqueSource("탐식자", UniqueSwords.gluttonOwned(state), UniqueSwords.GLUTTON_FORGE_BONUS),
+        ownedUniqueSource("폭풍우", UniqueSwords.tempestOwned(state), UniqueSwords.TEMPEST_FORGE_BONUS),
+        ownedUniqueSource("삼위일체", UniqueSwords.trinityOwned(state), UniqueSwords.TRINITY_FORGE_BONUS),
     )
+
+    private fun ownedUniqueSource(label: String, owned: Boolean, successRate: Double): BonusSource? =
+        if (owned) BonusSource(label, detail = "소유 중", bonus = ForgeBonus(successRate = successRate)) else null
 
     fun of(state: GameState, progress: ProgressState): ForgeBonus =
         sourcesOf(state, progress).fold(ForgeBonus.NONE) { acc, s -> acc + s.bonus }

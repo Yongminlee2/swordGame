@@ -63,7 +63,10 @@ object UniqueSwords {
             essences = mapOf("volcano" to 3),
             blurb = "불사조의 온기가 금을 부른다 — 사냥 골드 +25%",
         ),
-        // --- 아래 넷은 기본 4계열 하나씩. 시즌1에서 손에 넣을 수 있는 것들이다. ---
+        // --- 아래 넷은 기본 4계열 하나씩. 시즌1에서 손에 넣을 수 있는 것들이다.
+        // 넷 다 강화 성공률로 값을 한다(v2.4) - 원래 셋은 보스 데미지·공격 속도·조각
+        // 두 배로 전투에서만 값을 했는데, 시즌1은 사냥터가 잠겨 있어(deepUnlocked)
+        // 얻자마자 죽은 능력이었다. ---
         UniqueRecipe(
             id = "origin", name = "시작의 검",
             // +10 하한: 직검 두 자루 값(320골드)에 영구 보너스는 너무 쌌다
@@ -77,21 +80,21 @@ object UniqueSwords {
             hint = "굶주린 굽은 날 둘을 +12까지 강화해 서로를 집어삼키게 하면…",
             resultFamily = WeaponFamily.DEMON,
             needs = listOf(Triple(WeaponFamily.CURVED, 12, 2)),
-            blurb = "조각을 2배로 챙긴다",
+            blurb = "지니고만 있어도 강화 성공률 +2%p",
         ),
         UniqueRecipe(
             id = "tempest", name = "폭풍우",
             hint = "가장 빠르고 가는 것 둘을 +12까지 강화해 겹치면…",
             resultFamily = WeaponFamily.RAPIER,
             needs = listOf(Triple(WeaponFamily.RAPIER, 12, 2)),
-            blurb = "손이 30% 더 빨라진다",
+            blurb = "지니고만 있어도 강화 성공률 +2%p",
         ),
         UniqueRecipe(
             id = "trinity", name = "삼위일체",
             hint = "가장 무겁고 큰 것 둘을 +14까지 강화해 포개면…",
             resultFamily = WeaponFamily.HOLY,
             needs = listOf(Triple(WeaponFamily.GREAT, 14, 2)),
-            blurb = "보스에게 40% 더 아프다",
+            blurb = "지니고만 있어도 강화 성공률 +2.5%p",
         ),
     )
 
@@ -148,18 +151,11 @@ object UniqueSwords {
 
     // --- 패시브. 고유검이 아니면 전부 중립값이다. ---
 
-    fun bossBonusOf(sword: Sword?): Double = if (sword?.uniqueId == "trinity") 1.4 else 1.0
-
-    fun shardMultOf(sword: Sword?): Double = if (sword?.uniqueId == "glutton") 2.0 else 1.0
-
     fun burnMultOf(sword: Sword?): Double = if (sword?.uniqueId == "dragon_fang") 3.0 else 1.0
 
     fun dropMultOf(sword: Sword?): Double = if (sword?.uniqueId == "lucky") 2.0 else 1.0
 
     fun critBonusOf(sword: Sword?): Double = if (sword?.uniqueId == "cleaver") 0.10 else 0.0
-
-    fun tapIntervalMultOf(sword: Sword?): Double =
-        if (sword?.uniqueId == "tempest") 0.7 else 1.0
 
     fun maxHpRatioOf(sword: Sword?): Double =
         if (sword?.uniqueId == "abyss_eater") 0.02 else 0.0
@@ -170,16 +166,29 @@ object UniqueSwords {
         else -> 1.0
     }
 
+    /** [originOwned]·[gluttonOwned]·[tempestOwned]·[trinityOwned] 가 공유하는 소유 판정. */
+    private fun owns(state: GameState, id: String): Boolean =
+        state.sword?.uniqueId == id || state.storage.any { it.uniqueId == id }
+
     /**
-     * 시작의 검 - **지니고만 있어도** 강화 성공률 +3%p.
+     * 시즌1에서 손에 넣는 네 고유검 — **지니고만 있어도** 강화 성공률을 준다.
      *
-     * 고유검은 강화대에 오르지 않으므로(v2.3) "장착 중" 보너스는 죽은 말이 됐다.
-     * 소유로 바꿨다 - 팔면 사라진다는 긴장은 그대로다.
+     * 고유검은 강화대에 오르지 않으므로(v2.3) "장착 중" 보너스는 죽은 말이 된다.
+     * 소유로 값을 한다 - 팔면 사라진다는 긴장은 그대로다.
+     *
+     * 탐식자·폭풍우·삼위일체는 원래 조각 두 배·공격 속도·보스 데미지로 전투에서만
+     * 값을 했는데, 시즌1은 사냥터가 잠겨 있어(v2.4) 얻자마자 죽은 능력이었다.
+     * 시작의 검과 같은 방식으로 바꿔 시즌1 내내 쓸모 있게 했다.
      */
-    fun originOwned(state: GameState): Boolean =
-        state.sword?.uniqueId == "origin" || state.storage.any { it.uniqueId == "origin" }
+    fun originOwned(state: GameState): Boolean = owns(state, "origin")
+    fun gluttonOwned(state: GameState): Boolean = owns(state, "glutton")
+    fun tempestOwned(state: GameState): Boolean = owns(state, "tempest")
+    fun trinityOwned(state: GameState): Boolean = owns(state, "trinity")
 
     const val ORIGIN_FORGE_BONUS: Double = 0.03
+    const val GLUTTON_FORGE_BONUS: Double = 0.02
+    const val TEMPEST_FORGE_BONUS: Double = 0.02
+    const val TRINITY_FORGE_BONUS: Double = 0.025
 
     /**
      * 고유검 한 종류를 발견한 값. 0.005 는 0.5%p 다.
