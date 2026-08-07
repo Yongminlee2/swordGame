@@ -1575,6 +1575,10 @@ class ForgeViewModel(
                 temperCapBonus = forge.temperCapBonus,
                 blessingMult = forge.blessingMult,
             ).percents(),
+            // 부서지지 않는 검이면 되돌아갈 자리를 미리 알린다([ForgeEngine.survivesDestroy]).
+            shatterFloor = sword?.takeIf { ForgeEngine.survivesDestroy(it) }?.let {
+                if (it.isLegend()) LegendForge.LEVEL else ForgeEngine.MATERIAL_FLOOR
+            },
             temper = temperUiFor(targetLevel),
             isRecord = lastWasRecord,
             canForge = !busy && ForgeEngine.canAttempt(game, pendingItems),

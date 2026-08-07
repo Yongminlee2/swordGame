@@ -20,8 +20,18 @@ sealed interface ForgeResult {
     /** 실패했지만 단계는 그대로다. 안전구간이거나 행운부적을 썼을 때. */
     data class Stay(override val state: GameState, val level: Int) : ForgeResult
 
-    /** 실패해서 한 단계 떨어졌다. */
-    data class Drop(override val state: GameState, val newLevel: Int) : ForgeResult
+    /**
+     * 실패해서 단계가 떨어졌다.
+     *
+     * @property shattered **파괴 판정에서 살아남아** 바닥까지 떨어진 것인지.
+     *   부서지지 않는 검(전설검·조합검)만 참이 된다. 한 단계 하락과 겉모습이
+     *   같아서, 이것을 구분하지 않으면 +14 검이 갑자기 +1 이 된 것이 버그로 보인다.
+     */
+    data class Drop(
+        override val state: GameState,
+        val newLevel: Int,
+        val shattered: Boolean = false,
+    ) : ForgeResult
 
     /**
      * 파괴됐다. [state]의 검은 이미 null 이고 `pendingDestroy`가 채워져 있다.
@@ -170,6 +180,7 @@ object ForgeEngine {
                         ForgeResult.Drop(
                             state = failed.copy(sword = guarded, wardCharm = false),
                             newLevel = guarded.level,
+                            shattered = true,
                         )
                     } else if (sword.isLegend()) {
                         // 전설검은 사라지지 않는다. 재료 둘을 다시 +20 까지 올리는 것은
@@ -177,6 +188,7 @@ object ForgeEngine {
                         ForgeResult.Drop(
                             state = failed.copy(sword = sword.copy(level = LegendForge.LEVEL)),
                             newLevel = LegendForge.LEVEL,
+                            shattered = true,
                         )
                     } else if (sword.family in LegendForge.MATERIALS) {
                         // 조합검(마검·성검)은 **부서지지 않는다.** 언제나 +1 로 남는다.
@@ -189,6 +201,7 @@ object ForgeEngine {
                         ForgeResult.Drop(
                             state = failed.copy(sword = sword.copy(level = MATERIAL_FLOOR)),
                             newLevel = MATERIAL_FLOOR,
+                            shattered = true,
                         )
                     } else {
                         ForgeResult.Destroyed(

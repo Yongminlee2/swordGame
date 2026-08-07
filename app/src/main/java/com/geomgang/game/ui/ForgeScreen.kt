@@ -114,6 +114,12 @@ fun ForgeScreen(
             }
 
             is ForgeResult.Drop -> {
+                // 부서졌다가 바닥으로 살아 돌아온 것은 평범한 하락과 다른 사건이다.
+                // 같은 흔들림으로 지나가면 +14 가 +1 이 된 것이 버그로 보인다.
+                if (result.shattered) {
+                    flashColor = Color(0xFFE05A5A)
+                    flash.flashOnce(DESTROY_MILLIS)
+                }
                 shake.shakeOnce(DROP_SHAKE, DROP_MILLIS)
                 onAnimationEnd()
             }
@@ -294,6 +300,17 @@ fun ForgeScreen(
                 if (state.odds.destroy > 0) {
                     Stat("💥", "파괴", "${state.odds.destroy}%", MaterialTheme.colorScheme.error)
                 }
+            }
+            // 부서지지 않는 검은 그 사실을 **미리** 말한다. 결과창에서 처음 알면
+            // 갑자기 바닥으로 떨어진 것이 버그로 보인다.
+            state.shatterFloor?.let { floor ->
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = "🛡 부서져도 사라지지 않는다 — 대신 +$floor 로 되돌아간다",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFC79BFF),
+                )
             }
             state.temper?.let { temper ->
                 Spacer(Modifier.height(8.dp))
@@ -801,7 +818,13 @@ private fun ResultBanner(result: ForgeResult?) {
     val (text, color) = when (result) {
         is ForgeResult.Success -> "성공!  +${result.newLevel}" to Color(0xFF7FD48A)
         is ForgeResult.Stay -> "실패 — 단계 유지" to Color(0xFFD4C87F)
-        is ForgeResult.Drop -> "하락…  +${result.newLevel}" to Color(0xFFD49A5A)
+        // 부서졌지만 사라지지는 않은 검(전설검·조합검)은 그 사실을 말해 준다.
+        // "하락… +1" 만 뜨면 갑자기 바닥으로 간 것이 버그로 읽힌다.
+        is ForgeResult.Drop -> if (result.shattered) {
+            "부서졌다!  +${result.newLevel} 로 되돌아갔다" to Color(0xFFE05A5A)
+        } else {
+            "하락…  +${result.newLevel}" to Color(0xFFD49A5A)
+        }
         is ForgeResult.Destroyed -> "파괴!!" to Color(0xFFE05A5A)
         null -> "" to Color.Transparent
     }
