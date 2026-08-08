@@ -95,13 +95,17 @@ class LegendForgeTest {
         assertFalse(LegendForge.canCraft(holding, ProgressState()))
     }
 
+    /**
+     * 갓 벼린 용검은 +1이다(v2.5) — 마검·성검처럼 다시 오른다.
+     * +21(전설)은 [recraft] 로 다시 벼릴 때만 곧장 온다.
+     */
     @Test
-    fun `벼리면 재료가 사라지고 전설검이 손에 온다`() {
+    fun `벼리면 재료가 사라지고 용검 +1이 손에 온다`() {
         val (state, _) = LegendForge.craft(withMaterials(), ProgressState())
-        assertEquals(LegendForge.LEVEL, state.sword?.level)
-        assertTrue(state.sword!!.isLegend())
+        assertEquals(LegendForge.CRAFT_LEVEL, state.sword?.level)
+        assertEquals(WeaponFamily.DRAGON, state.sword?.family)
+        assertFalse(state.sword!!.isLegend())
         assertTrue(state.storage.isEmpty())
-        assertEquals(LegendForge.LEVEL, state.bestLevel)
     }
 
     /** 같은 계열이 여러 자루면 한 자루만 태운다. 나머지는 남는다. */

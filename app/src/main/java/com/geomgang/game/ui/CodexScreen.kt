@@ -91,7 +91,8 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
                 }
             }
 
-            // 용검은 계열 구획이 없다. +21부터만 존재하는 전설이라 전설 구획이 곧 용검이다.
+            // 용검은 위에서 이미 제 계열 구획(+0~+20)을 받았다. 여기는 +21 위 —
+            // 계열과 무관하게 같은 그림을 쓰는 전설 전용 구획이다.
             val legendLevels = WeaponCatalog.LEGEND_LEVELS.toList()
             item(span = { GridItemSpan(maxLineSpan) }) {
                 SectionHeader(

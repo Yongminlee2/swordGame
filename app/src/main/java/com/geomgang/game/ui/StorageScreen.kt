@@ -40,6 +40,7 @@ import com.geomgang.core.Storage
 import com.geomgang.core.Sword
 import com.geomgang.core.SwordNames
 import com.geomgang.core.UniqueSwords
+import com.geomgang.core.WeaponFamily
 import com.geomgang.game.ForgeUiState
 
 /**
@@ -308,13 +309,14 @@ private data class PendingLoss(
 )
 
 /**
- * 잃으면 되돌리기 힘든 귀한 검인지 - 조합검(마검·성검)이거나 고유검이다.
+ * 잃으면 되돌리기 힘든 귀한 검인지 - 조합검(마검·성검·용검)이거나 고유검이다.
  *
  * `family in LegendForge.MATERIALS` 만 봤다면 재료 계열이 우연히 마검·성검인
- * 고유검(탐식자·삼위일체 등)만 걸리고 나머지 고유검은 빠진다 — 고유검은
- * 재료 계열로 값을 매길 대상이 아니다(v2.4).
+ * 고유검(탐식자·삼위일체 등)만 걸리고 나머지 고유검·오르는 중인 용검은 빠진다 —
+ * 고유검은 재료 계열로 값을 매길 대상이 아니고, 용검은 [LegendForge.REFINED_FAMILIES]
+ * 에 이미 들어 있다(v2.5).
  */
-private fun Sword.isPrecious(): Boolean = uniqueId != null || family in LegendForge.MATERIALS
+private fun Sword.isPrecious(): Boolean = uniqueId != null || family in LegendForge.REFINED_FAMILIES
 
 /**
  * 잃는 동작을 감싼다.
@@ -347,10 +349,11 @@ private fun ConfirmLossDialog(
             )
         },
         text = {
-            val detail = if (loss.sword.uniqueId != null) {
-                "고유검은 정해진 재료를 다시 모아야 만들 수 있다"
-            } else {
-                "조합검은 기본 검 +${Refinery.MATERIAL_LEVEL} 두 자루를 태워야 나온다"
+            val detail = when {
+                loss.sword.uniqueId != null -> "고유검은 정해진 재료를 다시 모아야 만들 수 있다"
+                loss.sword.family == WeaponFamily.DRAGON ->
+                    "용검은 마검·성검 +${LegendForge.MATERIAL_LEVEL} 두 자루를 태워야 나온다"
+                else -> "조합검은 기본 검 +${Refinery.MATERIAL_LEVEL} 두 자루를 태워야 나온다"
             }
             Text(
                 text = "정말 ${loss.verb}?\n$detail — 되돌릴 수 없다.",

@@ -190,14 +190,13 @@ object ForgeEngine {
                             newLevel = LegendForge.LEVEL,
                             shattered = true,
                         )
-                    } else if (sword.family in LegendForge.MATERIALS) {
-                        // 조합검(마검·성검)은 **부서지지 않는다.** 언제나 +1 로 남는다.
+                    } else if (sword.family in LegendForge.REFINED_FAMILIES) {
+                        // 조합검(마검·성검·+20 이하 용검)은 **부서지지 않는다.** 언제나 +1 로 남는다.
                         //
-                        // 이 둘은 기본 검 +20 두 자루를 태워야 나온다. 통째로 잃으면
-                        // 그 몇 시간이 한 번에 지워져서 "한 번 파괴되면 답이 없다"가 된다.
-                        // 절반만 살리는 확률로도 해 봤는데 그 절반이 너무 아팠다 —
+                        // 셋 다 기본 검 +20 두 자루(용검은 마검·성검 +20)를 태워야 나온다.
+                        // 통째로 잃으면 그 시간이 한 번에 지워져서 "한 번 파괴되면 답이 없다"가
+                        // 된다. 절반만 살리는 확률로도 해 봤는데 그 절반이 너무 아팠다 —
                         // 전설검과 같은 규칙(부서지는 대신 바닥으로)으로 통일한다.
-                        // 화면도 이 사실대로 파괴 0% 라고 말한다([ForgeOdds]).
                         ForgeResult.Drop(
                             state = failed.copy(sword = sword.copy(level = MATERIAL_FLOOR)),
                             newLevel = MATERIAL_FLOOR,
@@ -248,7 +247,7 @@ object ForgeEngine {
 
     /** 이 계열은 파괴되지 않고 [MATERIAL_FLOOR] 로 떨어진다. 전설검과 같은 규칙이다. */
     fun survivesDestroy(sword: Sword): Boolean =
-        sword.isLegend() || sword.family in LegendForge.MATERIALS
+        sword.isLegend() || sword.family in LegendForge.REFINED_FAMILIES
 
     /**
      * 조각 회수량 = 단계 × 이 값 × 흔들림.

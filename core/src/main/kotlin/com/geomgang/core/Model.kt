@@ -65,13 +65,19 @@ enum class WeaponFamily(val id: String, val displayName: String) {
          * enum·저장 필드·특성 코드는 그대로라, 되살릴 때 이 목록에 넣기만 하면 된다.
          * 옛 세이브의 숨긴 계열 검도 그대로 보이고 쓰인다. 새로 얻을 길만 없다.
          *
-         * 용검은 여기 있지만 +21(전설) 전용이다. 20강 이하 용검은 만들 수 없다.
+         * 용검도 +1부터 있다(v2.5) — 마검+성검 조합으로 얻어 다른 계열처럼 +20까지
+         * 오르고, +21을 넘으면 전설이 된다.
          */
         val VISIBLE: List<WeaponFamily> =
             listOf(STRAIGHT, CURVED, GREAT, RAPIER, DEMON, HOLY, DRAGON)
 
-        /** 도감에 계열 구획(+0~+20)을 가지는 계열. 용검은 전설 구획에만 산다. */
-        val CODEX_FAMILIES: List<WeaponFamily> = VISIBLE - DRAGON
+        /**
+         * 도감에 계열 구획(+0~+20)을 가지는 계열.
+         *
+         * 용검도 포함한다(v2.5) — +20 이하는 계열 칸에, +21 위는 전설 칸에 쌓인다
+         * ([WeaponCatalog.slotFor]).
+         */
+        val CODEX_FAMILIES: List<WeaponFamily> = VISIBLE
 
         fun fromId(id: String): WeaponFamily =
             entries.firstOrNull { it.id == id }

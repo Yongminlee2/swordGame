@@ -39,7 +39,8 @@ object HelpTopics {
                 "세검은 +${Progress.RAPIER_UNLOCK_LEVEL} 달성으로 열린다.\n" +
                 "직검+20과 곡도+20을 조합하면 마검 +1, 대검+20과 세검+20은 성검 +1. " +
                 "마검·성검을 다시 +${LegendForge.MATERIAL_LEVEL}까지 올려 합치면 " +
-                "용검(전설, +${LegendForge.LEVEL})이다.",
+                "용검 +${LegendForge.CRAFT_LEVEL}. 용검은 +${LegendForge.MATERIAL_LEVEL}에서 " +
+                "멈추지 않고 전설(+${LegendForge.LEVEL})까지 오른다.",
         ),
         HelpTopic(
             "⚗", "조합",

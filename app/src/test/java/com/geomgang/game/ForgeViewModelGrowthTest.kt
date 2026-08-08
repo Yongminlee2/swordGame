@@ -132,7 +132,7 @@ class ForgeViewModelGrowthTest {
     // --- 전설검 ---
 
     @Test
-    fun `재료가 다 있으면 전설검을 벼린다`() {
+    fun `재료가 다 있으면 용검 +1을 벼린다`() {
         val vm = vm(
             rich(sword = null).copy(
                 storage = LegendForge.MATERIALS.map { Sword(it, LegendForge.MATERIAL_LEVEL) },
@@ -142,7 +142,7 @@ class ForgeViewModelGrowthTest {
 
         vm.craftLegend()
 
-        assertEquals(LegendForge.LEVEL, vm.ui.value.sword?.level)
+        assertEquals(LegendForge.CRAFT_LEVEL, vm.ui.value.sword?.level)
         assertTrue(vm.ui.value.storage.isEmpty())
     }
 

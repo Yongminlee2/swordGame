@@ -185,7 +185,7 @@ private fun RecipeList(state: ForgeUiState) {
             Text(
                 text = LegendForge.MATERIALS.joinToString(" + ") {
                     "${it.displayName}+${LegendForge.MATERIAL_LEVEL}"
-                } + "  =  용검 +${LegendForge.LEVEL} (전설)",
+                } + "  =  용검 +${LegendForge.CRAFT_LEVEL}",
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
             )
@@ -398,7 +398,9 @@ private fun LegendPanel(
             Text("용검 조합 — 전설", fontWeight = FontWeight.Bold, color = Color(0xFFFFD54A))
             Text(
                 text = "계열은 +${LegendForge.MATERIAL_LEVEL}에서 끝난다. " +
-                    "마검과 성검을 +${LegendForge.MATERIAL_LEVEL}까지 올려 조합하면 용이 된다 (+${LegendForge.LEVEL}).",
+                    "마검과 성검을 +${LegendForge.MATERIAL_LEVEL}까지 올려 조합하면 " +
+                    "용검 +${LegendForge.CRAFT_LEVEL}이 된다 — 용검만은 +${LegendForge.MATERIAL_LEVEL}에서 " +
+                    "멈추지 않고 전설(+${LegendForge.LEVEL})까지 계속 오른다.",
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
             )

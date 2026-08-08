@@ -213,15 +213,18 @@ class ForgeEngineTest {
         assertTrue(dropped is ForgeResult.Drop)
     }
 
+    /**
+     * 용검(과 마검·성검)은 조합으로만 얻는 계열이라 부서지지 않는다
+     * ([LegendForge.REFINED_FAMILIES]) - 그대로 파괴되는 계열로 검증한다.
+     */
     @Test
     fun `파괴되면 검이 사라지고 파괴 대기 상태가 남는다`() {
-        val before = state(level = 13, family = WeaponFamily.DRAGON)
-        // 용검은 파괴방지 특성이 있어 난수를 하나 더 쓴다. 0.9 는 방지에 실패하는 값이다.
-        val result = ForgeEngine.attempt(before, UsedItems.NONE, ScriptedRandom(0.9, 0.1, 0.9))
+        val before = state(level = 13, family = WeaponFamily.STRAIGHT)
+        val result = ForgeEngine.attempt(before, UsedItems.NONE, ScriptedRandom(0.9, 0.1))
         result as ForgeResult.Destroyed
         assertEquals(13, result.lostLevel)
         assertNull(result.state.sword)
-        assertEquals(PendingDestroy(WeaponFamily.DRAGON, 13), result.state.pendingDestroy)
+        assertEquals(PendingDestroy(WeaponFamily.STRAIGHT, 13), result.state.pendingDestroy)
     }
 
     @Test

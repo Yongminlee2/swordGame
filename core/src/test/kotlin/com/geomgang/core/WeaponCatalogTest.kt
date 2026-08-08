@@ -78,16 +78,16 @@ class WeaponCatalogTest {
     }
 
     /**
-     * v2.1 노출 축소.
+     * v2.5 — 용검도 계열 칸을 갖는다.
      *
-     * 노출 6계열(용검 제외) × 21 = 126 에 용검(전설) 30(+21~+50)을 더해 156.
+     * 노출 7계열 × 21 = 147 에 전설 30(+21~+50)을 더해 177.
      * 숨긴 계열의 칸은 도감 어디에도 없다.
      */
     @Test
-    fun `도감 엔트리는 계열칸 126에 전설칸 30을 더해 156개다`() {
-        assertEquals(156, WeaponCatalog.ENTRIES.size)
-        assertEquals(156, WeaponCatalog.ENTRIES.toSet().size)
-        assertEquals(126, WeaponCatalog.ENTRIES.count { it.family != null })
+    fun `도감 엔트리는 계열칸 147에 전설칸 30을 더해 177개다`() {
+        assertEquals(177, WeaponCatalog.ENTRIES.size)
+        assertEquals(177, WeaponCatalog.ENTRIES.toSet().size)
+        assertEquals(147, WeaponCatalog.ENTRIES.count { it.family != null })
         assertEquals(30, WeaponCatalog.ENTRIES.count { it.family == null })
     }
 
