@@ -177,19 +177,11 @@ object ForgeEngine {
                     if (WardCharm.protects(failed, sword)) {
                         // 수호 각인 - 전설검이 미끄러지는 것을 한 번 붙든다.
                         val guarded = sword.copy(level = maxOf(LegendForge.LEVEL, sword.level - 1))
-                        ForgeResult.Drop(
-                            state = failed.copy(sword = guarded, wardCharm = false),
-                            newLevel = guarded.level,
-                            shattered = true,
-                        )
+                        shatter(failed.copy(wardCharm = false), sword, guarded.level)
                     } else if (sword.isLegend()) {
                         // 전설검은 사라지지 않는다. 재료 둘을 다시 +20 까지 올리는 것은
                         // 몇 시간을 지우는 일이라 누를 엄두가 안 난다. 단계를 잃는 것으로 충분하다.
-                        ForgeResult.Drop(
-                            state = failed.copy(sword = sword.copy(level = LegendForge.LEVEL)),
-                            newLevel = LegendForge.LEVEL,
-                            shattered = true,
-                        )
+                        shatter(failed, sword, LegendForge.LEVEL)
                     } else if (sword.family in LegendForge.REFINED_FAMILIES) {
                         // 조합검(마검·성검·+20 이하 용검)은 **부서지지 않는다.** 언제나 +1 로 남는다.
                         //
@@ -197,11 +189,7 @@ object ForgeEngine {
                         // 통째로 잃으면 그 시간이 한 번에 지워져서 "한 번 파괴되면 답이 없다"가
                         // 된다. 절반만 살리는 확률로도 해 봤는데 그 절반이 너무 아팠다 —
                         // 전설검과 같은 규칙(부서지는 대신 바닥으로)으로 통일한다.
-                        ForgeResult.Drop(
-                            state = failed.copy(sword = sword.copy(level = MATERIAL_FLOOR)),
-                            newLevel = MATERIAL_FLOOR,
-                            shattered = true,
-                        )
+                        shatter(failed, sword, MATERIAL_FLOOR)
                     } else {
                         ForgeResult.Destroyed(
                             state = failed.copy(
@@ -218,6 +206,26 @@ object ForgeEngine {
                 }
         }
     }
+
+    /**
+     * 부서졌지만 사라지지는 않은 검 — **파괴창은 똑같이 뜬다.**
+     *
+     * [PendingDestroy] 에 **떨어지기 전 단계**를 적어 둔다. 그래야 파편이 잃은
+     * 만큼 나온다([applySalvage]). 손에는 검이 남아 있으므로 방지권만 잠긴다
+     * ([canPrevent]) — 되살릴 것이 없기 때문이지, 파편까지 못 줍는다는 뜻이 아니었다.
+     *
+     * v2.5 전에는 이 자리에서 아무 창도 뜨지 않아, 잃은 단계만큼의 파편이
+     * 그냥 사라졌다. 직검이 부서질 때와 다르게 취급할 이유가 없다.
+     */
+    private fun shatter(failed: GameState, sword: Sword, floor: Int): ForgeResult.Drop =
+        ForgeResult.Drop(
+            state = failed.copy(
+                sword = sword.copy(level = floor),
+                pendingDestroy = PendingDestroy(sword.family, sword.level),
+            ),
+            newLevel = floor,
+            shattered = true,
+        )
 
     /**
      * 하락이 정해진 자리에서 마지막으로 붙드는 판정.
@@ -260,8 +268,16 @@ object ForgeEngine {
     private const val SALVAGE_JITTER_MIN = 0.7
     private const val SALVAGE_JITTER_MAX = 1.3
 
+    /**
+     * 방지권을 쓸 수 있는지.
+     *
+     * **검이 손에 남아 있으면 못 쓴다** — 부서졌지만 사라지지 않은 검([shatter])이다.
+     * 되살릴 것이 없으니 방지권이 할 일도 없다. 파편은 그래도 주울 수 있다.
+     */
     fun canPrevent(state: GameState): Boolean =
-        state.pendingDestroy != null && state.inventory.preventTickets > 0
+        state.pendingDestroy != null &&
+            state.sword == null &&
+            state.inventory.preventTickets > 0
 
     /**
      * 방지권을 태워 파괴 직전 상태로 되돌린다.
@@ -272,6 +288,8 @@ object ForgeEngine {
         // 파괴 대기 여부는 인자 검증이 아니라 상태 전제조건이므로 checkNotNull 을 쓴다.
         val pending = checkNotNull(state.pendingDestroy) { "no pending destroy to prevent" }
         check(state.inventory.preventTickets > 0) { "no prevent ticket" }
+        // 검이 남아 있으면 되살릴 것이 없다 - 덮어쓰면 잃은 단계가 공짜로 돌아온다.
+        check(state.sword == null) { "sword survived; nothing to prevent" }
         return state.copy(
             sword = Sword(pending.family, pending.level),
             inventory = state.inventory.minus(Item.PREVENT_TICKET, 1),

@@ -205,7 +205,8 @@ class LegendForgeTest {
         )
         assertTrue("결과=$result", result is ForgeResult.Drop)
         assertEquals(LegendForge.LEVEL, result.state.sword?.level)
-        assertNull(result.state.pendingDestroy)
+        // 검은 남지만 파괴창은 열린다(v2.5) — 잃은 단계만큼 파편을 주울 수 있다.
+        assertEquals(PendingDestroy(WeaponFamily.STRAIGHT, 44), result.state.pendingDestroy)
     }
 
     /** 계열 검은 그대로 파괴된다. 전설검만 예외라는 것을 못 박는다. */
@@ -224,8 +225,8 @@ class LegendForgeTest {
     /**
      * 갓 벼린 +21 이 실패해도 +20 으로 내려가지 않는다.
      *
-     * 무한 구간은 [RateTable.destroyChance] 가 1.00 이라 실패가 곧 파괴다. 전설검은
-     * 그 자리에서 +21 로 되돌아가므로 **계열 구간으로 넘어가는 길이 없다.**
+     * 파괴로 가든(→ +21 복귀) 하락으로 가든([drop] 의 바닥이 +21) 전설검은
+     * 그 자리에 머문다 — **계열 구간으로 넘어가는 길이 없다.**
      */
     @Test
     fun `전설검은 21 아래로 떨어지지 않는다`() {
@@ -241,5 +242,53 @@ class LegendForgeTest {
         )
         assertEquals(LegendForge.LEVEL, result.state.sword?.level)
         assertNull(result.state.pendingDestroy)
+    }
+
+    // --- 부서졌지만 사라지지 않은 검의 파편(v2.5) ---
+
+    /**
+     * **부서졌어도 파편은 준다.**
+     *
+     * 전에는 이 자리에서 아무 창도 뜨지 않아 잃은 단계만큼의 파편이 그냥
+     * 사라졌다. 직검이 부서질 때와 다르게 취급할 이유가 없다 — 방지권만
+     * 잠긴다(되살릴 검이 이미 손에 있다).
+     */
+    @Test
+    fun `조합검이 부서지면 파편을 주울 수 있고 방지권만 잠긴다`() {
+        val state = GameState(
+            difficulty = Difficulty.ENDLESS,
+            gold = 1_000_000_000_000_000L,
+            sword = Sword(WeaponFamily.DEMON, 15),
+            inventory = Inventory(preventTickets = 3),
+        )
+        val result = ForgeEngine.attempt(state, UsedItems.NONE, ScriptedRandom(0.999, 0.0))
+        assertTrue("결과=$result", result is ForgeResult.Drop)
+        assertTrue((result as ForgeResult.Drop).shattered)
+        assertEquals(ForgeEngine.MATERIAL_FLOOR, result.state.sword?.level)
+
+        // 잃기 전 단계가 남아 있어야 파편이 그만큼 나온다
+        val after = result.state
+        assertEquals(PendingDestroy(WeaponFamily.DEMON, 15), after.pendingDestroy)
+        assertFalse("검이 손에 있으면 방지권은 못 쓴다", ForgeEngine.canPrevent(after))
+
+        val salvaged = ForgeEngine.applySalvage(after, ScriptedRandom(0.5))
+        assertTrue("파편이 나와야 한다", salvaged.shards > 0)
+        assertNull(salvaged.pendingDestroy)
+        // 주워도 검은 그대로 손에 남는다
+        assertEquals(ForgeEngine.MATERIAL_FLOOR, salvaged.sword?.level)
+    }
+
+    /** 시간을 넘겨도 검은 그대로다 — 사라지는 것은 파편뿐이다. */
+    @Test
+    fun `시간을 넘겨도 살아남은 검은 그대로다`() {
+        val state = GameState(
+            difficulty = Difficulty.ENDLESS,
+            gold = 1_000_000_000_000_000L,
+            sword = Sword(WeaponFamily.HOLY, 15),
+        )
+        val result = ForgeEngine.attempt(state, UsedItems.NONE, ScriptedRandom(0.999, 0.0))
+        val expired = ForgeEngine.confirmDestroy(result.state)
+        assertNull(expired.pendingDestroy)
+        assertEquals(ForgeEngine.MATERIAL_FLOOR, expired.sword?.level)
     }
 }

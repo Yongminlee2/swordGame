@@ -275,10 +275,15 @@ class ForgeViewModel(
                 haptics.forgeStay()
             }
 
-            is ForgeResult.Drop -> {
-                sound.forgeDrop()
-                haptics.forgeDrop()
-            }
+            is ForgeResult.Drop ->
+                // 부서져서 바닥으로 간 것은 평범한 한 단계 하락과 다른 사건이다.
+                if (result.shattered) {
+                    sound.forgeDestroy()
+                    haptics.forgeDestroy()
+                } else {
+                    sound.forgeDrop()
+                    haptics.forgeDrop()
+                }
 
             is ForgeResult.Destroyed -> {
                 sound.forgeDestroy()
@@ -286,7 +291,11 @@ class ForgeViewModel(
             }
         }
 
-        if (result is ForgeResult.Destroyed) openDestroyWindow()
+        // 부서졌지만 사라지지 않은 검(전설검·조합검)도 같은 창을 연다 — 방지권만
+        // 잠기고 파편은 똑같이 줍는다([ForgeEngine.shatter]).
+        if (result is ForgeResult.Destroyed || (result is ForgeResult.Drop && result.shattered)) {
+            openDestroyWindow()
+        }
     }
 
     /**

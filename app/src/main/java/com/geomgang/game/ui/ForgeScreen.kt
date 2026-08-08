@@ -144,6 +144,9 @@ fun ForgeScreen(
         is DestroyPhase.Choice -> DestroyDialog(
             progress = phase.progress,
             canPrevent = state.canPrevent,
+            // 검이 손에 남아 있으면 부서지고도 살아남은 것이다(전설검·조합검).
+            // 되살릴 것이 없어 방지권만 잠기고, 파편은 똑같이 줍는다.
+            survived = state.sword != null,
             preventTickets = state.preventTickets,
             onPrevent = onPrevent,
             onSalvage = onSalvage,
@@ -556,6 +559,8 @@ private fun IdleRewardDialog(reward: IdleReward, onDismiss: () -> Unit) {
 private fun DestroyDialog(
     progress: Float,
     canPrevent: Boolean,
+    /** 부서지고도 검이 남았는지(전설검·조합검). 되살릴 것이 없어 방지권만 잠긴다. */
+    survived: Boolean,
     preventTickets: Int,
     onPrevent: () -> Unit,
     onSalvage: () -> Unit,
@@ -576,10 +581,10 @@ private fun DestroyDialog(
         text = {
             Column {
                 Text(
-                    text = if (canPrevent) {
-                        "되살릴 것인가, 조각이라도 챙길 것인가."
-                    } else {
-                        "방지권이 없다. 지금 주우면 조각이라도 남는다."
+                    text = when {
+                        survived -> "검은 사라지지 않았다. 떨어져 나간 조각을 주울 수 있다."
+                        canPrevent -> "되살릴 것인가, 조각이라도 챙길 것인가."
+                        else -> "방지권이 없다. 지금 주우면 조각이라도 남는다."
                     },
                     fontSize = 14.sp,
                 )
@@ -591,7 +596,11 @@ private fun DestroyDialog(
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "시간을 넘기면 아무것도 남지 않는다",
+                    text = if (survived) {
+                        "시간을 넘기면 조각이 사라진다"
+                    } else {
+                        "시간을 넘기면 아무것도 남지 않는다"
+                    },
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 )

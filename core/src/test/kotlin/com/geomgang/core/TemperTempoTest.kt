@@ -50,6 +50,9 @@ class TemperTempoTest {
             if (result is ForgeResult.Destroyed) {
                 state = ForgeEngine.applyPrevent(state)
             }
+            // 부서졌지만 검이 남은 경우(v2.5)에도 파괴창이 열려 pendingDestroy 가 남는다.
+            // 실제 플레이에서는 파편을 줍거나 시간이 지나면 풀린다 — 여기서는 흘려보낸다.
+            state = ForgeEngine.confirmDestroy(state)
         }
         return attempts
     }
