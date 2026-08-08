@@ -77,7 +77,8 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
             // 계열마다 구획을 나눈다. 노출 계열만이다 - 숨긴 계열의 칸은
             // 도감 어디에도 없다([WeaponFamily.CODEX_FAMILIES]).
             WeaponFamily.CODEX_FAMILIES.forEach { family ->
-                val levels = WeaponCatalog.LEVELS_PER_FAMILY.toList()
+                // 조합검(마검·성검·용검)은 +1 부터다 — +0 칸은 영원히 못 채운다.
+                val levels = WeaponCatalog.levelsFor(family).toList()
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     SectionHeader(
                         title = family.displayName,

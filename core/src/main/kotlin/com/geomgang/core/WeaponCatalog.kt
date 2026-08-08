@@ -84,8 +84,16 @@ object WeaponCatalog {
         }
     }
 
-    /** 한 계열이 가지는 칸 수. */
-    val LEVELS_PER_FAMILY: IntRange = 0..FAMILY_MAX_LEVEL
+    /**
+     * 이 계열이 도감에 가지는 단계 칸.
+     *
+     * 조합검(마검·성검·용검)은 **+1 이 시작이다** — 상점에 나오지 않고 조합으로만
+     * 나오는데 [Refinery]·[LegendForge] 둘 다 +1 을 내놓는다. 하락으로도 못 닿는다:
+     * +1~+5 는 안전구간([RateTable.SAFE_BAND_END])이라 떨어지지 않고, 하락이 시작되는
+     * +6 에서 미끄러져도 +5 가 바닥이다. 그래서 +0 칸을 두면 **영원히 못 채우는 칸**이 된다.
+     */
+    fun levelsFor(family: WeaponFamily): IntRange =
+        if (family in LegendForge.REFINED_FAMILIES) 1..FAMILY_MAX_LEVEL else 0..FAMILY_MAX_LEVEL
 
     /** 전설 칸이 덮는 단계. */
     val LEGEND_LEVELS: IntRange = (FAMILY_MAX_LEVEL + 1)..LEGEND_MAX_LEVEL
@@ -93,12 +101,12 @@ object WeaponCatalog {
     /**
      * 도감 전체 칸.
      *
-     * 노출 계열 7 × 단계 21 = 147 에 전설 30(+21~+50)을 더해 177 이다(v2.5, 용검도
-     * 계열 칸을 갖는다). 숨긴 계열의 칸은 여기 없다 — 옛 세이브가 이미 채운 칸은
+     * 기본 4계열 × 21(+0~+20) = 84, 조합검 3계열 × 20(+1~+20) = 60, 전설 30(+21~+50).
+     * 합쳐서 174 다. 숨긴 계열의 칸은 여기 없다 — 옛 세이브가 이미 채운 칸은
      * 지우지 않되 세지도 않는다.
      */
     val ENTRIES: List<CodexEntry> =
         WeaponFamily.CODEX_FAMILIES.flatMap { family ->
-            LEVELS_PER_FAMILY.map { level -> CodexEntry(family, level) }
+            levelsFor(family).map { level -> CodexEntry(family, level) }
         } + LEGEND_LEVELS.map { level -> CodexEntry(null, level) }
 }

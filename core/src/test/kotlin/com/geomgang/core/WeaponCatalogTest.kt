@@ -78,29 +78,39 @@ class WeaponCatalogTest {
     }
 
     /**
-     * v2.5 — 용검도 계열 칸을 갖는다.
+     * v2.5 — 용검도 계열 칸을 갖고, 조합검은 +0 칸이 없다.
      *
-     * 노출 7계열 × 21 = 147 에 전설 30(+21~+50)을 더해 177.
+     * 기본 4계열 × 21(+0~+20) = 84, 조합검 3계열 × 20(+1~+20) = 60, 전설 30 → 174.
      * 숨긴 계열의 칸은 도감 어디에도 없다.
      */
     @Test
-    fun `도감 엔트리는 계열칸 147에 전설칸 30을 더해 177개다`() {
-        assertEquals(177, WeaponCatalog.ENTRIES.size)
-        assertEquals(177, WeaponCatalog.ENTRIES.toSet().size)
-        assertEquals(147, WeaponCatalog.ENTRIES.count { it.family != null })
+    fun `도감 엔트리는 계열칸 144에 전설칸 30을 더해 174개다`() {
+        assertEquals(174, WeaponCatalog.ENTRIES.size)
+        assertEquals(174, WeaponCatalog.ENTRIES.toSet().size)
+        assertEquals(144, WeaponCatalog.ENTRIES.count { it.family != null })
         assertEquals(30, WeaponCatalog.ENTRIES.count { it.family == null })
     }
 
+    /**
+     * 조합검은 **+1 이 시작이다.** 상점에 나오지 않고 조합이 +1 을 내놓으며,
+     * +1~+5 는 안전구간이라 하락으로도 +0 에 닿지 않는다 — +0 칸을 두면 영원히
+     * 못 채우는 칸이 된다.
+     */
     @Test
-    fun `노출 계열만 0부터 20단계까지 한 칸씩 갖는다`() {
+    fun `조합검은 1부터 기본 계열은 0부터 20단계까지 한 칸씩 갖는다`() {
         for (family in WeaponFamily.entries) {
             val levels = WeaponCatalog.ENTRIES.filter { it.family == family }.map { it.level }
-            if (family in WeaponFamily.CODEX_FAMILIES) {
-                assertEquals(21, levels.size)
-                assertEquals((0..20).toSet(), levels.toSet())
-            } else {
-                // 숨긴 계열(그리고 +21 전용인 용검)은 계열 칸이 없다
-                assertEquals("$family", 0, levels.size)
+            when {
+                family in LegendForge.REFINED_FAMILIES -> {
+                    assertEquals("$family", 20, levels.size)
+                    assertEquals("$family", (1..20).toSet(), levels.toSet())
+                }
+                family in WeaponFamily.CODEX_FAMILIES -> {
+                    assertEquals("$family", 21, levels.size)
+                    assertEquals("$family", (0..20).toSet(), levels.toSet())
+                }
+                // 숨긴 계열은 계열 칸이 없다
+                else -> assertEquals("$family", 0, levels.size)
             }
         }
     }
