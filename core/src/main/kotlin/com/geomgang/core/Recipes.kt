@@ -69,8 +69,10 @@ object Recipes {
     fun availableIn(deep: Boolean): List<Recipe> =
         if (deep) ALL else ALL.filter { it.reward is RecipeReward.GrantSword }
 
+    // 화면도 같은 경계를 본다([Unlocks.deepUnlocked]). 여기만 legendReached 였던 탓에
+    // 용검을 쥔 뒤 +21 전까지는 상점 목록에 뜨는데 사면 거절당했다(v2.5).
     fun availableIn(state: GameState): List<Recipe> =
-        availableIn(Unlocks.legendReached(state))
+        availableIn(Unlocks.deepUnlocked(state))
 
     /**
      * 워프권을 **안 고르고** 샀을 때의 계열.

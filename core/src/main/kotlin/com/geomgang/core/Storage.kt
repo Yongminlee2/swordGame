@@ -80,11 +80,16 @@ object Storage {
     /**
      * 이 검을 부술 수 있는지.
      *
-     * **전설검은 부술 수 없다.** +45 를 부수면 조각 92개가 나오는데 다시 벼리는 데는
+     * **전설검과 용검은 부술 수 없다.** +45 를 부수면 조각 92개가 나오는데 다시 벼리는 데는
      * 500개가 든다. 값이 그만큼 어긋나 있으면 그건 선택지가 아니라 함정이다.
      * 내려놓는 길은 도감에 바치는 것 하나로 족하다 — 그쪽은 해금이라도 남는다.
+     *
+     * 용검은 계열로 막는다(v2.5). +1 부터 시작하게 되면서 `!isLegend()` 만으로는
+     * +20 이하 용검이 뚫렸는데, +20 용검을 부숴 봐야 조각 42개다 — 마검·성검을
+     * +20 까지 다시 올려야 되찾는 검치고 터무니없다.
      */
-    fun canScrap(sword: Sword): Boolean = !sword.isLegend()
+    fun canScrap(sword: Sword): Boolean =
+        !sword.isLegend() && sword.family != WeaponFamily.DRAGON
 
     /** 부숴서 나오는 조각. 단계가 높을수록 많다. */
     fun scrapShards(sword: Sword): Int = (2 + sword.level * 2).coerceAtLeast(1)

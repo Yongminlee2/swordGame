@@ -1447,7 +1447,9 @@ class ForgeViewModel(
 
     private fun renderStar(): StarUiState? {
         val sword = game.sword ?: return null
-        if (sword.level < StarForce.MIN_LEVEL) return null
+        // 판정과 같은 규칙을 본다 - 별이 다 찬 검은 화면을 띄우고 "더 올릴 별이 없다"를
+        // 보여줘야 하므로 [StarForce.canStar] 대신 자격만 묻는다.
+        if (!StarForce.starrable(sword)) return null
         return StarUiState(
             stars = sword.stars,
             maxStars = StarForce.MAX_STARS,

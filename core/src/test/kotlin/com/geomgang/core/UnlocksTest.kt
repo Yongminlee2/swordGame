@@ -66,6 +66,55 @@ class UnlocksTest {
         assertTrue(Unlocks.deepUnlocked(s))
     }
 
+    /**
+     * **경계를 보는 곳이 하나여야 한다.** 상점 목록만 [Unlocks.legendReached] 를
+     * 보던 탓에, 용검을 쥔 뒤 +21 전까지는 목록에 뜨는데 사면 거절당했다(v2.5).
+     */
+    @Test
+    fun `용검을 쥐면 상점 교환도 함께 열린다`() {
+        val s = state(bestLevel = RateTable.MAX_FINITE_LEVEL)
+            .copy(sword = Sword(WeaponFamily.DRAGON, LegendForge.CRAFT_LEVEL))
+        assertEquals(Recipes.ALL.size, Recipes.availableIn(s).size)
+    }
+
+    @Test
+    fun `용검이 없으면 상점 교환은 워프권뿐이다`() {
+        val s = state(bestLevel = RateTable.MAX_FINITE_LEVEL)
+        assertTrue(Recipes.availableIn(s).size < Recipes.ALL.size)
+        assertTrue(Recipes.availableIn(s).all { it.reward is RecipeReward.GrantSword })
+    }
+
+    /**
+     * 용검은 **잃는 길을 전부 막는다.** 마검·성검을 +20 까지 다시 올려야 되찾는
+     * 검이라, 조각 몇십 개로 바꾸거나 재료로 녹이는 것은 선택지가 아니라 함정이다.
+     * `!isLegend()` 만 보던 시절에는 용검이 늘 +21 이라 저절로 막혔는데,
+     * +1 부터 시작하면서 +20 이하 용검이 두 구멍으로 다 샜다(v2.5).
+     */
+    @Test
+    fun `20 이하 용검도 부수거나 녹일 수 없다`() {
+        for (level in intArrayOf(LegendForge.CRAFT_LEVEL, 10, RateTable.MAX_FINITE_LEVEL)) {
+            val dragon = Sword(WeaponFamily.DRAGON, level)
+            assertFalse("+$level 용검 분해", Storage.canScrap(dragon))
+            assertFalse("+$level 용검 조합 재료", Fusion.meltable(dragon))
+        }
+        // 마검·성검은 고유검 레시피의 재료라 녹을 수 있어야 한다
+        assertTrue(Fusion.meltable(Sword(WeaponFamily.DEMON, 12)))
+    }
+
+    /**
+     * 별강화는 **용검부터**다 — 단계가 아니라 계열로 갈린다(v2.5).
+     *
+     * 「+20 에서 재료로 태워진다」와 「시즌1엔 사냥터가 없다」가 별을 잠근 이유였는데,
+     * 용검은 태워지지 않고 사냥터도 이미 열려 있다.
+     */
+    @Test
+    fun `용검은 1강부터 별을 붙일 수 있다`() {
+        assertTrue(StarForce.canStar(Sword(WeaponFamily.DRAGON, LegendForge.CRAFT_LEVEL)))
+        assertFalse(StarForce.canStar(Sword(WeaponFamily.DEMON, RateTable.MAX_FINITE_LEVEL)))
+        // 옛 세이브의 비(非)용검 전설검도 그대로 열린다
+        assertTrue(StarForce.canStar(Sword(WeaponFamily.STRAIGHT, LegendForge.LEVEL)))
+    }
+
     // --- 강화석 ---
 
     @Test

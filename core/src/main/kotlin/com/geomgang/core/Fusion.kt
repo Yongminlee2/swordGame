@@ -37,8 +37,13 @@ object Fusion {
      *
      * 화면도 같은 판단을 써야 한다 — 목록에서 고를 수 있는데 버튼이 안 눌리면
      * 왜 안 되는지 알 길이 없다.
+     *
+     * **용검은 계열로 막는다**(v2.5). `!isLegend()` 만 보던 시절에는 용검이 늘
+     * +21 이라 그것으로 충분했는데, 용검이 +1 부터 시작하면서 +20 이하 용검이
+     * 재료 목록에 나타났다. 마검·성검을 +20 까지 다시 올려야 되찾는 검이다.
      */
-    fun meltable(sword: Sword): Boolean = sword.uniqueId == null && !sword.isLegend()
+    fun meltable(sword: Sword): Boolean =
+        sword.uniqueId == null && !sword.isLegend() && sword.family != WeaponFamily.DRAGON
 
     /** 조합 비용. 재료 중 가장 좋은 검 판매가의 절반이다. */
     fun cost(state: GameState, indices: List<Int>): Long =
@@ -165,15 +170,9 @@ object MaterialBoost {
 object StarForce {
 
     /**
-     * 별을 붙일 수 있는 최소 강화 단계 — **용검부터.**
+     * 별을 붙일 수 있는 최소 강화 단계. **옛 세이브의 비(非)용검 전설검을 위해 남는다.**
      *
-     * +10 이었는데, 계열 검은 +20 에서 조합 재료로 태워지는 물건이라 별을 붙여도
-     * 곧 사라졌다. 별값(조각·골드)이 통째로 버려지니 시즌1에서는 눌러선 안 되는
-     * 버튼이었다. 게다가 별은 **공격력**만 올리는데 시즌1에는 사냥터가 없다 —
-     * 올려 봐야 쓸 데가 없었다.
-     *
-     * [LegendForge.LEVEL] 과 묶어 두면 「계열은 +20 이 끝, 그 위는 용검」이라는
-     * 규칙 하나로 이 문이 함께 열린다.
+     * 판단은 [canStar] 가 한다 — 단계가 아니라 **검이 용검인지**를 본다.
      */
     const val MIN_LEVEL = LegendForge.LEVEL
 
@@ -188,8 +187,23 @@ object StarForce {
     /** 별 하나가 올려 주는 공격력 비율. 다섯 개를 다 채우면 1.7배다. */
     const val ATTACK_PER_STAR = 0.14
 
+    /**
+     * 별을 붙일 수 있는 검인지 — **용검부터.**
+     *
+     * 별이 +10 부터였을 때는 계열 검이 +20 에서 조합 재료로 태워져 별값(조각·골드)이
+     * 통째로 버려졌고, 별은 **공격력**만 올리는데 시즌1에는 사냥터가 없어 쓸 데도 없었다.
+     * 둘 다 「용검을 손에 넣었는가」로 갈리는 이야기였다.
+     *
+     * 그래서 단계가 아니라 계열을 본다(v2.5). [MIN_LEVEL] 로만 재던 시절에는 용검이
+     * 늘 +21 이라 같은 말이었지만, 용검이 +1 부터 시작하면서 갈라졌다 — 용검은
+     * 태워지지 않고 사냥터도 이미 열려 있으니, +1 용검에 별을 붙이는 것은 낭비가 아니다.
+     * 옛 세이브의 비(非)용검 전설검(직검 +30 등)도 [MIN_LEVEL] 로 그대로 열린다.
+     */
+    fun starrable(sword: Sword): Boolean =
+        sword.family == WeaponFamily.DRAGON || sword.level >= MIN_LEVEL
+
     fun canStar(sword: Sword?): Boolean =
-        sword != null && sword.level >= MIN_LEVEL && sword.stars < MAX_STARS
+        sword != null && starrable(sword) && sword.stars < MAX_STARS
 
     /** 다음 별을 붙이는 데 드는 조각. 별이 늘수록 급격히 비싸진다. */
     fun shardCost(sword: Sword): Int = (12 * (sword.stars + 1) * (sword.stars + 1))

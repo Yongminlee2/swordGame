@@ -56,10 +56,14 @@ class HelpTopicsTest {
         assertTrue(body.contains("${Zone.MONSTERS_BEFORE_BOSS}"))
     }
 
+    /**
+     * 별의 문은 단계가 아니라 **계열**이 연다(v2.5, [StarForce.starrable]) —
+     * 설명도 "+21" 이 아니라 "용검부터" 라고 말해야 한다.
+     */
     @Test
-    fun `특수강화 설명이 실제 별 상한을 말한다`() {
+    fun `특수강화 설명이 용검과 실제 별 상한을 말한다`() {
         val body = HelpTopics.ALL.first { it.title == "특수강화" }.body
-        assertTrue(body.contains("+${StarForce.MIN_LEVEL}"))
+        assertTrue(body.contains("용검"))
         assertTrue(body.contains("${StarForce.MAX_STARS}"))
     }
 

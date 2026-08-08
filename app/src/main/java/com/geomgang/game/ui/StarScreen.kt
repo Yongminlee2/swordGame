@@ -60,9 +60,9 @@ fun StarScreen(
                         text = if (sword == null) {
                             "검이 없다."
                         } else {
-                            "용검(+${com.geomgang.core.StarForce.MIN_LEVEL})부터 " +
-                                "별을 붙일 수 있다. 계열 검은 +20에서 조합 재료가 되므로 " +
-                                "별을 붙여도 곧 사라진다."
+                            "용검부터 별을 붙일 수 있다. 계열 검은 " +
+                                "+${com.geomgang.core.LegendForge.MATERIAL_LEVEL}에서 " +
+                                "조합 재료가 되므로 별을 붙여도 곧 사라진다."
                         },
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),

@@ -21,7 +21,7 @@ object LegendForge {
 
     /**
      * 전설 등급이 시작되는 단계 - 파괴돼도 여기로 돌아오고([ForgeEngine]),
-     * 담금질·별강화([StarForce.MIN_LEVEL])도 여기부터 열린다. 다시 벼릴 때도
+     * 담금질도 여기부터 붙는다(별강화는 계열로 갈린다 — [StarForce.starrable]). 다시 벼릴 때도
      * ([recraft]) 곧장 여기로 온다 - 한 번 넘은 벽을 두 번 넘으라 하지 않는다.
      */
     const val LEVEL: Int = RateTable.MAX_FINITE_LEVEL + 1
