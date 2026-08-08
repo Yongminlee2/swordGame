@@ -34,6 +34,26 @@ class LegendForgeTest {
         assertTrue(LegendForge.canForge(Sword(WeaponFamily.STRAIGHT, 44)))
     }
 
+    /**
+     * **용검만은 +20 에서 멈추지 않는다.** 여기가 계열에서 전설로 가는 유일한 다리라,
+     * 막히면 시즌2 로 넘어갈 길이 통째로 사라진다.
+     *
+     * 화면이 이 조건을 따로 적었다가 실제로 갇힌 적이 있다 - [ForgeScreen] 의
+     * 「여기가 계열의 끝」 안내가 계열만 보고 강화 버튼을 지웠다. 화면도 이 함수를 본다.
+     */
+    @Test
+    fun `용검은 20에서 멈추지 않는다`() {
+        assertTrue(LegendForge.canForge(Sword(WeaponFamily.DRAGON, 20)))
+        val state = GameState(
+            difficulty = Difficulty.ENDLESS,
+            gold = 1_000_000_000_000_000L,
+            sword = Sword(WeaponFamily.DRAGON, 20),
+            forgeStones = 50,
+        )
+        assertTrue(ForgeEngine.canRoll(state, UsedItems.NONE))
+        assertTrue(ForgeEngine.canAttempt(state, UsedItems.NONE))
+    }
+
     /** 상한은 판정 입구에서도 막혀야 한다. 화면만 가리면 자동강화가 뚫는다. */
     @Test
     fun `20강 계열 검은 굴릴 수 없다`() {

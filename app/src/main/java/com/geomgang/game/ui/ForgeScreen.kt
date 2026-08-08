@@ -406,9 +406,11 @@ fun ForgeScreen(
             }
             // 계열의 끝에서는 강화 버튼이 영원히 잠긴다. 잠긴 버튼만 두면 무엇을 더
             // 사야 풀리는지 찾아 헤매게 되므로, 버튼 자리를 안내로 바꾼다.
-            val atFamilyCap = state.sword?.let {
-                !it.isLegend() && it.level >= LegendForge.MATERIAL_LEVEL
-            } == true
+            //
+            // **판정과 같은 규칙을 봐야 한다**([LegendForge.canForge]). 여기서 조건을
+            // 따로 적었다가 용검이 +20 에서 갇혔다 - 도메인은 굴릴 수 있다는데 화면만
+            // "여기가 계열의 끝"을 띄워 버튼이 아예 없었다.
+            val atFamilyCap = state.sword?.let { !LegendForge.canForge(it) } == true
             if (atFamilyCap) {
                 FamilyCapNotice()
             } else {

@@ -28,12 +28,42 @@ class UnlocksTest {
         assertTrue(Unlocks.legendReached(LegendForge.LEVEL + 9))
     }
 
-    /** 계열이 +20 에서 끝나므로 +21 을 밟았다는 것은 용검을 조합했다는 뜻이다. */
+    /** 기본 계열을 상한까지 올린 것만으로는 아직 초반 국면이다. */
     @Test
     fun `계열 상한까지 올려도 초반 국면이다`() {
         val s = state(bestLevel = RateTable.MAX_FINITE_LEVEL)
         assertFalse(Unlocks.huntOpen(s))
         assertFalse(Unlocks.stonesUsed(s))
+    }
+
+    /**
+     * **용검을 쥐면 +21 을 밟기 전에도 시즌2다**(v2.5).
+     *
+     * 용검이 +1 부터 시작하게 되면서 「+21 을 밟았는지」만 보면 조합을 해내고도
+     * 스무 단계를 더 올라야 사냥터가 열린다 — 큰 산을 넘은 값을 못 느낀다.
+     */
+    @Test
+    fun `용검을 손에 쥐면 바로 깊은 국면이다`() {
+        val s = state(bestLevel = RateTable.MAX_FINITE_LEVEL)
+            .copy(sword = Sword(WeaponFamily.DRAGON, LegendForge.CRAFT_LEVEL))
+        assertTrue(Unlocks.deepUnlocked(s))
+        assertTrue(Unlocks.huntOpen(s))
+        assertTrue(Unlocks.stonesUsed(s))
+    }
+
+    /** 사냥하려고 검을 바꿔 드는 일이 흔하다 — 보관함에 넣어 둬도 같다. */
+    @Test
+    fun `보관함의 용검도 깊은 국면을 연다`() {
+        val s = state(bestLevel = RateTable.MAX_FINITE_LEVEL)
+            .copy(storage = listOf(Sword(WeaponFamily.DRAGON, LegendForge.CRAFT_LEVEL)))
+        assertTrue(Unlocks.deepUnlocked(s))
+    }
+
+    /** 용검을 팔았거나 도감에 바친 옛 세이브도 열린 채 남는다. */
+    @Test
+    fun `용검이 없어도 최고 기록이 21이면 열린 채 남는다`() {
+        val s = state(bestLevel = LegendForge.LEVEL)
+        assertTrue(Unlocks.deepUnlocked(s))
     }
 
     // --- 강화석 ---

@@ -1595,7 +1595,7 @@ class ForgeViewModel(
             forgeStones = game.forgeStones,
             requiredStones = ForgeCost.requirementOf(game)?.stones ?: 0,
             forgeBlockedReason = if (busy) null else forgeBlockedReason(),
-            deepUnlocked = Unlocks.legendReached(game),
+            deepUnlocked = Unlocks.deepUnlocked(game),
             huntOpen = Unlocks.huntOpen(game),
             essencePower = Essences.powerOf(game.essences),
             wardCharm = game.wardCharm,
