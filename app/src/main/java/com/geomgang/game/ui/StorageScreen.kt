@@ -291,9 +291,11 @@ private fun RowAction(
 }
 
 private fun swordLine(sword: Sword): String {
-    val stars = if (sword.stars > 0) " " + "★".repeat(sword.stars) else ""
-    return "+${sword.level}$stars · ${sword.familyLabel} · " +
-        "공격력 %,d".format(Combat.attackPower(sword))
+    val stars = if (sword.stars > 0) "★".repeat(sword.stars) + " · " else ""
+    // 고유검은 강화대에 오르지 않으므로(v2.3) 단계가 아무 뜻도 없다 - 재료의
+    // 단계가 그대로 남아 있을 뿐이라 "+12 고유검"은 오히려 더 올릴 수 있는 것처럼 읽힌다.
+    val level = if (sword.uniqueId != null) "" else "+${sword.level} · "
+    return "$level$stars${sword.familyLabel} · 공격력 %,d".format(Combat.attackPower(sword))
 }
 
 /**
@@ -343,7 +345,9 @@ private fun ConfirmLossDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "${SwordNames.nameFor(loss.sword)} +${loss.sword.level}",
+                // 고유검은 단계를 붙이지 않는다 - swordLine 과 같은 이유다.
+                text = SwordNames.nameFor(loss.sword) +
+                    if (loss.sword.uniqueId == null) " +${loss.sword.level}" else "",
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFFFFD54A),
             )
