@@ -99,16 +99,39 @@ class RateTableTest {
         assertEquals(0.10, RateTable.destroyChance(12), eps)
         assertEquals(0.125, RateTable.destroyChance(13), eps)
         assertEquals(0.125, RateTable.destroyChance(15), eps)
-        assertEquals(0.20, RateTable.destroyChance(16), eps)
-        assertEquals(0.20, RateTable.destroyChance(18), eps)
-        assertEquals(0.275, RateTable.destroyChance(19), eps)
-        assertEquals(0.275, RateTable.destroyChance(20), eps)
+        assertEquals(0.14, RateTable.destroyChance(16), eps)
+        assertEquals(0.14, RateTable.destroyChance(18), eps)
+        assertEquals(0.18, RateTable.destroyChance(19), eps)
+        assertEquals(0.18, RateTable.destroyChance(20), eps)
     }
 
+    /**
+     * **무한 구간의 실패도 대부분 한 단계 하락이다**(v2.5).
+     *
+     * 1.00 이던 시절에는 화면에 파괴 91~96% 가 찍혔고, 되돌아가는 자리가
+     * +21(전설)이나 +1(용검)이라 한 번 미끄러지면 스무 단계가 통째로 날아갔다.
+     * 조합검·전설검은 방지권도 붙지 않아 막을 방법 자체가 없었다.
+     */
     @Test
-    fun `무한 구간 실패는 항상 파괴다`() {
-        assertEquals(1.00, RateTable.destroyChance(21), eps)
-        assertEquals(1.00, RateTable.destroyChance(50), eps)
+    fun `무한 구간도 실패가 전부 파괴는 아니다`() {
+        assertEquals(0.22, RateTable.destroyChance(21), eps)
+        assertEquals(0.22, RateTable.destroyChance(30), eps)
+        assertEquals(0.28, RateTable.destroyChance(31), eps)
+        assertEquals(0.28, RateTable.destroyChance(40), eps)
+        assertEquals(0.35, RateTable.destroyChance(41), eps)
+        assertEquals(0.35, RateTable.destroyChance(50), eps)
+    }
+
+    /** 깊이 갈수록 파괴 몫이 커진다 — 긴장은 남아야 한다. */
+    @Test
+    fun `파괴 몫은 단조 증가하고 1에 닿지 않는다`() {
+        for (level in 11..99) {
+            assertTrue(
+                "+$level",
+                RateTable.destroyChance(level) >= RateTable.destroyChance(level - 1),
+            )
+        }
+        assertTrue(RateTable.destroyChance(999) < 1.0)
     }
 
     @Test

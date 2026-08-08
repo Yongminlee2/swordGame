@@ -62,21 +62,24 @@ class TemperedRateTest {
     }
 
     /**
-     * 무한 구간에서 부적은 아무것도 하지 못한다.
+     * 무한 구간에서도 부적은 **파괴를 면한 실패만** 붙든다(v2.3).
      *
-     * 여기는 실패가 곧 파괴 판정이고([RateTable.destroyChance] 가 1.00),
-     * 부적은 **파괴를 면한 실패만** 붙든다(v2.3). 붙들 자리가 없다.
+     * 파괴 몫이 1.00 이던 시절에는 붙들 자리가 아예 없었다. v2.5에서 낮추면서
+     * 하락이 남았고, 부적이 그 하락을 유지로 바꾼다 — 파괴는 그대로다.
      */
     @Test
-    fun `무한 구간에서는 부적을 켜도 실패가 곧 파괴다`() {
-        val odds = ForgeOdds.of(
+    fun `무한 구간에서 부적은 하락만 붙들고 파괴는 못 막는다`() {
+        val level = 45
+        val plain = ForgeOdds.of(Difficulty.ENDLESS, level, temperFails = 30)
+        val charmed = ForgeOdds.of(
             Difficulty.ENDLESS,
-            45,
+            level,
             UsedItems(luckCharm = true),
             temperFails = 30,
         )
-        assertEquals(0.0, odds.stay, 1e-9)
-        assertEquals(0.0, odds.drop, 1e-9)
-        assertEquals(1.0 - odds.success, odds.destroy, 1e-9)
+        assertTrue("붙들 하락이 있어야 한다", plain.drop > 0.0)
+        assertEquals(0.0, charmed.drop, 1e-9)
+        assertEquals(plain.drop, charmed.stay, 1e-9)
+        assertEquals("파괴는 부적이 건드리지 못한다", plain.destroy, charmed.destroy, 1e-9)
     }
 }

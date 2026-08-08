@@ -54,12 +54,19 @@ class ForgeOddsTest {
     }
 
     @Test
-    fun `무한 구간은 실패가 곧 파괴다`() {
-        // 이 숫자가 화면에 뜨는 순간이 이 게임에서 손이 가장 떨려야 하는 지점이다.
+    /**
+     * 무한 구간의 실패는 **파괴와 하락으로 갈린다**(v2.5).
+     *
+     * 예전에는 [RateTable.destroyChance] 가 1.00 이라 실패가 곧 파괴였다 —
+     * 화면에 파괴 91~96% 가 찍혔고 한 번 미끄러지면 스무 단계가 날아갔다.
+     */
+    fun `무한 구간도 실패가 전부 파괴는 아니다`() {
         val level = RateTable.MAX_FINITE_LEVEL + 1
         val o = odds(level)
-        assertEquals(0.0, o.drop, 1e-9)
-        assertEquals(1.0 - o.success, o.destroy, 1e-9)
+        val fail = 1.0 - o.success
+        assertEquals(fail * RateTable.destroyChance(level), o.destroy, 1e-9)
+        assertTrue("하락이 남아야 한다", o.drop > 0.0)
+        assertTrue("파괴가 실패의 절반을 넘지 않는다", o.destroy < fail / 2)
     }
 
     @Test

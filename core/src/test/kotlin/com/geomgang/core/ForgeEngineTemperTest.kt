@@ -45,15 +45,16 @@ class ForgeEngineTemperTest {
     /**
      * 부적을 써도 담금질은 오른다.
      *
-     * v2.3부터 부적은 하락만 막는다. 무한 구간 실패는 항상 파괴 판정(1.00)이라
-     * 부적이 개입할 자리가 없고, 전설검은 단계를 잃는 것으로 대가를 치른다 —
-     * 그 실패도 담금질에는 쌓여야 다음 도전이 가벼워진다.
+     * v2.3부터 부적은 하락만 막는다. 파괴 몫이 1.00 이던 시절에는 무한 구간에
+     * 붙들 하락이 없어 이 실패가 그대로 하락이었는데, v2.5에서 낮추면서 부적이
+     * 제 몫을 한다 — 단계를 지켜 준다. 그 실패도 담금질에는 쌓여야 한다.
      */
     @Test
     fun `부적을 쓴 실패도 담금질을 올린다`() {
         val state = endless(44).copy(inventory = Inventory(luckCharms = 1))
         val result = ForgeEngine.attempt(state, UsedItems(luckCharm = true), alwaysFail())
-        assertTrue("결과=$result", result is ForgeResult.Drop)
+        assertTrue("결과=$result", result is ForgeResult.Stay)
+        assertEquals(44, result.state.sword?.level)
         assertEquals(1, result.state.temperFails)
     }
 
