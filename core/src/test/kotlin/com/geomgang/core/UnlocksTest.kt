@@ -67,6 +67,36 @@ class UnlocksTest {
     }
 
     /**
+     * **한 번 열린 시즌2는 닫히지 않는다.**
+     *
+     * 「지금 용검을 들고 있는가」로만 재던 동안에는 그 검을 팔거나 도감에 바치는 순간
+     * 사냥터가 잠기고 강화석이 지갑에서 사라졌다 — 한 번 넘은 산을 다시 넘게 하는 셈.
+     */
+    @Test
+    fun `용검을 조합하면 그 검을 잃어도 시즌2가 닫히지 않는다`() {
+        val ready = GameState(
+            difficulty = Difficulty.ENDLESS,
+            storage = LegendForge.MATERIALS.map { Sword(it, LegendForge.MATERIAL_LEVEL) },
+        )
+        val (forged, _) = LegendForge.craft(ready, ProgressState())
+        assertTrue(forged.dragonForged)
+        assertTrue(Unlocks.deepUnlocked(forged))
+
+        // 그 용검을 팔았다 - 손에도 보관함에도 없고, +21 을 밟은 적도 없다
+        val sold = forged.copy(sword = null)
+        assertFalse(Unlocks.dragonOwned(sold))
+        assertFalse(Unlocks.legendReached(sold))
+        assertTrue("시즌2가 닫히면 안 된다", Unlocks.deepUnlocked(sold))
+        assertTrue(Unlocks.huntOpen(sold))
+    }
+
+    /** 모드를 초기화하면 시즌1부터 다시다 — 시즌은 판에 속한 개념이다. */
+    @Test
+    fun `새 판은 시즌1에서 시작한다`() {
+        assertFalse(Unlocks.deepUnlocked(GameState(Difficulty.ENDLESS)))
+    }
+
+    /**
      * **경계를 보는 곳이 하나여야 한다.** 상점 목록만 [Unlocks.legendReached] 를
      * 보던 탓에, 용검을 쥔 뒤 +21 전까지는 목록에 뜨는데 사면 거절당했다(v2.5).
      */

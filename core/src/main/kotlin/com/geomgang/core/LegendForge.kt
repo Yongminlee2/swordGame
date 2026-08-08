@@ -91,6 +91,8 @@ object LegendForge {
             // 재료가 무엇이든 나오는 것은 용검 +1 하나다. 전설(+21)까지는 다시 오른다.
             sword = Sword(WeaponFamily.DRAGON, CRAFT_LEVEL),
             storage = left,
+            // 시즌2는 여기서 시작한다. 나중에 이 검을 팔아도 되돌아가지 않는다.
+            dragonForged = true,
         )
         return next to progress
     }
@@ -109,6 +111,7 @@ object LegendForge {
 
     fun recraft(state: GameState): GameState = state.copy(
         sword = Sword(WeaponFamily.DRAGON, LEVEL),
+        dragonForged = true,
         shards = state.shards - RECRAFT_SHARDS,
         bestLevel = maxOf(state.bestLevel, LEVEL),
     )

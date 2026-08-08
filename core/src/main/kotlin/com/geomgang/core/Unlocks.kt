@@ -22,11 +22,13 @@ object Unlocks {
     fun legendReached(state: GameState): Boolean = legendReached(state.bestLevel)
 
     /**
-     * 용검을 손에 넣었는지 — **조합을 해냈다는 증거.**
+     * 용검을 지금 가지고 있는지 — **[GameState.dragonForged] 가 없던 옛 세이브의 몫.**
      *
      * 용검은 마검 +20 과 성검 +20 을 태워야만 나오므로([LegendForge]), 계열이
      * 용검이라는 것만으로 「기본 4계열을 끝까지 올려 두 번 조합했다」가 증명된다.
      * 손에 들었든 보관함에 넣었든 같다 - 사냥하려고 검을 바꿔 드는 일이 흔하다.
+     *
+     * 새 판은 조합하는 순간 표식이 남으므로([LegendForge.craft]) 이 함수를 지나지 않는다.
      */
     fun dragonOwned(state: GameState): Boolean =
         state.sword?.family == WeaponFamily.DRAGON ||
@@ -43,9 +45,14 @@ object Unlocks {
      * 없으면(지갑이 [deepUnlocked] 를 본다) 번 것이 어디로 갔는지 알 수 없다.
      * 경계가 둘이 되는 순간 반드시 이런 틈이 생긴다.
      *
-     * 옛 세이브(용검을 팔았거나 도감에 바친 경우)도 [legendReached] 로 열린 채 남는다.
+     * **한 번 열리면 닫히지 않는다**([GameState.dragonForged]). 「지금 용검을 들고
+     * 있는가」로만 재던 동안에는 그 검을 팔거나 도감에 바치는 순간 사냥터가 잠기고
+     * 강화석이 지갑에서 사라졌다 — 한 번 넘은 산을 다시 넘게 하는 셈이었다.
+     *
+     * 나머지 둘은 표식이 없던 옛 세이브를 받아 준다.
      */
-    fun deepUnlocked(state: GameState): Boolean = legendReached(state) || dragonOwned(state)
+    fun deepUnlocked(state: GameState): Boolean =
+        state.dragonForged || legendReached(state) || dragonOwned(state)
 
     /** 사냥터·회랑이 열렸는지. 초반에는 강화대 앞을 떠날 이유가 없어야 한다. */
     fun huntOpen(state: GameState): Boolean = deepUnlocked(state)
