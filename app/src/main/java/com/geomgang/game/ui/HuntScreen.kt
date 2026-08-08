@@ -48,6 +48,7 @@ import com.geomgang.core.Combat
 import com.geomgang.core.FamilyStyle
 import com.geomgang.core.HuntEvent
 import com.geomgang.core.Sword
+import com.geomgang.core.familyLabel
 import com.geomgang.core.Zone
 import com.geomgang.game.ForgeUiState
 import com.geomgang.game.HuntUiState
@@ -359,7 +360,7 @@ private fun ZonePicker(
             color = MaterialTheme.colorScheme.primary,
         )
         Text(
-            text = "${sword.family.displayName} · ${FamilyStyle.of(sword.family).blurb}",
+            text = "${sword.familyLabel} · ${FamilyStyle.of(sword.family).blurb}",
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
         )

@@ -52,6 +52,7 @@ import com.geomgang.core.IdleRewards
 import com.geomgang.core.LegendForge
 import com.geomgang.core.Smithy
 import com.geomgang.core.SwordNames
+import com.geomgang.core.familyLabel
 import com.geomgang.core.isLegend
 import com.geomgang.game.DestroyPhase
 import com.geomgang.game.ForgeUiState
@@ -255,7 +256,7 @@ fun ForgeScreen(
         )
         if (state.destroyPhase == DestroyPhase.None && state.sword != null) {
             Text(
-                text = "+${state.sword.level} · ${state.sword.family.displayName} 계열" +
+                text = "+${state.sword.level} · ${state.sword.familyLabel}" +
                     if (state.sword.stars > 0) "  ${"★".repeat(state.sword.stars)}" else "",
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),

@@ -32,6 +32,7 @@ import com.geomgang.core.Recipe
 import com.geomgang.core.RecipeReward
 import com.geomgang.core.Recipes
 import com.geomgang.core.WeaponFamily
+import com.geomgang.core.familyLabel
 import com.geomgang.game.ForgeUiState
 
 /**
@@ -155,7 +156,7 @@ fun ShopScreen(
                     Spacer(Modifier.height(12.dp))
                     HorizontalDivider()
                     Spacer(Modifier.height(10.dp))
-                    Text("들고 있는 검  ·  +${state.sword.level} ${state.sword.family.displayName}")
+                    Text("들고 있는 검  ·  +${state.sword.level} ${state.sword.familyLabel}")
                     Spacer(Modifier.height(8.dp))
                     OutlinedButton(
                         onClick = onSellSword,

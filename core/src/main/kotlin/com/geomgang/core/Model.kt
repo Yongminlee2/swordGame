@@ -103,6 +103,14 @@ data class Sword(
     }
 }
 
+/**
+ * 화면에 쓰는 계열 표시명.
+ *
+ * 고유검은 재료로 무엇을 태웠든(마검·성검·직검…) 그 계열이 아니라 **고유검**이다 —
+ * "탐식자"가 "마검"으로 표시되면 재료가 곧 그 검인 것처럼 읽힌다(v2.4).
+ */
+val Sword.familyLabel: String get() = if (uniqueId != null) "고유검" else family.displayName
+
 /** 소비 아이템 보유량. */
 @Serializable
 data class Inventory(

@@ -25,6 +25,15 @@ class FamilyForgeTest {
         assertEquals(FamilyForge.LEGEND, FamilyForge.of(Sword(WeaponFamily.VOID, 30)))
     }
 
+    /** 고유검은 재료 계열도 전설 여부도 무시한다 - 이미 완성된 검이다. */
+    @Test
+    fun `고유검은 재료 계열을 무시한다`() {
+        val glutton = Sword(WeaponFamily.DEMON, 12, uniqueId = "glutton")
+        assertEquals(FamilyForge.UNIQUE, FamilyForge.of(glutton))
+        assertEquals(0.0, FamilyForge.UNIQUE.successBonus, 1e-9)
+        assertEquals(0.0, FamilyForge.UNIQUE.dropGuard, 1e-9)
+    }
+
     @Test
     fun `계열마다 다른 특성을 갖는다`() {
         assertEquals(FamilyForge.STRAIGHT, FamilyForge.of(Sword(WeaponFamily.STRAIGHT, 5)))

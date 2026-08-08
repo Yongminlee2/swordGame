@@ -83,12 +83,21 @@ enum class FamilyForge(
         temperCapBonus = 0.20,
         blurb = "전설검. 벼림의 끝",
     ),
+
+    /**
+     * 고유검. 재료가 무엇이었든 상관없다 - 이미 완성된 검이라 계열 특성을 쓰지 않는다.
+     *
+     * 강화대에 오르지 않으므로(v2.3) 모든 값이 중립이다 - 실제 능력은 [UniqueSwords] 가
+     * 별도 출처(소유 보너스·전투 패시브)로 준다.
+     */
+    UNIQUE(blurb = "고유검. 계열 특성 대신 저마다의 능력을 쓴다"),
     ;
 
     companion object {
-        /** 전설 여부를 먼저 본다. +21 위면 계열이 무엇이든 전설이다. */
+        /** 고유검·전설 여부를 먼저 본다. 계열은 그다음이다. */
         fun of(sword: Sword?): FamilyForge {
             if (sword == null) return NONE
+            if (sword.uniqueId != null) return UNIQUE
             if (sword.isLegend()) return LEGEND
             return when (sword.family) {
                 WeaponFamily.STRAIGHT -> STRAIGHT

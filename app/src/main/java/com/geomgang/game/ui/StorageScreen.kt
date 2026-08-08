@@ -35,6 +35,7 @@ import com.geomgang.core.CodexOffer
 import com.geomgang.core.Combat
 import com.geomgang.core.Economy
 import com.geomgang.core.FamilyStyle
+import com.geomgang.core.familyLabel
 import com.geomgang.core.Storage
 import com.geomgang.core.Sword
 import com.geomgang.core.SwordNames
@@ -290,7 +291,7 @@ private fun RowAction(
 
 private fun swordLine(sword: Sword): String {
     val stars = if (sword.stars > 0) " " + "★".repeat(sword.stars) else ""
-    return "+${sword.level}$stars · ${sword.family.displayName} · " +
+    return "+${sword.level}$stars · ${sword.familyLabel} · " +
         "공격력 %,d".format(Combat.attackPower(sword))
 }
 
@@ -306,13 +307,19 @@ private data class PendingLoss(
     val action: () -> Unit,
 )
 
-/** 조합검인지. 마검·성검은 기본 검 +20 두 자루를 태워야 나온다. */
-private fun Sword.isRefined(): Boolean = family in LegendForge.MATERIALS
+/**
+ * 잃으면 되돌리기 힘든 귀한 검인지 - 조합검(마검·성검)이거나 고유검이다.
+ *
+ * `family in LegendForge.MATERIALS` 만 봤다면 재료 계열이 우연히 마검·성검인
+ * 고유검(탐식자·삼위일체 등)만 걸리고 나머지 고유검은 빠진다 — 고유검은
+ * 재료 계열로 값을 매길 대상이 아니다(v2.4).
+ */
+private fun Sword.isPrecious(): Boolean = uniqueId != null || family in LegendForge.MATERIALS
 
 /**
  * 잃는 동작을 감싼다.
  *
- * 조합검이면 확인창을 세우고, 아니면 곧바로 실행한다 — 흔한 검까지 매번 물으면
+ * 귀한 검이면 확인창을 세우고, 아니면 곧바로 실행한다 — 흔한 검까지 매번 물으면
  * 확인창이 소음이 되어 정작 중요한 순간에도 손이 먼저 "예"를 누른다.
  */
 private inline fun guardLoss(
@@ -321,7 +328,7 @@ private inline fun guardLoss(
     pending: (PendingLoss) -> Unit,
     noinline action: () -> Unit,
 ) {
-    if (sword.isRefined()) pending(PendingLoss(sword, verb, action)) else action()
+    if (sword.isPrecious()) pending(PendingLoss(sword, verb, action)) else action()
 }
 
 @Composable
@@ -334,16 +341,19 @@ private fun ConfirmLossDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "${loss.sword.family.displayName} +${loss.sword.level}",
+                text = "${SwordNames.nameFor(loss.sword)} +${loss.sword.level}",
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFFFFD54A),
             )
         },
         text = {
+            val detail = if (loss.sword.uniqueId != null) {
+                "고유검은 정해진 재료를 다시 모아야 만들 수 있다"
+            } else {
+                "조합검은 기본 검 +${Refinery.MATERIAL_LEVEL} 두 자루를 태워야 나온다"
+            }
             Text(
-                text = "정말 ${loss.verb}?\n" +
-                    "조합검은 기본 검 +${Refinery.MATERIAL_LEVEL} 두 자루를 태워야 나온다 — " +
-                    "되돌릴 수 없다.",
+                text = "정말 ${loss.verb}?\n$detail — 되돌릴 수 없다.",
                 fontSize = 13.sp,
             )
         },

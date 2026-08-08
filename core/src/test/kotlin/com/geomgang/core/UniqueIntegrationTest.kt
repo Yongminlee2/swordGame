@@ -86,6 +86,20 @@ class UniqueIntegrationTest {
         assertFalse(ForgeEngine.canAttempt(state, UsedItems.NONE))
     }
 
+    /**
+     * 든 고유검은 "계열" 줄에 재료 계열(마검·성검…)로 새지 않는다 - 값이 없는
+     * 줄이라 아예 뺀다(v2.4). 실제 값은 소유 보너스나 "고유검" 수집 줄이 보여준다.
+     */
+    @Test
+    fun `든 고유검은 계열 출처 줄에 나오지 않는다`() {
+        val holding = GameState(
+            difficulty = Difficulty.ENDLESS,
+            sword = Sword(WeaponFamily.DEMON, 12, uniqueId = "glutton"),
+        )
+        val labels = ForgeBonuses.sourcesOf(holding, ProgressState()).map { it.label }
+        assertFalse("계열" in labels)
+    }
+
     /** 시작의 검은 **지니고만 있어도** 강화 보너스를 준다 — 보관함에 있어도 된다. */
     @Test
     fun `시작의 검은 소유만으로 성공률 3%p 를 더한다`() {

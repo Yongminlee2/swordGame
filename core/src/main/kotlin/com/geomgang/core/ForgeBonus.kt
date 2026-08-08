@@ -58,14 +58,21 @@ object ForgeBonuses {
                 "${UniqueSwords.RECIPES.size}",
             bonus = UniqueSwords.holdingBonus(progress),
         ),
-        FamilyForge.of(state.sword).let { forge ->
-            BonusSource(
-                label = if (state.sword?.isLegend() == true) "전설검" else "계열",
-                detail = forge.blurb,
-                bonus = ForgeBonus(forge.successBonus, forge.dropGuard),
-            )
-        },
     ) + listOfNotNull(
+        // 고유검은 계열 특성이 없다(FamilyForge.UNIQUE, 전부 0) - "계열: 마검" 처럼
+        // 재료 계열이 새는 대신, 값이 없는 줄을 아예 뺀다. 실제 값은 아래 소유 보너스나
+        // "고유검" 수집 줄이 이미 보여준다.
+        if (state.sword?.uniqueId == null) {
+            FamilyForge.of(state.sword).let { forge ->
+                BonusSource(
+                    label = if (state.sword?.isLegend() == true) "전설검" else "계열",
+                    detail = forge.blurb,
+                    bonus = ForgeBonus(forge.successBonus, forge.dropGuard),
+                )
+            }
+        } else {
+            null
+        },
         // 시즌1 고유검 넷은 지니고만 있어도 값을 한다. 팔면 이 줄이 사라진다.
         ownedUniqueSource("시작의 검", UniqueSwords.originOwned(state), UniqueSwords.ORIGIN_FORGE_BONUS),
         ownedUniqueSource("탐식자", UniqueSwords.gluttonOwned(state), UniqueSwords.GLUTTON_FORGE_BONUS),

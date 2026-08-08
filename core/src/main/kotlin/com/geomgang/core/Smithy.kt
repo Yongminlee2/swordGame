@@ -27,11 +27,13 @@ object Smithy {
      * **값이 왜 바뀌는지 화면이 설명하지 못했다.**
      *
      * 스킬은 영구 성장이라 값이 흔들릴 이유가 없다. 사다리는 레벨만 보고 오른다.
+     *
+     * 2,000 이었다가 올렸다(v2.4) — 영구 성장인데 너무 쌌다.
      */
-    private const val BASE_PRICE = 2_000.0
+    private const val BASE_PRICE = 5_000.0
 
-    /** 레벨마다 붙는 배수. Lv0 2,000 → Lv14 약 58만, 다 올리면 175만쯤이다. */
-    private const val GROWTH = 1.5
+    /** 레벨마다 붙는 배수. Lv0 5,000 → Lv14 약 360만, 다 올리면 960만쯤이다(v2.4, 1.5→1.6). */
+    private const val GROWTH = 1.6
 
     /** [level] 에서 다음 레벨로 올리는 값. **검 단계와 무관하다.** */
     fun priceOf(level: Int): Long =

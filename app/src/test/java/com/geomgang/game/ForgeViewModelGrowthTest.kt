@@ -200,11 +200,13 @@ class ForgeViewModelGrowthTest {
         assertEquals(before, Progress.entriesOf(vm.ui.value.progress).size)
     }
 
-    /** 전설검은 부서지지 않으므로 확률 표시에도 파괴가 남으면 안 된다. */
+    /**
+     * 전설검은 부서지는 대신 +21로 돌아가지만, 확률 표시는 다른 검과 똑같이
+     * 파괴로 보여준다(v2.4) — "하락"에 접어 감추면 얼마나 위험한지 숨겨진다.
+     */
     @Test
-    fun `전설검 확률 표시에 파괴가 없다`() {
+    fun `전설검 확률 표시도 파괴를 숨기지 않는다`() {
         val odds = vm(rich(Sword(WeaponFamily.STRAIGHT, 30))).ui.value.odds
-        assertEquals(0, odds.destroy)
-        assertTrue(odds.drop > 0)
+        assertTrue(odds.destroy > 0)
     }
 }

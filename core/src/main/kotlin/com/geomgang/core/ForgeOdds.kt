@@ -63,10 +63,6 @@ data class ForgeOdds(
          * @param bonus 쌓아 온 몫과 계열 특성을 더한 성공률 가산([ForgeBonuses]).
          * @param dropGuard 하락이 정해진 뒤 한 번 더 막을 확률. 막히면 단계가 그대로다.
          *   파괴에는 손대지 못한다 - 파괴를 막는 것은 방지권뿐이다(v2.3).
-         * @param legend 전설검인지. 전설검만 부서지는 대신 [LegendForge.LEVEL] 이라는 여전히
-         *   높은 자리로 돌아가 화면도 하락으로 보여준다. 마검·성검(조합검)도 부서지지
-         *   않지만 +1 로 떨어져 사실상 파괴와 같은 손해라, 화면은 평범한 검처럼
-         *   파괴로 보여준다(v2.4) - 그래서 별도 매개변수가 필요 없다.
          * @param temperCapBonus 담금질 상한 가산. 전설검만 갖는다.
          * @param blessingMult 축복서 효과 배수. 성검이 1.5배로 쓴다.
          */
@@ -77,7 +73,6 @@ data class ForgeOdds(
             temperFails: Int = 0,
             bonus: Double = 0.0,
             dropGuard: Double = 0.0,
-            legend: Boolean = false,
             temperCapBonus: Double = 0.0,
             blessingMult: Double = 1.0,
         ): ForgeOdds {
@@ -110,13 +105,13 @@ data class ForgeOdds(
                     val survived = fail * (1.0 - destroyShare)
                     val saved =
                         if (items.luckCharm) survived else survived * dropGuard.coerceIn(0.0, 1.0)
+                    // 전설검도 부서지는 대신 +21 로 돌아가지만(v2.4), 화면은 다른 검과
+                    // 똑같이 파괴로 보여준다 - "하락"에 접어 감추지 않는다.
                     ForgeOdds(
                         success = success,
                         stay = saved,
-                        // 전설검만 하락으로 접는다 - +21 이라는 여전히 높은 자리로 돌아가서다.
-                        // 마검·성검은 +1 로 떨어져 사실상 파괴와 같은 손해라 접지 않는다(v2.4).
-                        drop = (survived - saved) + if (legend) doomed else 0.0,
-                        destroy = if (legend) 0.0 else doomed,
+                        drop = survived - saved,
+                        destroy = doomed,
                     )
                 }
             }
