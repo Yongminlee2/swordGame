@@ -13,7 +13,7 @@
 - AGP 9.2.1 내장 Kotlin — `org.jetbrains.kotlin.android` 플러그인을 **절대 추가하지 않는다**
 - `gradle.properties`의 `-Dfile.encoding=MS949`·`org.gradle.java.home`을 건드리지 않는다 (한글 경로 워커 크래시 방지)
 - `:core`는 순수 Kotlin — 안드로이드 의존성 금지
-- 커밋 메시지·문서에 AI 언급 금지, UI 문구는 한국어
+- 커밋 메시지·문서는 구현 내용만 기록하고, UI 문구는 한국어로 쓴다
 - 아트는 CC0/CC-BY만. 출처는 설정 → 라이선스 화면과 README에 기록
 - 스프라이트 그리기: `inScaled=false` 로드 + `FilterQuality.None` (보간 켜면 픽셀아트가 뭉개진다)
 

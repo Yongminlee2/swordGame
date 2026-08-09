@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- M11 계획의 Global Constraints 전부 그대로 (AGP 내장 Kotlin, MS949, `:core` 순수, AI 언급 금지, 한국어 UI)
+- M11 계획의 Global Constraints 전부 그대로 (AGP 내장 Kotlin, MS949, `:core` 순수, 한국어 UI)
 - **난수 소비 순서는 계약**: `spawnNext` = ① nextInt(몬스터) ② nextDouble(희귀) ③ nextDouble(이벤트 발생) ④ 발생 시 nextDouble(이벤트 종류). 기존 사냥 테스트의 스크립트를 이 순서로 갱신한다
 - 사냥 테스트 규칙: 상태 캡처 → `leaveHunt()` → 단언 (M11의 행 함정)
 - 이벤트는 잡몹 스폰에만 붙는다(보스전 제외). 지속 버프(골든타임·상인) 중에는 새 이벤트를 굴리지 않는다

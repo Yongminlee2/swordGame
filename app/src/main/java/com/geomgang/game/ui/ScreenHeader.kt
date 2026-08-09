@@ -1,34 +1,38 @@
 package com.geomgang.game.ui
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Diamond
+import androidx.compose.material.icons.rounded.LocalFireDepartment
+import androidx.compose.material.icons.rounded.Paid
+import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geomgang.game.ForgeUiState
 
-/**
- * 지금 가진 재화.
- *
- * @property deep 용검을 조합한 뒤인지. 그 전에는 강화석이 화면에 없다.
- *   조각은 시즌1부터 보인다(v2.3) — 파괴가 남기는 조각이 워프권의 값이라
- *   쓸 데가 처음부터 있다.
- */
+/** 지금 가진 재화. */
 data class Wallet(
     val gold: Long,
     val shards: Int,
@@ -40,74 +44,129 @@ data class Wallet(
 fun ForgeUiState.wallet(): Wallet =
     Wallet(gold, shards, forgeStones, preventTickets, deepUnlocked)
 
-/**
- * 강화 화면 위에 올라오는 화면들의 공통 머리.
- *
- * [wallet] 을 주면 제목 아래에 재화 줄이 붙는다. 화면마다 필요한 것만 보여 주던 탓에
- * (상점은 골드만, 조합소는 조각만) "지금 강화석이 몇 개더라" 를 확인하려면
- * 강화 화면까지 돌아가야 했다. 재화와 무관한 화면은 넘기지 않으면 된다.
- */
+/** 강화 화면 위에 올라오는 화면들의 공통 머리. */
 @Composable
 fun ScreenHeader(title: String, onBack: () -> Unit, wallet: Wallet? = null) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(52.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        TextButton(onClick = onBack, contentPadding = PaddingValues(0.dp)) {
-            Text("← 뒤로", color = MaterialTheme.colorScheme.secondary)
+        Surface(
+            shape = MaterialTheme.shapes.small,
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.82f),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                    contentDescription = "뒤로",
+                    tint = MaterialTheme.colorScheme.secondary,
+                )
+            }
         }
-        Spacer(Modifier.width(12.dp))
-        Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(start = 14.dp),
+        )
     }
     if (wallet != null) {
         Spacer(Modifier.height(8.dp))
         WalletBar(wallet)
     }
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(14.dp))
 }
 
-/** 재화 한 줄. 아이콘만으로는 무슨 값인지 알 수 없으므로 이름을 함께 쓴다. */
+/** 이름과 값을 같이 보여 주는 재화 보드. 아이콘 모양은 기기마다 달라지지 않는다. */
 @Composable
 fun WalletBar(wallet: Wallet, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(vertical = 8.dp, horizontal = 8.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically,
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
-        WalletItem("💰", "골드", compactGold(wallet.gold))
-        WalletItem("💎", "조각", "${wallet.shards}")
-        if (wallet.deep) {
-            WalletItem("🪨", "강화석", "${wallet.stones}")
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp, horizontal = 4.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            WalletItem(
+                icon = Icons.Rounded.Paid,
+                label = "골드",
+                value = compactGold(wallet.gold),
+                tint = ForgeGold,
+                modifier = Modifier.weight(1f),
+            )
+            WalletItem(
+                icon = Icons.Rounded.Diamond,
+                label = "조각",
+                value = "${wallet.shards}",
+                tint = Color(0xFF78D7EA),
+                modifier = Modifier.weight(1f),
+            )
+            if (wallet.deep) {
+                WalletItem(
+                    icon = Icons.Rounded.LocalFireDepartment,
+                    label = "강화석",
+                    value = "${wallet.stones}",
+                    tint = ForgeWarning,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            WalletItem(
+                icon = Icons.Rounded.Shield,
+                label = "방지권",
+                value = "${wallet.tickets}",
+                tint = ForgeSteel,
+                modifier = Modifier.weight(1f),
+            )
         }
-        WalletItem("🛡", "방지권", "${wallet.tickets}")
     }
 }
 
 @Composable
-private fun WalletItem(icon: String, label: String, value: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(icon, fontSize = 13.sp)
-        Spacer(Modifier.width(3.dp))
-        Text(value, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.width(3.dp))
+private fun WalletItem(
+    icon: ImageVector,
+    label: String,
+    value: String,
+    tint: Color,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                tint = tint,
+            )
+            Text(
+                text = value,
+                modifier = Modifier.padding(start = 4.dp),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+            )
+        }
         Text(
             text = label,
-            fontSize = 9.sp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
+            fontSize = 10.sp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.52f),
         )
     }
 }
 
-/**
- * 큰 수를 짧게. 26억을 자릿수로 다 쓰면 한 줄을 통째로 먹는다.
- *
- * 조(兆) 이상은 소수 첫째 자리까지만 보여 준다 — 정확한 값이 필요한 순간은
- * 비용을 낼 수 있는지뿐이고, 그건 버튼 활성화가 알려 준다.
- */
+/** 큰 수를 짧게. 정확한 값보다 현재 지불 가능 여부를 빠르게 읽는 것이 우선이다. */
 fun compactGold(value: Long): String = when {
     value >= 1_000_000_000_000L -> "%.1f조".format(value / 1_000_000_000_000.0)
     value >= 100_000_000L -> "%.1f억".format(value / 100_000_000.0)

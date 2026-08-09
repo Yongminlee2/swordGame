@@ -14,7 +14,7 @@
 - UI 문구와 주석은 한국어다.
 - `org.jetbrains.kotlin.android` 플러그인을 **추가하지 않는다.** AGP 9.2.1 에 내장되어 있다.
 - `gradle.properties` 의 `-Dfile.encoding=MS949` 와 `org.gradle.java.home` 을 건드리지 않는다.
-- 커밋 메시지·README·문서에 AI/Claude 표기를 넣지 않는다.
+- 커밋 메시지·README·문서는 구현 내용과 판단 근거만 기록한다.
 - 새 세이브 필드는 전부 기본값을 가진다. 옛 세이브가 손실 없이 열려야 한다.
 - 커밋 메시지는 여러 줄이면 스크래치패드 파일에 쓰고 `git commit -F <file>` 로 넣는다. PowerShell 5.1 은 여러 줄 한글 문자열을 망가뜨린다.
 - 테스트 실행은 프로젝트 루트(`C:\workAndroid\SwordForge`)에서 `.\gradlew.bat` 로 한다.
