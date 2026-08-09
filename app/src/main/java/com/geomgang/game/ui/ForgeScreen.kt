@@ -2,10 +2,8 @@ package com.geomgang.game.ui
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.keyframes
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,29 +17,17 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.MenuBook
-import androidx.compose.material.icons.rounded.Construction
-import androidx.compose.material.icons.rounded.Inventory2
-import androidx.compose.material.icons.rounded.MilitaryTech
-import androidx.compose.material.icons.rounded.Science
-import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,7 +40,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -173,13 +158,10 @@ fun ForgeScreen(
         DestroyPhase.None -> Unit
     }
 
-    // 세로로 스크롤된다. 이 화면은 판이 갈수록 줄이 늘어나는데(요구량·스킬·재료·별·
-    // 회랑·아이콘) 고정 높이로 두면 짧은 화면이나 큰 글꼴에서 아래가 잘려 나간다.
-    // v1.3에서 실제로 검 이름이 그렇게 사라졌다.
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(ForgeBackground),
+            .background(MaterialTheme.colorScheme.background),
     ) {
         Image(
             painter = painterResource(R.drawable.forge_hall_background),
@@ -193,58 +175,60 @@ fun ForgeScreen(
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        0f to ForgeBackground.copy(alpha = 0.55f),
-                        0.42f to ForgeBackground.copy(alpha = 0.18f),
-                        0.72f to ForgeBackground.copy(alpha = 0.72f),
-                        1f to ForgeBackground,
+                        0f to MaterialTheme.colorScheme.background.copy(alpha = 0.72f),
+                        0.42f to MaterialTheme.colorScheme.background.copy(alpha = 0.42f),
+                        1f to MaterialTheme.colorScheme.background.copy(alpha = 0.88f),
                     ),
                 ),
         )
 
+        // 강화는 한 화면에서 끝난다. 검 영역만 남는 높이를 나눠 쓰고,
+        // 핵심 조작과 하단 메뉴는 어떤 진행 단계에서도 화면 밖으로 밀지 않는다.
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 10.dp)
-                .padding(bottom = if (state.awaitingDestroyChoice) 0.dp else 176.dp),
+                .padding(horizontal = 20.dp, vertical = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            ForgeTopBar(
-                bestLevel = state.bestLevel,
-                selectedTitle = state.progress.selectedTitle?.title,
-                enabled = !state.busy,
-                onOpenMenu = onOpenMenu,
-            )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Spacer(Modifier.width(64.dp))
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "최고 +${state.bestLevel}",
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                    fontSize = 13.sp,
+                )
+                state.progress.selectedTitle?.let {
+                    Text(
+                        text = it.title,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+            TextButton(onClick = onOpenMenu, enabled = !state.busy) {
+                Text("🏅", fontSize = 22.sp)
+            }
+        }
 
         // 재화는 **맨 위**에 둔다. 검 그림 아래에 두었더니 화면이 짧은 기기에서는
         // 스크롤해야 보여서 "몇 개 있는지 모르겠다" 는 말이 나왔다.
-            Spacer(Modifier.height(8.dp))
-            WalletBar(state.wallet())
-            Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(4.dp))
+        WalletBar(state.wallet())
+        Spacer(Modifier.height(6.dp))
 
-        // 그림 영역. 스크롤되는 열 안에서는 weight 를 쓸 수 없으므로(높이가 무한대다)
-        // 최소 높이로 자리를 잡는다. 이름·강화 단계는 이 밖에 둔다 — 안에 넣으면
-        // 가운데 정렬 탓에 위아래로 잘린다.
+        // 그림 영역만 남는 높이를 가져간다. 진행 정보가 늘어나면 검 영역이 먼저
+        // 줄어들고, 강화 버튼과 하단 메뉴는 화면 안에 그대로 남는다.
         Box(
             modifier = Modifier
-                .heightIn(min = 184.dp)
-                .fillMaxWidth()
-                .clip(MaterialTheme.shapes.extraLarge)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.24f),
-                            MaterialTheme.colorScheme.surface.copy(alpha = 0.54f),
-                            MaterialTheme.colorScheme.surface.copy(alpha = 0.84f),
-                        ),
-                    ),
-                )
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.7f),
-                    shape = MaterialTheme.shapes.extraLarge,
-                )
-                .padding(12.dp),
+                .weight(1f)
+                .heightIn(min = 112.dp, max = 164.dp)
+                .fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
             when (val phase = state.destroyPhase) {
@@ -270,7 +254,7 @@ fun ForgeScreen(
                 // 때마다 검이 커졌다 작아졌다 해서 들쭉날쭉해 보인다.
                 DestroyPhase.None -> SwordView(
                     sword = state.sword,
-                    modifier = Modifier.size(140.dp),
+                    modifier = Modifier.size(132.dp),
                     shake = shake.value,
                     flash = flash.value,
                     flashColor = flashColor,
@@ -288,7 +272,8 @@ fun ForgeScreen(
                     SwordNames.nameFor(it)
                 } ?: "검이 없다"
             },
-            style = MaterialTheme.typography.headlineSmall,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
             color = if (state.destroyPhase == DestroyPhase.None &&
                 state.sword?.uniqueId != null
             ) {
@@ -301,7 +286,7 @@ fun ForgeScreen(
             Text(
                 text = "+${state.sword.level} · ${state.sword.familyLabel}" +
                     if (state.sword.stars > 0) "  ${"★".repeat(state.sword.stars)}" else "",
-                style = MaterialTheme.typography.labelLarge,
+                fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
             )
             // 스킬은 +15부터 열린다. 강화 단계를 올릴 이유를 하나 더 보여 준다.
@@ -330,26 +315,19 @@ fun ForgeScreen(
         if (state.sword != null) {
             // 이번 한 번이 어떻게 끝날 수 있는지. 성공률만 보여 주던 탓에
             // 무한 구간에서 **실패가 곧 파괴**라는 걸 모르고 누르게 됐다.
-            Surface(
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.82f),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                ) {
-                    Stat("🎯", "성공", "${state.odds.success}%", MaterialTheme.colorScheme.primary)
-                    if (state.odds.stay > 0) {
-                        Stat("＝", "유지", "${state.odds.stay}%")
-                    }
-                    if (state.odds.drop > 0) {
-                        Stat("↓", "하락", "${state.odds.drop}%", ForgeWarning)
-                    }
-                    if (state.odds.destroy > 0) {
-                        Stat("💥", "파괴", "${state.odds.destroy}%", MaterialTheme.colorScheme.error)
-                    }
+                Stat("🎯", "성공", "${state.odds.success}%", MaterialTheme.colorScheme.primary)
+                if (state.odds.stay > 0) {
+                    Stat("＝", "유지", "${state.odds.stay}%")
+                }
+                if (state.odds.drop > 0) {
+                    Stat("↓", "하락", "${state.odds.drop}%", Color(0xFFE0A060))
+                }
+                if (state.odds.destroy > 0) {
+                    Stat("💥", "파괴", "${state.odds.destroy}%", MaterialTheme.colorScheme.error)
                 }
             }
             // 부서지지 않는 검은 그 사실을 **미리** 말한다. 결과창에서 처음 알면
@@ -382,29 +360,15 @@ fun ForgeScreen(
                 )
             }
             Spacer(Modifier.height(6.dp))
-            Surface(
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                ) {
-                    Stat("🔥", "강화 비용", compactGold(state.upgradeCost), ForgeGoldSoft)
-                    Stat("🏷", "판매가", compactGold(state.sellPrice), ForgeSteel)
-                }
+                Stat("🔥", "강화 비용", compactGold(state.upgradeCost))
+                Stat("🏷", "판매가", compactGold(state.sellPrice))
             }
 
             if (!state.awaitingDestroyChoice) {
-                Spacer(Modifier.height(8.dp))
-                // 배타는 v2.1에서 풀렸다 - 함께 켤 수 있고, 값(골드)이 선택을 가른다.
-                Text(
-                    text = "둘 다 함께 켤 수 있다 · 켠 것은 이번 강화에 쓰인다",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-                )
                 Spacer(Modifier.height(4.dp))
                 // 아이템은 한 번 쓰면 토글이 내려간다. 매번 다시 켜야 한다.
                 Row(
@@ -433,7 +397,7 @@ fun ForgeScreen(
             }
         }
 
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(6.dp))
 
         // 창이 열려 있으면 하단 버튼을 감춘다. 원과 파편을 눌러야 하기 때문이다.
         if (state.awaitingDestroyChoice) {
@@ -447,20 +411,6 @@ fun ForgeScreen(
             )
             Spacer(Modifier.height(64.dp))
         } else {
-            // 고단계는 골드가 아니라 재료가 화폐다. 무엇이 드는지 버튼 위에 먼저 알린다.
-            if (state.requiredStones > 0) {
-                Text(
-                    text = "이번 강화에 들어가는 것  ·  🪨 강화석 ${state.requiredStones}",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (state.canForge) {
-                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                    } else {
-                        MaterialTheme.colorScheme.error
-                    },
-                )
-                Spacer(Modifier.height(4.dp))
-            }
             // 계열의 끝에서는 강화 버튼이 영원히 잠긴다. 잠긴 버튼만 두면 무엇을 더
             // 사야 풀리는지 찾아 헤매게 되므로, 버튼 자리를 안내로 바꾼다.
             //
@@ -471,8 +421,32 @@ fun ForgeScreen(
             if (atFamilyCap) {
                 FamilyCapNotice()
             } else {
-                state.forgeBlockedReason?.let {
-                    Text(it, fontSize = 12.sp, color = MaterialTheme.colorScheme.error)
+                Button(
+                    onClick = onForge,
+                    enabled = state.canForge,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("강 화", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                        val helper = state.forgeBlockedReason ?: state.requiredStones
+                            .takeIf { it > 0 }
+                            ?.let { "강화석 $it" }
+                        helper?.let {
+                            Text(
+                                text = it,
+                                fontSize = 10.sp,
+                                maxLines = 1,
+                                color = if (state.canForge) {
+                                    MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.72f)
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f)
+                                },
+                            )
+                        }
+                    }
                 }
             }
             if (state.isRecord) {
@@ -486,7 +460,7 @@ fun ForgeScreen(
             }
             // 스킬과 특수강화는 「단련」 화면으로 옮겼다([TrainingScreen]).
             // 성장 장치를 여기 늘어놓으면 정작 강화 버튼이 아래로 밀린다.
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(4.dp))
             // 사냥터는 **용검을 손에 쥔 뒤에** 열린다([com.geomgang.core.Unlocks]).
             // 초반에 사냥이 골드를 벌어다 주면 검을 팔 이유가 사라지고,
             // 그러면 이 게임의 심장인 "강화해서 팔고 또 강화한다" 가 통째로 묻힌다.
@@ -501,7 +475,7 @@ fun ForgeScreen(
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp),
+                        .height(40.dp),
                 ) {
                     Text(
                         text = "⚔ 사냥터  %,d".format(state.attackPower),
@@ -512,225 +486,34 @@ fun ForgeScreen(
             // 잠긴 동안에는 **아무것도 두지 않는다.** 자물쇠 한 줄이 초반 내내 붙어 있으면
             // 아직 손도 못 댈 것을 계속 들여다보게 된다. 열릴 때 나타나면 그걸로 족하다.
             Spacer(Modifier.height(4.dp))
-        }
-        }
-        if (!state.awaitingDestroyChoice) {
-            ForgeDock(
-                canForge = state.canForge,
-                currentLevel = state.sword?.level,
-                atFamilyCap = state.sword?.let { !LegendForge.canForge(it) } == true,
-                storageCount = state.storage.size,
-                storageCapacity = state.storageCapacity,
-                highlightTraining = state.canUpgradeSkill,
-                enabled = !state.busy,
-                onForge = onForge,
-                onOpenShop = onOpenShop,
-                onOpenCraft = onOpenCraft,
-                onOpenStorage = onOpenStorage,
-                onOpenTraining = onOpenTraining,
-                onOpenCodex = onOpenCodex,
-                modifier = Modifier.align(Alignment.BottomCenter),
-            )
-        }
-    }
-}
-
-@Composable
-private fun ForgeTopBar(
-    bestLevel: Int,
-    selectedTitle: String?,
-    enabled: Boolean,
-    onOpenMenu: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column {
-            Text(
-                text = "끝없는 대장간",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "최고 기록  +$bestLevel",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.56f),
-                )
-                selectedTitle?.let {
-                    Text(
-                        text = "  ·  $it",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = ForgeGold,
-                    )
-                }
-            }
-        }
-        Surface(
-            shape = MaterialTheme.shapes.small,
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.84f),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        ) {
-            IconButton(onClick = onOpenMenu, enabled = enabled) {
-                Icon(
-                    imageVector = Icons.Rounded.MilitaryTech,
-                    contentDescription = "기록과 설정",
-                    tint = ForgeGold,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ForgeDock(
-    canForge: Boolean,
-    currentLevel: Int?,
-    atFamilyCap: Boolean,
-    storageCount: Int,
-    storageCapacity: Int,
-    highlightTraining: Boolean,
-    enabled: Boolean,
-    onForge: () -> Unit,
-    onOpenShop: () -> Unit,
-    onOpenCraft: () -> Unit,
-    onOpenStorage: () -> Unit,
-    onOpenTraining: () -> Unit,
-    onOpenCodex: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color.Transparent,
-                        ForgeBackground.copy(alpha = 0.96f),
-                        ForgeBackground,
-                    ),
-                ),
-            )
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .padding(top = 10.dp),
-    ) {
-        if (!atFamilyCap) {
-            Button(
-                onClick = onForge,
-                enabled = canForge,
-                shape = MaterialTheme.shapes.large,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = ForgeGold,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-                ),
-                elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 10.dp,
-                    pressedElevation = 2.dp,
-                    disabledElevation = 0.dp,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(64.dp),
+            // 회랑은 사냥터 안으로 갔다. 퀘스트는 v2.1에서 숨겼다 — 다섯 개면 한 줄에 선다.
+            val enabled = !state.busy
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "강화하기",
-                        style = MaterialTheme.typography.titleLarge,
-                    )
-                    currentLevel?.let {
-                        Text(
-                            text = "+$it  →  +${it + 1}",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.68f),
-                        )
-                    }
-                }
+                IconEntry("🛒", "상점", enabled, Modifier.weight(1f), onOpenShop)
+                IconEntry("⚗️", "조합", enabled, Modifier.weight(1f), onOpenCraft)
+                IconEntry(
+                    icon = "🎒",
+                    label = "${state.storage.size}/${state.storageCapacity}",
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f),
+                    onClick = onOpenStorage,
+                )
+                IconEntry(
+                    icon = "⚒",
+                    label = "단련",
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f),
+                    onClick = onOpenTraining,
+                    // 올릴 돈이 있으면 알려 준다 - 안 그러면 들어가 볼 이유를 잊는다
+                    highlight = state.canUpgradeSkill,
+                )
+                IconEntry("📖", "도감", enabled, Modifier.weight(1f), onOpenCodex)
             }
-            Spacer(Modifier.height(8.dp))
         }
-        ForgeNavigation(
-            storageCount = storageCount,
-            storageCapacity = storageCapacity,
-            highlightTraining = highlightTraining,
-            enabled = enabled,
-            onOpenShop = onOpenShop,
-            onOpenCraft = onOpenCraft,
-            onOpenStorage = onOpenStorage,
-            onOpenTraining = onOpenTraining,
-            onOpenCodex = onOpenCodex,
-        )
     }
-}
-
-@Composable
-private fun ForgeNavigation(
-    storageCount: Int,
-    storageCapacity: Int,
-    highlightTraining: Boolean,
-    enabled: Boolean,
-    onOpenShop: () -> Unit,
-    onOpenCraft: () -> Unit,
-    onOpenStorage: () -> Unit,
-    onOpenTraining: () -> Unit,
-    onOpenCodex: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.97f),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        shadowElevation = 12.dp,
-        tonalElevation = 4.dp,
-    ) {
-        Row(
-            modifier = Modifier.padding(6.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            IconEntry(
-                icon = Icons.Rounded.ShoppingCart,
-                label = "상점",
-                enabled = enabled,
-                modifier = Modifier.weight(1f),
-                onClick = onOpenShop,
-            )
-            IconEntry(
-                icon = Icons.Rounded.Science,
-                label = "조합",
-                enabled = enabled,
-                modifier = Modifier.weight(1f),
-                onClick = onOpenCraft,
-            )
-            IconEntry(
-                icon = Icons.Rounded.Inventory2,
-                label = "보관",
-                supporting = "$storageCount/$storageCapacity",
-                enabled = enabled,
-                modifier = Modifier.weight(1f),
-                onClick = onOpenStorage,
-            )
-            IconEntry(
-                icon = Icons.Rounded.Construction,
-                label = "단련",
-                enabled = enabled,
-                modifier = Modifier.weight(1f),
-                onClick = onOpenTraining,
-                highlight = highlightTraining,
-            )
-            IconEntry(
-                icon = Icons.AutoMirrored.Rounded.MenuBook,
-                label = "도감",
-                enabled = enabled,
-                modifier = Modifier.weight(1f),
-                onClick = onOpenCodex,
-            )
-        }
     }
 }
 
@@ -955,53 +738,39 @@ fun Stat(icon: String, label: String, value: String, color: Color = Color.Unspec
  */
 @Composable
 private fun IconEntry(
-    icon: ImageVector,
+    icon: String,
     label: String,
     enabled: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
-    supporting: String? = null,
     highlight: Boolean = false,
 ) {
     Column(
         modifier = modifier
-            .clip(MaterialTheme.shapes.medium)
+            .clip(RoundedCornerShape(12.dp))
             .background(
                 if (highlight) {
                     MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
                 } else {
-                    Color.Transparent
+                    MaterialTheme.colorScheme.surface
                 },
             )
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(vertical = 8.dp, horizontal = 2.dp)
+            .padding(vertical = 4.dp)
             .alpha(if (enabled) 1f else 0.4f),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            modifier = Modifier.size(23.dp),
-            tint = if (highlight) ForgeGold else MaterialTheme.colorScheme.secondary,
-        )
+        Text(text = icon, fontSize = 20.sp)
         Text(
             text = label,
-            style = MaterialTheme.typography.labelMedium,
+            fontSize = 10.sp,
             maxLines = 1,
             color = if (highlight) {
                 MaterialTheme.colorScheme.primary
             } else {
-                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.78f)
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             },
         )
-        supporting?.let {
-            Text(
-                text = it,
-                fontSize = 9.sp,
-                maxLines = 1,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.42f),
-            )
-        }
     }
 }
 
@@ -1077,7 +846,7 @@ private fun FamilyCapNotice() {
 @Composable
 private fun ResultBanner(result: ForgeResult?) {
     val (text, color) = when (result) {
-        is ForgeResult.Success -> "성공!  +${result.newLevel}" to ForgeSuccess
+        is ForgeResult.Success -> "성공!  +${result.newLevel}" to Color(0xFF7FD48A)
         is ForgeResult.Stay -> "실패 — 단계 유지" to Color(0xFFD4C87F)
         // 부서졌지만 사라지지는 않은 검(전설검·조합검)은 그 사실을 말해 준다.
         // "하락… +1" 만 뜨면 갑자기 바닥으로 간 것이 버그로 읽힌다.
@@ -1089,12 +858,7 @@ private fun ResultBanner(result: ForgeResult?) {
         is ForgeResult.Destroyed -> "파괴!!" to Color(0xFFE05A5A)
         null -> "" to Color.Transparent
     }
-    Box(
-        modifier = Modifier.heightIn(min = 26.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text = text, color = color, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-    }
+    Text(text = text, color = color, fontSize = 18.sp, fontWeight = FontWeight.Bold)
 }
 
 @Composable

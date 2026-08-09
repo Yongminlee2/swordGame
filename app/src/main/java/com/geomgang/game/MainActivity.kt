@@ -1,10 +1,8 @@
 package com.geomgang.game
 
 import androidx.compose.ui.Modifier
-import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -18,8 +16,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geomgang.core.Difficulty
 import com.geomgang.core.SaveStore
@@ -31,7 +27,6 @@ import com.geomgang.game.ui.AchievementScreen
 import com.geomgang.game.ui.CodexScreen
 import com.geomgang.game.ui.CraftScreen
 import com.geomgang.game.ui.ForgeScreen
-import com.geomgang.game.ui.ForgeBackdrop
 import com.geomgang.game.ui.GauntletScreen
 import com.geomgang.game.ui.HelpScreen
 import com.geomgang.game.ui.HuntScreen
@@ -78,16 +73,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // targetSdk 35 부터 **edge-to-edge 가 강제**다 - 앱이 상태바·내비게이션 바
         // 아래까지 그려진다. 끌 수 없으므로 명시적으로 켜 두고, 인셋은 아래에서 뺀다.
-        enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.dark(Color.Transparent.toArgb()),
-            navigationBarStyle = SystemBarStyle.dark(Color.Transparent.toArgb()),
-        )
+        enableEdgeToEdge()
         setContent {
             SwordForgeTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = androidx.compose.material3.MaterialTheme.colorScheme.background,
-                ) {
+                Surface {
                     // **인셋은 여기 한 곳에서만 뺀다.**
                     //
                     // 화면마다 각자 처리하면 스무 개 넘는 화면 중 하나는 반드시 빠뜨리고,
@@ -96,9 +85,7 @@ class MainActivity : ComponentActivity() {
                     //
                     // safeDrawing 은 상태바·내비게이션 바·디스플레이 컷아웃(노치)을 함께 본다.
                     Box(Modifier.safeDrawingPadding()) {
-                        ForgeBackdrop {
-                            App(SaveStore(filesDir))
-                        }
+                        App(SaveStore(filesDir))
                     }
                 }
             }

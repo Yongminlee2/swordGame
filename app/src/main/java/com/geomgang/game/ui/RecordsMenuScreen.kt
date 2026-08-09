@@ -1,6 +1,5 @@
 package com.geomgang.game.ui
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,25 +9,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Help
-import androidx.compose.material.icons.automirrored.rounded.MenuBook
-import androidx.compose.material.icons.rounded.BarChart
-import androidx.compose.material.icons.rounded.ChevronRight
-import androidx.compose.material.icons.rounded.EmojiEvents
-import androidx.compose.material.icons.rounded.Pets
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -63,67 +49,51 @@ fun RecordsMenuScreen(
         ScreenHeader(title = "기록", onBack = onBack)
 
         MenuRow(
-            icon = Icons.AutoMirrored.Rounded.MenuBook,
+            icon = "📖",
             title = "도감",
             subtitle = "$codexCount / ${WeaponCatalog.ENTRIES.size}",
-            tint = ForgeGold,
             onClick = onOpenCodex,
         )
         MenuRow(
-            icon = Icons.Rounded.Pets,
+            icon = "🐾",
             title = "펫",
             subtitle = "$ownedPets / ${com.geomgang.core.PetKind.entries.size}",
-            tint = ForgeViolet,
             onClick = onOpenPets,
         )
         MenuRow(
-            icon = Icons.Rounded.EmojiEvents,
+            icon = "🏆",
             title = "업적 · 칭호",
             subtitle = "${progress.achievements.size} / ${Achievement.entries.size}",
-            tint = ForgeGold,
             onClick = onOpenAchievements,
         )
         MenuRow(
-            icon = Icons.Rounded.BarChart,
+            icon = "📊",
             title = "통계",
             subtitle = "확률 비교",
-            tint = Color(0xFF78D7EA),
             onClick = onOpenStats,
         )
         MenuRow(
-            icon = Icons.AutoMirrored.Rounded.Help,
+            icon = "❓",
             title = "도움말",
             subtitle = "재료·계열·조합·스킬 규칙",
-            tint = ForgeSteel,
             onClick = onOpenHelp,
         )
         MenuRow(
-            icon = Icons.Rounded.Settings,
+            icon = "⚙️",
             title = "설정",
             subtitle = "소리 · 라이선스",
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             onClick = onOpenSettings,
         )
     }
 }
 
 @Composable
-private fun MenuRow(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    tint: Color,
-    onClick: () -> Unit,
-) {
+private fun MenuRow(icon: String, title: String, subtitle: String, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 10.dp)
             .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.88f),
-        ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Row(
             modifier = Modifier
@@ -133,14 +103,7 @@ private fun MenuRow(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .padding(end = 14.dp)
-                        .size(28.dp),
-                    tint = tint,
-                )
+                Text(icon, fontSize = 26.sp, modifier = Modifier.padding(end = 12.dp))
                 Column {
                     Text(title, fontWeight = FontWeight.Bold)
                     Text(
@@ -150,11 +113,7 @@ private fun MenuRow(
                     )
                 }
             }
-            Icon(
-                imageVector = Icons.Rounded.ChevronRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.secondary,
-            )
+            Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.secondary)
         }
     }
     Spacer(Modifier.height(0.dp))
