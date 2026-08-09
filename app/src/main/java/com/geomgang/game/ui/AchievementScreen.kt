@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -40,7 +39,7 @@ fun AchievementScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(20.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
         ScreenHeader(title = "업적 · 칭호", onBack = onBack)
 
@@ -58,7 +57,7 @@ fun AchievementScreen(
 
         Spacer(Modifier.height(14.dp))
 
-        Card(Modifier.fillMaxWidth()) {
+        ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(4.dp)) {
                 Row(
                     modifier = Modifier
@@ -76,7 +75,7 @@ fun AchievementScreen(
 
         Spacer(Modifier.height(12.dp))
 
-        Card(Modifier.fillMaxWidth()) {
+        ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(4.dp)) {
                 Achievement.entries.forEachIndexed { index, achievement ->
                     if (index > 0) HorizontalDivider()

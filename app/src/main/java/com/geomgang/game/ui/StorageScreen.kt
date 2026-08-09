@@ -18,10 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -79,7 +76,7 @@ fun StorageScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(20.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
         ScreenHeader(title = "보관함", onBack = onBack, wallet = state.wallet())
 
@@ -103,12 +100,16 @@ fun StorageScreen(
         }
 
         Spacer(Modifier.height(12.dp))
-        HeldSwordCard(state, onStore)
+        HeldSwordForgePanel(state, onStore)
         Spacer(Modifier.height(12.dp))
 
         if (state.storage.isEmpty()) {
             Text(
-                text = "보관함이 비어 있다.\n사냥에서 몬스터가 검을 떨어뜨린다 — 보스는 반드시 준다.",
+                text = if (state.deepUnlocked) {
+                    "보관함이 비어 있다.\n사냥에서 몬스터가 검을 떨어뜨린다 — 보스는 반드시 준다."
+                } else {
+                    "보관함이 비어 있다.\n상점에서 산 검을 바로 넣거나, 들고 있는 검을 보관할 수 있다."
+                },
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
             )
@@ -133,8 +134,8 @@ fun StorageScreen(
 }
 
 @Composable
-private fun HeldSwordCard(state: ForgeUiState, onStore: () -> Unit) {
-    Card(Modifier.fillMaxWidth()) {
+private fun HeldSwordForgePanel(state: ForgeUiState, onStore: () -> Unit) {
+    ForgePanel(Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -161,7 +162,7 @@ private fun HeldSwordCard(state: ForgeUiState, onStore: () -> Unit) {
                             text = SwordNames.nameFor(held),
                             fontWeight = FontWeight.Bold,
                             color = if (held.uniqueId != null) {
-                                Color(0xFFFFD54A)
+                                ForgeAmber
                             } else {
                                 Color.Unspecified
                             },
@@ -191,7 +192,7 @@ private fun StorageRow(
     onScrap: () -> Unit,
     onOffer: () -> Unit,
 ) {
-    Card(Modifier.fillMaxWidth()) {
+    ForgePanel(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
             // 검 그림과 장착이 **한 줄에 나란히** 있다. 예전에는 그림 아래로 설명이 세 줄,
             // 그 아래 버튼이 또 한 줄이라 한 자루가 화면의 3분의 1을 먹었다.
@@ -208,7 +209,7 @@ private fun StorageRow(
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         color = if (sword.uniqueId != null) {
-                            Color(0xFFFFD54A)
+                            ForgeAmber
                         } else {
                             Color.Unspecified
                         },
@@ -225,7 +226,7 @@ private fun StorageRow(
                     enabled = !state.busy && !state.awaitingDestroyChoice,
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                     modifier = Modifier.height(34.dp),
-                ) { Text("🗡 장착", fontSize = 12.sp, maxLines = 1) }
+                ) { Text("장착", fontSize = 12.sp, maxLines = 1) }
             }
 
             // 고유검 설명만 남긴다. 계열 설명은 어느 자루에나 같은 말이 붙어서
@@ -236,7 +237,7 @@ private fun StorageRow(
                         text = recipe.blurb,
                         fontSize = 10.sp,
                         maxLines = 1,
-                        color = Color(0xFFFFD54A).copy(alpha = 0.8f),
+                        color = ForgeAmber.copy(alpha = 0.8f),
                     )
                 }
             }
@@ -244,7 +245,7 @@ private fun StorageRow(
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 RowAction(
                     // 자릿수를 다 적으면 버튼 안에서 접힌다. 지갑 줄과 같은 축약을 쓴다.
-                    label = "💰 ${compactGold(Economy.sellPrice(sword))}",
+                    label = "판매 ${compactGold(Economy.sellPrice(sword))}",
                     enabled = !state.busy,
                     modifier = Modifier.weight(1f),
                     onClick = onSell,
@@ -253,7 +254,7 @@ private fun StorageRow(
                 // 쓸 수 없는 재화를 주는 버튼은 함정이다.
                 if (state.deepUnlocked) {
                     RowAction(
-                        label = "🔨 ${Storage.scrapShards(sword)}",
+                        label = "분해 ${Storage.scrapShards(sword)}",
                         // 전설검을 부수면 다시 벼릴 값의 5분의 1도 안 나온다([Storage.canScrap]).
                         enabled = !state.busy && Storage.canScrap(sword),
                         modifier = Modifier.weight(1f),
@@ -261,7 +262,7 @@ private fun StorageRow(
                     )
                 }
                 RowAction(
-                    label = "📖 도감",
+                    label = "도감",
                     // 이미 찬 칸이면 잠긴다. 검만 사라지고 얻는 게 없으면 함정이다.
                     enabled = !state.busy && CodexOffer.canOffer(state.progress, sword),
                     modifier = Modifier.weight(1f),
@@ -291,7 +292,7 @@ private fun RowAction(
 }
 
 private fun swordLine(sword: Sword): String {
-    val stars = if (sword.stars > 0) "★".repeat(sword.stars) + " · " else ""
+    val stars = if (sword.stars > 0) "별 ${sword.stars} · " else ""
     // 고유검은 강화대에 오르지 않으므로(v2.3) 단계가 아무 뜻도 없다 - 재료의
     // 단계가 그대로 남아 있을 뿐이라 "+12 고유검"은 오히려 더 올릴 수 있는 것처럼 읽힌다.
     val level = if (sword.uniqueId != null) "" else "+${sword.level} · "
@@ -349,7 +350,7 @@ private fun ConfirmLossDialog(
                 text = SwordNames.nameFor(loss.sword) +
                     if (loss.sword.uniqueId == null) " +${loss.sword.level}" else "",
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFFFFD54A),
+                color = ForgeAmber,
             )
         },
         text = {

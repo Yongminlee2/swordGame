@@ -11,8 +11,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AttachMoney
+import androidx.compose.material.icons.outlined.Diamond
+import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material.icons.outlined.StarBorder
+import androidx.compose.material.icons.outlined.TrackChanges
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,7 +48,7 @@ fun StarScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(20.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         ScreenHeader(title = "특수강화", onBack = onBack, wallet = state.wallet())
@@ -52,7 +56,7 @@ fun StarScreen(
         val sword = state.sword
         val star = state.star
         if (sword == null || star == null) {
-            Card(Modifier.fillMaxWidth()) {
+            ForgePanel(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
                     Text("아직 별을 붙일 수 없다", fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(4.dp))
@@ -81,11 +85,16 @@ fun StarScreen(
         )
 
         Spacer(Modifier.height(14.dp))
-        Text(
-            text = "★".repeat(star.stars) + "☆".repeat(star.maxStars - star.stars),
-            fontSize = 26.sp,
-            color = Color(0xFFFFD24A),
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+            repeat(star.maxStars) { index ->
+                ForgeIcon(
+                    imageVector = if (index < star.stars) Icons.Outlined.Star else Icons.Outlined.StarBorder,
+                    contentDescription = null,
+                    modifier = Modifier.size(25.dp),
+                    tint = ForgeAmber,
+                )
+            }
+        }
         if (star.attackBonusPercent > 0) {
             Text(
                 text = "공격력 +${star.attackBonusPercent}%",
@@ -100,7 +109,7 @@ fun StarScreen(
             Text(
                 text = if (it) "별이 하나 올랐다" else "실패 — 별 하나를 잃었다 (검은 무사하다)",
                 fontSize = 13.sp,
-                color = if (it) Color(0xFF7FD48A) else Color(0xFFE0906A),
+                color = if (it) ForgeGreen else Color(0xFFE0906A),
             )
         }
 
@@ -116,9 +125,9 @@ fun StarScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                Stat("🎯", "성공", "${star.successPercent}%", MaterialTheme.colorScheme.primary)
-                Stat("💎", "조각", "${star.shardCost}")
-                Stat("💰", "골드", compactGold(star.goldCost))
+                Stat(Icons.Outlined.TrackChanges, "성공", "${star.successPercent}%", MaterialTheme.colorScheme.primary)
+                Stat(Icons.Outlined.Diamond, "조각", "${star.shardCost}")
+                Stat(Icons.Outlined.AttachMoney, "골드", compactGold(star.goldCost))
             }
             Spacer(Modifier.height(12.dp))
             Button(

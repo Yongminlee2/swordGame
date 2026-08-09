@@ -2,7 +2,6 @@ package com.geomgang.game.ui
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.keyframes
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -18,14 +18,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -38,10 +39,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -58,7 +57,6 @@ import com.geomgang.core.familyLabel
 import com.geomgang.core.isLegend
 import com.geomgang.game.DestroyPhase
 import com.geomgang.game.ForgeUiState
-import com.geomgang.game.R
 import com.geomgang.game.TemperUi
 
 /**
@@ -121,7 +119,7 @@ fun ForgeScreen(
                 // 부서졌다가 바닥으로 살아 돌아온 것은 평범한 하락과 다른 사건이다.
                 // 같은 흔들림으로 지나가면 +14 가 +1 이 된 것이 버그로 보인다.
                 if (result.shattered) {
-                    flashColor = Color(0xFFE05A5A)
+                    flashColor = ForgeRed
                     flash.flashOnce(DESTROY_MILLIS)
                 }
                 shake.shakeOnce(DROP_SHAKE, DROP_MILLIS)
@@ -129,7 +127,7 @@ fun ForgeScreen(
             }
 
             is ForgeResult.Destroyed -> {
-                flashColor = Color(0xFFE05A5A)
+                flashColor = ForgeRed
                 flash.flashOnce(DESTROY_MILLIS)
                 // 여기서 onAnimationEnd 를 부르지 않는다.
                 // 제한 시간 창이 열려 있고, 그 잠금은 ViewModel 이 푼다.
@@ -158,36 +156,14 @@ fun ForgeScreen(
         DestroyPhase.None -> Unit
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-    ) {
-        Image(
-            painter = painterResource(R.drawable.forge_hall_background),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop,
-            alpha = 0.2f,
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        0f to MaterialTheme.colorScheme.background.copy(alpha = 0.72f),
-                        0.42f to MaterialTheme.colorScheme.background.copy(alpha = 0.42f),
-                        1f to MaterialTheme.colorScheme.background.copy(alpha = 0.88f),
-                    ),
-                ),
-        )
+    Box(modifier = Modifier.fillMaxSize()) {
 
         // 강화는 한 화면에서 끝난다. 검 영역만 남는 높이를 나눠 쓰고,
         // 핵심 조작과 하단 메뉴는 어떤 진행 단계에서도 화면 밖으로 밀지 않는다.
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp, vertical = 10.dp),
+                .padding(horizontal = 14.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
         Row(
@@ -195,30 +171,69 @@ fun ForgeScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Spacer(Modifier.width(64.dp))
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "최고 +${state.bestLevel}",
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                    fontSize = 13.sp,
-                )
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = if (state.deepUnlocked) "심층 대장간" else "초보 대장간",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = (-0.5).sp,
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        text = if (state.deepUnlocked) "시즌 II" else "시즌 I",
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.78f),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
                 state.progress.selectedTitle?.let {
                     Text(
                         text = it.title,
-                        fontSize = 12.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
-            TextButton(onClick = onOpenMenu, enabled = !state.busy) {
-                Text("🏅", fontSize = 22.sp)
+            ForgePanel(
+                modifier = Modifier.clickable(enabled = !state.busy, onClick = onOpenMenu),
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 9.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    ForgeIcon(
+                        imageVector = Icons.Outlined.EmojiEvents,
+                        contentDescription = "기록 메뉴",
+                        modifier = Modifier.size(17.dp),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(Modifier.width(5.dp))
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "최고 +${state.bestLevel}",
+                            fontSize = 12.sp,
+                            lineHeight = 12.sp,
+                            fontWeight = FontWeight.Black,
+                        )
+                        Text(
+                            text = "기록",
+                            fontSize = 8.sp,
+                            lineHeight = 9.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
             }
         }
 
+        ThinRule(Modifier.fillMaxWidth().padding(top = 5.dp))
+
         // 재화는 **맨 위**에 둔다. 검 그림 아래에 두었더니 화면이 짧은 기기에서는
         // 스크롤해야 보여서 "몇 개 있는지 모르겠다" 는 말이 나왔다.
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(6.dp))
         WalletBar(state.wallet())
         Spacer(Modifier.height(6.dp))
 
@@ -227,7 +242,7 @@ fun ForgeScreen(
         Box(
             modifier = Modifier
                 .weight(1f)
-                .heightIn(min = 112.dp, max = 164.dp)
+                .heightIn(min = 108.dp, max = 178.dp)
                 .fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
@@ -254,7 +269,7 @@ fun ForgeScreen(
                 // 때마다 검이 커졌다 작아졌다 해서 들쭉날쭉해 보인다.
                 DestroyPhase.None -> SwordView(
                     sword = state.sword,
-                    modifier = Modifier.size(132.dp),
+                    modifier = Modifier.size(if (state.deepUnlocked) 148.dp else 154.dp),
                     shake = shake.value,
                     flash = flash.value,
                     flashColor = flashColor,
@@ -277,7 +292,7 @@ fun ForgeScreen(
             color = if (state.destroyPhase == DestroyPhase.None &&
                 state.sword?.uniqueId != null
             ) {
-                Color(0xFFFFD54A)
+                ForgeAmber
             } else {
                 Color.Unspecified
             },
@@ -285,26 +300,39 @@ fun ForgeScreen(
         if (state.destroyPhase == DestroyPhase.None && state.sword != null) {
             Text(
                 text = "+${state.sword.level} · ${state.sword.familyLabel}" +
-                    if (state.sword.stars > 0) "  ${"★".repeat(state.sword.stars)}" else "",
+                    if (state.sword.stars > 0) "  · 별 ${state.sword.stars}" else "",
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
             )
             // 스킬은 +15부터 열린다. 강화 단계를 올릴 이유를 하나 더 보여 준다.
             val skill = com.geomgang.core.Skills.of(state.sword.family)
             val unlocked = com.geomgang.core.Skills.unlocked(state.sword)
-            Text(
-                text = if (unlocked) {
-                    "⚡ ${skill.name} — ${skill.blurb}"
-                } else {
-                    "🔒 ${skill.name} — +${com.geomgang.core.Skills.MIN_LEVEL}부터"
-                },
-                fontSize = 11.sp,
-                color = if (unlocked) {
-                    Color(0xFF7FE8FF)
-                } else {
-                    MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
-                },
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ForgeIcon(
+                    imageVector = if (unlocked) Icons.Outlined.Bolt else Icons.Outlined.Lock,
+                    contentDescription = null,
+                    modifier = Modifier.size(13.dp),
+                    tint = if (unlocked) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    },
+                )
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    text = if (unlocked) {
+                        "${skill.name} — ${skill.blurb}"
+                    } else {
+                        "${skill.name} — +${com.geomgang.core.Skills.MIN_LEVEL}부터"
+                    },
+                    fontSize = 11.sp,
+                    color = if (unlocked) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    },
+                )
+            }
         }
         Spacer(Modifier.height(4.dp))
         ResultBanner(state.lastResult)
@@ -319,15 +347,15 @@ fun ForgeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                Stat("🎯", "성공", "${state.odds.success}%", MaterialTheme.colorScheme.primary)
+                Stat(Icons.Outlined.TrackChanges, "성공", "${state.odds.success}%", MaterialTheme.colorScheme.primary)
                 if (state.odds.stay > 0) {
-                    Stat("＝", "유지", "${state.odds.stay}%")
+                    Stat(Icons.Outlined.Remove, "유지", "${state.odds.stay}%")
                 }
                 if (state.odds.drop > 0) {
-                    Stat("↓", "하락", "${state.odds.drop}%", Color(0xFFE0A060))
+                    Stat(Icons.Outlined.ArrowDownward, "하락", "${state.odds.drop}%", ForgeOrange)
                 }
                 if (state.odds.destroy > 0) {
-                    Stat("💥", "파괴", "${state.odds.destroy}%", MaterialTheme.colorScheme.error)
+                    Stat(Icons.Outlined.CrisisAlert, "파괴", "${state.odds.destroy}%", MaterialTheme.colorScheme.error)
                 }
             }
             // 부서지지 않는 검은 그 사실을 **미리** 말한다. 결과창에서 처음 알면
@@ -335,10 +363,10 @@ fun ForgeScreen(
             state.shatterFloor?.let { floor ->
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = "🛡 부서져도 사라지지 않는다 — 대신 +$floor 로 되돌아간다",
+                    text = "부서져도 사라지지 않는다 — 대신 +$floor 로 되돌아간다",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFFC79BFF),
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
             state.temper?.let { temper ->
@@ -353,10 +381,10 @@ fun ForgeScreen(
             if (state.wardCharm && state.sword.isLegend()) {
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = "🛡 수호 각인 — 미끄러져도 한 단계만 잃는다",
+                    text = "수호 각인 — 미끄러져도 한 단계만 잃는다",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFFC79BFF),
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
             Spacer(Modifier.height(6.dp))
@@ -364,8 +392,8 @@ fun ForgeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                Stat("🔥", "강화 비용", compactGold(state.upgradeCost))
-                Stat("🏷", "판매가", compactGold(state.sellPrice))
+                Stat(Icons.Outlined.LocalFireDepartment, "강화 비용", compactGold(state.upgradeCost))
+                Stat(Icons.Outlined.Sell, "판매가", compactGold(state.sellPrice))
             }
 
             if (!state.awaitingDestroyChoice) {
@@ -380,7 +408,20 @@ fun ForgeScreen(
                         onClick = onToggleBlessing,
                         enabled = state.blessingScrolls > 0 && !state.busy,
                         label = {
-                            Text("📜 축복서 ${state.blessingScrolls}", fontSize = 12.sp)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                ForgeIcon(
+                                    imageVector = Icons.Outlined.Description,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp),
+                                    tint = if (state.useBlessing) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                                )
+                                Spacer(Modifier.width(5.dp))
+                                Text("축복서 ${state.blessingScrolls}", fontSize = 12.sp)
+                            }
                         },
                         modifier = Modifier.weight(1f),
                     )
@@ -389,7 +430,20 @@ fun ForgeScreen(
                         onClick = onToggleLuckCharm,
                         enabled = state.luckCharms > 0 && !state.busy,
                         label = {
-                            Text("🍀 행운부적 ${state.luckCharms}", fontSize = 12.sp)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                ForgeIcon(
+                                    imageVector = Icons.Outlined.Spa,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp),
+                                    tint = if (state.useLuckCharm) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                                )
+                                Spacer(Modifier.width(5.dp))
+                                Text("행운부적 ${state.luckCharms}", fontSize = 12.sp)
+                            }
                         },
                         modifier = Modifier.weight(1f),
                     )
@@ -424,23 +478,27 @@ fun ForgeScreen(
                 Button(
                     onClick = onForge,
                     enabled = state.canForge,
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(2.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ForgeAmber,
+                        contentColor = Color(0xFF1C1202),
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp),
+                        .height(58.dp),
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("강 화", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                        val helper = state.forgeBlockedReason ?: state.requiredStones
-                            .takeIf { it > 0 }
-                            ?.let { "강화석 $it" }
+                        Text("강화하기", fontSize = 22.sp, fontWeight = FontWeight.Black)
+                        val helper = state.forgeBlockedReason
                         helper?.let {
                             Text(
                                 text = it,
                                 fontSize = 10.sp,
                                 maxLines = 1,
                                 color = if (state.canForge) {
-                                    MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.72f)
+                                    Color(0xFF1C1202).copy(alpha = 0.72f)
                                 } else {
                                     MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f)
                                 },
@@ -452,57 +510,40 @@ fun ForgeScreen(
             if (state.isRecord) {
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = "★ 최고 기록!",
+                    text = "최고 기록!",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFFFFD54A),
+                    color = ForgeAmber,
                 )
             }
-            // 스킬과 특수강화는 「단련」 화면으로 옮겼다([TrainingScreen]).
-            // 성장 장치를 여기 늘어놓으면 정작 강화 버튼이 아래로 밀린다.
             Spacer(Modifier.height(4.dp))
-            // 사냥터는 **용검을 손에 쥔 뒤에** 열린다([com.geomgang.core.Unlocks]).
-            // 초반에 사냥이 골드를 벌어다 주면 검을 팔 이유가 사라지고,
-            // 그러면 이 게임의 심장인 "강화해서 팔고 또 강화한다" 가 통째로 묻힌다.
-            if (state.huntOpen) {
-                Button(
-                    onClick = onOpenHunt,
-                    enabled = !state.busy && state.sword != null,
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondary,
-                        contentColor = Color(0xFF10222E),
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(40.dp),
-                ) {
-                    Text(
-                        text = "⚔ 사냥터  %,d".format(state.attackPower),
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
+            if (state.deepUnlocked) {
+                DeepActionStrip(
+                    requiredStones = state.requiredStones,
+                    attackPower = state.attackPower,
+                    huntEnabled = state.huntOpen && !state.busy && state.sword != null,
+                    onOpenHunt = onOpenHunt,
+                )
+                Spacer(Modifier.height(4.dp))
             }
-            // 잠긴 동안에는 **아무것도 두지 않는다.** 자물쇠 한 줄이 초반 내내 붙어 있으면
-            // 아직 손도 못 댈 것을 계속 들여다보게 된다. 열릴 때 나타나면 그걸로 족하다.
-            Spacer(Modifier.height(4.dp))
             // 회랑은 사냥터 안으로 갔다. 퀘스트는 v2.1에서 숨겼다 — 다섯 개면 한 줄에 선다.
             val enabled = !state.busy
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                IconEntry("🛒", "상점", enabled, Modifier.weight(1f), onOpenShop)
-                IconEntry("⚗️", "조합", enabled, Modifier.weight(1f), onOpenCraft)
+                IconEntry(Icons.Outlined.Storefront, "상점", enabled, Modifier.weight(1f), onOpenShop)
+                IconEntry(Icons.Outlined.Science, "조합", enabled, Modifier.weight(1f), onOpenCraft)
                 IconEntry(
-                    icon = "🎒",
-                    label = "${state.storage.size}/${state.storageCapacity}",
+                    icon = Icons.Outlined.Backpack,
+                    label = "가방",
                     enabled = enabled,
                     modifier = Modifier.weight(1f),
                     onClick = onOpenStorage,
+                    badge = "${state.storage.size}/${state.storageCapacity}",
                 )
                 IconEntry(
-                    icon = "⚒",
+                    icon = Icons.Outlined.Construction,
                     label = "단련",
                     enabled = enabled,
                     modifier = Modifier.weight(1f),
@@ -510,7 +551,7 @@ fun ForgeScreen(
                     // 올릴 돈이 있으면 알려 준다 - 안 그러면 들어가 볼 이유를 잊는다
                     highlight = state.canUpgradeSkill,
                 )
-                IconEntry("📖", "도감", enabled, Modifier.weight(1f), onOpenCodex)
+                IconEntry(Icons.AutoMirrored.Outlined.MenuBook, "도감", enabled, Modifier.weight(1f), onOpenCodex)
             }
         }
     }
@@ -539,14 +580,14 @@ private fun IdleRewardDialog(reward: IdleReward, onDismiss: () -> Unit) {
                 )
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    text = "💰 %,d".format(reward.gold),
+                    text = "골드 %,d".format(reward.gold),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFFFFD24A),
                 )
                 if (reward.stones > 0) {
                     Text(
-                        text = "🪨 강화석 ${reward.stones}",
+                        text = "강화석 ${reward.stones}",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.secondary,
@@ -629,7 +670,7 @@ private fun DestroyDialog(
         dismissButton = {
             TextButton(onClick = onPrevent, enabled = canPrevent) {
                 Text(
-                    text = "🛡 방지권 $preventTickets",
+                    text = "방지권 $preventTickets",
                     fontWeight = FontWeight.Bold,
                     color = if (canPrevent) {
                         MaterialTheme.colorScheme.primary
@@ -641,7 +682,7 @@ private fun DestroyDialog(
         },
         confirmButton = {
             TextButton(onClick = onSalvage) {
-                Text("💎 파편 줍기", fontWeight = FontWeight.Bold)
+                Text("파편 줍기", fontWeight = FontWeight.Bold)
             }
         },
     )
@@ -664,7 +705,7 @@ private fun TemperBar(temper: TemperUi) {
                 text = "담금질 — 실패가 다음 확률을 올린다",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFFE0A458),
+                color = ForgeAmber,
             )
             Text(
                 text = if (temper.fails > 0) {
@@ -679,7 +720,7 @@ private fun TemperBar(temper: TemperUi) {
                 fontSize = 11.sp,
                 fontWeight = if (temper.fails > 0) FontWeight.Bold else FontWeight.Normal,
                 color = if (temper.fails > 0) {
-                    Color(0xFFE0A458)
+                    ForgeAmber
                 } else {
                     MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 },
@@ -689,7 +730,7 @@ private fun TemperBar(temper: TemperUi) {
         LinearProgressIndicator(
             progress = { temper.ratio },
             modifier = Modifier.fillMaxWidth(),
-            color = Color(0xFFE0A458),
+            color = ForgeAmber,
         )
         Spacer(Modifier.height(4.dp))
         // 0회일 때 "0.5% → 0.5%" 만 보이면 이게 무슨 장치인지 알 수 없다.
@@ -709,23 +750,112 @@ private fun TemperBar(temper: TemperUi) {
 // "그래서 뭘 하라는 건지" 가 없었다 - 읽어도 행동이 바뀌지 않는 표시는 장식이다.
 
 @Composable
-fun Stat(icon: String, label: String, value: String, color: Color = Color.Unspecified) {
+fun Stat(
+    icon: ImageVector,
+    label: String,
+    value: String,
+    color: Color = Color.Unspecified,
+) {
+    val resolvedColor = if (color == Color.Unspecified) {
+        MaterialTheme.colorScheme.onSurface
+    } else {
+        color
+    }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(icon, fontSize = 15.sp)
+            ForgeIcon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                tint = resolvedColor,
+            )
             Spacer(Modifier.width(4.dp))
             Text(
                 text = value,
                 fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = color,
+                fontWeight = FontWeight.Black,
+                color = resolvedColor,
             )
         }
         Text(
             text = label,
             fontSize = 10.sp,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+@Composable
+private fun DeepActionStrip(
+    requiredStones: Int,
+    attackPower: Long,
+    huntEnabled: Boolean,
+    onOpenHunt: () -> Unit,
+) {
+    ForgePanel(Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ForgeIcon(
+                    imageVector = Icons.Outlined.ChangeHistory,
+                    contentDescription = null,
+                    modifier = Modifier.size(17.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = "강화석 $requiredStones",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+            Spacer(
+                Modifier
+                    .width(1.dp)
+                    .fillMaxHeight()
+                    .background(MaterialTheme.colorScheme.outline),
+            )
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clickable(enabled = huntEnabled, onClick = onOpenHunt)
+                    .alpha(if (huntEnabled) 1f else 0.38f),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ForgeIcon(
+                    imageVector = Icons.Outlined.Forest,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(Modifier.width(6.dp))
+                Column {
+                    Text(
+                        text = "사냥터",
+                        fontSize = 12.sp,
+                        lineHeight = 12.sp,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(
+                        text = "공격 ${compactGold(attackPower)}",
+                        fontSize = 8.sp,
+                        lineHeight = 9.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -738,32 +868,43 @@ fun Stat(icon: String, label: String, value: String, color: Color = Color.Unspec
  */
 @Composable
 private fun IconEntry(
-    icon: String,
+    icon: ImageVector,
     label: String,
     enabled: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     highlight: Boolean = false,
+    badge: String? = null,
 ) {
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(2.dp))
             .background(
                 if (highlight) {
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
                 } else {
                     MaterialTheme.colorScheme.surface
                 },
             )
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(vertical = 4.dp)
+            .padding(vertical = 5.dp)
             .alpha(if (enabled) 1f else 0.4f),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(text = icon, fontSize = 20.sp)
+        ForgeIcon(
+            imageVector = icon,
+            contentDescription = label,
+            modifier = Modifier.size(20.dp),
+            tint = if (highlight) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+        )
         Text(
             text = label,
             fontSize = 10.sp,
+            lineHeight = 11.sp,
             maxLines = 1,
             color = if (highlight) {
                 MaterialTheme.colorScheme.primary
@@ -771,6 +912,14 @@ private fun IconEntry(
                 MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             },
         )
+        badge?.let {
+            Text(
+                text = it,
+                fontSize = 7.sp,
+                lineHeight = 8.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            )
+        }
     }
 }
 
@@ -804,7 +953,7 @@ private fun BonusBreakdown(sources: List<BonusSource>) {
             text = "성공 +%.2f%%p  ·  하락방지 +%.2f%%p".format(success * 100, guard * 100),
             fontSize = 11.sp,
             color = if (earned) {
-                Color(0xFF7FD48A)
+                ForgeGreen
             } else {
                 MaterialTheme.colorScheme.onBackground.copy(alpha = 0.35f)
             },
@@ -828,7 +977,7 @@ private fun FamilyCapNotice() {
             text = "여기가 계열의 끝",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFFE0A458),
+            color = ForgeAmber,
         )
         Spacer(Modifier.height(2.dp))
         Text(
@@ -846,16 +995,16 @@ private fun FamilyCapNotice() {
 @Composable
 private fun ResultBanner(result: ForgeResult?) {
     val (text, color) = when (result) {
-        is ForgeResult.Success -> "성공!  +${result.newLevel}" to Color(0xFF7FD48A)
+        is ForgeResult.Success -> "성공!  +${result.newLevel}" to ForgeGreen
         is ForgeResult.Stay -> "실패 — 단계 유지" to Color(0xFFD4C87F)
         // 부서졌지만 사라지지는 않은 검(전설검·조합검)은 그 사실을 말해 준다.
         // "하락… +1" 만 뜨면 갑자기 바닥으로 간 것이 버그로 읽힌다.
         is ForgeResult.Drop -> if (result.shattered) {
-            "부서졌다!  +${result.newLevel} 로 되돌아갔다" to Color(0xFFE05A5A)
+            "부서졌다!  +${result.newLevel} 로 되돌아갔다" to ForgeRed
         } else {
             "하락…  +${result.newLevel}" to Color(0xFFD49A5A)
         }
-        is ForgeResult.Destroyed -> "파괴!!" to Color(0xFFE05A5A)
+        is ForgeResult.Destroyed -> "파괴!!" to ForgeRed
         null -> "" to Color.Transparent
     }
     Text(text = text, color = color, fontSize = 18.sp, fontWeight = FontWeight.Bold)

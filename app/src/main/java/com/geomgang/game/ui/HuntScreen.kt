@@ -20,12 +20,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -98,7 +98,7 @@ fun HuntScreen(
             .fillMaxSize()
             .background(zoneBrush(hunt.zone))
             .verticalScroll(rememberScrollState())
-            .padding(20.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Row(
@@ -106,7 +106,15 @@ fun HuntScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            OutlinedButton(onClick = onLeave) { Text("← 사냥터") }
+            OutlinedButton(onClick = onLeave) {
+                ForgeIcon(
+                    imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                    contentDescription = null,
+                    modifier = Modifier.size(17.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Text("사냥터")
+            }
             Text(
                 text = hunt.zone.displayName,
                 fontWeight = FontWeight.Bold,
@@ -130,10 +138,10 @@ fun HuntScreen(
         if (hunt.goldenRemainingMillis > 0) {
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "✨ 골든타임! 골드·조각 2배 (${hunt.goldenRemainingMillis / 1000}초)",
+                text = "골든타임 · 골드·조각 2배 (${hunt.goldenRemainingMillis / 1000}초)",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFFFFD54A),
+                color = ForgeAmber,
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
@@ -194,7 +202,7 @@ fun HuntScreen(
                             modifier = Modifier
                                 .padding(end = 8.dp)
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0xFFFFD54A))
+                                .background(ForgeAmber)
                                 .padding(horizontal = 6.dp, vertical = 2.dp),
                         )
                     }
@@ -214,7 +222,7 @@ fun HuntScreen(
                         text = "%.1f초 안에 잡아라!".format(hunt.eventRemainingMillis / 1000.0),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFFFD54A),
+                        color = ForgeAmber,
                     )
                 }
                 Spacer(Modifier.height(12.dp))
@@ -282,7 +290,7 @@ fun HuntScreen(
                 onClick = onTapNugget,
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFFD54A),
+                    containerColor = ForgeAmber,
                     contentColor = Color(0xFF10222E),
                 ),
                 modifier = Modifier
@@ -334,12 +342,12 @@ private fun ZonePicker(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(20.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
         ScreenHeader(title = "사냥터", onBack = onBack, wallet = state.wallet())
 
         if (state.sword == null) {
-            Card(Modifier.fillMaxWidth()) {
+            ForgePanel(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
                     Text("검이 없다", fontWeight = FontWeight.Bold)
                     Text(
@@ -376,18 +384,18 @@ private fun ZonePicker(
         ) {
             Text(
                 text = when {
-                    !state.gauntletUnlocked -> "🔒 무한 회랑 — 화산 보스를 잡으면 열린다"
+                    !state.gauntletUnlocked -> "잠김 · 무한 회랑 — 화산 보스를 잡으면 열린다"
                     state.gauntletBest > 0 -> "무한 회랑 · 최고 ${state.gauntletBest}층"
                     else -> "무한 회랑"
                 },
-                color = if (state.gauntletUnlocked) Color(0xFFC79BFF) else Color.Unspecified,
+                color = if (state.gauntletUnlocked) MaterialTheme.colorScheme.primary else Color.Unspecified,
             )
         }
 
         Spacer(Modifier.height(12.dp))
 
         Zone.entries.forEach { zone ->
-            ZoneCard(
+            ZoneForgePanel(
                 zone = zone,
                 sword = sword,
                 unlocked = adventure.isUnlocked(zone),
@@ -400,14 +408,14 @@ private fun ZonePicker(
 }
 
 @Composable
-private fun ZoneCard(
+private fun ZoneForgePanel(
     zone: Zone,
     sword: Sword,
     unlocked: Boolean,
     cleared: Boolean,
     onClick: () -> Unit,
 ) {
-    Card(
+    ForgePanel(
         modifier = Modifier
             .fillMaxWidth()
             .then(if (unlocked) Modifier.clickable(onClick = onClick) else Modifier),
@@ -459,7 +467,12 @@ private fun ZoneCard(
                         color = MaterialTheme.colorScheme.primary,
                     )
 
-                    else -> Text("›", fontSize = 20.sp, color = MaterialTheme.colorScheme.secondary)
+                    else -> ForgeIcon(
+                        imageVector = Icons.Outlined.ChevronRight,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
                 }
                 if (unlocked && !Combat.canBeatBoss(sword, zone)) {
                     Text(
@@ -543,8 +556,8 @@ private fun PopText(pop: DamagePop, onDone: () -> Unit) {
         // 스킬은 청록빛으로 구분한다 - 치명타(금색)와 겹쳐 터져도 무엇이 터졌는지 읽힌다
         color = when {
             pop.skill != null -> Color(0xFF7FE8FF)
-            pop.strong -> Color(0xFFFFD54A)
-            else -> Color(0xFFEEEEEE)
+            pop.strong -> ForgeAmber
+            else -> MaterialTheme.colorScheme.onSurface
         },
         modifier = Modifier
             .offset { IntOffset(pop.xJitter, (-90 * progress.value).toInt()) }
@@ -559,13 +572,13 @@ private fun HpBar(ratio: Float, isBoss: Boolean) {
             .fillMaxWidth()
             .height(14.dp)
             .clip(RoundedCornerShape(7.dp))
-            .background(Color(0xFF2A2340)),
+            .background(MaterialTheme.colorScheme.surfaceVariant),
     ) {
         Box(
             Modifier
                 .fillMaxWidth(ratio)
                 .fillMaxHeight()
-                .background(if (isBoss) Color(0xFFE05A5A) else Color(0xFF7FD48A)),
+                .background(if (isBoss) ForgeRed else ForgeGreen),
         )
     }
 }
@@ -577,13 +590,13 @@ private fun TimerBar(ratio: Float) {
             .fillMaxWidth()
             .height(8.dp)
             .clip(RoundedCornerShape(4.dp))
-            .background(Color(0xFF2A2340)),
+            .background(MaterialTheme.colorScheme.surfaceVariant),
     ) {
         Box(
             Modifier
                 .fillMaxWidth(ratio)
                 .fillMaxHeight()
-                .background(Color(0xFFE0A458)),
+                .background(ForgeAmber),
         )
     }
 }
@@ -642,11 +655,11 @@ private fun BossWonDialog(
         text = {
             Column {
                 if (reward != null) {
-                    Text("💰 %,d".format(reward.gold), fontWeight = FontWeight.Bold)
-                    Text("💎 조각 ${reward.shards}", fontWeight = FontWeight.Bold)
-                    Text("🪨 강화석 ${reward.stones}", fontWeight = FontWeight.Bold)
+                    Text("골드 %,d".format(reward.gold), fontWeight = FontWeight.Bold)
+                    Text("조각 ${reward.shards}", fontWeight = FontWeight.Bold)
+                    Text("강화석 ${reward.stones}", fontWeight = FontWeight.Bold)
                     reward.petName?.let {
-                        Text("🥚 $it 알!", color = MaterialTheme.colorScheme.primary)
+                        Text("$it 알 획득", color = MaterialTheme.colorScheme.primary)
                     }
                     Spacer(Modifier.height(8.dp))
                 }
@@ -663,7 +676,7 @@ private fun BossWonDialog(
             Column(horizontalAlignment = Alignment.End) {
                 TextButton(onClick = onNextZone) { Text("다음 구역으로") }
                 TextButton(onClick = onStay) { Text("이 구역 더 돌기") }
-                TextButton(onClick = onGoHome) { Text("🔨 홈으로 (강화하러)") }
+                TextButton(onClick = onGoHome) { Text("홈으로 · 강화하러") }
             }
         },
     )

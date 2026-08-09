@@ -6,6 +6,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -40,9 +41,10 @@ fun PreventRing(
     val urgent = progress < URGENT_THRESHOLD
     val ringColor = when {
         !enabled -> Color(0xFF6B6B6B)
-        urgent -> Color(0xFFE05A5A)
-        else -> Color(0xFFE0A458)
+        urgent -> ForgeRed
+        else -> ForgeAmber
     }
+    val trackColor = MaterialTheme.colorScheme.surfaceVariant
     val interaction = remember { MutableInteractionSource() }
 
     Box(
@@ -63,7 +65,7 @@ fun PreventRing(
 
             // 남은 시간이 없는 부분은 어둡게 깔아 둔다
             drawArc(
-                color = Color(0xFF2A2340),
+                color = trackColor,
                 startAngle = 0f,
                 sweepAngle = 360f,
                 useCenter = false,

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -49,7 +48,7 @@ fun StatsScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(20.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
         ScreenHeader(title = "통계", onBack = onBack)
 
@@ -61,7 +60,7 @@ fun StatsScreen(
         )
         Spacer(Modifier.height(8.dp))
 
-        Card(Modifier.fillMaxWidth()) {
+        ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(12.dp)) {
                 RateHeaderRow()
                 HorizontalDivider(Modifier.padding(vertical = 4.dp))
@@ -80,7 +79,7 @@ fun StatsScreen(
         Text("누적", fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
 
-        Card(Modifier.fillMaxWidth()) {
+        ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(12.dp)) {
                 StatRow("총 강화 시도", "%,d".format(stats.attempts))
                 StatRow("성공", "%,d".format(stats.successes))
@@ -114,7 +113,7 @@ fun StatsScreen(
             Text("사냥과 수집", fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
 
-            Card(Modifier.fillMaxWidth()) {
+            ForgePanel(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(12.dp)) {
                     StatRow("잡몹 처치", "%,d".format(stats.monsterKills))
                     StatRow("보스 처치", "%,d".format(stats.bossKills))
@@ -122,7 +121,7 @@ fun StatsScreen(
                     HorizontalDivider(Modifier.padding(vertical = 6.dp))
                     StatRow("조합", "%,d".format(stats.fusions))
                     StatRow("별 강화 시도", "%,d".format(stats.starAttempts))
-                    StatRow("최고 별", "★".repeat(stats.maxStars).ifEmpty { "없음" })
+                    StatRow("최고 별", if (stats.maxStars > 0) "${stats.maxStars}개" else "없음")
                     HorizontalDivider(Modifier.padding(vertical = 6.dp))
                     StatRow("스킬 발동", "%,d".format(stats.skillsTriggered))
                     StatRow("모은 강화석", "%,d".format(stats.stonesEarned))
@@ -167,7 +166,7 @@ private fun RateRow(level: Int, expected: Double, observed: Double?, tries: Long
                 // 시도가 적으면 차이가 커도 의미가 없다. 색으로 강조하지 않는다.
                 tries < 20 -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                 abs(diff) < 0.05 -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                diff > 0 -> Color(0xFF7FD48A)
+                diff > 0 -> ForgeGreen
                 else -> Color(0xFFE0906A)
             },
         )

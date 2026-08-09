@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,7 +41,7 @@ fun QuestScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(20.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
         ScreenHeader(title = "퀘스트", onBack = onBack, wallet = state.wallet())
 
@@ -102,7 +100,7 @@ private fun QuestRow(
     onClaim: () -> Unit,
 ) {
     val done = progress >= quest.target
-    Card(Modifier.fillMaxWidth()) {
+    ForgePanel(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -141,14 +139,14 @@ private fun QuestRow(
                     .fillMaxWidth()
                     .height(8.dp)
                     .clip(RoundedCornerShape(4.dp))
-                    .background(Color(0xFF2A2340)),
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
             ) {
                 Box(
                     Modifier
                         .fillMaxWidth((progress.toFloat() / quest.target).coerceIn(0f, 1f))
                         .fillMaxHeight()
                         .background(
-                            if (done) Color(0xFF7FD48A) else MaterialTheme.colorScheme.primary,
+                            if (done) ForgeGreen else MaterialTheme.colorScheme.primary,
                         ),
                 )
             }

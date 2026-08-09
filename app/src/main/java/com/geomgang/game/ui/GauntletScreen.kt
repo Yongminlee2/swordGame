@@ -12,17 +12,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -50,10 +49,7 @@ fun GauntletScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(listOf(Color(0xFF1F1A26), Color(0xFF0C0A12))),
-            )
-            .padding(20.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Row(
@@ -61,14 +57,22 @@ fun GauntletScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            OutlinedButton(onClick = onLeave) { Text("← 나가기") }
+            OutlinedButton(onClick = onLeave) {
+                ForgeIcon(
+                    imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                    contentDescription = null,
+                    modifier = Modifier.size(17.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Text("나가기")
+            }
             Text(
                 text = "${g.floor}층" + if (g.cursed) " · 저주" else "",
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
-                color = if (g.cursed) Color(0xFFE05A5A) else Color(0xFFC79BFF),
+                color = if (g.cursed) ForgeRed else MaterialTheme.colorScheme.primary,
             )
-            Text("최고 ${g.best}층", fontSize = 12.sp, color = Color(0xFF9B8FB8))
+            Text("최고 ${g.best}층", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
 
         Spacer(Modifier.height(8.dp))
@@ -76,12 +80,12 @@ fun GauntletScreen(
             Text(
                 "확정 %,d골드 · %d조각".format(g.bankedGold, g.bankedShards),
                 fontSize = 12.sp,
-                color = Color(0xFF7FD48A),
+                color = ForgeGreen,
             )
             Text(
                 "미확정 %,d골드 · %d조각".format(g.pendingGold, g.pendingShards),
                 fontSize = 12.sp,
-                color = Color(0xFFE0A458),
+                color = ForgeAmber,
             )
         }
         if (g.buffs.isNotEmpty()) {
@@ -89,7 +93,7 @@ fun GauntletScreen(
             Text(
                 text = g.buffs.joinToString(" · ") { "${it.label}(${it.blurb})" },
                 fontSize = 11.sp,
-                color = Color(0xFFFFD54A),
+                color = ForgeAmber,
             )
         }
 
@@ -109,12 +113,12 @@ private fun androidx.compose.foundation.layout.ColumnScope.Wave(
 ) {
     Spacer(Modifier.height(8.dp))
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text("처치 ${g.kills}/${g.waveSize}", fontSize = 13.sp, color = Color(0xFFEEEEEE))
+        Text("처치 ${g.kills}/${g.waveSize}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
         Text(
             "남은 시간 %.1f초".format(g.timeLeftMillis / 1000.0),
             fontSize = 13.sp,
             fontWeight = FontWeight.Bold,
-            color = if (g.timeLeftMillis < 6_000) Color(0xFFE05A5A) else Color(0xFFEEEEEE),
+            color = if (g.timeLeftMillis < 6_000) ForgeRed else MaterialTheme.colorScheme.onSurface,
         )
     }
     Spacer(Modifier.height(4.dp))
@@ -139,7 +143,7 @@ private fun androidx.compose.foundation.layout.ColumnScope.Wave(
                 text = if (g.isBossFloor) "회랑의 수문장" else "${g.floor}층의 그림자",
                 fontSize = if (g.isBossFloor) 24.sp else 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = if (g.isBossFloor) Color(0xFFE05A5A) else Color(0xFFEEEEEE),
+                color = if (g.isBossFloor) ForgeRed else MaterialTheme.colorScheme.onSurface,
             )
             Spacer(Modifier.height(10.dp))
             MonsterSprite(
@@ -156,7 +160,7 @@ private fun androidx.compose.foundation.layout.ColumnScope.Wave(
             Text(
                 "화면을 눌러 공격",
                 fontSize = 12.sp,
-                color = Color(0xFFEEEEEE).copy(alpha = 0.4f),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
             )
         }
     }
@@ -169,19 +173,19 @@ private fun HpLine(g: GauntletUiState) {
             .fillMaxWidth()
             .height(12.dp)
             .clip(RoundedCornerShape(6.dp))
-            .background(Color(0xFF2A2340)),
+            .background(MaterialTheme.colorScheme.surfaceVariant),
     ) {
         Box(
             Modifier
                 .fillMaxWidth(g.hpRatio)
                 .fillMaxHeight()
-                .background(if (g.isBossFloor) Color(0xFFE05A5A) else Color(0xFFC79BFF)),
+                .background(if (g.isBossFloor) ForgeRed else MaterialTheme.colorScheme.primary),
         )
     }
     Text(
         "%,d / %,d".format(g.monsterHp, g.monsterMaxHp),
         fontSize = 11.sp,
-        color = Color(0xFF9B8FB8),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
 
@@ -192,13 +196,13 @@ private fun TimeBar(ratio: Float) {
             .fillMaxWidth()
             .height(6.dp)
             .clip(RoundedCornerShape(3.dp))
-            .background(Color(0xFF2A2340)),
+            .background(MaterialTheme.colorScheme.surfaceVariant),
     ) {
         Box(
             Modifier
                 .fillMaxWidth(ratio.coerceIn(0f, 1f))
                 .fillMaxHeight()
-                .background(Color(0xFFE0A458)),
+                .background(ForgeAmber),
         )
     }
 }
@@ -214,11 +218,11 @@ private fun androidx.compose.foundation.layout.ColumnScope.Crossroad(
         "${g.floor}층을 깼다. 갈림길이다.",
         fontSize = 18.sp,
         fontWeight = FontWeight.Bold,
-        color = Color(0xFFC79BFF),
+        color = MaterialTheme.colorScheme.primary,
     )
     Spacer(Modifier.height(14.dp))
     g.choices.forEachIndexed { index, choice ->
-        Card(
+        ForgePanel(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 10.dp)
@@ -230,7 +234,7 @@ private fun androidx.compose.foundation.layout.ColumnScope.Crossroad(
                         Text(
                             "축복 — ${choice.buff.label}",
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFFFFD54A),
+                            color = ForgeAmber,
                         )
                         Text(
                             "${choice.buff.blurb} (이번 런 동안)",
@@ -239,7 +243,7 @@ private fun androidx.compose.foundation.layout.ColumnScope.Crossroad(
                         )
                     }
                     is GauntletChoice.Treasure -> {
-                        Text("보물", fontWeight = FontWeight.Bold, color = Color(0xFF7FD48A))
+                        Text("보물", fontWeight = FontWeight.Bold, color = ForgeGreen)
                         Text(
                             "%,d골드 · %d조각 (위험 없음)".format(choice.gold, choice.shards),
                             fontSize = 12.sp,
@@ -250,7 +254,7 @@ private fun androidx.compose.foundation.layout.ColumnScope.Crossroad(
                         Text(
                             "저주받은 방",
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFFE05A5A),
+                            color = ForgeRed,
                         )
                         Text(
                             "다음 층 체력 2배, 보상 4배",
@@ -271,15 +275,15 @@ private fun androidx.compose.foundation.layout.ColumnScope.RunOver(
     onLeave: () -> Unit,
 ) {
     Spacer(Modifier.height(40.dp))
-    Text("시간이 다했다", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFFE05A5A))
+    Text("시간이 다했다", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = ForgeRed)
     Spacer(Modifier.height(10.dp))
-    Text("${g.floor}층에서 런 종료 · 최고 기록 ${g.best}층", fontSize = 14.sp, color = Color(0xFFEEEEEE))
+    Text("${g.floor}층에서 런 종료 · 최고 기록 ${g.best}층", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
     Spacer(Modifier.height(16.dp))
     Text(
         "확정 %,d골드는 전부, 미확정 %,d골드는 70%%만 들고 나간다"
             .format(g.bankedGold, g.pendingGold),
         fontSize = 12.sp,
-        color = Color(0xFF9B8FB8),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     Spacer(Modifier.height(20.dp))
     Button(onClick = onLeave, modifier = Modifier.fillMaxWidth().height(52.dp)) {

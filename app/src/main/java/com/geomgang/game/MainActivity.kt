@@ -1,13 +1,15 @@
 package com.geomgang.game
 
+import android.graphics.Color
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.setContent
 import androidx.compose.ui.Modifier
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.safeDrawingPadding
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
-import androidx.activity.compose.setContent
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,6 +29,8 @@ import com.geomgang.game.ui.AchievementScreen
 import com.geomgang.game.ui.CodexScreen
 import com.geomgang.game.ui.CraftScreen
 import com.geomgang.game.ui.ForgeScreen
+import com.geomgang.game.ui.ForgeBackdrop
+import com.geomgang.game.ui.ForgeSeasonTheme
 import com.geomgang.game.ui.GauntletScreen
 import com.geomgang.game.ui.HelpScreen
 import com.geomgang.game.ui.HuntScreen
@@ -73,7 +77,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // targetSdk 35 부터 **edge-to-edge 가 강제**다 - 앱이 상태바·내비게이션 바
         // 아래까지 그려진다. 끌 수 없으므로 명시적으로 켜 두고, 인셋은 아래에서 뺀다.
-        enableEdgeToEdge()
+        val systemBarColor = Color.rgb(9, 9, 11)
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(systemBarColor),
+            navigationBarStyle = SystemBarStyle.dark(systemBarColor),
+        )
         setContent {
             SwordForgeTheme {
                 Surface {
@@ -122,6 +130,8 @@ private fun App(store: SaveStore) {
         }
     }
 
+    ForgeSeasonTheme(deep = state.deepUnlocked) {
+        ForgeBackdrop {
     when (overlay) {
         Overlay.Hunt -> HuntScreen(
             state = state,
@@ -221,6 +231,7 @@ private fun App(store: SaveStore) {
         Overlay.Records -> RecordsMenuScreen(
             progress = state.progress,
             ownedPets = state.progress.petsFound.size,
+            deepUnlocked = state.deepUnlocked,
             onOpenCodex = {
                 codexOrigin = Overlay.Records
                 overlay = Overlay.Codex
@@ -282,5 +293,7 @@ private fun App(store: SaveStore) {
             onOpenTraining = { overlay = Overlay.Training },
             onAnimationEnd = vm::onAnimationFinished,
         )
+    }
+        }
     }
 }

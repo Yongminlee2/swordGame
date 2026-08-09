@@ -11,10 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -65,7 +62,7 @@ fun CraftScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(20.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
         ScreenHeader(title = "조합소", onBack = onBack, wallet = state.wallet())
 
@@ -169,7 +166,7 @@ fun CraftScreen(
  */
 @Composable
 private fun RecipeList(state: ForgeUiState) {
-    Card(Modifier.fillMaxWidth()) {
+    ForgePanel(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
             Text("조합법", fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(4.dp))
@@ -194,7 +191,7 @@ private fun RecipeList(state: ForgeUiState) {
                 text = "고유검 — 특별한 조합은 특별한 검이 된다",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFFFFD54A),
+                color = ForgeAmber,
             )
             // 정수를 요구하는 레시피는 시즌2(용검 뒤)부터 보인다. 시즌1은 사냥터가
             // 잠겨 정수를 얻을 길이 없다 - 만들 수 없는 목록만 늘어놓게 된다.
@@ -217,14 +214,14 @@ private fun RecipeList(state: ForgeUiState) {
                             val level = if (minLevel > 0) " +$minLevel↑" else ""
                             if (count > 1) "$name$level ×$count" else "$name$level"
                         } + (if (essenceText.isEmpty()) "" else " + $essenceText") +
-                            "  =  ✦ ${recipe.name}"
+                            "  =  고유 · ${recipe.name}"
                     } else {
                         "??? — ${recipe.hint}" +
                             (if (essenceText.isEmpty()) "" else "  [$essenceText]")
                     },
                     fontSize = 11.sp,
                     color = if (found) {
-                        Color(0xFFFFD54A).copy(alpha = 0.85f)
+                        ForgeAmber.copy(alpha = 0.85f)
                     } else {
                         MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     },
@@ -259,19 +256,19 @@ private fun RecipeList(state: ForgeUiState) {
  */
 @Composable
 private fun AltarPanel(state: ForgeUiState, onBuyWard: () -> Unit) {
-    Card(Modifier.fillMaxWidth()) {
+    ForgePanel(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("제단", fontWeight = FontWeight.Bold, color = Color(0xFFC79BFF))
+                Text("제단", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 Text(
                     text = "정수력 ${state.essencePower}",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFFC79BFF),
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
             Text(
@@ -281,7 +278,7 @@ private fun AltarPanel(state: ForgeUiState, onBuyWard: () -> Unit) {
             )
             Spacer(Modifier.height(10.dp))
 
-            Text("🛡 수호 각인", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text("수호 각인", fontSize = 13.sp, fontWeight = FontWeight.Bold)
             Text(
                 text = "전설검이 미끄러질 때 한 번 붙든다 — " +
                     "+${LegendForge.LEVEL} 복귀 대신 한 단계만 잃는다. 쓰면 사라진다.",
@@ -294,10 +291,10 @@ private fun AltarPanel(state: ForgeUiState, onBuyWard: () -> Unit) {
             // "쌓아 두는 것" 이라는 오해가 안 생긴다.
             if (state.wardCharm) {
                 Text(
-                    text = "✓ 각인을 지니고 있다",
+                    text = "각인 보유 중",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF7FD48A),
+                    color = ForgeGreen,
                 )
             } else {
                 Button(
@@ -338,7 +335,7 @@ private fun RefinePanel(
     onRefine: () -> Unit,
 ) {
     val recipe = status.recipe
-    Card(Modifier.fillMaxWidth()) {
+    ForgePanel(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
             Text(
                 text = "${recipe.result.displayName} 조합",
@@ -355,11 +352,11 @@ private fun RefinePanel(
             recipe.materials.forEach { family ->
                 val have = family !in status.missing
                 Text(
-                    text = "${if (have) "✓" else "✗"} ${family.displayName} " +
+                    text = "${if (have) "보유" else "부족"} · ${family.displayName} " +
                         "+${Refinery.MATERIAL_LEVEL} (보관함)",
                     fontSize = 12.sp,
                     color = if (have) {
-                        Color(0xFF7FD48A)
+                        ForgeGreen
                     } else {
                         MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     },
@@ -393,9 +390,9 @@ private fun LegendPanel(
     onCraft: () -> Unit,
     onRecraft: () -> Unit,
 ) {
-    Card(Modifier.fillMaxWidth()) {
+    ForgePanel(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
-            Text("용검 조합 — 전설", fontWeight = FontWeight.Bold, color = Color(0xFFFFD54A))
+            Text("용검 조합 — 전설", fontWeight = FontWeight.Bold, color = ForgeAmber)
             Text(
                 text = "계열은 +${LegendForge.MATERIAL_LEVEL}에서 끝난다. " +
                     "마검과 성검을 +${LegendForge.MATERIAL_LEVEL}까지 올려 조합하면 " +
@@ -408,11 +405,11 @@ private fun LegendPanel(
             LegendForge.MATERIALS.forEach { family ->
                 val have = family !in missing
                 Text(
-                    text = "${if (have) "✓" else "✗"} ${family.displayName} " +
+                    text = "${if (have) "보유" else "부족"} · ${family.displayName} " +
                         "+${LegendForge.MATERIAL_LEVEL}",
                     fontSize = 12.sp,
                     color = if (have) {
-                        Color(0xFF7FD48A)
+                        ForgeGreen
                     } else {
                         MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     },
@@ -425,7 +422,7 @@ private fun LegendPanel(
                 Text(
                     text = "손에 든 검을 보관함에 넣어야 벼릴 수 있다",
                     fontSize = 11.sp,
-                    color = Color(0xFFE0A458),
+                    color = ForgeAmber,
                 )
                 Spacer(Modifier.height(4.dp))
             }
@@ -441,7 +438,7 @@ private fun LegendPanel(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(
-                        text = "💎 ${LegendForge.RECRAFT_SHARDS}로 다시 조합  (보유 $shards)",
+                        text = "조각 ${LegendForge.RECRAFT_SHARDS}로 다시 조합  (보유 $shards)",
                         fontSize = 13.sp,
                     )
                 }
@@ -468,7 +465,7 @@ private fun FusionPanel(
     val cost = Fusion.costOf(materials)
     val affordable = preview != null && state.gold >= cost
 
-    Card(Modifier.fillMaxWidth()) {
+    ForgePanel(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
             Text(
                 text = "특별한 조합(고유검) — 재료 두 자루를 직접 골라 빚는다 " +
@@ -493,14 +490,14 @@ private fun FusionPanel(
                     Column(Modifier.padding(start = 10.dp)) {
                         if (preview.uniqueId != null) {
                             Text(
-                                text = "✦ ${SwordNames.nameFor(preview)} ✦",
+                                text = "고유 · ${SwordNames.nameFor(preview)}",
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFFFFD54A),
+                                color = ForgeAmber,
                             )
                             Text(
                                 text = UniqueSwords.byId(preview.uniqueId!!)?.blurb ?: "",
                                 fontSize = 11.sp,
-                                color = Color(0xFFFFD54A).copy(alpha = 0.8f),
+                                color = ForgeAmber.copy(alpha = 0.8f),
                             )
                         } else {
                             Text(
@@ -561,7 +558,7 @@ private fun MaterialRow(
     selectable: Boolean,
     onToggle: () -> Unit,
 ) {
-    Card(
+    ForgePanel(
         modifier = Modifier
             .fillMaxWidth()
             .then(if (selectable) Modifier.clickable(onClick = onToggle) else Modifier),
@@ -572,14 +569,14 @@ private fun MaterialRow(
         ) {
             Text(
                 text = when {
-                    !selectable -> "✦"
-                    selected -> "●"
-                    else -> "○"
+                    !selectable -> "고유"
+                    selected -> "선택"
+                    else -> "고르기"
                 },
                 fontSize = 20.sp,
                 modifier = Modifier.padding(end = 10.dp),
                 color = when {
-                    !selectable -> Color(0xFFFFD54A)
+                    !selectable -> ForgeAmber
                     selected -> MaterialTheme.colorScheme.primary
                     else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                 },
@@ -589,7 +586,7 @@ private fun MaterialRow(
                 Text(
                     text = SwordNames.nameFor(sword),
                     fontWeight = FontWeight.Bold,
-                    color = if (sword.uniqueId != null) Color(0xFFFFD54A) else Color.Unspecified,
+                    color = if (sword.uniqueId != null) ForgeAmber else Color.Unspecified,
                 )
                 Text(
                     text = if (selectable) {

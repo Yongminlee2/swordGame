@@ -50,7 +50,7 @@ fun HoldToReset(
             .fillMaxWidth()
             .height(40.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(Color(0xFF2A2340))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
             .pointerInput(Unit) {
                 detectTapGestures(
                     onPress = {

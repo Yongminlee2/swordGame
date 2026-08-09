@@ -10,11 +10,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -62,13 +59,13 @@ fun ShopScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(20.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
         // 재화는 머리의 지갑 줄이 전부 보여 준다 - 화면마다 따로 쓰지 않는다.
         ScreenHeader(title = "상점", onBack = onBack, wallet = state.wallet())
 
         // --- 검 ---
-        Card(Modifier.fillMaxWidth()) {
+        ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 Text("검", fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(10.dp))
@@ -104,7 +101,7 @@ fun ShopScreen(
                             .basicFamilyHint(state.progress, f)
                             ?.let { hint ->
                                 Text(
-                                    text = "🔒 ${f.displayName} — $hint",
+                                    text = "잠김 · ${f.displayName} — $hint",
                                     fontSize = 11.sp,
                                     color = MaterialTheme.colorScheme.onSurface
                                         .copy(alpha = 0.5f),
@@ -175,7 +172,7 @@ fun ShopScreen(
         // 골드는 남고 강화석은 모자란 상태가 후반의 기본값이다. 둘을 잇는다.
         // 시즌1은 강화석을 아예 안 먹으므로([Unlocks.stonesUsed]) 칸째로 감춘다.
         if (state.deepUnlocked) {
-        Card(Modifier.fillMaxWidth()) {
+        ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 Text("재료", fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(4.dp))
@@ -185,7 +182,7 @@ fun ShopScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text("🪨 강화석", fontWeight = FontWeight.Medium)
+                        Text("강화석", fontWeight = FontWeight.Medium)
                         Text(
                             text = "보유 ${state.forgeStones}개",
                             fontSize = 12.sp,
@@ -215,7 +212,7 @@ fun ShopScreen(
         }
 
         // --- 아이템 ---
-        Card(Modifier.fillMaxWidth()) {
+        ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 Text("아이템", fontWeight = FontWeight.Bold)
                 // 값이 왜 오르고 언제 풀리는지 말해 주지 않으면 그냥 짜증으로만 남는다.
@@ -253,7 +250,7 @@ fun ShopScreen(
         // 시즌1부터 보인다(v2.3). 파괴가 남기는 조각으로 워프권을 사는 것이
         // 시즌1 재기의 축이다 - 무엇이 열려 있는지는 [Recipes.availableIn]이 정한다.
         val recipes = Recipes.availableIn(state.deepUnlocked)
-        Card(Modifier.fillMaxWidth()) {
+        ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 Text("조각 교환", fontWeight = FontWeight.Bold)
                 Text(
@@ -332,7 +329,7 @@ private fun RecipeRow(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Button(onClick = { onCraft(1) }, enabled = canTap) {
-                Text("💎 ${recipe.shardCost}", fontSize = 13.sp)
+                Text("조각 ${recipe.shardCost}", fontSize = 13.sp)
             }
             // 고단계 강화석은 한 판에 열댓 개가 든다. 하나씩 누르면 그건 노가다다.
             if (most > 1) {

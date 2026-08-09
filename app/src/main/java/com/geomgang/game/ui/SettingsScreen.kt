@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -41,11 +40,11 @@ fun SettingsScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(20.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
         ScreenHeader(title = "설정", onBack = onBack)
 
-        Card(Modifier.fillMaxWidth()) {
+        ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -68,7 +67,7 @@ fun SettingsScreen(
 
         Spacer(Modifier.height(12.dp))
 
-        Card(Modifier.fillMaxWidth()) {
+        ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -91,7 +90,7 @@ fun SettingsScreen(
 
         Spacer(Modifier.height(12.dp))
 
-        Card(Modifier.fillMaxWidth()) {
+        ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -121,7 +120,7 @@ fun SettingsScreen(
 
         Spacer(Modifier.height(12.dp))
 
-        Card(Modifier.fillMaxWidth()) {
+        ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 Text("진행 초기화", fontWeight = FontWeight.Medium)
                 Text(
@@ -137,7 +136,7 @@ fun SettingsScreen(
 
         Spacer(Modifier.height(12.dp))
 
-        Card(Modifier.fillMaxWidth()) {
+        ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 Text("리소스 라이선스", fontWeight = FontWeight.Medium)
                 Spacer(Modifier.height(8.dp))

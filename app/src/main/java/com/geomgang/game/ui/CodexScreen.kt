@@ -1,4 +1,4 @@
-﻿package com.geomgang.game.ui
+package com.geomgang.game.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -52,7 +51,7 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(20.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
         ScreenHeader(title = "도감", onBack = onBack)
 
@@ -101,7 +100,7 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
                         "+${WeaponCatalog.LEGEND_MAX_LEVEL}",
                     owned = legendLevels.count { CodexEntry(null, it) in owned },
                     total = legendLevels.size,
-                    color = Color(0xFFFFD54A),
+                    color = ForgeAmber,
                 )
             }
             items(legendLevels) { level ->
@@ -133,7 +132,7 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
                 items = com.geomgang.core.Refinery.RECIPES,
                 span = { GridItemSpan(maxLineSpan) },
             ) { recipe ->
-                Card(Modifier.fillMaxWidth()) {
+                ForgePanel(Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier.padding(10.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -162,7 +161,7 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
             }
             // 용검(전설)로 가는 길도 여기서 말한다. 표에는 없지만 길은 있다.
             item(span = { GridItemSpan(maxLineSpan) }) {
-                Card(Modifier.fillMaxWidth()) {
+                ForgePanel(Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier.padding(10.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -173,7 +172,7 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
                                 "용검(전설)",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFFFFD54A),
+                                color = ForgeAmber,
                             )
                             Text(
                                 text = "마검 +20 + 성검 +20 — 조합소 전설 칸에서",
@@ -193,7 +192,7 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
                         text = "고유검  ${progress.uniqueFound.size} / ${UniqueSwords.RECIPES.size}",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFFFD54A),
+                        color = ForgeAmber,
                     )
                     Text(
                         text = "특별한 조합이 특별한 검을 만든다. 힌트를 읽고 재료를 찾아라.",
@@ -214,7 +213,7 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
 
 @Composable
 private fun UniqueRow(recipe: com.geomgang.core.UniqueRecipe, found: Boolean) {
-    Card(Modifier.fillMaxWidth()) {
+    ForgePanel(Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(10.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -223,11 +222,11 @@ private fun UniqueRow(recipe: com.geomgang.core.UniqueRecipe, found: Boolean) {
             UniqueThumb(uniqueId = recipe.id, size = 44.dp, dimmed = !found)
             Column(Modifier.padding(start = 10.dp)) {
                 Text(
-                    text = if (found) "✦ ${recipe.name}" else "???",
+                    text = if (found) "고유 · ${recipe.name}" else "???",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (found) {
-                        Color(0xFFFFD54A)
+                        ForgeAmber
                     } else {
                         MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     },

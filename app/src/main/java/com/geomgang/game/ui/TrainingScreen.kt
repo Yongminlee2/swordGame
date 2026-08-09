@@ -10,11 +10,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -47,24 +44,24 @@ fun TrainingScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(20.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
         ScreenHeader(title = "단련", onBack = onBack, wallet = state.wallet())
         Spacer(Modifier.height(12.dp))
 
-        SkillCard(state, onUpgradeSkill)
+        SkillForgePanel(state, onUpgradeSkill)
         Spacer(Modifier.height(12.dp))
-        StarCard(state, onOpenStar)
+        StarForgePanel(state, onOpenStar)
         Spacer(Modifier.height(12.dp))
-        BonusCard(state.bonusSources)
+        BonusForgePanel(state.bonusSources)
     }
 }
 
 /** 골드로 사는 영구 확률. 후반에 쌓이기만 하던 골드가 여기 묶인다. */
 @Composable
-private fun SkillCard(state: ForgeUiState, onUpgrade: () -> Unit) {
+private fun SkillForgePanel(state: ForgeUiState, onUpgrade: () -> Unit) {
     val maxed = state.skillLevel >= Smithy.MAX_LEVEL
-    Card(Modifier.fillMaxWidth()) {
+    ForgePanel(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -92,7 +89,7 @@ private fun SkillCard(state: ForgeUiState, onUpgrade: () -> Unit) {
                     state.skillLevel * Smithy.PER_LEVEL * 100,
                 ),
                 fontSize = 12.sp,
-                color = Color(0xFF7FD48A),
+                color = ForgeGreen,
             )
             Text(
                 text = "한 칸 올릴 때마다 둘 다 +%.2f%%p".format(Smithy.PER_LEVEL * 100),
@@ -112,7 +109,7 @@ private fun SkillCard(state: ForgeUiState, onUpgrade: () -> Unit) {
                     enabled = state.canUpgradeSkill,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("💰 ${compactGold(state.skillPrice)} 로 올리기")
+                    Text("${compactGold(state.skillPrice)} 골드로 올리기")
                 }
                 if (!state.canUpgradeSkill) {
                     Spacer(Modifier.height(4.dp))
@@ -129,8 +126,8 @@ private fun SkillCard(state: ForgeUiState, onUpgrade: () -> Unit) {
 
 /** 별 강화. 여기서는 지금 상태만 보여 주고 실제 강화는 자기 화면에서 한다. */
 @Composable
-private fun StarCard(state: ForgeUiState, onOpenStar: () -> Unit) {
-    Card(Modifier.fillMaxWidth()) {
+private fun StarForgePanel(state: ForgeUiState, onOpenStar: () -> Unit) {
+    ForgePanel(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp)) {
             Text("특수강화", fontSize = 17.sp, fontWeight = FontWeight.Bold)
             val star = state.star
@@ -145,7 +142,7 @@ private fun StarCard(state: ForgeUiState, onOpenStar: () -> Unit) {
             }
             Spacer(Modifier.height(6.dp))
             Text(
-                text = "★".repeat(star.stars) + "☆".repeat(star.maxStars - star.stars),
+                text = "별 ${star.stars} / ${star.maxStars}",
                 fontSize = 18.sp,
                 color = Color(0xFFFFD24A),
             )
@@ -174,8 +171,8 @@ private fun StarCard(state: ForgeUiState, onOpenStar: () -> Unit) {
  * "다음에 무엇을 올릴지"를 고르는 자리이기 때문이다.
  */
 @Composable
-private fun BonusCard(sources: List<BonusSource>) {
-    Card(Modifier.fillMaxWidth()) {
+private fun BonusForgePanel(sources: List<BonusSource>) {
+    ForgePanel(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp)) {
             Text("강화 확률 내역", fontSize = 17.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
@@ -199,7 +196,7 @@ private fun BonusCard(sources: List<BonusSource>) {
                             text = "성공 +%.2f%%p".format(source.bonus.successRate * 100),
                             fontSize = 12.sp,
                             color = if (source.bonus.successRate > 0) {
-                                Color(0xFF7FD48A)
+                                ForgeGreen
                             } else {
                                 MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
                             },

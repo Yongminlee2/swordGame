@@ -8,13 +8,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,7 +36,7 @@ fun HelpScreen(onBack: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(20.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
         ScreenHeader(title = "도움말", onBack = onBack)
 
@@ -44,17 +48,22 @@ fun HelpScreen(onBack: () -> Unit) {
         Spacer(Modifier.height(12.dp))
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(HelpTopics.ALL) { topic -> TopicCard(topic) }
+            items(HelpTopics.ALL) { topic -> TopicForgePanel(topic) }
         }
     }
 }
 
 @Composable
-private fun TopicCard(topic: HelpTopic) {
-    Card(Modifier.fillMaxWidth()) {
+private fun TopicForgePanel(topic: HelpTopic) {
+    ForgePanel(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
-            Row {
-                Text(topic.icon, fontSize = 16.sp)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ForgeIcon(
+                    imageVector = helpIcon(topic.title),
+                    contentDescription = null,
+                    modifier = Modifier.size(17.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
                 Text(
                     text = "  ${topic.title}",
                     fontWeight = FontWeight.Bold,
@@ -71,4 +80,18 @@ private fun TopicCard(topic: HelpTopic) {
             )
         }
     }
+}
+
+private fun helpIcon(title: String): ImageVector = when (title) {
+    "강화" -> Icons.Outlined.Construction
+    "강화 재료" -> Icons.Outlined.ChangeHistory
+    "계열" -> Icons.Outlined.Category
+    "조합" -> Icons.Outlined.Science
+    "사냥" -> Icons.Outlined.Forest
+    "스킬" -> Icons.Outlined.Bolt
+    "특수강화" -> Icons.Outlined.Star
+    "무한 회랑" -> Icons.Outlined.AllInclusive
+    "자리비움" -> Icons.Outlined.Schedule
+    "펫" -> Icons.Outlined.Pets
+    else -> Icons.Outlined.AutoAwesome
 }
