@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -50,8 +49,10 @@ fun TrainingScreen(
         Spacer(Modifier.height(12.dp))
 
         SkillForgePanel(state, onUpgradeSkill)
-        Spacer(Modifier.height(12.dp))
-        StarForgePanel(state, onOpenStar)
+        if (state.deepUnlocked) {
+            Spacer(Modifier.height(12.dp))
+            StarForgePanel(state, onOpenStar)
+        }
         Spacer(Modifier.height(12.dp))
         BonusForgePanel(state.bonusSources)
     }
@@ -77,8 +78,8 @@ private fun SkillForgePanel(state: ForgeUiState, onUpgrade: () -> Unit) {
                 )
             }
             Spacer(Modifier.height(6.dp))
-            LinearProgressIndicator(
-                progress = { state.skillLevel.toFloat() / Smithy.MAX_LEVEL },
+            PixelProgressBar(
+                progress = state.skillLevel.toFloat() / Smithy.MAX_LEVEL,
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(Modifier.height(10.dp))

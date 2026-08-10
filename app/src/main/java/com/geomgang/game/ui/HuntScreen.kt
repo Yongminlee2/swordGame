@@ -3,6 +3,7 @@ package com.geomgang.game.ui
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,7 +19,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -90,46 +91,56 @@ fun HuntScreen(
         BossWonDialog(hunt, onStayInZone, onNextZone, onBack)
     }
 
-    // 강화 화면과 같은 이유로 스크롤된다 - 이벤트 배너·금덩이 버튼·보스 도전이
-    // 한꺼번에 뜨면 짧은 화면에서 아래가 잘린다. 탭 공격은 스크롤과 충돌하지 않는다.
+    // 전투 중 화면은 고정한다. 대상 패널이 남은 높이를 차지하고 이벤트·보스 버튼이
+    // 나타날 때만 스스로 줄어들어, 연타 중 화면이 위아래로 미끄러지지 않는다.
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(zoneBrush(hunt.zone))
-            .verticalScroll(rememberScrollState())
             .padding(horizontal = 14.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            OutlinedButton(onClick = onLeave) {
-                PixelIcon(
-                    resource = R.drawable.ui_pixel_back,
-                    contentDescription = null,
-                    modifier = Modifier.size(21.dp),
-                )
-                Text("사냥터")
+        ForgePanel(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    OutlinedButton(onClick = onLeave) {
+                        PixelIcon(
+                            resource = R.drawable.ui_pixel_back,
+                            contentDescription = null,
+                            modifier = Modifier.size(21.dp),
+                        )
+                        Text("사냥터")
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = hunt.zone.displayName,
+                            fontWeight = FontWeight.Black,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                        Text(
+                            text = "공격력 %,d".format(hunt.attackPower),
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    SeasonStamp(compact = true)
+                }
+                ThinRule(Modifier.fillMaxWidth().padding(vertical = 8.dp))
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    HuntStat(R.drawable.ui_pixel_gold, "%,d".format(state.gold))
+                    HuntStat(R.drawable.ui_pixel_gem, "${state.shards}")
+                    HuntStat(
+                        R.drawable.ui_pixel_target,
+                        "${hunt.killsInZone}/${hunt.killsNeeded}",
+                    )
+                }
             }
-            Text(
-                text = hunt.zone.displayName,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = "공격력 %,d".format(hunt.attackPower),
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        }
-
-        Spacer(Modifier.height(10.dp))
-
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("골드 %,d".format(state.gold), fontSize = 12.sp)
-            Text("조각 ${state.shards}", fontSize = 12.sp)
-            Text("잡은 수 ${hunt.killsInZone}/${hunt.killsNeeded}", fontSize = 12.sp)
         }
 
         // --- 이벤트 띠 ---
@@ -142,8 +153,9 @@ fun HuntScreen(
                 color = ForgeAmber,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(CutCornerShape(4.dp))
                     .background(Color(0x33FFD54A))
+                    .border(1.dp, ForgeAmber.copy(alpha = 0.55f), CutCornerShape(4.dp))
                     .padding(vertical = 6.dp, horizontal = 10.dp),
             )
         }
@@ -152,8 +164,9 @@ fun HuntScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(CutCornerShape(4.dp))
                     .background(Color(0x3364B5F6))
+                    .border(1.dp, Color(0xFF64B5F6).copy(alpha = 0.55f), CutCornerShape(4.dp))
                     .padding(vertical = 6.dp, horizontal = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -175,11 +188,13 @@ fun HuntScreen(
         Spacer(Modifier.height(16.dp))
 
         // --- 대상 ---
-        // 스크롤되는 열 안에서는 weight 를 쓸 수 없다(높이가 무한대다). 최소 높이로 잡는다.
         Box(
             modifier = Modifier
-                .heightIn(min = 260.dp)
+                .weight(1f)
+                .heightIn(min = 300.dp)
                 .fillMaxWidth()
+                .border(1.dp, MaterialTheme.colorScheme.outline, CutCornerShape(5.dp))
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.88f), CutCornerShape(5.dp))
                 .clickable(enabled = hunt.targetHp > 0, onClick = onTap),
             contentAlignment = Alignment.Center,
         ) {
@@ -199,7 +214,7 @@ fun HuntScreen(
                             color = Color(0xFF10222E),
                             modifier = Modifier
                                 .padding(end = 8.dp)
-                                .clip(RoundedCornerShape(6.dp))
+                                .clip(CutCornerShape(3.dp))
                                 .background(ForgeAmber)
                                 .padding(horizontal = 6.dp, vertical = 2.dp),
                         )
@@ -286,7 +301,7 @@ fun HuntScreen(
             Spacer(Modifier.height(8.dp))
             Button(
                 onClick = onTapNugget,
-                shape = RoundedCornerShape(14.dp),
+                shape = CutCornerShape(5.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = ForgeAmber,
                     contentColor = Color(0xFF10222E),
@@ -323,6 +338,23 @@ fun HuntScreen(
                 Text("${hunt.zone.bossName} 도전", fontWeight = FontWeight.Bold)
             }
         }
+    }
+}
+
+@Composable
+private fun HuntStat(resource: Int, value: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        PixelIcon(
+            resource = resource,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp),
+        )
+        Text(
+            text = value,
+            modifier = Modifier.padding(start = 5.dp),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+        )
     }
 }
 
@@ -566,38 +598,22 @@ private fun PopText(pop: DamagePop, onDone: () -> Unit) {
 
 @Composable
 private fun HpBar(ratio: Float, isBoss: Boolean) {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .height(14.dp)
-            .clip(RoundedCornerShape(7.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-    ) {
-        Box(
-            Modifier
-                .fillMaxWidth(ratio)
-                .fillMaxHeight()
-                .background(if (isBoss) ForgeRed else ForgeGreen),
-        )
-    }
+    PixelProgressBar(
+        progress = ratio,
+        modifier = Modifier.fillMaxWidth(),
+        height = 14.dp,
+        color = if (isBoss) ForgeRed else ForgeGreen,
+    )
 }
 
 @Composable
 private fun TimerBar(ratio: Float) {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .height(8.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-    ) {
-        Box(
-            Modifier
-                .fillMaxWidth(ratio)
-                .fillMaxHeight()
-                .background(ForgeAmber),
-        )
-    }
+    PixelProgressBar(
+        progress = ratio,
+        modifier = Modifier.fillMaxWidth(),
+        height = 8.dp,
+        color = ForgeAmber,
+    )
 }
 
 /**

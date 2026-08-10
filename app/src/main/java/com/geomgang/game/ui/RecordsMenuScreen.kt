@@ -81,7 +81,11 @@ fun RecordsMenuScreen(
         MenuRow(
             icon = R.drawable.ui_pixel_help,
             title = "도움말",
-            subtitle = "재료·계열·조합·스킬 규칙",
+            subtitle = if (deepUnlocked) {
+                "재료·계열·조합·스킬 규칙"
+            } else {
+                "강화·계열·조합 규칙"
+            },
             onClick = onOpenHelp,
         )
         MenuRow(

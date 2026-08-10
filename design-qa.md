@@ -6,6 +6,8 @@
 - 구현 캡처: `C:\workAndroid\SwordForge\build\visual-audit\pixel-reference-pass\09-season2-layout-clean.png`
 - 시즌1 최종 설치 캡처: `C:\workAndroid\SwordForge\build\visual-audit\pixel-reference-pass\23-final-installed-season1-clean.png`
 - 시즌1 기록 캡처: `C:\workAndroid\SwordForge\build\visual-audit\pixel-reference-pass\21-season1-records.png`
+- 시즌1 전 화면 재검사: `C:\workAndroid\SwordForge\build\visual-audit\full-screen-audit\after-season1`
+- 시즌2 전 화면 재검사: `C:\workAndroid\SwordForge\build\visual-audit\full-screen-audit\after-season2`
 - 전체 비교 이미지: `C:\workAndroid\SwordForge\build\visual-audit\pixel-reference-pass\10-source-vs-final-layout.png`
 - 전체 메뉴 비교 이미지: `C:\workAndroid\SwordForge\build\visual-audit\pixel-reference-pass\16-menu-contact-sheet.png`
 - 기준 시안 크기: 853×1848 px, 1080×2340으로 정규화
@@ -60,6 +62,39 @@
   없어야 한다.
 
 ## 결함
+
+- P0: 없음
+- P1: 없음
+- P2: 없음
+
+final result: passed
+
+## 전 화면 재감사 — 2026-08-10
+
+기준 화면만 맞춘 뒤 끝내지 않고 시즌1 16장, 시즌2 24장의 현재 설치본 화면을 다시
+캡처했다. 상점·조합·가방·단련·특수강화·도감·기록·펫·업적·통계·도움말·설정과
+사냥터 목록·전투·무한 회랑 전투·시간 종료 상태를 실제 기기에서 직접 이동해 확인했다.
+
+첫 검사에서 다음 차이를 찾았다.
+
+- 시즌1 도움말과 설정에 강화석·사냥처럼 아직 열리지 않은 기능 설명이 남아 있었다.
+- 시즌1 단련에 조작할 수 없는 특수강화 패널이, 기록 메뉴에는 재료·스킬 안내가 남아 있었다.
+- 상점 계열 칩, 설정 스위치, 단련·도감 진행 바가 보라색·둥근 Material 기본 형태였다.
+- 조합 화면을 스크롤하면 목록 내용이 고정 재화 줄 아래로 그려졌고, 긴 정수 요구는 수량만
+  다음 줄로 떨어졌다.
+- 사냥 전투만 구역색 전체 배경과 둥근 HP 바를 써 나머지 메뉴와 다른 게임처럼 보였다.
+- 무한 회랑의 상단 정보와 HP·시간 바도 공통 픽셀 부품을 쓰지 않았다.
+- 설정의 “비트맵 파일이 없다”는 문구가 실제 PNG 픽셀 자산 구성과 달랐다.
+
+공통 잘린 모서리 칩·토글·진행 바를 만들고 해당 화면을 교체했다. 사냥 전투는 배경,
+정보 패널, 재화 아이콘, 대상 프레임과 HP 바를 공통 대장간 체계로 다시 구성했으며 전투 중
+세로 스크롤을 없앴다. 시즌1은 특수강화·사냥·펫·정수 설명을 노출하지 않고, 자리비움도
+시즌1 보상만 설명한다. 조합 목록은 고정 헤더 경계에서 잘라 그리고 정수 요구를 별도 줄로
+분리했다.
+
+수정 뒤 같은 상태와 같은 1080×2340 기기에서 전 화면을 다시 캡처했다. 사냥은 실제 탭으로
+처치 수와 몬스터 교체를 확인했고, 무한 회랑은 입장 뒤 제한 시간 종료와 정산 화면까지
+확인했다. 대장간 본 화면은 두 시즌 모두 스크롤 없이 유지된다.
 
 - P0: 없음
 - P1: 없음

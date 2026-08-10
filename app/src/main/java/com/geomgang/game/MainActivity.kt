@@ -266,10 +266,14 @@ private fun App(store: SaveStore) {
             onBack = { overlay = Overlay.Records },
         )
 
-        Overlay.Help -> HelpScreen(onBack = { overlay = Overlay.Records })
+        Overlay.Help -> HelpScreen(
+            deepUnlocked = state.deepUnlocked,
+            onBack = { overlay = Overlay.Records },
+        )
 
         Overlay.Settings -> SettingsScreen(
             settings = state.settings,
+            deepUnlocked = state.deepUnlocked,
             onAutoPreventChange = vm::setAutoPrevent,
             onSoundChange = vm::setSoundOn,
             onHapticsChange = vm::setHapticsOn,

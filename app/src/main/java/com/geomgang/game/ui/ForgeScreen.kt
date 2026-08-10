@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -642,8 +641,8 @@ private fun DestroyDialog(
                     fontSize = 14.sp,
                 )
                 Spacer(Modifier.height(12.dp))
-                LinearProgressIndicator(
-                    progress = { progress },
+                PixelProgressBar(
+                    progress = progress,
                     modifier = Modifier.fillMaxWidth(),
                     color = MaterialTheme.colorScheme.error,
                 )
@@ -721,8 +720,8 @@ private fun TemperBar(temper: TemperUi) {
             )
         }
         Spacer(Modifier.height(4.dp))
-        LinearProgressIndicator(
-            progress = { temper.ratio },
+        PixelProgressBar(
+            progress = temper.ratio,
             modifier = Modifier.fillMaxWidth(),
             color = ForgeAmber,
         )

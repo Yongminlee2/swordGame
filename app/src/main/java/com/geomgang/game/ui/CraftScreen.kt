@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -70,7 +71,9 @@ fun CraftScreen(
         // 고정으로 쌓이고 재료 목록만 남는 높이에서 스크롤됐다. 위 칸이 늘어나자
         // 재료 목록이 화면 밖으로 밀려 **아래로 내려갈 수가 없었다.**
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .clipToBounds(),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             item {
@@ -217,7 +220,7 @@ private fun RecipeList(state: ForgeUiState) {
                             "  =  고유 · ${recipe.name}"
                     } else {
                         "??? — ${recipe.hint}" +
-                            (if (essenceText.isEmpty()) "" else "  [$essenceText]")
+                            (if (essenceText.isEmpty()) "" else "\n필요 · $essenceText")
                     },
                     fontSize = 11.sp,
                     color = if (found) {

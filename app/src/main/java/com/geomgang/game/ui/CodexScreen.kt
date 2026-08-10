@@ -2,6 +2,7 @@ package com.geomgang.game.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,8 +17,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,8 +62,8 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
             color = MaterialTheme.colorScheme.primary,
         )
         Spacer(Modifier.height(6.dp))
-        LinearProgressIndicator(
-            progress = { owned.size.toFloat() / WeaponCatalog.ENTRIES.size },
+        PixelProgressBar(
+            progress = owned.size.toFloat() / WeaponCatalog.ENTRIES.size,
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(14.dp))
@@ -282,8 +282,13 @@ private fun CodexCell(entry: CodexEntry, discovered: Boolean) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(6.dp))
-            .background(MaterialTheme.colorScheme.surface),
+            .clip(CutCornerShape(3.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(
+                1.dp,
+                MaterialTheme.colorScheme.outline.copy(alpha = if (discovered) 0.8f else 0.55f),
+                CutCornerShape(3.dp),
+            ),
     ) {
         Column(
             modifier = Modifier.padding(4.dp),
@@ -311,7 +316,7 @@ private fun CodexCell(entry: CodexEntry, discovered: Boolean) {
                 color = if (discovered) {
                     MaterialTheme.colorScheme.onSurface
                 } else {
-                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.48f)
                 },
             )
         }

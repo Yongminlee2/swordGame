@@ -1,19 +1,19 @@
 package com.geomgang.game.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,48 +51,56 @@ fun GauntletScreen(
             .padding(horizontal = 14.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            OutlinedButton(onClick = onLeave) {
-                PixelIcon(
-                    resource = R.drawable.ui_pixel_back,
-                    contentDescription = null,
-                    modifier = Modifier.size(21.dp),
-                )
-                Text("나가기")
-            }
-            Text(
-                text = "${g.floor}층" + if (g.cursed) " · 저주" else "",
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = if (g.cursed) ForgeRed else MaterialTheme.colorScheme.primary,
-            )
-            Text("최고 ${g.best}층", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+        ForgePanel(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    OutlinedButton(onClick = onLeave) {
+                        PixelIcon(
+                            resource = R.drawable.ui_pixel_back,
+                            contentDescription = null,
+                            modifier = Modifier.size(21.dp),
+                        )
+                        Text("나가기")
+                    }
+                    Text(
+                        text = "${g.floor}층" + if (g.cursed) " · 저주" else "",
+                        fontWeight = FontWeight.Black,
+                        fontSize = 18.sp,
+                        color = if (g.cursed) ForgeRed else MaterialTheme.colorScheme.primary,
+                    )
+                    Text(
+                        "최고 ${g.best}층",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
 
-        Spacer(Modifier.height(8.dp))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(
-                "확정 %,d골드 · %d조각".format(g.bankedGold, g.bankedShards),
-                fontSize = 12.sp,
-                color = ForgeGreen,
-            )
-            Text(
-                "미확정 %,d골드 · %d조각".format(g.pendingGold, g.pendingShards),
-                fontSize = 12.sp,
-                color = ForgeAmber,
-            )
-        }
-        if (g.buffs.isNotEmpty()) {
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = g.buffs.joinToString(" · ") { "${it.label}(${it.blurb})" },
-                fontSize = 11.sp,
-                color = ForgeAmber,
-            )
+                ThinRule(Modifier.fillMaxWidth().padding(vertical = 8.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(
+                        "확정 %,d골드 · %d조각".format(g.bankedGold, g.bankedShards),
+                        fontSize = 12.sp,
+                        color = ForgeGreen,
+                    )
+                    Text(
+                        "미확정 %,d골드 · %d조각".format(g.pendingGold, g.pendingShards),
+                        fontSize = 12.sp,
+                        color = ForgeAmber,
+                    )
+                }
+                if (g.buffs.isNotEmpty()) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = g.buffs.joinToString(" · ") { "${it.label}(${it.blurb})" },
+                        fontSize = 11.sp,
+                        color = ForgeAmber,
+                    )
+                }
+            }
         }
 
         when {
@@ -126,6 +134,8 @@ private fun androidx.compose.foundation.layout.ColumnScope.Wave(
         modifier = Modifier
             .weight(1f)
             .fillMaxWidth()
+            .border(1.dp, MaterialTheme.colorScheme.outline, CutCornerShape(5.dp))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.84f), CutCornerShape(5.dp))
             .clickable(enabled = g.monsterHp > 0, onClick = onTap),
         contentAlignment = Alignment.Center,
     ) {
@@ -166,20 +176,12 @@ private fun androidx.compose.foundation.layout.ColumnScope.Wave(
 
 @Composable
 private fun HpLine(g: GauntletUiState) {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .height(12.dp)
-            .clip(RoundedCornerShape(6.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-    ) {
-        Box(
-            Modifier
-                .fillMaxWidth(g.hpRatio)
-                .fillMaxHeight()
-                .background(if (g.isBossFloor) ForgeRed else MaterialTheme.colorScheme.primary),
-        )
-    }
+    PixelProgressBar(
+        progress = g.hpRatio,
+        modifier = Modifier.fillMaxWidth(),
+        height = 12.dp,
+        color = if (g.isBossFloor) ForgeRed else MaterialTheme.colorScheme.primary,
+    )
     Text(
         "%,d / %,d".format(g.monsterHp, g.monsterMaxHp),
         fontSize = 11.sp,
@@ -189,20 +191,12 @@ private fun HpLine(g: GauntletUiState) {
 
 @Composable
 private fun TimeBar(ratio: Float) {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .height(6.dp)
-            .clip(RoundedCornerShape(3.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-    ) {
-        Box(
-            Modifier
-                .fillMaxWidth(ratio.coerceIn(0f, 1f))
-                .fillMaxHeight()
-                .background(ForgeAmber),
-        )
-    }
+    PixelProgressBar(
+        progress = ratio,
+        modifier = Modifier.fillMaxWidth(),
+        height = 6.dp,
+        color = ForgeAmber,
+    )
 }
 
 /** 갈림길. 시간이 멈춘다 - 고민은 공짜다. */

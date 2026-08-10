@@ -31,7 +31,15 @@ import com.geomgang.game.R
  * 밸런스를 고쳤는데 도움말만 옛 숫자를 말하는 일이 없어야 한다.
  */
 @Composable
-fun HelpScreen(onBack: () -> Unit) {
+fun HelpScreen(
+    deepUnlocked: Boolean,
+    onBack: () -> Unit,
+) {
+    val topics = if (deepUnlocked) {
+        HelpTopics.ALL
+    } else {
+        HelpTopics.ALL.filterNot { it.title in DEEP_HELP_TOPICS }
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -47,9 +55,33 @@ fun HelpScreen(onBack: () -> Unit) {
         Spacer(Modifier.height(12.dp))
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(HelpTopics.ALL) { topic -> TopicForgePanel(topic) }
+            items(topics) { topic ->
+                TopicForgePanel(
+                    if (!deepUnlocked && topic.title == "자리비움") {
+                        topic.copy(body = seasonOneIdleBody(topic.body))
+                    } else {
+                        topic
+                    },
+                )
+            }
         }
     }
+}
+
+/** 용검을 얻기 전에는 아직 조작할 수도, 얻을 수도 없는 시즌2 규칙을 숨긴다. */
+private val DEEP_HELP_TOPICS = setOf(
+    "강화 재료",
+    "사냥",
+    "스킬",
+    "특수강화",
+    "무한 회랑",
+    "펫",
+    "정수와 제단",
+)
+
+private fun seasonOneIdleBody(body: String): String {
+    val seasonOne = body.substringBefore("\n용검 뒤에는")
+    return "$seasonOne\n손으로 하는 편이 훨씬 빠르다 — 자리비움은 덤이다."
 }
 
 @Composable

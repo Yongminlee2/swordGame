@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,6 +29,7 @@ import com.geomgang.core.Timing
 @Composable
 fun SettingsScreen(
     settings: Settings,
+    deepUnlocked: Boolean,
     onAutoPreventChange: (Boolean) -> Unit,
     onSoundChange: (Boolean) -> Unit,
     onHapticsChange: (Boolean) -> Unit,
@@ -54,13 +54,18 @@ fun SettingsScreen(
                     Column(Modifier.weight(1f)) {
                         Text("효과음", fontWeight = FontWeight.Medium)
                         Text(
-                            text = "강화 성공·실패·파괴, 방지권, 줍기, 사냥 타격에 소리가 붙는다. " +
-                                "성공음은 단계가 높을수록 높은 음이 난다.",
+                            text = if (deepUnlocked) {
+                                "강화 성공·실패·파괴, 방지권, 줍기, 사냥 타격에 소리가 붙는다. " +
+                                    "성공음은 단계가 높을수록 높은 음이 난다."
+                            } else {
+                                "강화 성공·실패·파괴, 방지권과 줍기에 소리가 붙는다. " +
+                                    "성공음은 단계가 높을수록 높은 음이 난다."
+                            },
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         )
                     }
-                    Switch(checked = settings.soundOn, onCheckedChange = onSoundChange)
+                    PixelToggle(checked = settings.soundOn, onCheckedChange = onSoundChange)
                 }
             }
         }
@@ -77,13 +82,18 @@ fun SettingsScreen(
                     Column(Modifier.weight(1f)) {
                         Text("진동", fontWeight = FontWeight.Medium)
                         Text(
-                            text = "성공은 짧게, 실패는 둔탁하게, 파괴는 길게 울린다. " +
-                                "사냥 탭마다는 울리지 않는다 — 연타라 손이 아프다.",
+                            text = if (deepUnlocked) {
+                                "성공은 짧게, 실패는 둔탁하게, 파괴는 길게 울린다. " +
+                                    "사냥 탭마다는 울리지 않는다 — 연타라 손이 아프다."
+                            } else {
+                                "성공은 짧게, 실패는 둔탁하게, 파괴는 길게 울린다. " +
+                                    "강화 결과를 손끝에서도 바로 구분할 수 있다."
+                            },
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         )
                     }
-                    Switch(checked = settings.hapticsOn, onCheckedChange = onHapticsChange)
+                    PixelToggle(checked = settings.hapticsOn, onCheckedChange = onHapticsChange)
                 }
             }
         }
@@ -106,7 +116,7 @@ fun SettingsScreen(
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         )
                     }
-                    Switch(checked = settings.autoPrevent, onCheckedChange = onAutoPreventChange)
+                    PixelToggle(checked = settings.autoPrevent, onCheckedChange = onAutoPreventChange)
                 }
                 Spacer(Modifier.height(6.dp))
                 Text(
@@ -124,8 +134,13 @@ fun SettingsScreen(
             Column(Modifier.padding(16.dp)) {
                 Text("진행 초기화", fontWeight = FontWeight.Medium)
                 Text(
-                    text = "검·골드·조각·아이템·사냥 진행을 지운다. " +
-                        "도감·업적·통계·설정은 지워지지 않는다.",
+                    text = if (deepUnlocked) {
+                        "검·골드·조각·아이템·사냥 진행을 지운다. " +
+                            "도감·업적·통계·설정은 지워지지 않는다."
+                    } else {
+                        "검·골드·조각·아이템을 지운다. " +
+                            "도감·업적·통계·설정은 지워지지 않는다."
+                    },
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )
@@ -182,8 +197,9 @@ fun SettingsScreen(
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Text(
-                    text = "타사 게임의 그래픽·사운드를 사용하지 않았으며, 변형해 사용하지도 않았다.\n" +
-                        "비트맵 이미지 파일이 하나도 없다. 전부 벡터다.",
+                    text = "타사 상용 게임의 그래픽·사운드는 사용하지 않았다.\n" +
+                        "검·몬스터는 위 라이선스의 픽셀 비트맵을 사용하고, " +
+                        "UI 아이콘은 프로젝트 전용 픽셀 자산으로 구성했다.",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )

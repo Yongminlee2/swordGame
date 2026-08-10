@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.Button as MaterialButton
 import androidx.compose.material3.OutlinedButton as MaterialOutlinedButton
@@ -33,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
@@ -171,6 +174,75 @@ fun ThinRule(
             .height(thickness)
             .background(color),
     )
+}
+
+/** 앱 팔레트와 잘린 모서리를 공유하는 공통 진행 막대. */
+@Composable
+fun PixelProgressBar(
+    progress: Float,
+    modifier: Modifier = Modifier,
+    height: Dp = 7.dp,
+    color: Color = MaterialTheme.colorScheme.primary,
+) {
+    val shape = CutCornerShape(2.dp)
+    Box(
+        modifier = modifier
+            .height(height)
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .border(1.dp, MaterialTheme.colorScheme.outline, shape),
+    ) {
+        Box(
+            Modifier
+                .fillMaxWidth(progress.coerceIn(0f, 1f))
+                .fillMaxSize()
+                .background(color),
+        )
+    }
+}
+
+/** 설정 화면용 픽셀 토글. 48dp 터치 영역 안에 각진 스위치를 둔다. */
+@Composable
+fun PixelToggle(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val trackShape = CutCornerShape(4.dp)
+    Box(
+        modifier = modifier
+            .size(width = 58.dp, height = 48.dp)
+            .toggleable(
+                value = checked,
+                role = Role.Switch,
+                onValueChange = onCheckedChange,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .width(52.dp)
+                .height(28.dp)
+                .border(1.dp, MaterialTheme.colorScheme.outline, trackShape)
+                .background(
+                    if (checked) MaterialTheme.colorScheme.primary.copy(alpha = 0.28f)
+                    else MaterialTheme.colorScheme.surfaceVariant,
+                    trackShape,
+                )
+                .padding(4.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .align(if (checked) Alignment.CenterEnd else Alignment.CenterStart)
+                    .size(18.dp)
+                    .background(
+                        if (checked) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        CutCornerShape(2.dp),
+                    ),
+            )
+        }
+    }
 }
 
 /** 기준 시안의 황금색 픽셀 베벨 강화 버튼. */

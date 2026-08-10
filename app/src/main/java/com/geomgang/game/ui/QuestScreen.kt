@@ -1,17 +1,14 @@
 package com.geomgang.game.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -134,22 +131,12 @@ private fun QuestRow(
                 }
             }
             Spacer(Modifier.height(8.dp))
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-            ) {
-                Box(
-                    Modifier
-                        .fillMaxWidth((progress.toFloat() / quest.target).coerceIn(0f, 1f))
-                        .fillMaxHeight()
-                        .background(
-                            if (done) ForgeGreen else MaterialTheme.colorScheme.primary,
-                        ),
-                )
-            }
+            PixelProgressBar(
+                progress = progress.toFloat() / quest.target,
+                modifier = Modifier.fillMaxWidth(),
+                height = 8.dp,
+                color = if (done) ForgeGreen else MaterialTheme.colorScheme.primary,
+            )
         }
     }
 }
