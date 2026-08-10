@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +28,7 @@ import com.geomgang.core.GauntletChoice
 import com.geomgang.core.Zone
 import com.geomgang.game.ForgeUiState
 import com.geomgang.game.GauntletUiState
+import com.geomgang.game.R
 
 /**
  * 무한 회랑.
@@ -58,11 +57,10 @@ fun GauntletScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             OutlinedButton(onClick = onLeave) {
-                ForgeIcon(
-                    imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                PixelIcon(
+                    resource = R.drawable.ui_pixel_back,
                     contentDescription = null,
-                    modifier = Modifier.size(17.dp),
-                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(21.dp),
                 )
                 Text("나가기")
             }

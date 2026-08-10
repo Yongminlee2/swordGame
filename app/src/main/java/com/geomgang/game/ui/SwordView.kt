@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.size
 import android.graphics.BitmapFactory
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,7 +58,11 @@ fun SwordView(
         contentAlignment = Alignment.Center,
     ) {
         if (sword != null) {
-            Sprite2Box(sword, Modifier.fillMaxSize())
+            Sprite2Box(
+                sword = sword,
+                modifier = Modifier.fillMaxSize(),
+                auraColor = MaterialTheme.colorScheme.primary,
+            )
         }
     }
 }
@@ -69,7 +74,7 @@ fun SwordView(
  * 어느 시트인지는 [SwordSheet3.sourceFor] 가 정한다.
  */
 @Composable
-private fun Sprite2Box(sword: Sword, modifier: Modifier) {
+private fun Sprite2Box(sword: Sword, modifier: Modifier, auraColor: Color) {
     val source = SwordSheet3.sourceFor(sword)
 
     // 낱장 그림을 쓰는 구간은 시트를 보지 않는다. 오라도 그리지 않는다 -
@@ -106,7 +111,10 @@ private fun Sprite2Box(sword: Sword, modifier: Modifier) {
             val r = size.minDimension * 0.46f
             drawCircle(
                 brush = Brush.radialGradient(
-                    colors = listOf(aura.color.copy(alpha = aura.alpha), Color.Transparent),
+                    colors = listOf(
+                        auraColor.copy(alpha = (aura.alpha * 0.45f).coerceAtMost(0.16f)),
+                        Color.Transparent,
+                    ),
                     center = Offset(size.width / 2f, size.height / 2f),
                     radius = r,
                 ),

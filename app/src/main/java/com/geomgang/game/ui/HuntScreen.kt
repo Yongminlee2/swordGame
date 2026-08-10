@@ -20,9 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
@@ -43,6 +41,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.unit.sp
+import com.geomgang.game.R
 import com.geomgang.core.AdventureState
 import com.geomgang.core.Combat
 import com.geomgang.core.FamilyStyle
@@ -107,11 +106,10 @@ fun HuntScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             OutlinedButton(onClick = onLeave) {
-                ForgeIcon(
-                    imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                PixelIcon(
+                    resource = R.drawable.ui_pixel_back,
                     contentDescription = null,
-                    modifier = Modifier.size(17.dp),
-                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(21.dp),
                 )
                 Text("사냥터")
             }
@@ -467,11 +465,12 @@ private fun ZoneForgePanel(
                         color = MaterialTheme.colorScheme.primary,
                     )
 
-                    else -> ForgeIcon(
-                        imageVector = Icons.Outlined.ChevronRight,
+                    else -> PixelIcon(
+                        resource = R.drawable.ui_pixel_back,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .size(18.dp)
+                            .rotate(180f),
                     )
                 }
                 if (unlocked && !Combat.canBeatBoss(sword, zone)) {

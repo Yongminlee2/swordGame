@@ -11,19 +11,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.annotation.DrawableRes
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geomgang.core.HelpTopic
 import com.geomgang.core.HelpTopics
+import com.geomgang.game.R
 
 /**
  * 도움말.
@@ -58,11 +57,10 @@ private fun TopicForgePanel(topic: HelpTopic) {
     ForgePanel(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                ForgeIcon(
-                    imageVector = helpIcon(topic.title),
+                PixelIcon(
+                    resource = helpIcon(topic.title),
                     contentDescription = null,
-                    modifier = Modifier.size(17.dp),
-                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(23.dp),
                 )
                 Text(
                     text = "  ${topic.title}",
@@ -82,16 +80,17 @@ private fun TopicForgePanel(topic: HelpTopic) {
     }
 }
 
-private fun helpIcon(title: String): ImageVector = when (title) {
-    "강화" -> Icons.Outlined.Construction
-    "강화 재료" -> Icons.Outlined.ChangeHistory
-    "계열" -> Icons.Outlined.Category
-    "조합" -> Icons.Outlined.Science
-    "사냥" -> Icons.Outlined.Forest
-    "스킬" -> Icons.Outlined.Bolt
-    "특수강화" -> Icons.Outlined.Star
-    "무한 회랑" -> Icons.Outlined.AllInclusive
-    "자리비움" -> Icons.Outlined.Schedule
-    "펫" -> Icons.Outlined.Pets
-    else -> Icons.Outlined.AutoAwesome
+@DrawableRes
+private fun helpIcon(title: String): Int = when (title) {
+    "강화" -> R.drawable.ui_pixel_training
+    "강화 재료" -> R.drawable.ui_pixel_stone
+    "계열" -> R.drawable.ui_pixel_book
+    "조합" -> R.drawable.ui_pixel_craft
+    "사냥" -> R.drawable.ui_pixel_hunt
+    "스킬" -> R.drawable.ui_pixel_bolt
+    "특수강화" -> R.drawable.ui_pixel_star
+    "무한 회랑" -> R.drawable.ui_pixel_hunt
+    "자리비움" -> R.drawable.ui_pixel_gold
+    "펫" -> R.drawable.ui_pixel_pets
+    else -> R.drawable.ui_pixel_help
 }

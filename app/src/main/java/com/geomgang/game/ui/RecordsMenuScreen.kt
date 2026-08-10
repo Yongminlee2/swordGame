@@ -10,20 +10,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.HelpOutline
-import androidx.compose.material.icons.automirrored.outlined.MenuBook
-import androidx.compose.material.icons.outlined.BarChart
-import androidx.compose.material.icons.outlined.ChevronRight
-import androidx.compose.material.icons.outlined.EmojiEvents
-import androidx.compose.material.icons.outlined.Pets
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.annotation.DrawableRes
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,6 +24,7 @@ import com.geomgang.core.Achievement
 import com.geomgang.core.Progress
 import com.geomgang.core.ProgressState
 import com.geomgang.core.WeaponCatalog
+import com.geomgang.game.R
 
 /** 도감·업적·통계·설정으로 가는 갈림길. 강화 화면을 버튼으로 채우지 않으려고 한 단계 둔다. */
 @Composable
@@ -59,39 +53,39 @@ fun RecordsMenuScreen(
         ScreenHeader(title = "기록", onBack = onBack)
 
         MenuRow(
-            icon = Icons.AutoMirrored.Outlined.MenuBook,
+            icon = R.drawable.ui_pixel_book,
             title = "도감",
             subtitle = "$codexCount / ${WeaponCatalog.ENTRIES.size}",
             onClick = onOpenCodex,
         )
         if (deepUnlocked) {
             MenuRow(
-                icon = Icons.Outlined.Pets,
+                icon = R.drawable.ui_pixel_pets,
                 title = "펫",
                 subtitle = "$ownedPets / ${com.geomgang.core.PetKind.entries.size}",
                 onClick = onOpenPets,
             )
         }
         MenuRow(
-            icon = Icons.Outlined.EmojiEvents,
+            icon = R.drawable.ui_pixel_trophy,
             title = "업적 · 칭호",
             subtitle = "${progress.achievements.size} / ${Achievement.entries.size}",
             onClick = onOpenAchievements,
         )
         MenuRow(
-            icon = Icons.Outlined.BarChart,
+            icon = R.drawable.ui_pixel_stats,
             title = "통계",
             subtitle = "확률 비교",
             onClick = onOpenStats,
         )
         MenuRow(
-            icon = Icons.AutoMirrored.Outlined.HelpOutline,
+            icon = R.drawable.ui_pixel_help,
             title = "도움말",
             subtitle = "재료·계열·조합·스킬 규칙",
             onClick = onOpenHelp,
         )
         MenuRow(
-            icon = Icons.Outlined.Settings,
+            icon = R.drawable.ui_pixel_settings,
             title = "설정",
             subtitle = "소리 · 라이선스",
             onClick = onOpenSettings,
@@ -100,7 +94,7 @@ fun RecordsMenuScreen(
 }
 
 @Composable
-private fun MenuRow(icon: ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
+private fun MenuRow(@DrawableRes icon: Int, title: String, subtitle: String, onClick: () -> Unit) {
     ForgePanel(
         modifier = Modifier
             .fillMaxWidth()
@@ -115,13 +109,12 @@ private fun MenuRow(icon: ImageVector, title: String, subtitle: String, onClick:
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                ForgeIcon(
-                    imageVector = icon,
+                PixelIcon(
+                    resource = icon,
                     contentDescription = null,
                     modifier = Modifier
                         .padding(end = 12.dp)
                         .size(25.dp),
-                    tint = MaterialTheme.colorScheme.primary,
                 )
                 Column {
                     Text(title, fontWeight = FontWeight.Bold)
@@ -132,11 +125,12 @@ private fun MenuRow(icon: ImageVector, title: String, subtitle: String, onClick:
                     )
                 }
             }
-            ForgeIcon(
-                imageVector = Icons.Outlined.ChevronRight,
+            PixelIcon(
+                resource = R.drawable.ui_pixel_back,
                 contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .size(18.dp)
+                    .rotate(180f),
             )
         }
     }

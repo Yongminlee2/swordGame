@@ -6,10 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
-import androidx.compose.ui.Modifier
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -19,6 +16,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.geomgang.core.Difficulty
 import com.geomgang.core.SaveStore
 import com.geomgang.core.WeaponFamily
@@ -82,21 +81,26 @@ class MainActivity : ComponentActivity() {
             statusBarStyle = SystemBarStyle.dark(systemBarColor),
             navigationBarStyle = SystemBarStyle.dark(systemBarColor),
         )
+        enterImmersiveMode()
         setContent {
             SwordForgeTheme {
                 Surface {
-                    // **인셋은 여기 한 곳에서만 뺀다.**
-                    //
-                    // 화면마다 각자 처리하면 스무 개 넘는 화면 중 하나는 반드시 빠뜨리고,
-                    // 그 화면의 맨 아래 버튼이 내비게이션 바에 먹힌다. Surface 한 겹에서
-                    // 빼면 모든 화면이 한 번에 안전해진다.
-                    //
-                    // safeDrawing 은 상태바·내비게이션 바·디스플레이 컷아웃(노치)을 함께 본다.
-                    Box(Modifier.safeDrawingPadding()) {
-                        App(SaveStore(filesDir))
-                    }
+                    App(SaveStore(filesDir))
                 }
             }
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) enterImmersiveMode()
+    }
+
+    private fun enterImmersiveMode() {
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            hide(WindowInsetsCompat.Type.systemBars())
         }
     }
 }

@@ -1,6 +1,6 @@
 package com.geomgang.game.ui
 
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
@@ -15,16 +15,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-val ForgeCyan = Color(0xFF48D6D2)
-val ForgeAmber = Color(0xFFF2B338)
-val ForgeOrange = Color(0xFFFF8B2C)
-val ForgeRed = Color(0xFFFF625F)
+val ForgeCyan = Color(0xFF45D1CF)
+val ForgeAmber = Color(0xFFF4B53B)
+val ForgeOrange = Color(0xFFFF982E)
+val ForgeRed = Color(0xFFFF4C4C)
 val ForgeGreen = Color(0xFF67D995)
-val ForgeInk = Color(0xFF071016)
-val ForgePanelColor = Color(0xE610181F)
-val ForgeLine = Color(0xFF28343C)
-val ForgeText = Color(0xFFF1F4F5)
-val ForgeMuted = Color(0xFF89959D)
+val ForgeInk = Color(0xFF050C12)
+val ForgePanelColor = Color(0xD9121A21)
+val ForgeLine = Color(0xFF303A43)
+val ForgeText = Color(0xFFF1F1F3)
+val ForgeMuted = Color(0xFF92929A)
 
 private val DeepColors = darkColorScheme(
     primary = ForgeCyan,
@@ -37,7 +37,7 @@ private val DeepColors = darkColorScheme(
     onBackground = ForgeText,
     surface = ForgePanelColor,
     onSurface = ForgeText,
-    surfaceVariant = Color(0xFF131D24),
+    surfaceVariant = Color(0xFF141C23),
     onSurfaceVariant = ForgeMuted,
     outline = ForgeLine,
     error = ForgeRed,
@@ -51,9 +51,9 @@ private val EarlyColors = darkColorScheme(
     onPrimaryContainer = Color(0xFFFFE2A8),
     secondary = ForgeOrange,
     onSecondary = Color(0xFF221002),
-    background = Color(0xFF100C08),
+    background = Color(0xFF0D0A07),
     onBackground = Color(0xFFF4EEE8),
-    surface = Color(0xE617120E),
+    surface = Color(0xD918120D),
     onSurface = Color(0xFFF4EEE8),
     surfaceVariant = Color(0xFF211811),
     onSurfaceVariant = Color(0xFFA99C91),
@@ -63,37 +63,37 @@ private val EarlyColors = darkColorScheme(
 )
 
 private val ForgeShapes = Shapes(
-    extraSmall = RoundedCornerShape(2.dp),
-    small = RoundedCornerShape(2.dp),
-    medium = RoundedCornerShape(3.dp),
-    large = RoundedCornerShape(4.dp),
-    extraLarge = RoundedCornerShape(6.dp),
+    extraSmall = CutCornerShape(2.dp),
+    small = CutCornerShape(3.dp),
+    medium = CutCornerShape(4.dp),
+    large = CutCornerShape(5.dp),
+    extraLarge = CutCornerShape(6.dp),
 )
 
 private val ForgeTypography = Typography(
     bodyLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Normal,
-        fontSize = 15.sp,
-        lineHeight = 21.sp,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
     ),
     bodyMedium = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Normal,
-        fontSize = 13.sp,
-        lineHeight = 18.sp,
+        fontSize = 12.sp,
+        lineHeight = 17.sp,
     ),
     labelLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Bold,
-        fontSize = 14.sp,
+        fontSize = 13.sp,
         letterSpacing = 0.2.sp,
     ),
     titleLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Black,
-        fontSize = 24.sp,
-        lineHeight = 30.sp,
+        fontSize = 22.sp,
+        lineHeight = 28.sp,
         letterSpacing = (-0.4).sp,
     ),
     titleMedium = TextStyle(

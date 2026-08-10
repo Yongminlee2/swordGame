@@ -11,12 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AttachMoney
-import androidx.compose.material.icons.outlined.Diamond
-import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material.icons.outlined.StarBorder
-import androidx.compose.material.icons.outlined.TrackChanges
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geomgang.core.SwordNames
 import com.geomgang.game.ForgeUiState
+import com.geomgang.game.R
 
 /**
  * 특수강화(별) 전용 화면.
@@ -87,11 +82,11 @@ fun StarScreen(
         Spacer(Modifier.height(14.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
             repeat(star.maxStars) { index ->
-                ForgeIcon(
-                    imageVector = if (index < star.stars) Icons.Outlined.Star else Icons.Outlined.StarBorder,
+                PixelIcon(
+                    resource = R.drawable.ui_pixel_star,
                     contentDescription = null,
                     modifier = Modifier.size(25.dp),
-                    tint = ForgeAmber,
+                    alpha = if (index < star.stars) 1f else 0.18f,
                 )
             }
         }
@@ -125,9 +120,9 @@ fun StarScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                Stat(Icons.Outlined.TrackChanges, "성공", "${star.successPercent}%", MaterialTheme.colorScheme.primary)
-                Stat(Icons.Outlined.Diamond, "조각", "${star.shardCost}")
-                Stat(Icons.Outlined.AttachMoney, "골드", compactGold(star.goldCost))
+                Stat(R.drawable.ui_pixel_target, "성공", "${star.successPercent}%", MaterialTheme.colorScheme.primary)
+                Stat(R.drawable.ui_pixel_gem, "조각", "${star.shardCost}")
+                Stat(R.drawable.ui_pixel_gold, "골드", compactGold(star.goldCost))
             }
             Spacer(Modifier.height(12.dp))
             Button(
