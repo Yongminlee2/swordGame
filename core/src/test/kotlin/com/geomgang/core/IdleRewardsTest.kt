@@ -18,11 +18,23 @@ class IdleRewardsTest {
             bestLevel = LegendForge.LEVEL,
         )
 
+    private fun seasonOneState(bestLevel: Int = 0) = state().copy(
+        bestLevel = bestLevel,
+        dragonForged = false,
+        adventure = AdventureState(),
+    )
+
     @Test
     fun `짧게 나갔다 오면 보상이 없다`() {
         assertNull(IdleRewards.rewardFor(state(), 0))
         assertNull(IdleRewards.rewardFor(state(), IdleRewards.MIN_SECONDS - 1))
         assertNotNull(IdleRewards.rewardFor(state(), IdleRewards.MIN_SECONDS))
+    }
+
+    @Test
+    fun `시즌1에서 계산된 골드가 0이면 복귀 보상을 띄우지 않는다`() {
+        assertNull(IdleRewards.rewardFor(seasonOneState(), IdleRewards.MIN_SECONDS))
+        assertNotNull(IdleRewards.rewardFor(seasonOneState(), IdleRewards.MAX_SECONDS))
     }
 
     @Test

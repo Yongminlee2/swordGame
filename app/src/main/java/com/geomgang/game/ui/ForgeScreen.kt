@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -40,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import com.geomgang.core.BonusSource
-import com.geomgang.core.Difficulty
 import com.geomgang.core.ForgeResult
 import com.geomgang.core.IdleReward
 import com.geomgang.core.IdleRewards
@@ -346,23 +344,25 @@ fun ForgeScreen(
         if (state.sword != null) {
             // 이번 한 번이 어떻게 끝날 수 있는지. 성공률만 보여 주던 탓에
             // 무한 구간에서 **실패가 곧 파괴**라는 걸 모르고 누르게 됐다.
+            // 라벨에 숫자를 다시 적지 않는다 - 큰 값 아래 "성공 20%" 가 또 붙으면
+            // 같은 수가 두 번 보여 오타처럼 읽힌다. 숫자는 위, 이름은 아래 한 번씩이다.
             val outcomeStats = buildList {
                 add(
                     OutcomeDisplay(
                         R.drawable.ui_pixel_target,
-                        "성공 ${state.odds.success}%",
+                        "성공",
                         "${state.odds.success}%",
                         MaterialTheme.colorScheme.primary,
                     ),
                 )
                 if (state.odds.stay > 0) {
-                    add(OutcomeDisplay(R.drawable.ui_pixel_equal, "유지 ${state.odds.stay}%", "${state.odds.stay}%"))
+                    add(OutcomeDisplay(R.drawable.ui_pixel_equal, "유지", "${state.odds.stay}%"))
                 }
                 if (state.odds.drop > 0) {
                     add(
                         OutcomeDisplay(
                             R.drawable.ui_pixel_down,
-                            "하락 ${state.odds.drop}%",
+                            "하락",
                             "${state.odds.drop}%",
                             ForgeOrange,
                         ),
@@ -372,7 +372,7 @@ fun ForgeScreen(
                     add(
                         OutcomeDisplay(
                             R.drawable.ui_pixel_burst,
-                            "파괴 ${state.odds.destroy}%",
+                            "파괴",
                             "${state.odds.destroy}%",
                             MaterialTheme.colorScheme.error,
                         ),
@@ -400,9 +400,18 @@ fun ForgeScreen(
                     }
                 }
             }
-            Spacer(Modifier.height(14.dp))
+            // 쌓은 보너스 합계와 담금질은 재설계에서 떨어져 나갔던 것을 되살린 것이다.
+            // 보너스 줄은 도감·스킬이 자라는 것이 보이는 유일한 자리고, 담금질은
+            // 무한 구간에서 실패가 눈에 보이는 무언가를 남기는 유일한 자리다.
+            Spacer(Modifier.height(6.dp))
+            BonusBreakdown(state.bonusSources)
+            state.temper?.let {
+                Spacer(Modifier.height(6.dp))
+                TemperBar(it)
+            }
+            Spacer(Modifier.height(8.dp))
             ThinRule(Modifier.fillMaxWidth())
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
@@ -1061,17 +1070,6 @@ private fun ResultBanner(result: ForgeResult?) {
     Text(text = text, color = color, fontSize = 18.sp, fontWeight = FontWeight.Bold)
 }
 
-@Composable
-private fun InfoRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(label, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
-        Text(value, fontWeight = FontWeight.Medium)
-    }
-}
-
 /** 좌우로 몇 번 흔들리다 제자리로 돌아온다. */
 private suspend fun Animatable<Float, *>.shakeOnce(amplitude: Float, durationMillis: Int) {
     snapTo(0f)
@@ -1102,11 +1100,4 @@ private suspend fun Animatable<Float, *>.flashOnce(durationMillis: Int) {
             0f at durationMillis
         },
     )
-}
-
-private fun Difficulty.displayLabel(): String = when (this) {
-    Difficulty.EASY -> "쉬움"
-    Difficulty.NORMAL -> "일반"
-    Difficulty.HARD -> "지옥"
-    Difficulty.ENDLESS -> "무한"
 }

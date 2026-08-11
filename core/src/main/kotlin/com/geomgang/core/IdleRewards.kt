@@ -84,10 +84,14 @@ object IdleRewards {
         // 강화석·조각을 주면 쓸 수도 없는 것이 쌓인다.
         if (!Unlocks.huntOpen(state)) {
             val full = Economy.sellPrice(state.bestLevel) * FORGE_RATIO
+            val gold = (full * seconds / MAX_SECONDS).toLong()
+            // 저단계 시즌1은 최소 대기 시간을 채워도 비례 계산이 0으로 내림될 수 있다.
+            // 실제 보상이 없는데 복귀 창만 띄우지 않는다.
+            if (gold <= 0L) return null
             return IdleReward(
                 seconds = seconds,
                 zone = null,
-                gold = (full * seconds / MAX_SECONDS).toLong(),
+                gold = gold,
                 stones = 0,
             )
         }

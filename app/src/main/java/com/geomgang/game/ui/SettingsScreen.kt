@@ -36,14 +36,7 @@ fun SettingsScreen(
     onReset: () -> Unit,
     onBack: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-    ) {
-        ScreenHeader(title = "설정", onBack = onBack)
-
+    ScrollableForgeScreen(title = "설정", onBack = onBack) {
         ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 Row(

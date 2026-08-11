@@ -1,103 +1,40 @@
-# 1번 시안 픽셀 인터페이스 디자인 QA
+# SwordForge UI Design QA
 
-## 비교 대상
+## Visual truth and test state
 
-- 기준 시안: `C:\workAndroid\SwordForge\build\visual-audit\selected-design-1\reference-design-1.png`
-- 구현 캡처: `C:\workAndroid\SwordForge\build\visual-audit\pixel-reference-pass\09-season2-layout-clean.png`
-- 시즌1 최종 설치 캡처: `C:\workAndroid\SwordForge\build\visual-audit\pixel-reference-pass\23-final-installed-season1-clean.png`
-- 시즌1 기록 캡처: `C:\workAndroid\SwordForge\build\visual-audit\pixel-reference-pass\21-season1-records.png`
-- 시즌1 전 화면 재검사: `C:\workAndroid\SwordForge\build\visual-audit\full-screen-audit\after-season1`
-- 시즌2 전 화면 재검사: `C:\workAndroid\SwordForge\build\visual-audit\full-screen-audit\after-season2`
-- 전체 비교 이미지: `C:\workAndroid\SwordForge\build\visual-audit\pixel-reference-pass\10-source-vs-final-layout.png`
-- 전체 메뉴 비교 이미지: `C:\workAndroid\SwordForge\build\visual-audit\pixel-reference-pass\16-menu-contact-sheet.png`
-- 기준 시안 크기: 853×1848 px, 1080×2340으로 정규화
-- 구현 캡처 크기: 1080×2340 px, SM_A165N, 물리 밀도 450 dpi, 글꼴 배율 1.0
-- CSS 크기: 해당 없음. Jetpack Compose 네이티브 화면이다.
-- 상태: 용검 +16을 든 시즌2 상태를 기준 시안과 구현 양쪽의 주 비교 상태로 사용했다.
+- Reference: `C:/workAndroid/SwordForge/art-review/ui-reference/selected-design-1.png` (853 x 1844)
+- Implementation: `C:/workAndroid/SwordForge/build/visual-qa/final-redesign-20260810/13-main-season2-final.png` (1080 x 2340, 450 dpi)
+- Comparison: `C:/workAndroid/SwordForge/build/visual-qa/final-redesign-20260810/16-design-comparison.png`
+- Focus comparison: `C:/workAndroid/SwordForge/build/visual-qa/final-redesign-20260810/17-design-comparison-focus.png`
+- State: Season II, dragon sword +16, 8,651만 gold, 30 shards, 25 wards. Enhancement stones are live save data (48 in the implementation, 24 in the reference).
 
-## 전체 화면 비교
+The implementation capture was normalized to the reference aspect and inspected side by side. The header hierarchy, resource strip, sword stage, probability panel, costs, toggles, primary enhancement action, hunt strip, and bottom navigation all match the selected direction. The new sword art and live resource values are intentional deviations.
 
-기준과 구현을 같은 1080×2340 크기로 맞춘 뒤 한 캔버스에 나란히 놓고 확인했다. 제목과 시즌,
-최고 기록, 재화, 검, 이름과 단계, 계열 효과, 결과 확률, 비용과 판매가, 소모품, 강화 버튼,
-강화석과 사냥터, 하단 다섯 메뉴가 같은 순서와 비슷한 화면 비율로 배치된다. 앱이 시스템
-영역까지 사용하므로 기준 시안과 구현 화면의 종횡비도 일치한다. 모든 조작은 한 화면에 있고
-세로 스크롤은 생기지 않는다.
+## Interaction and layout verification
 
-전체 비교 이미지에서 양쪽 텍스트와 16비트 픽셀 아이콘을 원본 크기로 읽을 수 있어 헤더,
-확률 열, 비용, 소모품, 강화 버튼과 하단 메뉴의 선 굵기와 간격까지 함께 확인했다.
+- Main forge screen remains a fixed, non-scrolling game screen.
+- Bottom navigation and menu routes were exercised on the connected SM-A165N device.
+- Long menu bodies scroll independently while title, season badge, back action, and wallet remain fixed.
+- Shop fixed-header evidence:
+  - `build/visual-qa/final-redesign-20260810/14-shop-fixed-top.png`
+  - `build/visual-qa/final-redesign-20260810/15-shop-fixed-scroll.png`
+- Sword codex and adjacent-level sprite changes were checked with live app renders.
+- Final chroma-clean legend sprite evidence:
+  - `build/visual-qa/final-redesign-20260810/19-legend-clean.png`
+- Browser and console checks are not applicable to this native Android build. Gradle unit tests, APK assembly, ADB installation, and device rendering were used instead.
 
-## 항목별 확인
+## Iteration history
 
-- 글꼴: 제목, 수치, 보조 설명의 굵기와 명도 계층이 기준과 일치한다. 실제 화면은 시스템 한글
-  글꼴을 사용하지만 크기와 행간은 기준 시안의 조밀한 게임 UI 비율에 맞췄다.
-- 간격: 재화는 별도 카드 없이 한 줄에 놓고, 검 영역을 중심으로 확률과 조작을 분리했다.
-  강화 버튼과 하단 다섯 메뉴는 1080×2340 안에서 잘리지 않는다.
-- 색: 시즌2는 시안의 청록·시안과 검푸른 배경을 사용한다. 시즌1은 같은 명도 구조를 유지한
-  채 황동·호박색으로 바꿔 기능 경계를 분명히 한다.
-- 이미지: 기존 검 스프라이트는 수정하지 않았다. 배경 조명과 낮은 투명도의 불티만 계절별로
-  적용해 글자와 검의 대비를 확보했다.
-- 아이콘: 재화, 상태, 비용, 소모품, 다섯 메뉴와 하위 화면까지 30개의 16비트 픽셀 자산으로
-  통일했다. 이모지, 문자 기호와 범용 Material 아이콘은 남아 있지 않다.
-- 문구: 실제 확률, 비용, 효과와 소모품 개수를 그대로 보여 준다. 시즌1에는 강화석·사냥터·펫
-  같은 시즌2 전용 기능을 안내하지 않는다.
+1. Per-level sword art reused five base silhouettes. Replaced with 177 non-empty, edge-safe, byte-unique sprites so every enhancement level has a distinct source silhouette.
+2. Generated sword edges retained green chroma spill. Updated the production generator to remap residual green to the cyan family palette and regenerated the sheets.
+3. Long menu screens scrolled the exit route and resource header away. Introduced a shared fixed-header/scrolling-body layout and verified it before and after a device swipe.
+4. Empty storage did not explain the next action. Added season-aware shop/hunt calls to action.
 
-## 비교 이력
+## Findings
 
-1. 첫 비교에서 둥근 카드, 범용 아이콘, 재화를 감싼 외곽 패널이 기준 시안과 달라 P1로
-   분류했다. 잘린 모서리 공통 패널, 한 줄 재화 표시와 30개 픽셀 아이콘으로 교체했다.
-2. 두 번째 비교에서 검 크기와 후광, 확률 열의 반복 설명과 구분선, 강화 버튼 아래 여백이
-   달라 P1로 분류했다. 검 영역의 최대 높이, 시즌 강조색 후광, 네 열 구분선과 메뉴 높이를
-   다시 맞췄다.
-3. 최종 비교에서는 기준과 구현 사이에 수정이 필요한 P0·P1·P2 차이가 남지 않았다. 기존
-   검 그림과 시스템 한글 글꼴은 게임 자산 보존을 위한 의도한 차이다.
-
-## 동작과 시즌 확인
-
-- 대장간 하단 상점·조합·가방·단련·도감은 모두 실제 화면으로 연결된다.
-- 기록, 도움말, 설정, 사냥터와 시련 화면의 뒤로 가기와 주요 이동을 확인했다.
-- 시즌1 대장간 XML에서 `scrollable=true`, 강화석과 사냥터가 없음을 확인했다.
-- 시즌1 기록 XML에서 펫과 사냥터 문구, `scrollable=true`가 없음을 확인했다.
-- 실기기 화면 검증용 시즌2 세이브를 사용한 뒤 골드 1,014, 직검 +0의 원래 세이브로 복원했다.
-- 네이티브 앱 화면이므로 브라우저 콘솔 항목은 해당하지 않는다. 최종 실행에서 치명적 로그가
-  없어야 한다.
-
-## 결함
-
-- P0: 없음
-- P1: 없음
-- P2: 없음
-
-final result: passed
-
-## 전 화면 재감사 — 2026-08-10
-
-기준 화면만 맞춘 뒤 끝내지 않고 시즌1 16장, 시즌2 24장의 현재 설치본 화면을 다시
-캡처했다. 상점·조합·가방·단련·특수강화·도감·기록·펫·업적·통계·도움말·설정과
-사냥터 목록·전투·무한 회랑 전투·시간 종료 상태를 실제 기기에서 직접 이동해 확인했다.
-
-첫 검사에서 다음 차이를 찾았다.
-
-- 시즌1 도움말과 설정에 강화석·사냥처럼 아직 열리지 않은 기능 설명이 남아 있었다.
-- 시즌1 단련에 조작할 수 없는 특수강화 패널이, 기록 메뉴에는 재료·스킬 안내가 남아 있었다.
-- 상점 계열 칩, 설정 스위치, 단련·도감 진행 바가 보라색·둥근 Material 기본 형태였다.
-- 조합 화면을 스크롤하면 목록 내용이 고정 재화 줄 아래로 그려졌고, 긴 정수 요구는 수량만
-  다음 줄로 떨어졌다.
-- 사냥 전투만 구역색 전체 배경과 둥근 HP 바를 써 나머지 메뉴와 다른 게임처럼 보였다.
-- 무한 회랑의 상단 정보와 HP·시간 바도 공통 픽셀 부품을 쓰지 않았다.
-- 설정의 “비트맵 파일이 없다”는 문구가 실제 PNG 픽셀 자산 구성과 달랐다.
-
-공통 잘린 모서리 칩·토글·진행 바를 만들고 해당 화면을 교체했다. 사냥 전투는 배경,
-정보 패널, 재화 아이콘, 대상 프레임과 HP 바를 공통 대장간 체계로 다시 구성했으며 전투 중
-세로 스크롤을 없앴다. 시즌1은 특수강화·사냥·펫·정수 설명을 노출하지 않고, 자리비움도
-시즌1 보상만 설명한다. 조합 목록은 고정 헤더 경계에서 잘라 그리고 정수 요구를 별도 줄로
-분리했다.
-
-수정 뒤 같은 상태와 같은 1080×2340 기기에서 전 화면을 다시 캡처했다. 사냥은 실제 탭으로
-처치 수와 몬스터 교체를 확인했고, 무한 회랑은 입장 뒤 제한 시간 종료와 정산 화면까지
-확인했다. 대장간 본 화면은 두 시즌 모두 스크롤 없이 유지된다.
-
-- P0: 없음
-- P1: 없음
-- P2: 없음
+- P0: none
+- P1: none
+- P2: none after fixes
+- P3 accepted: family-specific ornament density varies intentionally to preserve the rough 2D B-grade RPG identity; debug-only adjacent-level previews dim neighboring silhouettes by design.
 
 final result: passed

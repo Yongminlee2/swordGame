@@ -134,11 +134,13 @@ private fun androidx.compose.foundation.layout.ColumnScope.Wave(
         modifier = Modifier
             .weight(1f)
             .fillMaxWidth()
+            .clip(CutCornerShape(5.dp))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.70f))
             .border(1.dp, MaterialTheme.colorScheme.outline, CutCornerShape(5.dp))
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.84f), CutCornerShape(5.dp))
             .clickable(enabled = g.monsterHp > 0, onClick = onTap),
         contentAlignment = Alignment.Center,
     ) {
+        BattleArenaBackdrop(Modifier.fillMaxSize(), danger = g.isBossFloor || g.cursed)
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             // 회랑 몬스터는 무한 회랑 구역의 그림을 순환한다. 보스 층은 보스 그림.
             val hallZone = Zone.ENDLESS_HALL

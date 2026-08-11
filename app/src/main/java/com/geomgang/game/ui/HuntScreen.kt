@@ -82,6 +82,7 @@ fun HuntScreen(
         ZonePicker(state, adventure, onEnterGauntlet, onEnterZone, onBack)
         return
     }
+    val bossReady = hunt.killsInZone >= hunt.killsNeeded && !hunt.isBoss && !hunt.zoneCleared
 
     // 승패는 알림 한 줄이 아니라 창으로 알린다. 5초를 걸고 싸운 결과가
     // 화면 구석 한 줄로 지나가면 그 순간이 없던 일이 된다.
@@ -193,12 +194,58 @@ fun HuntScreen(
                 .weight(1f)
                 .heightIn(min = 300.dp)
                 .fillMaxWidth()
+                .clip(CutCornerShape(5.dp))
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.72f))
                 .border(1.dp, MaterialTheme.colorScheme.outline, CutCornerShape(5.dp))
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.88f), CutCornerShape(5.dp))
-                .clickable(enabled = hunt.targetHp > 0, onClick = onTap),
+                .clickable(enabled = hunt.targetHp > 0 && !bossReady, onClick = onTap),
             contentAlignment = Alignment.Center,
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            BattleArenaBackdrop(Modifier.fillMaxSize(), danger = hunt.isBoss || bossReady)
+
+            if (bossReady) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 22.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = "BOSS GATE OPEN",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Black,
+                        color = ForgeRed,
+                        modifier = Modifier
+                            .clip(CutCornerShape(3.dp))
+                            .background(ForgeRed.copy(alpha = 0.16f))
+                            .border(1.dp, ForgeRed.copy(alpha = 0.65f), CutCornerShape(3.dp))
+                            .padding(horizontal = 9.dp, vertical = 3.dp),
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "${hunt.zone.bossName} 출현",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                    Text(
+                        text = "잡몹 ${hunt.killsNeeded}마리 처치 완료",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f),
+                    )
+                    MonsterSprite(
+                        name = hunt.zone.bossName,
+                        hpRatio = 1f,
+                        isBoss = true,
+                        isRare = false,
+                        enraged = false,
+                        hitSeq = 0,
+                    )
+                    Text(
+                        text = "아래 버튼을 눌러 보스전에 돌입",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = ForgeAmber,
+                    )
+                }
+            } else Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (hunt.event != null) {
                         Text(
@@ -315,7 +362,7 @@ fun HuntScreen(
         }
 
         // --- 보스 도전 ---
-        if (hunt.killsInZone >= hunt.killsNeeded && !hunt.isBoss && !hunt.zoneCleared) {
+        if (bossReady) {
             Spacer(Modifier.height(10.dp))
             val beatable = Combat.canBeatBoss(state.sword, hunt.zone)
             if (!beatable) {
@@ -368,14 +415,7 @@ private fun ZonePicker(
 ) {
     // 구역이 24곳이라 한 화면에 다 들어가지 않는다. 스크롤이 없으면 화면 높이만큼만
     // 보이고 나머지는 없는 것이 된다 - 실제로 "늪지밖에 없다"는 말을 들었다.
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-    ) {
-        ScreenHeader(title = "사냥터", onBack = onBack, wallet = state.wallet())
-
+    ScrollableForgeScreen(title = "사냥터", onBack = onBack, wallet = state.wallet()) {
         if (state.sword == null) {
             ForgePanel(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
@@ -387,7 +427,7 @@ private fun ZonePicker(
                     )
                 }
             }
-            return@Column
+            return@ScrollableForgeScreen
         }
 
         val sword = state.sword
@@ -457,22 +497,24 @@ private fun ZoneForgePanel(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            val alpha = if (unlocked) 1f else 0.35f
+            val titleAlpha = if (unlocked) 1f else 0.62f
+            val secondaryAlpha = if (unlocked) 0.60f else 0.44f
+            val detailAlpha = if (unlocked) 0.50f else 0.38f
             Column(Modifier.weight(1f)) {
                 Text(
                     text = zone.displayName,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = titleAlpha),
                 )
                 Text(
                     text = "권장 +${zone.recommendedLevel} · 몬스터 ${zone.monsters.size}종",
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha * 0.6f),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = secondaryAlpha),
                 )
                 Text(
                     text = zone.monsters.joinToString(" · ") { it.name },
                     fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha * 0.5f),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = detailAlpha),
                 )
                 Text(
                     text = "마리당 %,d~%,d골드".format(
@@ -480,7 +522,7 @@ private fun ZoneForgePanel(
                         zone.monsters.maxOf { zone.goldOf(it) },
                     ),
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha * 0.6f),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = secondaryAlpha),
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
@@ -488,7 +530,7 @@ private fun ZoneForgePanel(
                     !unlocked -> Text(
                         "잠김",
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f),
                     )
 
                     cleared -> Text(

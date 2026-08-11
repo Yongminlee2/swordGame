@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +40,7 @@ import com.geomgang.core.SwordNames
 import com.geomgang.core.UniqueSwords
 import com.geomgang.core.WeaponFamily
 import com.geomgang.game.ForgeUiState
+import com.geomgang.game.R
 
 /**
  * 보관함.
@@ -57,6 +59,7 @@ fun StorageScreen(
     onSell: (Int) -> Unit,
     onScrap: (Int) -> Unit,
     onOffer: (Int) -> Unit,
+    onOpenSource: () -> Unit,
     onBack: () -> Unit,
 ) {
     // 조합검(마검·성검)을 잃는 동작은 한 번 더 묻는다. 이 둘은 기본 검 +20
@@ -80,39 +83,21 @@ fun StorageScreen(
     ) {
         ScreenHeader(title = "보관함", onBack = onBack, wallet = state.wallet())
 
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(
-                text = "${state.storage.size} / ${state.storageCapacity}",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            // 조각은 시즌2 화폐다. 시즌1에 보여 주면 쓸 수 없는 숫자만 하나 는다.
-            Text(
-                text = if (state.deepUnlocked) {
-                    "골드 %,d · 조각 %,d".format(state.gold, state.shards)
-                } else {
-                    "골드 %,d".format(state.gold)
-                },
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-            )
-        }
+        // 골드·조각은 바로 위 지갑 줄([ScreenHeader])이 이미 보여 준다.
+        // 같은 숫자를 두 줄 연달아 적으면 하나가 낡은 값처럼 읽힌다.
+        Text(
+            text = "${state.storage.size} / ${state.storageCapacity}",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+        )
 
         Spacer(Modifier.height(12.dp))
         HeldSwordForgePanel(state, onStore)
         Spacer(Modifier.height(12.dp))
 
         if (state.storage.isEmpty()) {
-            Text(
-                text = if (state.deepUnlocked) {
-                    "보관함이 비어 있다.\n사냥에서 몬스터가 검을 떨어뜨린다 — 보스는 반드시 준다."
-                } else {
-                    "보관함이 비어 있다.\n상점에서 산 검을 바로 넣거나, 들고 있는 검을 보관할 수 있다."
-                },
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
-            )
+            EmptyStoragePanel(deepUnlocked = state.deepUnlocked, onOpenSource = onOpenSource)
             return@Column
         }
 
@@ -128,6 +113,44 @@ fun StorageScreen(
                         guardLoss(sword, "도감에 바친다", pending = { pending = it }) { onOffer(index) }
                     },
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyStoragePanel(deepUnlocked: Boolean, onOpenSource: () -> Unit) {
+    ForgePanel(Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            PixelIcon(
+                resource = R.drawable.ui_pixel_bag,
+                contentDescription = null,
+                modifier = Modifier.size(42.dp),
+                alpha = 0.72f,
+            )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 12.dp),
+            ) {
+                Text("보관함이 비어 있다", fontWeight = FontWeight.Bold)
+                Text(
+                    text = if (deepUnlocked) {
+                        "사냥 전리품과 보스 검을 여기에 모을 수 있다."
+                    } else {
+                        "상점에서 검을 바로 넣거나, 든 검을 보관할 수 있다."
+                    },
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+            }
+            OutlinedButton(onClick = onOpenSource) {
+                Text(if (deepUnlocked) "사냥터" else "상점")
             }
         }
     }

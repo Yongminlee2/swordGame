@@ -94,7 +94,7 @@ private fun PetRow(
                     color = if (owned) {
                         MaterialTheme.colorScheme.onSurface
                     } else {
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f)
                     },
                 )
                 Text(
@@ -104,7 +104,9 @@ private fun PetRow(
                         "${Zone.fromId(pet.zoneId).displayName}의 보스가 품고 있다"
                     },
                     fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    color = MaterialTheme.colorScheme.onSurface.copy(
+                        alpha = if (owned) 0.6f else 0.52f,
+                    ),
                 )
                 if (owned) {
                     Text(

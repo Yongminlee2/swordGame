@@ -39,15 +39,12 @@ fun StarScreen(
     onStarUp: () -> Unit,
     onBack: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+    ScrollableForgeScreen(
+        title = "특수강화",
+        onBack = onBack,
+        wallet = state.wallet(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        ScreenHeader(title = "특수강화", onBack = onBack, wallet = state.wallet())
-
         val sword = state.sword
         val star = state.star
         if (sword == null || star == null) {
@@ -68,7 +65,7 @@ fun StarScreen(
                     )
                 }
             }
-            return@Column
+            return@ScrollableForgeScreen
         }
 
         SwordView(sword = sword, modifier = Modifier.size(140.dp))

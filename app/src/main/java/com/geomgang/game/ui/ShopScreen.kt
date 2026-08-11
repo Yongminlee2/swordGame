@@ -55,15 +55,7 @@ fun ShopScreen(
     onCraft: (recipeId: String, count: Int, family: WeaponFamily?) -> Unit,
     onBack: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-    ) {
-        // 재화는 머리의 지갑 줄이 전부 보여 준다 - 화면마다 따로 쓰지 않는다.
-        ScreenHeader(title = "상점", onBack = onBack, wallet = state.wallet())
-
+    ScrollableForgeScreen(title = "상점", onBack = onBack, wallet = state.wallet()) {
         // --- 검 ---
         ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {

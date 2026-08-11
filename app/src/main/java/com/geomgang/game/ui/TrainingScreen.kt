@@ -39,13 +39,7 @@ fun TrainingScreen(
     onOpenStar: () -> Unit,
     onBack: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-    ) {
-        ScreenHeader(title = "단련", onBack = onBack, wallet = state.wallet())
+    ScrollableForgeScreen(title = "단련", onBack = onBack, wallet = state.wallet()) {
         Spacer(Modifier.height(12.dp))
 
         SkillForgePanel(state, onUpgradeSkill)

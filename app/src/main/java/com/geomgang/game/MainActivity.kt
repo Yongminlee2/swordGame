@@ -192,6 +192,9 @@ private fun App(store: SaveStore) {
             onSell = vm::sellFromStorage,
             onScrap = vm::scrapFromStorage,
             onOffer = vm::offerFromStorage,
+            onOpenSource = {
+                overlay = if (state.deepUnlocked) Overlay.Hunt else Overlay.Shop
+            },
             onBack = { overlay = Overlay.None },
         )
 

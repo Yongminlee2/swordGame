@@ -35,14 +35,7 @@ fun AchievementScreen(
     onSelectTitle: (Achievement?) -> Unit,
     onBack: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-    ) {
-        ScreenHeader(title = "업적 · 칭호", onBack = onBack)
-
+    ScrollableForgeScreen(title = "업적 · 칭호", onBack = onBack) {
         Text(
             text = "${progress.achievements.size} / ${Achievement.entries.size}",
             fontSize = 18.sp,

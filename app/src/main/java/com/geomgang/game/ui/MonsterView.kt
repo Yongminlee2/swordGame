@@ -49,7 +49,7 @@ fun PetSprite(
             srcSize = IntSize(MonsterSheet.CELL, MonsterSheet.CELL),
             dstSize = IntSize(this.size.width.toInt(), this.size.height.toInt()),
             filterQuality = FilterQuality.None,
-            colorFilter = if (owned) null else ColorFilter.tint(Color(0xE0333344)),
+            colorFilter = if (owned) null else ColorFilter.tint(Color(0xFF596079)),
         )
     }
 }
@@ -90,7 +90,9 @@ fun MonsterSprite(
         )
     }
 
-    val base: Dp = if (isBoss) 150.dp else 110.dp
+    // 전투 패널의 중심 대상이 한눈에 잡히도록 한다. 원본 시트 안쪽 여백까지
+    // 감안하면 이 정도여야 실제 실루엣이 화면에서 작게 떠 보이지 않는다.
+    val base: Dp = if (isBoss) 184.dp else 148.dp
     val side = base * (0.55f + hpRatio * 0.45f)
     val tint: Color? = when {
         hpRatio <= 0f -> Color(0xB3555555)

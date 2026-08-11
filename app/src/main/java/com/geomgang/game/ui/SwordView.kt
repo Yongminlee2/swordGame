@@ -75,7 +75,15 @@ fun SwordView(
  */
 @Composable
 private fun Sprite2Box(sword: Sword, modifier: Modifier, auraColor: Color) {
-    val source = SwordSheet3.sourceFor(sword)
+    if (CustomSwordArt.has(sword)) {
+        CustomSwordBox(
+            family = sword.family,
+            level = sword.level,
+            modifier = modifier,
+            auraColor = auraColor,
+        )
+        return
+    }
 
     // 낱장 그림을 쓰는 구간은 시트를 보지 않는다. 오라도 그리지 않는다 -
     // 그림 자체가 이미 빛으로 가득해서 겹치면 뭉갠다.
@@ -97,6 +105,7 @@ private fun Sprite2Box(sword: Sword, modifier: Modifier, auraColor: Color) {
         return
     }
 
+    val source = SwordSheet3.sourceFor(sword)
     val sheet = if (source.useSheet3) rememberSheet3() else rememberSheet2()
     val src = if (source.useSheet3) {
         SwordSheet3.offsetOf(source.cell)
@@ -136,6 +145,49 @@ private fun Sprite2Box(sword: Sword, modifier: Modifier, auraColor: Color) {
     }
 }
 
+/** 새 강화 시트의 큰 검. 기존 오라 규칙은 그대로 유지한다. */
+@Composable
+private fun CustomSwordBox(
+    family: WeaponFamily?,
+    level: Int,
+    modifier: Modifier,
+    auraColor: Color,
+) {
+    val source = CustomSwordArt.sourceFor(family, level)
+    val sheet = rememberSheet(source.drawable)
+    val src = CustomSwordArt.offsetOf(source)
+    val aura = SwordSheet.auraFor(level)
+
+    Canvas(modifier) {
+        if (aura.alpha > 0f) {
+            val r = size.minDimension * 0.46f
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        auraColor.copy(alpha = (aura.alpha * 0.45f).coerceAtMost(0.16f)),
+                        Color.Transparent,
+                    ),
+                    center = Offset(size.width / 2f, size.height / 2f),
+                    radius = r,
+                ),
+                radius = r,
+                center = Offset(size.width / 2f, size.height / 2f),
+            )
+        }
+        val side = size.minDimension
+        val left = ((size.width - side) / 2f).toInt()
+        val top = ((size.height - side) / 2f).toInt()
+        drawImage(
+            image = sheet,
+            srcOffset = src,
+            srcSize = IntSize(CustomSwordArt.CELL, CustomSwordArt.CELL),
+            dstOffset = IntOffset(left, top),
+            dstSize = IntSize(side.toInt(), side.toInt()),
+            filterQuality = FilterQuality.None,
+        )
+    }
+}
+
 /**
  * 도감 칸용 — 계열과 단계로 정확히 한 그림. 미발견은 어둡게.
  *
@@ -150,6 +202,11 @@ fun LevelThumb(
     size: Dp = 52.dp,
     dimmed: Boolean = false,
 ) {
+    if (CustomSwordArt.has(family, level)) {
+        CustomSwordThumbArt(family, level, modifier, size, dimmed)
+        return
+    }
+
     if (family == null && LegendArt.has(level)) {
         LegendSwordArt(level, modifier, size, dimmed)
         return
@@ -169,7 +226,7 @@ fun LevelThumb(
             srcSize = IntSize(SwordSheet3.CELL, SwordSheet3.CELL),
             dstSize = IntSize(this.size.width.toInt(), this.size.height.toInt()),
             filterQuality = FilterQuality.None,
-            colorFilter = if (dimmed) ColorFilter.tint(Color(0xFF2E2740)) else null,
+            colorFilter = if (dimmed) ColorFilter.tint(Color(0xFF514C66)) else null,
         )
     }
 }
@@ -191,7 +248,7 @@ fun UniqueThumb(
             srcSize = IntSize(SwordSheet2.CELL, SwordSheet2.CELL),
             dstSize = IntSize(this.size.width.toInt(), this.size.height.toInt()),
             filterQuality = FilterQuality.None,
-            colorFilter = if (dimmed) ColorFilter.tint(Color(0xFF2E2740)) else null,
+            colorFilter = if (dimmed) ColorFilter.tint(Color(0xFF514C66)) else null,
         )
     }
 }
@@ -210,6 +267,11 @@ fun SwordThumb(
     size: Dp = 44.dp,
     dimmed: Boolean = false,
 ) {
+    if (CustomSwordArt.has(sword)) {
+        CustomSwordThumbArt(sword.family, sword.level, modifier, size, dimmed)
+        return
+    }
+
     if (sword.uniqueId == null && LegendArt.has(sword.level)) {
         LegendSwordArt(sword.level, modifier, size, dimmed)
         return
@@ -230,7 +292,31 @@ fun SwordThumb(
             srcSize = IntSize(cellSize, cellSize),
             dstSize = IntSize(this.size.width.toInt(), this.size.height.toInt()),
             filterQuality = FilterQuality.None,
-            colorFilter = if (dimmed) ColorFilter.tint(Color(0xFF2E2740)) else null,
+            colorFilter = if (dimmed) ColorFilter.tint(Color(0xFF514C66)) else null,
+        )
+    }
+}
+
+/** 강화 화면과 같은 전용 그림을 목록·도감 크기로 줄인다. */
+@Composable
+private fun CustomSwordThumbArt(
+    family: WeaponFamily?,
+    level: Int,
+    modifier: Modifier,
+    size: Dp,
+    dimmed: Boolean,
+) {
+    val source = CustomSwordArt.sourceFor(family, level)
+    val sheet = rememberSheet(source.drawable)
+    val src = CustomSwordArt.offsetOf(source)
+    Canvas(modifier.size(size)) {
+        drawImage(
+            image = sheet,
+            srcOffset = src,
+            srcSize = IntSize(CustomSwordArt.CELL, CustomSwordArt.CELL),
+            dstSize = IntSize(this.size.width.toInt(), this.size.height.toInt()),
+            filterQuality = FilterQuality.None,
+            colorFilter = if (dimmed) ColorFilter.tint(Color(0xFF514C66)) else null,
         )
     }
 }

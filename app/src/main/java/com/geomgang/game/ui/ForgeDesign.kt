@@ -21,7 +21,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.Button as MaterialButton
 import androidx.compose.material3.OutlinedButton as MaterialOutlinedButton
@@ -50,6 +52,38 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geomgang.game.R
+
+/**
+ * 긴 보조 화면의 공통 골격.
+ *
+ * 제목과 뒤로 가기, 지갑은 항상 화면에 남고 실제 내용만 스크롤된다. 화면마다
+ * 스크롤 위치가 달라도 나가는 길과 현재 시즌을 잃지 않게 한다.
+ */
+@Composable
+fun ScrollableForgeScreen(
+    title: String,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    wallet: Wallet? = null,
+    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(start = 14.dp, end = 14.dp, top = 12.dp),
+    ) {
+        ScreenHeader(title = title, onBack = onBack, wallet = wallet)
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 12.dp),
+            horizontalAlignment = horizontalAlignment,
+            content = content,
+        )
+    }
+}
 
 /** 기준 시안의 어두운 격자와 불씨를 모든 게임 화면의 공통 무대로 사용한다. */
 @Composable
