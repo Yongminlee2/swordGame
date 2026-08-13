@@ -47,8 +47,8 @@ object ForgeBonuses {
             bonus = CodexOffer.bonusOf(progress),
         ),
         BonusSource(
-            // 화면에서 읽는 말이 기준이다. 도메인 이름([Smithy])과 달라도 된다.
-            label = "스킬",
+            // 전투에서 발동하는 검 스킬과 구분되는 영구 성장이다.
+            label = "대장 기술",
             detail = "Lv ${progress.smithyLevel} / ${Smithy.MAX_LEVEL}",
             bonus = Smithy.bonusOf(progress),
         ),

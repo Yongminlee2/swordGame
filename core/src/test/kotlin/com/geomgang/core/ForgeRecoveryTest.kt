@@ -52,6 +52,39 @@ class ForgeRecoveryTest {
         assertEquals(2, after.inventory.preventTickets)
     }
 
+    @Test
+    fun `전설 파괴는 전설 방지권으로 원래 단계까지 복구한다`() {
+        val before = GameState(
+            difficulty = Difficulty.ENDLESS,
+            sword = Sword(WeaponFamily.DRAGON, LegendForge.LEVEL),
+            inventory = Inventory(preventTickets = 9, legendPreventTickets = 2),
+            pendingDestroy = PendingDestroy(WeaponFamily.DRAGON, 37, stars = 4),
+            dragonForged = true,
+            legendSeasonUnlocked = true,
+        )
+        assertTrue(ForgeEngine.usesLegendPrevent(before))
+        assertTrue(ForgeEngine.canPrevent(before))
+
+        val after = ForgeEngine.applyPrevent(before)
+        assertEquals(Sword(WeaponFamily.DRAGON, 37, stars = 4), after.sword)
+        assertEquals(1, after.inventory.legendPreventTickets)
+        assertEquals(9, after.inventory.preventTickets)
+        assertNull(after.pendingDestroy)
+    }
+
+    @Test
+    fun `전설 파괴에는 일반 방지권을 대신 쓸 수 없다`() {
+        val before = GameState(
+            difficulty = Difficulty.ENDLESS,
+            sword = Sword(WeaponFamily.DRAGON, LegendForge.LEVEL),
+            inventory = Inventory(preventTickets = 9),
+            pendingDestroy = PendingDestroy(WeaponFamily.DRAGON, 31),
+            dragonForged = true,
+            legendSeasonUnlocked = true,
+        )
+        assertFalse(ForgeEngine.canPrevent(before))
+    }
+
     @Test(expected = IllegalStateException::class)
     fun `방지권 없이 되살리려 하면 예외가 난다`() {
         ForgeEngine.applyPrevent(destroyed(tickets = 0))

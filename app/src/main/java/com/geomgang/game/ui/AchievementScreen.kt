@@ -43,7 +43,7 @@ fun AchievementScreen(
             color = MaterialTheme.colorScheme.primary,
         )
         Text(
-            text = "업적을 달성하면 칭호가 열린다. 눌러서 단다",
+            text = "달성한 칭호를 눌러 장착",
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
         )

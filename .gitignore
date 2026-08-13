@@ -18,3 +18,8 @@ keystore.properties
 
 # 아트 검토용 참고 이미지(45MB) - 산출물은 drawable-nodpi 시트로 들어간다
 /art-review/
+
+# 로컬 빌드·파이썬 캐시
+/.kotlin/
+__pycache__/
+*.pyc

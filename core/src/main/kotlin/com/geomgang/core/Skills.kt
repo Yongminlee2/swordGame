@@ -45,59 +45,59 @@ object Skills {
     private val BY_FAMILY: Map<WeaponFamily, Skill> = mapOf(
         WeaponFamily.STRAIGHT to Skill(
             "flash", "일섬", damageMult = 3.0, hits = 1,
-            blurb = "한 번에 3배로 베어 넘긴다",
+            blurb = "3배 강타",
         ),
         WeaponFamily.CURVED to Skill(
             "moonfall", "월광참", damageMult = 2.5, hits = 1,
-            blurb = "달빛을 그리며 2.5배",
+            blurb = "2.5배 참격",
         ),
         WeaponFamily.GREAT to Skill(
             "collapse", "붕괴", damageMult = 5.0, hits = 1,
-            blurb = "무게로 짓눌러 5배",
+            blurb = "5배 강타",
         ),
         WeaponFamily.RAPIER to Skill(
             "flurry", "연속 찌르기", damageMult = 4.0, hits = 4,
-            blurb = "네 번 찔러 합 4배",
+            blurb = "4연타 · 합 4배",
         ),
         WeaponFamily.TWIN to Skill(
             "twinmoon", "쌍월", damageMult = 4.0, hits = 2,
-            blurb = "두 자루가 각각 2배",
+            blurb = "2연타 · 합 4배",
         ),
         WeaponFamily.DEMON to Skill(
             "drain", "흡혈", damageMult = 3.0, hits = 1, shardBonus = 1,
-            blurb = "3배로 베고 조각을 빤다",
+            blurb = "3배 · 조각 +1",
         ),
         WeaponFamily.HOLY to Skill(
             "judgment", "심판", damageMult = 3.0, hits = 1, bossMult = 2.0,
-            blurb = "보스에게 6배, 잡몹에게 3배",
+            blurb = "보스 6배 · 일반 3배",
         ),
         WeaponFamily.DRAGON to Skill(
             "dragonbreath", "용의 숨결", damageMult = 3.0, hits = 1, burnBurst = true,
-            blurb = "3배 + 화상을 한꺼번에 터뜨린다",
+            blurb = "3배 · 화상 폭발",
         ),
         WeaponFamily.SCYTHE to Skill(
             "reap", "사신의 낫", damageMult = 3.0, hits = 1, maxHpRatio = 0.05,
-            blurb = "3배 + 최대체력 5%",
+            blurb = "3배 · 체력 5%",
         ),
         WeaponFamily.AXE to Skill(
             "crush", "분쇄", damageMult = 6.0, hits = 1,
-            blurb = "내려찍어 6배",
+            blurb = "6배 강타",
         ),
         WeaponFamily.SPEAR to Skill(
             "pierce", "관통", damageMult = 3.6, hits = 3,
-            blurb = "세 번 관통해 합 3.6배",
+            blurb = "3연타 · 합 3.6배",
         ),
         WeaponFamily.SPIRIT to Skill(
             "spiritburst", "정령 폭발", damageMult = 3.0, hits = 1, burnBurst = true,
-            blurb = "3배 + 화상 폭발",
+            blurb = "3배 · 화상 폭발",
         ),
         WeaponFamily.FUSED to Skill(
             "allthings", "만상", damageMult = 4.0, hits = 1,
-            blurb = "모든 계열의 힘으로 4배",
+            blurb = "4배 만상격",
         ),
         WeaponFamily.VOID to Skill(
             "voidcall", "공허", damageMult = 3.0, hits = 1, maxHpRatio = 0.08,
-            blurb = "3배 + 최대체력 8%",
+            blurb = "3배 · 체력 8%",
         ),
     )
 

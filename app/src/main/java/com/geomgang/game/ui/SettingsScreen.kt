@@ -48,11 +48,11 @@ fun SettingsScreen(
                         Text("효과음", fontWeight = FontWeight.Medium)
                         Text(
                             text = if (deepUnlocked) {
-                                "강화 성공·실패·파괴, 방지권, 줍기, 사냥 타격에 소리가 붙는다. " +
-                                    "성공음은 단계가 높을수록 높은 음이 난다."
+                                "강화 결과·복구·조각·사냥 타격 효과음. " +
+                                    "단계가 높을수록 성공음도 높아진다."
                             } else {
-                                "강화 성공·실패·파괴, 방지권과 줍기에 소리가 붙는다. " +
-                                    "성공음은 단계가 높을수록 높은 음이 난다."
+                                "강화 결과·복구·조각 효과음. " +
+                                    "단계가 높을수록 성공음도 높아진다."
                             },
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -76,11 +76,9 @@ fun SettingsScreen(
                         Text("진동", fontWeight = FontWeight.Medium)
                         Text(
                             text = if (deepUnlocked) {
-                                "성공은 짧게, 실패는 둔탁하게, 파괴는 길게 울린다. " +
-                                    "사냥 탭마다는 울리지 않는다 — 연타라 손이 아프다."
+                                "강화 결과마다 다른 진동. 사냥 연타에는 진동이 없다."
                             } else {
-                                "성공은 짧게, 실패는 둔탁하게, 파괴는 길게 울린다. " +
-                                    "강화 결과를 손끝에서도 바로 구분할 수 있다."
+                                "강화 결과마다 다른 진동으로 성공과 실패를 구분한다."
                             },
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -103,8 +101,7 @@ fun SettingsScreen(
                     Column(Modifier.weight(1f)) {
                         Text("방지권 자동 사용", fontWeight = FontWeight.Medium)
                         Text(
-                            text = "파괴되면 ${Timing.DESTROY_WINDOW_MILLIS / 1000.0}초 창을 " +
-                                "열지 않고 바로 방지권을 쓴다",
+                            text = "파괴 직후 사용 가능한 방지권을 즉시 쓴다",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         )
@@ -112,12 +109,6 @@ fun SettingsScreen(
                     PixelToggle(checked = settings.autoPrevent, onCheckedChange = onAutoPreventChange)
                 }
                 Spacer(Modifier.height(6.dp))
-                Text(
-                    text = "기본값은 꺼짐이다. 파괴 순간 손이 먼저 나가는 그 긴장이 " +
-                        "이 게임의 핵심이라, 편의를 원하는 사람만 켜게 두었다.",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
-                )
             }
         }
 
@@ -128,11 +119,11 @@ fun SettingsScreen(
                 Text("진행 초기화", fontWeight = FontWeight.Medium)
                 Text(
                     text = if (deepUnlocked) {
-                        "검·골드·조각·아이템·사냥 진행을 지운다. " +
-                            "도감·업적·통계·설정은 지워지지 않는다."
+                        "현재 판의 검·재화·아이템·사냥 진행 삭제. " +
+                            "도감·업적·통계·설정은 유지된다."
                     } else {
-                        "검·골드·조각·아이템을 지운다. " +
-                            "도감·업적·통계·설정은 지워지지 않는다."
+                        "현재 판의 검·재화·아이템 삭제. " +
+                            "도감·업적·통계·설정은 유지된다."
                     },
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -149,50 +140,44 @@ fun SettingsScreen(
                 Text("리소스 라이선스", fontWeight = FontWeight.Medium)
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "검 아이콘",
+                    text = "프로젝트 전용 일러스트",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Text(
-                    text = "The Humble Sword Pack · CC BY 4.0\n" +
-                        "제작: The Wise Hedgehog\n" +
-                        "https://opengameart.org/content/the-humble-sword-pack\n" +
-                        "https://creativecommons.org/licenses/by/4.0/\n\n" +
-                        "16비트 픽셀아트 검 30종 × 낡음 3단계. 스프라이트시트에서 " +
-                        "필요한 칸만 잘라 그린다.",
+                    text = "강화검 7계열 +0~+20 · 전설 +21~+50\n" +
+                        "사냥 몬스터 24구역 144종 · 전투 효과 16종\n" +
+                        "대장간 배경과 UI 픽셀 아이콘",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    text = "몬스터 아이콘",
+                    text = "CC0 보조 스프라이트",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Text(
                     // CC0 은 표기 의무가 없지만 출처를 남기는 것이 이 프로젝트의 방침이다.
-                    text = "Dungeon Crawl 32x32 tiles · CC0 (퍼블릭 도메인)\n" +
+                    text = "Dungeon Crawl 32x32 tiles · CC0\n" +
                         "제작: Dungeon Crawl Stone Soup 팀 외 다수\n" +
                         "https://opengameart.org/content/dungeon-crawl-32x32-tiles\n\n" +
-                        "몬스터 60종 + 보스 12종 + 펫 12종을 선별해 스프라이트시트로 합쳤다.\n" +
-                        "검 그림도 같은 팩의 무기 타일이다 — 계열 14 × 강화 단계 21 = 294칸에\n" +
-                        "무한 구간 전설 20칸, 고유검 10칸을 더해 배치했다.",
+                        "고유검과 펫 등 일부 보조 스프라이트에 사용.",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    text = "그 외",
+                    text = "사운드와 기타",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Text(
-                    text = "타사 상용 게임의 그래픽·사운드는 사용하지 않았다.\n" +
-                        "검·몬스터는 위 라이선스의 픽셀 비트맵을 사용하고, " +
-                        "UI 아이콘은 프로젝트 전용 픽셀 자산으로 구성했다.",
+                    text = "효과음은 앱에서 실시간 합성한다.\n" +
+                        "타사 상용 게임의 그래픽·사운드는 사용하지 않았다.",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )

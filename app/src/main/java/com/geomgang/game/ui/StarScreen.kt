@@ -40,7 +40,7 @@ fun StarScreen(
     onBack: () -> Unit,
 ) {
     ScrollableForgeScreen(
-        title = "특수강화",
+        title = "별 강화",
         onBack = onBack,
         wallet = state.wallet(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -54,11 +54,9 @@ fun StarScreen(
                     Spacer(Modifier.height(4.dp))
                     Text(
                         text = if (sword == null) {
-                            "검이 없다."
+                            "검 없음"
                         } else {
-                            "용검부터 별을 붙일 수 있다. 계열 검은 " +
-                                "+${com.geomgang.core.LegendForge.MATERIAL_LEVEL}에서 " +
-                                "조합 재료가 되므로 별을 붙여도 곧 사라진다."
+                            "별 강화는 용검부터 열린다."
                         },
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -99,7 +97,7 @@ fun StarScreen(
         star.lastUp?.let {
             Spacer(Modifier.height(8.dp))
             Text(
-                text = if (it) "별이 하나 올랐다" else "실패 — 별 하나를 잃었다 (검은 무사하다)",
+                text = if (it) "별 +1" else "실패 · 별 -1 (검 유지)",
                 fontSize = 13.sp,
                 color = if (it) ForgeGreen else Color(0xFFE0906A),
             )
@@ -134,7 +132,7 @@ fun StarScreen(
             if (!star.affordable) {
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "조각이나 골드가 모자라다",
+                    "조각 또는 골드 부족",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.error,
                 )
@@ -143,7 +141,7 @@ fun StarScreen(
 
         Spacer(Modifier.height(20.dp))
         Text(
-            text = "별은 강화와 별개의 계층이다. 실패해도 검은 부서지지 않고 별 하나만 잃는다.",
+            text = "실패해도 검은 유지 · 별만 1단계 하락",
             fontSize = 11.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
         )

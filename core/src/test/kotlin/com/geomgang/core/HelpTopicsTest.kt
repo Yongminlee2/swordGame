@@ -14,10 +14,9 @@ import org.junit.Test
 class HelpTopicsTest {
 
     @Test
-    fun `모든 꼭지에 아이콘과 제목과 본문이 있다`() {
+    fun `모든 꼭지에 제목과 본문이 있다`() {
         assertTrue(HelpTopics.ALL.isNotEmpty())
         for (topic in HelpTopics.ALL) {
-            assertTrue("아이콘 없음: ${topic.title}", topic.icon.isNotBlank())
             assertTrue("제목 없음", topic.title.isNotBlank())
             assertTrue("본문 없음: ${topic.title}", topic.body.length >= 20)
         }
@@ -45,7 +44,7 @@ class HelpTopicsTest {
 
     @Test
     fun `스킬 설명이 실제 해금 단계를 말한다`() {
-        val body = HelpTopics.ALL.first { it.title == "스킬" }.body
+        val body = HelpTopics.ALL.first { it.title == "검 스킬" }.body
         assertTrue(body.contains("+${Skills.MIN_LEVEL}"))
     }
 
@@ -61,10 +60,17 @@ class HelpTopicsTest {
      * 설명도 "+21" 이 아니라 "용검부터" 라고 말해야 한다.
      */
     @Test
-    fun `특수강화 설명이 용검과 실제 별 상한을 말한다`() {
-        val body = HelpTopics.ALL.first { it.title == "특수강화" }.body
+    fun `별 강화 설명이 용검과 실제 별 상한을 말한다`() {
+        val body = HelpTopics.ALL.first { it.title == "별 강화" }.body
         assertTrue(body.contains("용검"))
         assertTrue(body.contains("${StarForce.MAX_STARS}"))
+    }
+
+    @Test
+    fun `전설 방지권 설명이 실제 상점 가격을 말한다`() {
+        val body = HelpTopics.ALL.first { it.title == "전설 방지권" }.body
+        assertTrue(body.contains("%,d".format(LegendProtection.GOLD_PRICE)))
+        assertTrue(body.contains("%,d".format(LegendProtection.SHARD_PRICE)))
     }
 
     @Test

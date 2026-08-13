@@ -31,9 +31,9 @@ import com.geomgang.game.R
 /**
  * 검 그림 (강화 화면의 큰 검).
  *
- * 큰 화면은 64px 시트2(계열×티어 큐레이션)를 쓴다. 고유검은 전용 칸이 있다.
+ * 일반 강화검은 원본 해상도 전용 시트를 쓰고, 고유검은 기존 전용 칸을 쓴다.
  * 오라는 초창기 벡터 아트에서 살아남은 유산 - 시트 위에 그대로 얹는다.
- * 픽셀아트라 확대할 때 보간을 끄는 것이 중요하다 — 켜 두면 흐물흐물해진다.
+ * 원본 강화검은 고품질 보간으로 표시하고 기존 저해상도 시트만 보간을 끈다.
  *
  * @param shake 좌우 흔들림(px). 실패·하락 연출에서 준다.
  * @param flash 0~1. 1에 가까울수록 [flashColor] 로 덮인다. 성공·파괴 연출에서 준다.
@@ -145,7 +145,7 @@ private fun Sprite2Box(sword: Sword, modifier: Modifier, auraColor: Color) {
     }
 }
 
-/** 새 강화 시트의 큰 검. 기존 오라 규칙은 그대로 유지한다. */
+/** 원본 품질 강화 시트의 큰 검. 기존 오라 규칙은 그대로 유지한다. */
 @Composable
 private fun CustomSwordBox(
     family: WeaponFamily?,
@@ -183,7 +183,7 @@ private fun CustomSwordBox(
             srcSize = IntSize(CustomSwordArt.CELL, CustomSwordArt.CELL),
             dstOffset = IntOffset(left, top),
             dstSize = IntSize(side.toInt(), side.toInt()),
-            filterQuality = FilterQuality.None,
+            filterQuality = FilterQuality.High,
         )
     }
 }
@@ -297,7 +297,7 @@ fun SwordThumb(
     }
 }
 
-/** 강화 화면과 같은 전용 그림을 목록·도감 크기로 줄인다. */
+/** 강화 화면과 같은 원본 품질 그림을 목록·도감 크기로 줄인다. */
 @Composable
 private fun CustomSwordThumbArt(
     family: WeaponFamily?,
@@ -315,7 +315,7 @@ private fun CustomSwordThumbArt(
             srcOffset = src,
             srcSize = IntSize(CustomSwordArt.CELL, CustomSwordArt.CELL),
             dstSize = IntSize(this.size.width.toInt(), this.size.height.toInt()),
-            filterQuality = FilterQuality.None,
+            filterQuality = FilterQuality.High,
             colorFilter = if (dimmed) ColorFilter.tint(Color(0xFF514C66)) else null,
         )
     }

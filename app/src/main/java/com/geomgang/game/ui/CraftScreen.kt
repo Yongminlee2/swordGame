@@ -78,7 +78,7 @@ fun CraftScreen(
         ) {
             item {
                 Text(
-                    text = "+${Refinery.MATERIAL_LEVEL} 두 자루를 조합하면 새 계열이 된다",
+                    text = "+${Refinery.MATERIAL_LEVEL} 두 자루 → 새 계열",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                 )
@@ -119,9 +119,7 @@ fun CraftScreen(
             if (state.storage.size < Fusion.MIN_MATERIALS) {
                 item {
                     Text(
-                        text = "재료가 모자라다. 보관함에 검이 " +
-                            "${Fusion.MIN_MATERIALS}자루는 있어야 한다.\n" +
-                            "상점에서 검을 사 보관함에 넣을 수 있다.",
+                        text = "재료 검 ${Fusion.MIN_MATERIALS}자루 필요",
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
                     )
@@ -191,7 +189,7 @@ private fun RecipeList(state: ForgeUiState) {
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "고유검 — 특별한 조합은 특별한 검이 된다",
+                text = "고유검 · 숨은 조합",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = ForgeAmber,
@@ -237,7 +235,7 @@ private fun RecipeList(state: ForgeUiState) {
                 Spacer(Modifier.height(6.dp))
                 Text(
                     text = if (state.essences.isEmpty()) {
-                        "정수는 사냥터 보스가 준다. 고유검 조합의 촉매다."
+                        "보스 처치 시 정수 획득 · 고유검 조합 재료"
                     } else {
                         "보유 정수 — " + state.essences.entries.joinToString(" · ") {
                             "${Zone.fromId(it.key).displayName} ${it.value}"
@@ -275,7 +273,7 @@ private fun AltarPanel(state: ForgeUiState, onBuyWard: () -> Unit) {
                 )
             }
             Text(
-                text = "깊은 구역의 정수일수록 무겁다. 초원 1 · 끝의 문 39.",
+                text = "깊은 구역 정수일수록 높은 가치",
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
             )
@@ -283,8 +281,7 @@ private fun AltarPanel(state: ForgeUiState, onBuyWard: () -> Unit) {
 
             Text("수호 각인", fontSize = 13.sp, fontWeight = FontWeight.Bold)
             Text(
-                text = "전설검이 미끄러질 때 한 번 붙든다 — " +
-                    "+${LegendForge.LEVEL} 복귀 대신 한 단계만 잃는다. 쓰면 사라진다.",
+                text = "전설 파괴 시 1단계만 하락 · 1회용",
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             )
@@ -305,12 +302,12 @@ private fun AltarPanel(state: ForgeUiState, onBuyWard: () -> Unit) {
                     enabled = state.canBuyWardCharm,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("정수력 ${state.wardCharmCost} 로 새기기")
+                    Text("정수력 ${state.wardCharmCost}로 새기기")
                 }
                 if (!state.canBuyWardCharm) {
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = "정수력 ${state.wardCharmCost - state.essencePower} 만큼 더 모아야 한다",
+                            text = "정수력 ${state.wardCharmCost - state.essencePower} 부족",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -318,7 +315,7 @@ private fun AltarPanel(state: ForgeUiState, onBuyWard: () -> Unit) {
             }
             Spacer(Modifier.height(6.dp))
             Text(
-                text = "얕은 구역 정수부터 태운다 — 고유검이 찾는 깊은 정수는 남겨 둔다.",
+                text = "얕은 정수부터 자동 사용",
                 fontSize = 10.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
             )
@@ -346,8 +343,7 @@ private fun RefinePanel(
                 color = MaterialTheme.colorScheme.primary,
             )
             Text(
-                text = "+${Refinery.MATERIAL_LEVEL} 두 자루가 ${recipe.result.displayName} " +
-                    "+${recipe.resultLevel} 이 된다. 결과는 보관함으로 들어간다.",
+                text = "+${Refinery.MATERIAL_LEVEL} 두 자루 → ${recipe.result.displayName} +${recipe.resultLevel}",
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
             )
@@ -397,10 +393,8 @@ private fun LegendPanel(
         Column(Modifier.padding(12.dp)) {
             Text("용검 조합 — 전설", fontWeight = FontWeight.Bold, color = ForgeAmber)
             Text(
-                text = "계열은 +${LegendForge.MATERIAL_LEVEL}에서 끝난다. " +
-                    "마검과 성검을 +${LegendForge.MATERIAL_LEVEL}까지 올려 조합하면 " +
-                    "용검 +${LegendForge.CRAFT_LEVEL}이 된다 — 용검만은 +${LegendForge.MATERIAL_LEVEL}에서 " +
-                    "멈추지 않고 전설(+${LegendForge.LEVEL})까지 계속 오른다.",
+                text = "마검 +${LegendForge.MATERIAL_LEVEL} + 성검 +${LegendForge.MATERIAL_LEVEL} → " +
+                    "용검 +${LegendForge.CRAFT_LEVEL} · 이후 전설까지 강화",
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
             )
@@ -423,7 +417,7 @@ private fun LegendPanel(
             // 무엇이 모자란지 재료 목록만 몇 번씩 다시 보게 된다.
             if (handsFull && missing.isEmpty()) {
                 Text(
-                    text = "손에 든 검을 보관함에 넣어야 벼릴 수 있다",
+                        text = "재료 검은 보관함에 넣어야 한다",
                     fontSize = 11.sp,
                     color = ForgeAmber,
                 )
@@ -471,8 +465,7 @@ private fun FusionPanel(
     ForgePanel(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
             Text(
-                text = "특별한 조합(고유검) — 재료 두 자루를 직접 골라 빚는다 " +
-                    "(${picked.size}/2)",
+                text = "고유검 재료 선택 · ${picked.size}/2",
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
             )
@@ -530,7 +523,7 @@ private fun FusionPanel(
             if (preview == null && materials.size == Fusion.MIN_MATERIALS) {
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = "맞는 레시피가 없다 — 위 힌트를 다시 읽어 보자",
+                    text = "맞는 레시피가 없다.",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )

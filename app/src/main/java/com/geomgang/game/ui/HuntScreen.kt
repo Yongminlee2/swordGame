@@ -1,7 +1,5 @@
 package com.geomgang.game.ui
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -53,6 +51,8 @@ import com.geomgang.core.Zone
 import com.geomgang.game.ForgeUiState
 import com.geomgang.game.HuntUiState
 import kotlin.random.Random
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 
 /**
  * 사냥터.
@@ -70,7 +70,6 @@ fun HuntScreen(
     onChallengeBoss: () -> Unit,
     onTapNugget: () -> Unit,
     onBuyMerchant: () -> Unit,
-    onRetryBoss: () -> Unit,
     onGiveUpBoss: () -> Unit,
     onStayInZone: () -> Unit,
     onNextZone: () -> Unit,
@@ -87,7 +86,7 @@ fun HuntScreen(
     // 승패는 알림 한 줄이 아니라 창으로 알린다. 5초를 걸고 싸운 결과가
     // 화면 구석 한 줄로 지나가면 그 순간이 없던 일이 된다.
     if (hunt.bossFailed) {
-        BossFailedDialog(hunt, onRetryBoss, onGiveUpBoss)
+        BossFailedDialog(hunt, onGiveUpBoss)
     } else if (hunt.zoneCleared) {
         BossWonDialog(hunt, onStayInZone, onNextZone, onBack)
     }
@@ -293,7 +292,7 @@ fun HuntScreen(
                     isBoss = hunt.isBoss,
                     isRare = hunt.isRare,
                     enraged = hunt.enraged,
-                    hitSeq = hunt.hitSeq,
+                    hitSeq = if (hunt.isBoss) 0 else hunt.hitSeq,
                 )
                 if (hunt.targetHp <= 0) {
                     Text(
@@ -340,7 +339,7 @@ fun HuntScreen(
             }
 
             // 데미지 숫자는 몬스터 위 레이어에서 튀어오른다
-            DamagePopups(hunt)
+            if (!bossReady) CombatFeedbackOverlay(hunt)
         }
 
         // --- 금덩이 ---
@@ -367,7 +366,7 @@ fun HuntScreen(
             val beatable = Combat.canBeatBoss(state.sword, hunt.zone)
             if (!beatable) {
                 Text(
-                    text = "지금 공격력으로는 시간 안에 잡기 어렵다 (권장 +${hunt.zone.recommendedLevel})",
+                    text = "공격력 부족 · 권장 +${hunt.zone.recommendedLevel}",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.error,
                 )
@@ -421,7 +420,7 @@ private fun ZonePicker(
                 Column(Modifier.padding(16.dp)) {
                     Text("검이 없다", fontWeight = FontWeight.Bold)
                     Text(
-                        text = "검을 들지 않으면 사냥할 수 없다. 상점에서 먼저 검을 구해라.",
+                        text = "검을 장착해야 사냥할 수 있다.",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     )
@@ -564,6 +563,8 @@ private fun ZoneForgePanel(
  *
  * 음수 id 는 처치 골드 팝업이고, [skill] 이 채워지면 스킬 이름을 크게 띄운다.
  */
+/* Legacy text-only damage popup retained below for source history; the selected illustrated
+ * overlay above is the only implementation invoked by HuntScreen. */
 private data class DamagePop(
     val id: Long,
     val text: String,
@@ -661,13 +662,11 @@ private fun TimerBar(ratio: Float) {
 /**
  * 보스를 놓쳤다.
  *
- * 골드를 내면 잡몹을 다시 모으지 않고 **즉시** 다시 붙는다. 낮추려는 것은
- * 재도전 문턱이지 5초의 긴장이 아니다. 값은 다시 도전할 때마다 두 배가 된다.
+ * 실패를 확인하고 사냥터 목록으로 돌아간다. 유료 즉시 재도전은 제공하지 않는다.
  */
 @Composable
-private fun BossFailedDialog(
+internal fun BossFailedDialog(
     hunt: HuntUiState,
-    onRetry: () -> Unit,
     onGiveUp: () -> Unit,
 ) {
     AlertDialog(
@@ -676,22 +675,17 @@ private fun BossFailedDialog(
         title = { Text("보스를 놓쳤다", fontWeight = FontWeight.Bold) },
         text = {
             Column {
-                Text("${hunt.zone.bossName}이(가) 달아났다.", fontSize = 14.sp)
+                Text("${hunt.zone.bossName} 도주", fontSize = 14.sp)
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "나가면 잡몹부터 다시 모아야 한다.",
+                    text = "잡몹 처치 수는 초기화된다.",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )
             }
         },
         confirmButton = {
-            TextButton(onClick = onRetry, enabled = hunt.canRetry) {
-                Text("다시 도전 · %,d".format(hunt.retryPrice))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onGiveUp) { Text("나가기") }
+            TextButton(onClick = onGiveUp) { Text("확인") }
         },
     )
 }
@@ -721,7 +715,7 @@ private fun BossWonDialog(
                     Spacer(Modifier.height(8.dp))
                 }
                 Text(
-                    text = "다음 구역이 열렸다.",
+                    text = "다음 구역 해금",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )

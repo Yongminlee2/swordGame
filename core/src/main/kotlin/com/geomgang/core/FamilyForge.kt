@@ -49,27 +49,27 @@ enum class FamilyForge(
      * 하고, 무엇보다 [com.geomgang.core.sim.BalanceSimulation] 이 직검으로만 도는데
      * 여기에 값을 주면 그 모형이 재려던 "맨손" 이 맨손이 아니게 된다.
      */
-    STRAIGHT(blurb = "기준. 특별할 것도 모자랄 것도 없다"),
-    CURVED(successBonus = 0.004, blurb = "조금 더 잘 붙는다"),
-    GREAT(dropGuard = 0.03, blurb = "잘 부서지지 않는다"),
-    RAPIER(costMult = 0.7, blurb = "가벼워서 벼리는 값이 싸다"),
-    TWIN(successBonus = 0.003, dropGuard = 0.015, blurb = "성공률과 내구가 조금씩"),
-    DEMON(salvageMult = 2.0, blurb = "부서져도 조각을 두 배로 줍는다"),
-    HOLY(blessingMult = 1.5, blurb = "축복서가 더 잘 듣는다"),
-    DRAGON(successBonus = 0.002, dropGuard = 0.02, blurb = "단단하고 조금 잘 붙는다"),
-    SCYTHE(codexPair = true, blurb = "도감에 바치면 다음 칸도 함께 열린다"),
-    AXE(costMult = 0.8, blurb = "강화 비용이 싸다"),
-    SPEAR(stoneRelief = 2, blurb = "강화석이 두 개 덜 든다"),
-    SPIRIT(dropGuard = 0.025, blurb = "정령이 부서짐을 막아 준다"),
+    STRAIGHT(blurb = "기본형"),
+    CURVED(successBonus = 0.004, blurb = "성공률 +0.4%p"),
+    GREAT(dropGuard = 0.03, blurb = "하락 방지 +3%p"),
+    RAPIER(costMult = 0.7, blurb = "비용 30% 절감"),
+    TWIN(successBonus = 0.003, dropGuard = 0.015, blurb = "성공·하락 방지"),
+    DEMON(salvageMult = 2.0, blurb = "파괴 조각 2배"),
+    HOLY(blessingMult = 1.5, blurb = "축복 효과 1.5배"),
+    DRAGON(successBonus = 0.002, dropGuard = 0.02, blurb = "성공·하락 방지"),
+    SCYTHE(codexPair = true, blurb = "도감 2칸 개방"),
+    AXE(costMult = 0.8, blurb = "비용 20% 절감"),
+    SPEAR(stoneRelief = 2, blurb = "강화석 -2"),
+    SPIRIT(dropGuard = 0.025, blurb = "하락 방지 +2.5%p"),
     FUSED(
         successBonus = 0.0025,
         dropGuard = 0.015,
         costMult = 0.9,
         salvageMult = 1.5,
         blessingMult = 1.25,
-        blurb = "여러 계열의 벼림을 조금씩 전부",
+        blurb = "전 특성 혼합",
     ),
-    VOID(refundStones = true, blurb = "실패해도 강화석을 돌려받는다"),
+    VOID(refundStones = true, blurb = "실패 시 강화석 환급"),
 
     /**
      * 가장 어려운 길의 보상. 어느 계열보다 강하다.
@@ -81,7 +81,7 @@ enum class FamilyForge(
         successBonus = 0.03,
         dropGuard = 0.03,
         temperCapBonus = 0.20,
-        blurb = "전설검. 벼림의 끝",
+        blurb = "전설 보너스",
     ),
 
     /**
@@ -90,7 +90,7 @@ enum class FamilyForge(
      * 강화대에 오르지 않으므로(v2.3) 모든 값이 중립이다 - 실제 능력은 [UniqueSwords] 가
      * 별도 출처(소유 보너스·전투 패시브)로 준다.
      */
-    UNIQUE(blurb = "고유검. 계열 특성 대신 저마다의 능력을 쓴다"),
+    UNIQUE(blurb = "고유 능력 적용"),
     ;
 
     companion object {

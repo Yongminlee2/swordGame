@@ -47,7 +47,7 @@ fun StatsScreen(
     ScrollableForgeScreen(title = "통계", onBack = onBack) {
         Text("표기 확률 대 실제 확률", fontWeight = FontWeight.Bold)
         Text(
-            text = "표기는 ${difficulty.statsLabel()} 기준, 실제는 전 모드 합산이다",
+            text = "표기: ${difficulty.statsLabel()} · 실제 기록: 전 모드 합산",
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
         )

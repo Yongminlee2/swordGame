@@ -1,53 +1,101 @@
 package com.geomgang.game.ui
 
+import androidx.annotation.DrawableRes
 import androidx.compose.ui.unit.IntOffset
 import com.geomgang.core.PetKind
 import com.geomgang.core.Zone
+import com.geomgang.game.R
 
 /**
- * 몬스터 그림의 단일 출처.
+ * Monster artwork routing.
  *
- * monster_sheet.png 는 32px 칸 8열 시트다.
- * 0~59 잡몹(구역 순서 × 몬스터 5), 60~71 보스(구역 순서), 72~81 펫(PetKind 선언 순서).
- * 칸 배치를 바꾸면 여기와 tools/monster_cells.txt 를 함께 바꿔야 한다.
- *
- * 잡몹 칸은 손 표가 아니라 **구역 순회**로 만든다 — 구역이나 몬스터가 늘면 저절로 따라온다.
- * 다만 시트의 칸 순서가 그 순회와 일치해야 하며, 그 계약은 MonsterSheetTest 가 지킨다.
- *
- * 출처: Dungeon Crawl 32x32 tiles — Dungeon Crawl Stone Soup 팀, CC0.
- * 표기는 설정 → 라이선스 화면에 있다.
+ * Combat monsters use one high-resolution 3 x 2 atlas per zone: the five regular
+ * monsters followed by the zone boss. Pets remain in the compact legacy sheet so
+ * replacing combat art cannot disturb collection data or pet cell ordering.
  */
 object MonsterSheet {
 
     const val CELL = 32
     const val COLUMNS = 8
 
-    /** 보스 칸의 시작. 잡몹 칸(구역 × 5) 바로 뒤다. */
-    private val BOSS_BASE = Zone.entries.sumOf { it.monsters.size }
+    const val COMBAT_CELL = 384
+    const val COMBAT_COLUMNS = 3
 
-    /** 펫 칸의 시작. 보스 칸 뒤다. */
-    private val PET_BASE = BOSS_BASE + Zone.entries.size
+    data class CombatSource(
+        @DrawableRes val drawable: Int,
+        val offset: IntOffset,
+    )
 
-    /** 구역 순서가 곧 칸 순서다 - 이름 목록을 Zone 에서 뽑아 표를 만든다. */
-    private val cells: Map<String, Int> = buildMap {
-        var mob = 0
-        for (zone in Zone.entries) {
-            for (m in zone.monsters) put(m.name, mob++)
+    private val bossBase = Zone.entries.sumOf { it.monsters.size }
+    private val petBase = bossBase + Zone.entries.size
+
+    private val legacyCells: Map<String, Int> = buildMap {
+        var monster = 0
+        Zone.entries.forEach { zone -> zone.monsters.forEach { put(it.name, monster++) } }
+        var boss = bossBase
+        Zone.entries.forEach { zone -> put(zone.bossName, boss++) }
+    }
+
+    private data class ZoneCell(val zoneIndex: Int, val localCell: Int)
+
+    private val combatCells: Map<String, ZoneCell> = buildMap {
+        Zone.entries.forEachIndexed { zoneIndex, zone ->
+            zone.monsters.forEachIndexed { monsterIndex, monster ->
+                put(monster.name, ZoneCell(zoneIndex, monsterIndex))
+            }
+            put(zone.bossName, ZoneCell(zoneIndex, 5))
         }
-        var boss = BOSS_BASE
-        for (zone in Zone.entries) put(zone.bossName, boss++)
+    }
+
+    private val zoneDrawables = intArrayOf(
+        R.drawable.monster_zone_00,
+        R.drawable.monster_zone_01,
+        R.drawable.monster_zone_02,
+        R.drawable.monster_zone_03,
+        R.drawable.monster_zone_04,
+        R.drawable.monster_zone_05,
+        R.drawable.monster_zone_06,
+        R.drawable.monster_zone_07,
+        R.drawable.monster_zone_08,
+        R.drawable.monster_zone_09,
+        R.drawable.monster_zone_10,
+        R.drawable.monster_zone_11,
+        R.drawable.monster_zone_12,
+        R.drawable.monster_zone_13,
+        R.drawable.monster_zone_14,
+        R.drawable.monster_zone_15,
+        R.drawable.monster_zone_16,
+        R.drawable.monster_zone_17,
+        R.drawable.monster_zone_18,
+        R.drawable.monster_zone_19,
+        R.drawable.monster_zone_20,
+        R.drawable.monster_zone_21,
+        R.drawable.monster_zone_22,
+        R.drawable.monster_zone_23,
+    )
+
+    fun combatSourceOf(name: String): CombatSource {
+        val source = requireNotNull(combatCells[name]) { "unknown monster: $name" }
+        return CombatSource(
+            drawable = zoneDrawables[source.zoneIndex],
+            offset = IntOffset(
+                x = (source.localCell % COMBAT_COLUMNS) * COMBAT_CELL,
+                y = (source.localCell / COMBAT_COLUMNS) * COMBAT_CELL,
+            ),
+        )
     }
 
     fun petCellOf(petId: String): Int {
         val index = PetKind.entries.indexOfFirst { it.id == petId }
         require(index >= 0) { "unknown pet: $petId" }
-        return PET_BASE + index
+        return petBase + index
     }
 
-    fun hasCell(name: String): Boolean = name in cells
+    fun hasCell(name: String): Boolean = name in legacyCells
 
+    /** Retained for ordering tests and save-compatible legacy atlas indices. */
     fun cellOf(name: String): Int =
-        requireNotNull(cells[name]) { "unknown monster: $name" }
+        requireNotNull(legacyCells[name]) { "unknown monster: $name" }
 
     fun offsetOf(cell: Int): IntOffset =
         IntOffset((cell % COLUMNS) * CELL, (cell / COLUMNS) * CELL)

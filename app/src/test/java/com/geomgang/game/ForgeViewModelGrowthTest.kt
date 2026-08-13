@@ -63,7 +63,7 @@ class ForgeViewModelGrowthTest {
     fun `보너스 출처가 화면 상태로 온다`() {
         val sources = vm(rich()).ui.value.bonusSources
         assertTrue(sources.any { it.label == "도감" })
-        assertTrue(sources.any { it.label == "스킬" })
+        assertTrue(sources.any { it.label == "대장 기술" })
         assertTrue(sources.any { it.label == "고유검" })
     }
 

@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geomgang.core.Sword
+import com.geomgang.core.GameSeason
 import com.geomgang.core.WeaponFamily
 import com.geomgang.game.ui.ForgeBackdrop
 import com.geomgang.game.ui.ForgeSeasonTheme
@@ -42,7 +43,9 @@ class SwordArtPreviewActivity : ComponentActivity() {
 
         setContent {
             SwordForgeTheme {
-                ForgeSeasonTheme(deep = level >= 15) {
+                ForgeSeasonTheme(
+                    season = if (level >= 20) GameSeason.LEGEND else GameSeason.ABYSS,
+                ) {
                     Surface(modifier = Modifier.fillMaxSize()) {
                         ForgeBackdrop {
                             Column(

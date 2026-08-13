@@ -51,7 +51,7 @@ class CustomSwordArtTest {
     }
 
     @Test
-    fun `모든 좌표가 128 픽셀 격자에 맞는다`() {
+    fun `모든 좌표가 고해상도 셀 격자에 맞는다`() {
         val sources = customFamilies.flatMap { family ->
             (0..20).map { CustomSwordArt.sourceFor(family, it) }
         } + (21..50).map { CustomSwordArt.sourceFor(null, it) }

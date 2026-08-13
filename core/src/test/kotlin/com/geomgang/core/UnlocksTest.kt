@@ -94,6 +94,23 @@ class UnlocksTest {
     @Test
     fun `새 판은 시즌1에서 시작한다`() {
         assertFalse(Unlocks.deepUnlocked(GameState(Difficulty.ENDLESS)))
+        assertEquals(GameSeason.EMBER, Unlocks.season(GameState(Difficulty.ENDLESS)))
+    }
+
+    @Test
+    fun `용검 조합 직후는 시즌2이고 용검 20강부터 시즌3다`() {
+        val season2 = GameState(
+            difficulty = Difficulty.ENDLESS,
+            sword = Sword(WeaponFamily.DRAGON, LegendForge.CRAFT_LEVEL),
+            dragonForged = true,
+        )
+        assertEquals(GameSeason.ABYSS, Unlocks.season(season2))
+
+        val season3 = season2.copy(
+            sword = Sword(WeaponFamily.DRAGON, LegendForge.MATERIAL_LEVEL),
+        )
+        assertEquals(GameSeason.LEGEND, Unlocks.season(season3))
+        assertTrue(Unlocks.repairSeason(season3).legendSeasonUnlocked)
     }
 
     /**

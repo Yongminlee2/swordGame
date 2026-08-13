@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.geomgang.core.GameSeason
 
 val ForgeCyan = Color(0xFF45D1CF)
 val ForgeAmber = Color(0xFFF4B53B)
@@ -105,6 +106,7 @@ private val ForgeTypography = Typography(
 )
 
 val LocalForgeDeep = staticCompositionLocalOf { false }
+val LocalForgeSeason = staticCompositionLocalOf { GameSeason.EMBER }
 
 @Composable
 fun SwordForgeTheme(content: @Composable () -> Unit) {
@@ -118,8 +120,12 @@ fun SwordForgeTheme(content: @Composable () -> Unit) {
 
 /** 게임 진행 국면과 모든 메뉴의 색을 같은 경계로 전환한다. */
 @Composable
-fun ForgeSeasonTheme(deep: Boolean, content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalForgeDeep provides deep) {
+fun ForgeSeasonTheme(season: GameSeason, content: @Composable () -> Unit) {
+    val deep = season != GameSeason.EMBER
+    CompositionLocalProvider(
+        LocalForgeDeep provides deep,
+        LocalForgeSeason provides season,
+    ) {
         MaterialTheme(
             colorScheme = if (deep) DeepColors else EarlyColors,
             typography = ForgeTypography,

@@ -120,9 +120,7 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
                         color = MaterialTheme.colorScheme.secondary,
                     )
                     Text(
-                        text = "기본 4계열(직검·곡도·대검·세검)만 상점에 나온다. " +
-                            "마검·성검은 +20 두 자루의 조합으로, " +
-                            "용검은 그 둘 +20을 합쳐 얻는다.",
+                        text = "상점: 기본 4계열 · 조합: 마검·성검·용검",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
                     )
@@ -175,7 +173,7 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
                                 color = ForgeAmber,
                             )
                             Text(
-                                text = "마검 +20 + 성검 +20 — 조합소 전설 칸에서",
+                                text = "마검 +20 + 성검 +20",
                                 fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                             )
@@ -195,7 +193,7 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
                         color = ForgeAmber,
                     )
                     Text(
-                        text = "특별한 조합이 특별한 검을 만든다. 힌트를 읽고 재료를 찾아라.",
+                        text = "힌트에 맞는 재료를 조합한다.",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
                     )

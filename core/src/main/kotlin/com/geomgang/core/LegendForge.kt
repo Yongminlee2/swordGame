@@ -112,6 +112,7 @@ object LegendForge {
     fun recraft(state: GameState): GameState = state.copy(
         sword = Sword(WeaponFamily.DRAGON, LEVEL),
         dragonForged = true,
+        legendSeasonUnlocked = true,
         shards = state.shards - RECRAFT_SHARDS,
         bestLevel = maxOf(state.bestLevel, LEVEL),
     )

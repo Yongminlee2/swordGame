@@ -98,9 +98,9 @@ class MainActivity : ComponentActivity() {
 
     private fun enterImmersiveMode() {
         WindowInsetsControllerCompat(window, window.decorView).apply {
-            systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            hide(WindowInsetsCompat.Type.systemBars())
+            // 하단의 뒤로·홈·최근 앱 버튼은 항상 보이게 둔다. 숨겼다가 나타나는
+            // 내비게이션 바는 게임 버튼 위에 겹치므로 상태바만 숨긴다.
+            hide(WindowInsetsCompat.Type.statusBars())
         }
     }
 }
@@ -134,7 +134,7 @@ private fun App(store: SaveStore) {
         }
     }
 
-    ForgeSeasonTheme(deep = state.deepUnlocked) {
+    ForgeSeasonTheme(season = state.season) {
         ForgeBackdrop {
     when (overlay) {
         Overlay.Hunt -> HuntScreen(
@@ -150,7 +150,6 @@ private fun App(store: SaveStore) {
             onChallengeBoss = vm::challengeBoss,
             onTapNugget = vm::tapNugget,
             onBuyMerchant = vm::buyMerchantOffer,
-            onRetryBoss = vm::retryBoss,
             onGiveUpBoss = vm::giveUpBoss,
             onStayInZone = vm::stayInZone,
             onNextZone = vm::nextZone,
@@ -208,6 +207,8 @@ private fun App(store: SaveStore) {
             onBuyStone = vm::buyStone,
             onSellSword = vm::sellSword,
             onBuyItem = vm::buyItem,
+            onBuyLegendPreventWithGold = vm::buyLegendPreventWithGold,
+            onBuyLegendPreventWithShards = vm::buyLegendPreventWithShards,
             onCraft = { id, count, family -> vm.craft(id, count, family) },
             onBack = { overlay = Overlay.None },
         )
@@ -270,7 +271,7 @@ private fun App(store: SaveStore) {
         )
 
         Overlay.Help -> HelpScreen(
-            deepUnlocked = state.deepUnlocked,
+            season = state.season,
             onBack = { overlay = Overlay.Records },
         )
 

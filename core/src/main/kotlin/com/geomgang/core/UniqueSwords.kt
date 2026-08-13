@@ -50,7 +50,7 @@ object UniqueSwords {
             resultFamily = WeaponFamily.DEMON,
             needs = listOf(Triple(WeaponFamily.DEMON, 12, 2)),
             essences = mapOf("abyss" to 5),
-            blurb = "적 최대체력의 2%를 추가로 벤다",
+            blurb = "최대 체력 2% 추가 피해",
         ),
         UniqueRecipe(
             id = "phoenix", name = "불사조",
@@ -61,7 +61,7 @@ object UniqueSwords {
                 Triple(WeaponFamily.DEMON, 12, 1),
             ),
             essences = mapOf("volcano" to 3),
-            blurb = "불사조의 온기가 금을 부른다 — 사냥 골드 +25%",
+            blurb = "사냥 골드 +25%",
         ),
         // --- 아래 넷은 기본 4계열 하나씩. 시즌1에서 손에 넣을 수 있는 것들이다.
         // 넷 다 강화 성공률로 값을 한다(v2.4) - 원래 셋은 보스 데미지·공격 속도·조각
@@ -73,28 +73,28 @@ object UniqueSwords {
             hint = "처음 쥔 곧은 검 둘을 +10까지 강화해 맞대면…",
             resultFamily = WeaponFamily.STRAIGHT,
             needs = listOf(Triple(WeaponFamily.STRAIGHT, 10, 2)),
-            blurb = "지니고만 있어도 강화 성공률 +3%p",
+            blurb = "보유 시 성공률 +3%p",
         ),
         UniqueRecipe(
             id = "glutton", name = "탐식자",
             hint = "굶주린 굽은 날 둘을 +12까지 강화해 서로를 집어삼키게 하면…",
             resultFamily = WeaponFamily.DEMON,
             needs = listOf(Triple(WeaponFamily.CURVED, 12, 2)),
-            blurb = "지니고만 있어도 강화 성공률 +2%p",
+            blurb = "보유 시 성공률 +2%p",
         ),
         UniqueRecipe(
             id = "tempest", name = "폭풍우",
             hint = "가장 빠르고 가는 것 둘을 +12까지 강화해 겹치면…",
             resultFamily = WeaponFamily.RAPIER,
             needs = listOf(Triple(WeaponFamily.RAPIER, 12, 2)),
-            blurb = "지니고만 있어도 강화 성공률 +2%p",
+            blurb = "보유 시 성공률 +2%p",
         ),
         UniqueRecipe(
             id = "trinity", name = "삼위일체",
             hint = "가장 무겁고 큰 것 둘을 +14까지 강화해 포개면…",
             resultFamily = WeaponFamily.HOLY,
             needs = listOf(Triple(WeaponFamily.GREAT, 14, 2)),
-            blurb = "지니고만 있어도 강화 성공률 +2.5%p",
+            blurb = "보유 시 성공률 +2.5%p",
         ),
     )
 

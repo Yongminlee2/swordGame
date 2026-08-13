@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geomgang.core.GauntletChoice
+import com.geomgang.core.GauntletEngine
 import com.geomgang.core.Zone
 import com.geomgang.game.ForgeUiState
 import com.geomgang.game.GauntletUiState
@@ -231,7 +232,7 @@ private fun androidx.compose.foundation.layout.ColumnScope.Crossroad(
                             color = ForgeAmber,
                         )
                         Text(
-                            "${choice.buff.blurb} (이번 런 동안)",
+                            "${choice.buff.blurb} (이번 도전 동안)",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         )
@@ -271,11 +272,18 @@ private fun androidx.compose.foundation.layout.ColumnScope.RunOver(
     Spacer(Modifier.height(40.dp))
     Text("시간이 다했다", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = ForgeRed)
     Spacer(Modifier.height(10.dp))
-    Text("${g.floor}층에서 런 종료 · 최고 기록 ${g.best}층", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+    Text(
+        "${g.floor}층에서 도전 종료 · 최고 ${g.best}층",
+        fontSize = 14.sp,
+        color = MaterialTheme.colorScheme.onSurface,
+    )
     Spacer(Modifier.height(16.dp))
     Text(
-        "확정 %,d골드는 전부, 미확정 %,d골드는 70%%만 들고 나간다"
-            .format(g.bankedGold, g.pendingGold),
+        "확정 %,d · 미확정 %,d 중 %d%% 획득".format(
+            g.bankedGold,
+            g.pendingGold,
+            (GauntletEngine.LOSS_RATIO * 100).toInt(),
+        ),
         fontSize = 12.sp,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )

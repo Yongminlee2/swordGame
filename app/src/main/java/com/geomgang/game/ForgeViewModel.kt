@@ -17,6 +17,7 @@ import com.geomgang.core.GauntletEngine
 import com.geomgang.core.GauntletRun
 import com.geomgang.core.GoldShop
 import com.geomgang.core.LegendForge
+import com.geomgang.core.LegendProtection
 import com.geomgang.core.MaterialBoost
 import com.geomgang.core.Smithy
 import com.geomgang.core.isLegend
@@ -37,7 +38,6 @@ import com.geomgang.core.Combat
 import com.geomgang.core.DailyQuests
 import com.geomgang.core.HuntEvent
 import com.geomgang.core.HuntEvents
-import com.geomgang.core.HuntRetry
 import com.geomgang.core.IdleReward
 import com.geomgang.core.IdleRewards
 import com.geomgang.core.QuestKind
@@ -126,15 +126,6 @@ class ForgeViewModel(
     private var lastKillGold = 0L
     private var bossFailed = false
     private var zoneCleared = false
-
-    /**
-     * 이 구역에서 골드를 내고 재도전한 횟수. 낼 값이 매번 2배가 된다([HuntRetry]).
-     *
-     * 구역을 나가거나 보스를 잡으면 0으로 돌아간다 — 안 그러면 다음 구역까지
-     * 값이 따라와서 "왜 처음부터 비싸지" 가 된다.
-     */
-    private var bossRetries = 0
-
     /** 방금 보스에게서 얻은 것. 승리 팝업이 읽고 나면 비운다. */
     private var bossReward: BossReward? = null
     private var huntJob: Job? = null
@@ -192,6 +183,14 @@ class ForgeViewModel(
      */
     private fun loadAndRepair(difficulty: Difficulty): GameState {
         var loaded = store.loadGame(difficulty)
+
+        // 용검 +20을 들고 있는 옛 세이브에는 시즌3 표식 필드가 없다.
+        // 보유 상태를 한 번 읽어 영구 표식으로 승격해 둔다.
+        val seasonRepaired = Unlocks.repairSeason(loaded)
+        if (seasonRepaired != loaded) {
+            loaded = seasonRepaired
+            store.saveGame(loaded)
+        }
 
         if (loaded.pendingDestroy != null) {
             loaded = ForgeEngine.confirmDestroy(loaded)
@@ -484,7 +483,7 @@ class ForgeViewModel(
         _ui.value = render()
     }
 
-    /** 스킬을 한 칸 올린다. 도메인 이름은 [Smithy] 지만 화면에서는 "스킬"이다. */
+    /** 대장 기술을 한 칸 올린다. 저장 필드는 호환성을 위해 smithyLevel을 유지한다. */
     fun upgradeSkill() {
         if (busy || !Smithy.canUpgrade(game, progress)) return
         val (nextGame, nextProgress) = Smithy.upgrade(game, progress)
@@ -586,7 +585,6 @@ class ForgeViewModel(
         bossFailed = false
         zoneCleared = false
         // 구역이 바뀌면 재도전 값도 처음으로 돌아간다.
-        bossRetries = 0
         bossReward = null
         refreshQuests() // 자정을 넘겨 계속 켜 둔 경우를 여기서 따라잡는다
         spawnNext()
@@ -600,7 +598,6 @@ class ForgeViewModel(
         stopHuntLoop()
         huntZone = null
         combo = 0
-        bossRetries = 0
         bossReward = null
         activeEvent = null
         eventRemainingMillis = 0
@@ -710,7 +707,6 @@ class ForgeViewModel(
                 petName = if (lastEgg !== eggBefore) lastEgg?.displayName else null,
             )
             // 이 구역은 끝났다. 다음 구역에 재도전 값이 따라가면 안 된다.
-            bossRetries = 0
             zoneCleared = true
             sound.zoneCleared()
             stopHuntLoop()
@@ -762,26 +758,6 @@ class ForgeViewModel(
     fun challengeBoss() {
         val zone = huntZone ?: return
         if (!game.adventure.bossReady || game.sword == null) return
-        startBossFight(zone)
-    }
-
-    /**
-     * 골드를 내고 **즉시** 다시 도전한다.
-     *
-     * 잡몹을 다시 모으지 않는다 — 낮추려는 것은 재도전 문턱이지 5초의 긴장이 아니다.
-     */
-    fun retryBoss() {
-        val zone = huntZone ?: return
-        if (!bossFailed || game.sword == null) return
-        if (!HuntRetry.canRetry(game.gold, zone, bossRetries)) return
-
-        game = game.copy(gold = game.gold - HuntRetry.priceOf(zone, bossRetries))
-        bossRetries++
-        // 놓칠 때 잡몹 진행이 지워졌으므로 보스가 다시 나오도록 되돌린다.
-        game = game.copy(
-            adventure = game.adventure.copy(killsInZone = Zone.MONSTERS_BEFORE_BOSS),
-        )
-        persist()
         startBossFight(zone)
     }
 
@@ -1179,8 +1155,6 @@ class ForgeViewModel(
             lastKillGold = lastKillGold,
             bossFailed = bossFailed,
             zoneCleared = zoneCleared,
-            retryPrice = HuntRetry.priceOf(zone, bossRetries),
-            canRetry = !busy && HuntRetry.canRetry(game.gold, zone, bossRetries),
             bossReward = bossReward,
             event = activeEvent,
             eventRemainingMillis = eventRemainingMillis,
@@ -1216,6 +1190,22 @@ class ForgeViewModel(
     fun buyItem(item: Item) {
         if (busy || !Economy.canBuyItem(game, item)) return
         game = Economy.buyItem(game, item)
+        sound.purchase()
+        persist()
+        _ui.value = render()
+    }
+
+    fun buyLegendPreventWithGold() {
+        if (busy || !LegendProtection.canBuyWithGold(game)) return
+        game = LegendProtection.buyWithGold(game)
+        sound.purchase()
+        persist()
+        _ui.value = render()
+    }
+
+    fun buyLegendPreventWithShards() {
+        if (busy || !LegendProtection.canBuyWithShards(game)) return
+        game = LegendProtection.buyWithShards(game)
         sound.purchase()
         persist()
         _ui.value = render()
@@ -1567,6 +1557,7 @@ class ForgeViewModel(
             gold = game.gold,
             shards = game.shards,
             preventTickets = game.inventory.preventTickets,
+            legendPreventTickets = game.inventory.legendPreventTickets,
             blessingScrolls = game.inventory.blessingScrolls,
             luckCharms = game.inventory.luckCharms,
             bestLevel = game.bestLevel,
@@ -1607,6 +1598,11 @@ class ForgeViewModel(
             requiredStones = ForgeCost.requirementOf(game)?.stones ?: 0,
             forgeBlockedReason = if (busy) null else forgeBlockedReason(),
             deepUnlocked = Unlocks.deepUnlocked(game),
+            season = Unlocks.season(game),
+            canBuyLegendPreventWithGold = !busy &&
+                LegendProtection.canBuyWithGold(game),
+            canBuyLegendPreventWithShards = !busy &&
+                LegendProtection.canBuyWithShards(game),
             huntOpen = Unlocks.huntOpen(game),
             essencePower = Essences.powerOf(game.essences),
             wardCharm = game.wardCharm,
@@ -1658,6 +1654,7 @@ class ForgeViewModel(
             lastResult = lastResult,
             destroyPhase = phase,
             canPrevent = ForgeEngine.canPrevent(game),
+            usesLegendPrevent = ForgeEngine.usesLegendPrevent(game),
             busy = busy,
         )
     }

@@ -141,7 +141,12 @@ fun ForgeScreen(
             // 검이 손에 남아 있으면 부서지고도 살아남은 것이다(전설검·조합검).
             // 되살릴 것이 없어 방지권만 잠기고, 파편은 똑같이 줍는다.
             survived = state.sword != null,
-            preventTickets = state.preventTickets,
+            preventTickets = if (state.usesLegendPrevent) {
+                state.legendPreventTickets
+            } else {
+                state.preventTickets
+            },
+            legendPrevent = state.usesLegendPrevent,
             onPrevent = onPrevent,
             onSalvage = onSalvage,
         )
@@ -167,7 +172,7 @@ fun ForgeScreen(
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = if (state.deepUnlocked) "심층 대장간" else "초보 대장간",
+                        text = state.season.smithyName,
                         color = MaterialTheme.colorScheme.primary,
                         fontSize = 19.sp,
                         fontWeight = FontWeight.Black,
@@ -181,7 +186,7 @@ fun ForgeScreen(
                             .background(MaterialTheme.colorScheme.outline),
                     )
                     Text(
-                        text = if (state.deepUnlocked) "시즌 II" else "시즌 I",
+                        text = "${state.season.roman} · ${state.season.displayName}",
                         color = MaterialTheme.colorScheme.primary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Black,
@@ -309,30 +314,32 @@ fun ForgeScreen(
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
             )
-            // 스킬은 +15부터 열린다. 강화 단계를 올릴 이유를 하나 더 보여 준다.
-            val skill = com.geomgang.core.Skills.of(state.sword.family)
-            val unlocked = com.geomgang.core.Skills.unlocked(state.sword)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                PixelIcon(
-                    resource = if (unlocked) R.drawable.ui_pixel_bolt else R.drawable.ui_pixel_lock,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                    alpha = if (unlocked) 1f else 0.45f,
-                )
-                Spacer(Modifier.width(4.dp))
-                Text(
-                    text = if (unlocked) {
-                        "${skill.name} — ${skill.blurb}"
-                    } else {
-                        "${skill.name} — +${com.geomgang.core.Skills.MIN_LEVEL}부터"
-                    },
-                    fontSize = 11.sp,
-                    color = if (unlocked) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                    },
-                )
+            // 사냥터가 없는 시즌1에는 검 스킬을 보여 주지 않는다.
+            if (state.deepUnlocked) {
+                val skill = com.geomgang.core.Skills.of(state.sword.family)
+                val unlocked = com.geomgang.core.Skills.unlocked(state.sword)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    PixelIcon(
+                        resource = if (unlocked) R.drawable.ui_pixel_bolt else R.drawable.ui_pixel_lock,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        alpha = if (unlocked) 1f else 0.45f,
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = if (unlocked) {
+                            "${skill.name} · ${skill.blurb}"
+                        } else {
+                            "${skill.name} · +${com.geomgang.core.Skills.MIN_LEVEL} 해금"
+                        },
+                        fontSize = 11.sp,
+                        color = if (unlocked) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        },
+                    )
+                }
             }
         }
         Spacer(Modifier.height(4.dp))
@@ -460,9 +467,9 @@ fun ForgeScreen(
         if (state.awaitingDestroyChoice) {
             Text(
                 text = if (state.canPrevent) {
-                    "왼쪽 원은 되살리기, 오른쪽 파편은 조각"
+                    "왼쪽: 복구 · 오른쪽: 조각"
                 } else {
-                    "방지권이 없다 — 파편을 눌러 조각을 회수한다"
+                    "복구권 없음 · 조각 회수"
                 },
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
             )
@@ -623,6 +630,7 @@ private fun DestroyDialog(
     /** 부서지고도 검이 남았는지(전설검·조합검). 되살릴 것이 없어 방지권만 잠긴다. */
     survived: Boolean,
     preventTickets: Int,
+    legendPrevent: Boolean,
     onPrevent: () -> Unit,
     onSalvage: () -> Unit,
 ) {
@@ -643,9 +651,10 @@ private fun DestroyDialog(
             Column {
                 Text(
                     text = when {
-                        survived -> "검은 사라지지 않았다. 떨어져 나간 조각을 주울 수 있다."
-                        canPrevent -> "되살릴 것인가, 조각이라도 챙길 것인가."
-                        else -> "방지권이 없다. 지금 주우면 조각이라도 남는다."
+                        survived && canPrevent -> "전설 방지권으로 원래 단계 복구"
+                        survived -> "검 유지 · 복구권 없음 · 조각 회수 가능"
+                        canPrevent -> "검 복구 또는 조각 회수"
+                        else -> "방지권 없음 · 조각만 회수 가능"
                     },
                     fontSize = 14.sp,
                 )
@@ -658,9 +667,9 @@ private fun DestroyDialog(
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = if (survived) {
-                        "시간을 넘기면 조각이 사라진다"
+                        "시간 초과 시 조각 소멸"
                     } else {
-                        "시간을 넘기면 아무것도 남지 않는다"
+                        "시간 초과 시 복구·조각 기회 소멸"
                     },
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
@@ -672,7 +681,11 @@ private fun DestroyDialog(
         dismissButton = {
             TextButton(onClick = onPrevent, enabled = canPrevent) {
                 Text(
-                    text = "방지권 $preventTickets",
+                    text = if (legendPrevent) {
+                        "전설 방지권 $preventTickets"
+                    } else {
+                        "방지권 $preventTickets"
+                    },
                     fontWeight = FontWeight.Bold,
                     color = if (canPrevent) {
                         MaterialTheme.colorScheme.primary
@@ -684,7 +697,7 @@ private fun DestroyDialog(
         },
         confirmButton = {
             TextButton(onClick = onSalvage) {
-                Text("파편 줍기", fontWeight = FontWeight.Bold)
+                Text("조각 줍기", fontWeight = FontWeight.Bold)
             }
         },
     )
@@ -704,7 +717,7 @@ private fun TemperBar(temper: TemperUi) {
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
-                text = "담금질 — 실패가 다음 확률을 올린다",
+                text = "담금질 · 실패 보너스",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = ForgeAmber,
@@ -738,7 +751,7 @@ private fun TemperBar(temper: TemperUi) {
         // 0회일 때 "0.5% → 0.5%" 만 보이면 이게 무슨 장치인지 알 수 없다.
         // 다음 한 번의 실패가 무엇을 주는지 늘 적어 둔다.
         Text(
-            text = "실패할 때마다 +%.2f%%p · 최대 %.0f%% · 성공하면 처음으로".format(
+            text = "실패 +%.2f%%p · 최대 %.0f%% · 성공 시 초기화".format(
                 temper.gainPerFail,
                 temper.maxPercent,
             ),
@@ -955,6 +968,7 @@ private fun IconEntry(
             .padding(vertical = 6.dp)
             .alpha(if (enabled) 1f else 0.4f),
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
     ) {
         PixelIcon(
             resource = icon,
@@ -1005,12 +1019,12 @@ private fun BonusBreakdown(sources: List<BonusSource>) {
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
-            text = "쌓은 보너스",
+            text = "보너스",
             fontSize = 11.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
         )
         Text(
-            text = "성공 +%.2f%%p  ·  하락방지 +%.2f%%p".format(success * 100, guard * 100),
+            text = "성공 +%.2f%%p · 하락 방지 +%.2f%%p".format(success * 100, guard * 100),
             fontSize = 11.sp,
             color = if (earned) {
                 ForgeGreen
@@ -1034,15 +1048,14 @@ private fun FamilyCapNotice() {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = "여기가 계열의 끝",
+            text = "계열 강화 완료",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             color = ForgeAmber,
         )
         Spacer(Modifier.height(2.dp))
         Text(
-            text = "+${LegendForge.MATERIAL_LEVEL} 위는 강화로 가지 않는다. " +
-                "조합소에서 전설검으로 조합한다",
+            text = "다음 단계: 조합소에서 전설검 제작",
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
         )
@@ -1055,16 +1068,16 @@ private fun FamilyCapNotice() {
 @Composable
 private fun ResultBanner(result: ForgeResult?) {
     val (text, color) = when (result) {
-        is ForgeResult.Success -> "성공!  +${result.newLevel}" to ForgeGreen
-        is ForgeResult.Stay -> "실패 — 단계 유지" to Color(0xFFD4C87F)
+        is ForgeResult.Success -> "성공 · +${result.newLevel}" to ForgeGreen
+        is ForgeResult.Stay -> "실패 · 단계 유지" to Color(0xFFD4C87F)
         // 부서졌지만 사라지지는 않은 검(전설검·조합검)은 그 사실을 말해 준다.
         // "하락… +1" 만 뜨면 갑자기 바닥으로 간 것이 버그로 읽힌다.
         is ForgeResult.Drop -> if (result.shattered) {
-            "부서졌다!  +${result.newLevel} 로 되돌아갔다" to ForgeRed
+            "파괴! +${result.newLevel}로 복귀" to ForgeRed
         } else {
-            "하락…  +${result.newLevel}" to Color(0xFFD49A5A)
+            "하락 · +${result.newLevel}" to Color(0xFFD49A5A)
         }
-        is ForgeResult.Destroyed -> "파괴!!" to ForgeRed
+        is ForgeResult.Destroyed -> "파괴!" to ForgeRed
         null -> "" to Color.Transparent
     }
     Text(text = text, color = color, fontSize = 18.sp, fontWeight = FontWeight.Bold)

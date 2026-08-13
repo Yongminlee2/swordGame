@@ -63,7 +63,7 @@ private fun SkillForgePanel(state: ForgeUiState, onUpgrade: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("스킬", fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                Text("대장 기술", fontSize = 17.sp, fontWeight = FontWeight.Bold)
                 Text(
                     text = "Lv ${state.skillLevel} / ${Smithy.MAX_LEVEL}",
                     fontSize = 15.sp,
@@ -79,7 +79,7 @@ private fun SkillForgePanel(state: ForgeUiState, onUpgrade: () -> Unit) {
             Spacer(Modifier.height(10.dp))
             // 지금 몇 % 를 받고 있는지 먼저 말한다. 다음 한 칸의 값어치가 거기서 읽힌다.
             Text(
-                text = "지금  성공률 +%.2f%%p  ·  하락방지 +%.2f%%p".format(
+                text = "현재 성공률 +%.2f%%p · 하락 방지 +%.2f%%p".format(
                     state.skillLevel * Smithy.PER_LEVEL * 100,
                     state.skillLevel * Smithy.PER_LEVEL * 100,
                 ),
@@ -124,7 +124,7 @@ private fun SkillForgePanel(state: ForgeUiState, onUpgrade: () -> Unit) {
 private fun StarForgePanel(state: ForgeUiState, onOpenStar: () -> Unit) {
     ForgePanel(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp)) {
-            Text("특수강화", fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            Text("별 강화", fontSize = 17.sp, fontWeight = FontWeight.Bold)
             val star = state.star
             if (star == null) {
                 Spacer(Modifier.height(6.dp))
@@ -152,7 +152,7 @@ private fun StarForgePanel(state: ForgeUiState, onOpenStar: () -> Unit) {
             )
             Spacer(Modifier.height(10.dp))
             OutlinedButton(onClick = onOpenStar, modifier = Modifier.fillMaxWidth()) {
-                Text("별 강화 하러 가기")
+                Text("별 강화 열기")
             }
         }
     }
@@ -197,7 +197,7 @@ private fun BonusForgePanel(sources: List<BonusSource>) {
                             },
                         )
                         Text(
-                            text = "방지 +%.2f%%p".format(source.bonus.dropGuard * 100),
+                            text = "하락 방지 +%.2f%%p".format(source.bonus.dropGuard * 100),
                             fontSize = 12.sp,
                             color = if (source.bonus.dropGuard > 0) {
                                 Color(0xFF7FA8D4)

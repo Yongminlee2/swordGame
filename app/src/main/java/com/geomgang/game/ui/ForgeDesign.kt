@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -110,7 +111,15 @@ fun ForgeBackdrop(content: @Composable BoxScope.() -> Unit) {
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background.copy(alpha = 0.08f)),
         )
-        content()
+        // Android 15의 edge-to-edge 환경에서도 시스템 뒤로·홈 버튼 위로 UI가
+        // 내려가지 않게 모든 화면에 같은 하단 안전 영역을 적용한다.
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .navigationBarsPadding()
+                .padding(bottom = 6.dp),
+            content = content,
+        )
     }
 }
 
@@ -188,7 +197,11 @@ fun SeasonStamp(
     compact: Boolean = false,
 ) {
     Text(
-        text = if (LocalForgeDeep.current) "시즌 II" else "시즌 I",
+        text = LocalForgeSeason.current.let { season ->
+            if (compact) "${season.roman} · ${season.shortName}" else {
+                "${season.roman} ${season.displayName}"
+            }
+        },
         modifier = modifier,
         color = MaterialTheme.colorScheme.primary,
         fontSize = if (compact) 10.sp else 13.sp,

@@ -82,7 +82,7 @@ fun RecordsMenuScreen(
             icon = R.drawable.ui_pixel_help,
             title = "도움말",
             subtitle = if (deepUnlocked) {
-                "재료·계열·조합·스킬 규칙"
+            "강화·조합·전투 규칙"
             } else {
                 "강화·계열·조합 규칙"
             },

@@ -34,6 +34,23 @@ class SwordNamesTest {
     }
 
     @Test
+    fun `노출 계열은 같은 강화 단계에서도 서로 다른 이름이다`() {
+        for (level in 0..20) {
+            val names = WeaponFamily.VISIBLE.map { SwordNames.nameFor(it, level) }
+            assertEquals("+$level 계열 이름이 겹친다", names.size, names.toSet().size)
+        }
+    }
+
+    @Test
+    fun `노출된 일곱 계열은 각자 21개의 고유 이름을 가진다`() {
+        val names = WeaponFamily.VISIBLE.flatMap { family ->
+            (0..20).map { level -> SwordNames.nameFor(family, level) }
+        }
+        assertEquals(WeaponFamily.VISIBLE.size * 21, names.toSet().size)
+        assertEquals("어린 용의 이빨", SwordNames.nameFor(WeaponFamily.DRAGON, 1))
+    }
+
+    @Test
     fun `이름에 강화 숫자를 넣지 않는다`() {
         // 숫자는 화면이 부제로 따로 붙인다. 이름 자체에 들어가면 중복이다.
         (0..20).forEach { level ->

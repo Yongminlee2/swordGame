@@ -121,11 +121,16 @@ val Sword.familyLabel: String get() = if (uniqueId != null) "고유검" else fam
 @Serializable
 data class Inventory(
     val preventTickets: Int = 0,
+    /** 용검 +20 이후 파괴 판정에서 떨어진 단계를 되돌리는 전용 방지권. */
+    val legendPreventTickets: Int = 0,
     val blessingScrolls: Int = 0,
     val luckCharms: Int = 0,
 ) {
     init {
         require(preventTickets >= 0) { "preventTickets must be >= 0, was $preventTickets" }
+        require(legendPreventTickets >= 0) {
+            "legendPreventTickets must be >= 0, was $legendPreventTickets"
+        }
         require(blessingScrolls >= 0) { "blessingScrolls must be >= 0, was $blessingScrolls" }
         require(luckCharms >= 0) { "luckCharms must be >= 0, was $luckCharms" }
     }
@@ -163,7 +168,12 @@ data class Inventory(
  * 그렇게 하지 않으면 방지권 대기 중 강제 종료로 파괴를 무효화할 수 있다.
  */
 @Serializable
-data class PendingDestroy(val family: WeaponFamily, val level: Int)
+data class PendingDestroy(
+    val family: WeaponFamily,
+    val level: Int,
+    val stars: Int = 0,
+    val uniqueId: String? = null,
+)
 
 /** 한 모드의 전체 진행 상태. */
 @Serializable
@@ -226,6 +236,8 @@ data class GameState(
      * [Unlocks.dragonOwned] 가 받아 준다.
      */
     val dragonForged: Boolean = false,
+    /** 용검 +20을 한 번이라도 달성했는지 — 시즌3의 영구 표식. */
+    val legendSeasonUnlocked: Boolean = false,
     /**
      * 마지막으로 저장된 시각(epoch ms). 자리비움 보상이 이 값과 지금을 견준다.
      *

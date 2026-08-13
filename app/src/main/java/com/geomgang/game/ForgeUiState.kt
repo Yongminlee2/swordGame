@@ -3,6 +3,7 @@ package com.geomgang.game
 import com.geomgang.core.BonusSource
 import com.geomgang.core.Difficulty
 import com.geomgang.core.ForgeResult
+import com.geomgang.core.GameSeason
 import com.geomgang.core.IdleReward
 import com.geomgang.core.Item
 import com.geomgang.core.OddsPercent
@@ -51,6 +52,7 @@ data class ForgeUiState(
     val gold: Long,
     val shards: Int,
     val preventTickets: Int,
+    val legendPreventTickets: Int,
     val blessingScrolls: Int,
     val luckCharms: Int,
     val bestLevel: Int,
@@ -98,6 +100,8 @@ data class ForgeUiState(
     /** 파괴 이후 무엇을 기다리는 중인지. 제한 시간 진행도가 여기 들어 있다. */
     val destroyPhase: DestroyPhase = DestroyPhase.None,
     val canPrevent: Boolean = false,
+    /** 현재 파괴창이 일반 방지권이 아니라 전설 방지권을 쓰는 상태인지. */
+    val usesLegendPrevent: Boolean = false,
     /** 연출 재생 중이거나 제한 시간 창이 열려 있으면 입력을 받지 않는다. */
     val busy: Boolean = false,
     /** 도감·업적·칭호·통계. 모드와 무관한 전역 진행도다. */
@@ -141,9 +145,9 @@ data class ForgeUiState(
     /** 강화 보너스의 출처별 내역. 화면이 "왜 이 확률인지" 말해 준다. */
     val bonusSources: List<BonusSource> = emptyList(),
     /**
-     * 스킬 — 골드로 사는 영구 확률.
+     * 대장 기술 — 골드로 사는 영구 확률.
      *
-     * 도메인 이름은 [com.geomgang.core.Smithy] 지만 화면에서는 "스킬"이다.
+     * 도메인 이름은 [com.geomgang.core.Smithy]지만 화면에서는 "대장 기술"이다.
      * 저장 필드(`smithyLevel`)는 그대로 둔다 — 이름을 바꾸면 옛 세이브가 값을 잃는다.
      */
     val skillLevel: Int = 0,
@@ -167,6 +171,9 @@ data class ForgeUiState(
      * **강화 → 판매 → 강화** 만 한다.
      */
     val deepUnlocked: Boolean = false,
+    val season: GameSeason = GameSeason.EMBER,
+    val canBuyLegendPreventWithGold: Boolean = false,
+    val canBuyLegendPreventWithShards: Boolean = false,
     val huntOpen: Boolean = false,
     /** 가진 정수를 전부 무게로 환산한 값([com.geomgang.core.Essences]). */
     val essencePower: Int = 0,

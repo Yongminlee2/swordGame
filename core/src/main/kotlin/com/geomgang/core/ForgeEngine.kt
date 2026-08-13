@@ -154,6 +154,9 @@ object ForgeEngine {
                 state = paid.copy(
                     sword = sword.copy(level = targetLevel),
                     bestLevel = maxOf(paid.bestLevel, targetLevel),
+                    legendSeasonUnlocked = paid.legendSeasonUnlocked ||
+                        (sword.family == WeaponFamily.DRAGON &&
+                            targetLevel >= LegendForge.MATERIAL_LEVEL),
                     // 성공하면 담금질은 처음으로 돌아간다.
                     temperLevel = 0,
                     temperFails = 0,
@@ -194,10 +197,25 @@ object ForgeEngine {
                         ForgeResult.Destroyed(
                             state = failed.copy(
                                 sword = null,
-                                pendingDestroy = PendingDestroy(sword.family, sword.level),
+                                pendingDestroy = PendingDestroy(
+                                    sword.family,
+                                    sword.level,
+                                    sword.stars,
+                                    sword.uniqueId,
+                                ),
                             ),
                             lostLevel = sword.level,
-                            preventable = failed.inventory.preventTickets > 0,
+                            preventable = canPrevent(
+                                failed.copy(
+                                    sword = null,
+                                    pendingDestroy = PendingDestroy(
+                                        sword.family,
+                                        sword.level,
+                                        sword.stars,
+                                        sword.uniqueId,
+                                    ),
+                                ),
+                            ),
                         )
                     }
                 } else {
@@ -221,7 +239,12 @@ object ForgeEngine {
         ForgeResult.Drop(
             state = failed.copy(
                 sword = sword.copy(level = floor),
-                pendingDestroy = PendingDestroy(sword.family, sword.level),
+                pendingDestroy = PendingDestroy(
+                    sword.family,
+                    sword.level,
+                    sword.stars,
+                    sword.uniqueId,
+                ),
             ),
             newLevel = floor,
             shattered = true,
@@ -274,10 +297,21 @@ object ForgeEngine {
      * **검이 손에 남아 있으면 못 쓴다** — 부서졌지만 사라지지 않은 검([shatter])이다.
      * 되살릴 것이 없으니 방지권이 할 일도 없다. 파편은 그래도 주울 수 있다.
      */
-    fun canPrevent(state: GameState): Boolean =
-        state.pendingDestroy != null &&
-            state.sword == null &&
-            state.inventory.preventTickets > 0
+    fun usesLegendPrevent(state: GameState): Boolean {
+        val pending = state.pendingDestroy ?: return false
+        return Unlocks.legendSeasonReached(state) &&
+            pending.family == WeaponFamily.DRAGON &&
+            pending.level >= LegendForge.MATERIAL_LEVEL
+    }
+
+    fun canPrevent(state: GameState): Boolean {
+        if (state.pendingDestroy == null) return false
+        return if (usesLegendPrevent(state)) {
+            state.inventory.legendPreventTickets > 0
+        } else {
+            state.sword == null && state.inventory.preventTickets > 0
+        }
+    }
 
     /**
      * 방지권을 태워 파괴 직전 상태로 되돌린다.
@@ -287,12 +321,28 @@ object ForgeEngine {
     fun applyPrevent(state: GameState): GameState {
         // 파괴 대기 여부는 인자 검증이 아니라 상태 전제조건이므로 checkNotNull 을 쓴다.
         val pending = checkNotNull(state.pendingDestroy) { "no pending destroy to prevent" }
-        check(state.inventory.preventTickets > 0) { "no prevent ticket" }
-        // 검이 남아 있으면 되살릴 것이 없다 - 덮어쓰면 잃은 단계가 공짜로 돌아온다.
-        check(state.sword == null) { "sword survived; nothing to prevent" }
+        val legend = usesLegendPrevent(state)
+        if (legend) {
+            check(state.inventory.legendPreventTickets > 0) { "no legend prevent ticket" }
+        } else {
+            check(state.inventory.preventTickets > 0) { "no prevent ticket" }
+            // 일반 방지권은 완전히 사라진 검만 되살린다.
+            check(state.sword == null) { "sword survived; nothing to prevent" }
+        }
         return state.copy(
-            sword = Sword(pending.family, pending.level),
-            inventory = state.inventory.minus(Item.PREVENT_TICKET, 1),
+            sword = Sword(
+                pending.family,
+                pending.level,
+                pending.stars,
+                pending.uniqueId,
+            ),
+            inventory = if (legend) {
+                state.inventory.copy(
+                    legendPreventTickets = state.inventory.legendPreventTickets - 1,
+                )
+            } else {
+                state.inventory.minus(Item.PREVENT_TICKET, 1)
+            },
             pendingDestroy = null,
         )
     }

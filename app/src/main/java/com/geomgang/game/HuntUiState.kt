@@ -64,10 +64,6 @@ data class HuntUiState(
     val merchantPrice: Long = 0,
     /** 화면에 금덩이가 떠 있는지. */
     val nugget: Boolean = false,
-    /** 지금 즉시 재도전하는 값. 놓친 직후에만 뜻이 있다. */
-    val retryPrice: Long = 0,
-    /** 그 값을 낼 수 있는지. */
-    val canRetry: Boolean = false,
     /** 방금 보스에게서 얻은 것. 승리 팝업이 그대로 띄운다. */
     val bossReward: BossReward? = null,
 ) {

@@ -14,6 +14,17 @@ package com.geomgang.core
  * 판별에 새 저장 필드는 없다 — 가진 검의 계열과 최고 기록만 보므로 옛 세이브도
  * 그대로 읽힌다([deepUnlocked]).
  */
+enum class GameSeason(
+    val roman: String,
+    val displayName: String,
+    val shortName: String,
+    val smithyName: String,
+) {
+    EMBER("I", "불씨의 시대", "불씨", "불씨 대장간"),
+    ABYSS("II", "심연의 시대", "심연", "심층 대장간"),
+    LEGEND("III", "전설의 시대", "전설", "전설 대장간"),
+}
+
 object Unlocks {
 
     /** 전설(+21)을 밟았는지. */
@@ -53,6 +64,28 @@ object Unlocks {
      */
     fun deepUnlocked(state: GameState): Boolean =
         state.dragonForged || legendReached(state) || dragonOwned(state)
+
+    /** 용검 +20 달성은 시즌3의 경계다. 한 번 열리면 그 검을 잃어도 닫히지 않는다. */
+    fun legendSeasonReached(state: GameState): Boolean =
+        state.legendSeasonUnlocked ||
+            state.sword?.let { it.family == WeaponFamily.DRAGON && it.level >= LegendForge.MATERIAL_LEVEL } == true ||
+            state.storage.any {
+                it.family == WeaponFamily.DRAGON && it.level >= LegendForge.MATERIAL_LEVEL
+            }
+
+    fun season(state: GameState): GameSeason = when {
+        legendSeasonReached(state) -> GameSeason.LEGEND
+        deepUnlocked(state) -> GameSeason.ABYSS
+        else -> GameSeason.EMBER
+    }
+
+    /** 이 필드가 없던 세이브도 보유 중인 용검 +20을 보고 영구 표식을 복구한다. */
+    fun repairSeason(state: GameState): GameState =
+        if (legendSeasonReached(state) && !state.legendSeasonUnlocked) {
+            state.copy(legendSeasonUnlocked = true)
+        } else {
+            state
+        }
 
     /** 사냥터·회랑이 열렸는지. 초반에는 강화대 앞을 떠날 이유가 없어야 한다. */
     fun huntOpen(state: GameState): Boolean = deepUnlocked(state)

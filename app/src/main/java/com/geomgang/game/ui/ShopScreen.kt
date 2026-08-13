@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geomgang.core.Economy
 import com.geomgang.core.Item
+import com.geomgang.core.GameSeason
+import com.geomgang.core.LegendProtection
 import com.geomgang.core.Recipe
 import com.geomgang.core.RecipeReward
 import com.geomgang.core.Recipes
@@ -52,6 +54,8 @@ fun ShopScreen(
     onBuyStone: () -> Unit,
     onSellSword: () -> Unit,
     onBuyItem: (Item) -> Unit,
+    onBuyLegendPreventWithGold: () -> Unit,
+    onBuyLegendPreventWithShards: () -> Unit,
     onCraft: (recipeId: String, count: Int, family: WeaponFamily?) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -62,10 +66,7 @@ fun ShopScreen(
                 Text("검", fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(10.dp))
 
-                Text(
-                    "살 계열을 고른다",
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                )
+                Text("계열 선택", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                 Spacer(Modifier.height(6.dp))
                 // 미리보기도 게임 전체와 같은 그림이다 - 사는 검이 곧 보이는 검
                 SwordThumb(
@@ -109,7 +110,7 @@ fun ShopScreen(
                         enabled = state.canBuySword,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text("손에 들기  ·  %,d".format(Economy.BASE_SWORD_PRICE))
+                        Text("손에 들기 · %,d".format(Economy.BASE_SWORD_PRICE))
                     }
                     if (!state.canBuySword) {
                         Reason("골드가 모자란다")
@@ -145,14 +146,14 @@ fun ShopScreen(
                     Spacer(Modifier.height(12.dp))
                     HorizontalDivider()
                     Spacer(Modifier.height(10.dp))
-                    Text("들고 있는 검  ·  +${state.sword.level} ${state.sword.familyLabel}")
+                    Text("들고 있는 검 · +${state.sword.level} ${state.sword.familyLabel}")
                     Spacer(Modifier.height(8.dp))
                     OutlinedButton(
                         onClick = onSellSword,
                         enabled = !state.busy,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text("판매  ·  %,d".format(state.sellPrice))
+                        Text("판매 · %,d".format(state.sellPrice))
                     }
                 }
             }
@@ -193,7 +194,7 @@ fun ShopScreen(
                 Spacer(Modifier.height(6.dp))
                 // 값이 왜 오르고 언제 풀리는지 말해 주지 않으면 그냥 짜증으로만 남는다.
                 Text(
-                    text = "살수록 값이 오른다. 한 단계 올리면 처음 값으로 돌아온다.",
+                    text = "연속 구매 시 상승 · 강화 성공 시 초기화",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 )
@@ -203,6 +204,47 @@ fun ShopScreen(
         Spacer(Modifier.height(12.dp))
         }
 
+        if (state.season == GameSeason.LEGEND) {
+            ForgePanel(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp)) {
+                    Text("전설 파괴 방지권", fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "전설 구간 파괴 시 원래 단계 복구",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "보유 ${state.legendPreventTickets}개",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Button(
+                            onClick = onBuyLegendPreventWithGold,
+                            enabled = state.canBuyLegendPreventWithGold,
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text("골드 %,d".format(LegendProtection.GOLD_PRICE), fontSize = 12.sp)
+                        }
+                        OutlinedButton(
+                            onClick = onBuyLegendPreventWithShards,
+                            enabled = state.canBuyLegendPreventWithShards,
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text("조각 %,d".format(LegendProtection.SHARD_PRICE), fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+        }
+
         // --- 아이템 ---
         ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
@@ -210,10 +252,9 @@ fun ShopScreen(
                 // 값이 왜 오르고 언제 풀리는지 말해 주지 않으면 그냥 짜증으로만 남는다.
                 Text(
                     text = if (state.itemsBought > 0) {
-                        "이 구간에서 ${state.itemsBought}개 샀다. 살수록 값이 오르고, " +
-                            "한 단계 올리면 처음 값으로 돌아온다."
+                        "이번 구간 ${state.itemsBought}개 · 연속 구매 시 가격 상승"
                     } else {
-                        "살수록 값이 오른다. 한 단계 올리면 처음 값으로 돌아온다."
+                        "연속 구매 시 가격 상승 · 강화 성공 시 초기화"
                     },
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
@@ -246,15 +287,13 @@ fun ShopScreen(
             Column(Modifier.padding(16.dp)) {
                 Text("조각 교환", fontWeight = FontWeight.Bold)
                 Text(
-                    text = "파괴된 검에서 주운 조각으로 바꾼다. " +
-                        "워프권은 그 단계에서 시작하는 새 검이다 — 파괴의 재가 재기의 밑천이 된다.\n" +
-                        "계열은 위 「검」 칸에서 고른 것을 따라간다.",
+                    text = "조각으로 워프권 교환 · 선택 계열로 지급",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
                 )
                 if (!state.deepUnlocked) {
                     Text(
-                        text = "강화석·소모품 교환은 용검을 조합하면 열린다.",
+                        text = "용검 조합 후 강화석·소모품 해금",
                         fontSize = 10.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                     )
@@ -378,9 +417,9 @@ private fun Reason(text: String) {
 }
 
 private fun Item.hint(): String = when (this) {
-    Item.PREVENT_TICKET -> "파괴 직후 눌러 검을 되살린다"
-    Item.BLESSING_SCROLL -> "다음 1회 성공률 +10%p"
-    Item.LUCK_CHARM -> "다음 1회 실패해도 하락 없음 (파괴는 방지권으로)"
+    Item.PREVENT_TICKET -> "파괴 직후 검 복구"
+    Item.BLESSING_SCROLL -> "다음 강화 성공률 +10%p"
+    Item.LUCK_CHARM -> "다음 실패 하락 방지 · 파괴 제외"
 }
 
 private fun ForgeUiState.ownedCountOf(item: Item): Int = when (item) {

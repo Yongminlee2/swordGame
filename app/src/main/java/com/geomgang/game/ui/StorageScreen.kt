@@ -141,9 +141,9 @@ private fun EmptyStoragePanel(deepUnlocked: Boolean, onOpenSource: () -> Unit) {
                 Text("보관함이 비어 있다", fontWeight = FontWeight.Bold)
                 Text(
                     text = if (deepUnlocked) {
-                        "사냥 전리품과 보스 검을 여기에 모을 수 있다."
+                        "사냥 전리품과 보스 검 보관"
                     } else {
-                        "상점에서 검을 바로 넣거나, 든 검을 보관할 수 있다."
+                        "상점 구매 또는 장착 검 보관"
                     },
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -378,13 +378,13 @@ private fun ConfirmLossDialog(
         },
         text = {
             val detail = when {
-                loss.sword.uniqueId != null -> "고유검은 정해진 재료를 다시 모아야 만들 수 있다"
+                loss.sword.uniqueId != null -> "고유검 재료를 다시 모아야 한다"
                 loss.sword.family == WeaponFamily.DRAGON ->
-                    "용검은 마검·성검 +${LegendForge.MATERIAL_LEVEL} 두 자루를 태워야 나온다"
-                else -> "조합검은 기본 검 +${Refinery.MATERIAL_LEVEL} 두 자루를 태워야 나온다"
+                    "용검 재료: 마검·성검 +${LegendForge.MATERIAL_LEVEL}"
+                else -> "조합검 재료: 기본 검 +${Refinery.MATERIAL_LEVEL} 두 자루"
             }
             Text(
-                text = "정말 ${loss.verb}?\n$detail — 되돌릴 수 없다.",
+                text = "${loss.verb}?\n$detail · 되돌릴 수 없다.",
                 fontSize = 13.sp,
             )
         },
