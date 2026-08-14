@@ -10,9 +10,9 @@ plugins {
 /**
  * 서명 키는 저장소에 넣지 않는다.
  *
- * 프로젝트 루트에 keystore.properties 가 있으면 그것으로 릴리스를 서명하고,
- * 없으면 디버그 키로 떨어진다. 디버그 키로 서명된 APK 는 스토어에 올릴 수 없다 —
- * 출시하려면 keystore.properties 를 만들어야 한다. 만드는 법은 README 에 있다.
+ * 프로젝트 루트에 keystore.properties 가 있을 때만 릴리스를 서명한다.
+ * 공개된 디버그 키로 릴리스를 서명하면 같은 키를 가진 개조 APK가 업데이트될 수 있으므로
+ * 보안 기능을 넣은 뒤에는 안전한 대체 경로가 아니다. 만드는 법은 README 에 있다.
  */
 val keystoreProps = Properties().apply {
     val file = rootProject.file("keystore.properties")
@@ -30,6 +30,7 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
@@ -45,17 +46,16 @@ android {
 
     buildTypes {
         release {
+            isDebuggable = false
+            isJniDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            signingConfig = if (hasReleaseKey) {
-                signingConfigs.getByName("release")
-            } else {
-                // 키가 없으면 빌드 자체는 되게 두되, 이 APK 는 스토어에 올릴 수 없다.
-                signingConfigs.getByName("debug")
+            if (hasReleaseKey) {
+                signingConfig = signingConfigs.getByName("release")
             }
         }
     }
@@ -67,6 +67,8 @@ android {
 
     buildFeatures {
         compose = true
+        // 디버그 APK 롤백 뒤의 평문 세이브 재이전은 DEBUG 빌드에서만 허용한다.
+        buildConfig = true
     }
 }
 
@@ -82,6 +84,7 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.ui.tooling.preview)
     debugImplementation(libs.compose.ui.tooling)
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -89,4 +92,8 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
 }

@@ -44,6 +44,7 @@ import com.geomgang.core.QuestKind
 import com.geomgang.core.Recipes
 import com.geomgang.core.Refinery
 import com.geomgang.core.SaveStore
+import com.geomgang.core.SaveSecurityEvent
 import com.geomgang.core.Settings
 import com.geomgang.core.Skill
 import com.geomgang.core.Skills
@@ -61,11 +62,16 @@ import com.geomgang.core.Zone
 import com.geomgang.game.feel.HapticEngine
 import com.geomgang.game.sound.SoundEngine
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.random.Random
@@ -89,6 +95,8 @@ class ForgeViewModel(
     private val haptics: HapticEngine = HapticEngine(null) { false },
     /** 지금 시각. 자리비움 보상만 쓴다 — 테스트가 시계를 직접 쥐어야 해서 밖에서 넣는다. */
     private val now: () -> Long = System::currentTimeMillis,
+    /** 실제 앱은 IO 디스패처를 넣어 암호화·파일 교체가 터치 프레임을 막지 않게 한다. */
+    private val saveDispatcher: CoroutineDispatcher? = null,
 ) : ViewModel() {
 
     private var progress: ProgressState = store.loadProgress()
@@ -99,6 +107,8 @@ class ForgeViewModel(
     private var idleReward: IdleReward? = null
 
     private var game: GameState = loadAndRepair(difficulty)
+
+    private var saveSecurityMessage: String? = null
 
     private var busy = false
 
@@ -167,9 +177,28 @@ class ForgeViewModel(
     private val _ui = MutableStateFlow(render())
     val ui: StateFlow<ForgeUiState> = _ui.asStateFlow()
 
+    /** 저장 명령은 하나의 소비자만 처리해 이전 상태가 최신 상태를 뒤늦게 덮지 못하게 한다. */
+    private val saveCommands = saveDispatcher?.let { Channel<SaveCommand>(Channel.UNLIMITED) }
+
+    private val saveJob = saveDispatcher?.let { dispatcher ->
+        viewModelScope.launch(dispatcher) {
+            val commands = checkNotNull(saveCommands)
+            for (command in commands) {
+                when (command) {
+                    is SaveCommand.Write -> writeSave(command.snapshot)
+                    is SaveCommand.Barrier -> command.done.complete(Unit)
+                }
+            }
+        }
+    }
+
     init {
         // 하루가 지나 있으면 첫 화면부터 새 퀘스트가 보여야 한다.
         refreshQuests()
+        // 게임·진행도·설정을 전부 읽은 뒤에만 옛 평문 세이브 이전 창을 닫는다.
+        // 이보다 일찍 닫으면 키 생성 직후 앱이 종료됐을 때 남은 평문 파일을 잃는다.
+        store.finishSecurityMigration()
+        saveSecurityMessage = securityMessageFor(store.consumeSecurityEvents())
         _ui.value = render()
     }
 
@@ -248,6 +277,12 @@ class ForgeViewModel(
     fun dismissIdleReward() {
         if (idleReward == null) return
         idleReward = null
+        _ui.value = render()
+    }
+
+    fun dismissSaveSecurityMessage() {
+        if (saveSecurityMessage == null) return
+        saveSecurityMessage = null
         _ui.value = render()
     }
 
@@ -517,23 +552,41 @@ class ForgeViewModel(
 
     fun setAutoPrevent(on: Boolean) {
         settings = settings.copy(autoPrevent = on)
-        store.saveSettings(settings)
+        enqueueSave(SaveSnapshot(settings = settings))
         _ui.value = render()
     }
 
     fun setSoundOn(on: Boolean) {
         settings = settings.copy(soundOn = on)
-        store.saveSettings(settings)
+        enqueueSave(SaveSnapshot(settings = settings))
         _ui.value = render()
         if (on) sound.purchase()
     }
 
     fun setHapticsOn(on: Boolean) {
         settings = settings.copy(hapticsOn = on)
-        store.saveSettings(settings)
+        enqueueSave(SaveSnapshot(settings = settings))
         _ui.value = render()
         // 켜는 순간 한 번 울려 준다 - 무엇을 켰는지 손으로 확인된다.
         if (on) haptics.forgeSuccess(0)
+    }
+
+    /** 휴대용 백업을 만들기 직전 메모리의 최신 상태를 디스크에 확정한다. */
+    fun preparePortableBackup(): Boolean {
+        if (busy) return false
+        persist()
+        enqueueSave(SaveSnapshot(settings = settings))
+        return flushPendingSaves()
+    }
+
+    /** 가져오기 중 예전 상태를 다시 저장할 수 있는 비동기 루프를 먼저 멈춘다. */
+    fun preparePortableImport() {
+        stopHuntLoop()
+        gauntletJob?.cancel()
+        gauntletJob = null
+        countdownJob?.cancel()
+        countdownJob = null
+        flushPendingSaves()
     }
 
     /** 소리를 켤지 판단할 때 쓴다. 설정이 바뀌면 즉시 반영된다. */
@@ -546,6 +599,8 @@ class ForgeViewModel(
     fun resetProgress() {
         stopHuntLoop()
         countdownJob?.cancel()
+        // 지우기 전 이전 상태의 비동기 저장을 끝낸다. 안 그러면 삭제 뒤 옛 세이브가 돌아온다.
+        flushPendingSaves()
         val difficulty = game.difficulty
         store.resetGame(difficulty)
         // 갓 지운 세이브는 골드 0에 검도 없다. 그대로 두면 검을 살 수도, 강화할 수도 없어
@@ -562,7 +617,7 @@ class ForgeViewModel(
     /** 달성한 업적의 칭호만 고를 수 있다. null 이면 해제. */
     fun selectTitle(achievement: Achievement?) {
         progress = Progress.selectTitle(progress, achievement)
-        store.saveProgress(progress)
+        enqueueSave(SaveSnapshot(progress = progress))
         _ui.value = render()
     }
 
@@ -1295,9 +1350,17 @@ class ForgeViewModel(
     }
 
     override fun onCleared() {
+        dispose()
+        super.onCleared()
+    }
+
+    /** Compose 가 직접 만든 ViewModel이라 화면이 사라질 때 명시적으로 정리한다. */
+    fun dispose() {
+        flushPendingSaves()
+        saveCommands?.close()
+        saveJob?.cancel()
         countdownJob?.cancel()
         huntJob?.cancel()
-        super.onCleared()
     }
 
     /** 사냥 진행을 읽기 전용으로 노출한다. 구역 선택 화면이 쓴다. */
@@ -1483,13 +1546,43 @@ class ForgeViewModel(
     private fun persist() {
         // 저장할 때마다 시각을 새로 찍는다. 이 값이 다음 실행의 자리비움 기준이다.
         game = game.copy(lastSeenMillis = now())
-        store.saveGame(game)
-        store.saveProgress(progress)
+        enqueueSave(SaveSnapshot(game = game, progress = progress))
+    }
+
+    /**
+     * 암호화와 원자적 파일 교체를 저장 전용 큐에 넣는다.
+     *
+     * 디스패처가 없는 JVM 테스트는 예전처럼 즉시 저장한다. 실제 앱은 IO 큐를 쓰므로
+     * 호출자는 상태 계산 직후 돌아가고 Compose 가 다음 프레임을 바로 그릴 수 있다.
+     */
+    private fun enqueueSave(snapshot: SaveSnapshot) {
+        val commands = saveCommands
+        if (commands == null || !commands.trySend(SaveCommand.Write(snapshot)).isSuccess) {
+            writeSave(snapshot)
+        }
+    }
+
+    private fun writeSave(snapshot: SaveSnapshot) {
+        snapshot.game?.let(store::saveGame)
+        snapshot.progress?.let(store::saveProgress)
+        snapshot.settings?.let(store::saveSettings)
+    }
+
+    /** 백그라운드 전환·백업 직전에 앞서 보낸 저장 명령이 전부 끝날 때까지 기다린다. */
+    fun flushPendingSaves(): Boolean {
+        val commands = saveCommands ?: return true
+        val done = CompletableDeferred<Unit>()
+        if (!commands.trySend(SaveCommand.Barrier(done)).isSuccess) return false
+        return runCatching { runBlocking { withTimeout(SAVE_FLUSH_TIMEOUT_MILLIS) { done.await() } } }
+            .isSuccess
     }
 
     private companion object {
         /** 사냥 루프 주기. 화상 피해와 보스 제한 시간을 이 간격으로 처리한다. */
         const val HUNT_TICK_MILLIS = 1_000L
+
+        /** 앱 종료를 막지 않으면서 보통 수십 ms인 암호화 저장을 마칠 수 있는 상한. */
+        const val SAVE_FLUSH_TIMEOUT_MILLIS = 2_000L
 
         /**
          * 이 단계 위부터 신기록을 축하한다.
@@ -1502,6 +1595,17 @@ class ForgeViewModel(
 
         // 잡몹 강화석 확률은 ForgeCost.MOB_STONE_CHANCE 로 옮겼다 -
         // 공급과 요구가 같은 파일에 있어야 ForgeTempoTest 가 둘을 견줄 수 있다.
+    }
+
+    private data class SaveSnapshot(
+        val game: GameState? = null,
+        val progress: ProgressState? = null,
+        val settings: Settings? = null,
+    )
+
+    private sealed interface SaveCommand {
+        data class Write(val snapshot: SaveSnapshot) : SaveCommand
+        data class Barrier(val done: CompletableDeferred<Unit>) : SaveCommand
     }
 
     /**
@@ -1626,6 +1730,7 @@ class ForgeViewModel(
             star = renderStar(),
             progress = progress,
             settings = settings,
+            saveSecurityMessage = saveSecurityMessage,
             idleReward = idleReward,
             hunt = renderHunt(),
             attackPower = Combat.attackPower(game.sword),
@@ -1657,5 +1762,13 @@ class ForgeViewModel(
             usesLegendPrevent = ForgeEngine.usesLegendPrevent(game),
             busy = busy,
         )
+    }
+
+    private fun securityMessageFor(events: Set<SaveSecurityEvent>): String? = when {
+        SaveSecurityEvent.REJECTED_INVALID_SAVE in events ->
+            "세이브 변조 또는 손상을 감지해 해당 값을 차단했습니다. 안전한 저장값으로 시작합니다."
+        SaveSecurityEvent.RECOVERED_FROM_BACKUP in events ->
+            "세이브 검증에 실패해 인증된 백업본으로 복구했습니다."
+        else -> null
     }
 }

@@ -1,5 +1,9 @@
 package com.geomgang.game.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,14 +14,26 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.geomgang.core.SaveStore
 import com.geomgang.core.Settings
 import com.geomgang.core.Timing
 
@@ -33,6 +49,11 @@ fun SettingsScreen(
     onAutoPreventChange: (Boolean) -> Unit,
     onSoundChange: (Boolean) -> Unit,
     onHapticsChange: (Boolean) -> Unit,
+    backupBusy: Boolean,
+    backupMessage: String?,
+    backupError: Boolean,
+    onRequestExportBackup: () -> Unit,
+    onRequestImportBackup: () -> Unit,
     onReset: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -116,6 +137,54 @@ fun SettingsScreen(
 
         ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
+                Text("기기 이전 백업", fontWeight = FontWeight.Medium)
+                Text(
+                    text = "모든 진행과 설정을 비밀번호로 암호화해 파일로 옮긴다. " +
+                        "새 기기에서도 같은 비밀번호가 필요하다.",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+                Spacer(Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    BackupActionButton(
+                        onClick = onRequestExportBackup,
+                        enabled = !backupBusy,
+                        filled = true,
+                        modifier = Modifier.weight(1f),
+                        label = "내보내기",
+                    )
+                    BackupActionButton(
+                        onClick = onRequestImportBackup,
+                        enabled = !backupBusy,
+                        filled = false,
+                        modifier = Modifier.weight(1f),
+                        label = "가져오기",
+                    )
+                }
+                Text(
+                    text = when {
+                        backupBusy -> "백업을 안전하게 처리하는 중..."
+                        backupMessage != null -> backupMessage
+                        else -> "비밀번호를 잊으면 백업을 복원할 수 없다."
+                    },
+                    modifier = Modifier.padding(top = 8.dp),
+                    fontSize = 11.sp,
+                    color = when {
+                        backupError -> MaterialTheme.colorScheme.error
+                        backupMessage != null -> MaterialTheme.colorScheme.primary
+                        else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.52f)
+                    },
+                )
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        ForgePanel(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp)) {
                 Text("진행 초기화", fontWeight = FontWeight.Medium)
                 Text(
                     text = if (deepUnlocked) {
@@ -184,4 +253,111 @@ fun SettingsScreen(
             }
         }
     }
+
+}
+
+enum class BackupDialogMode { Export, Import }
+
+@Composable
+private fun BackupActionButton(
+    label: String,
+    filled: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val shape = CutCornerShape(5.dp)
+    val accent = MaterialTheme.colorScheme.primary
+    val border = if (enabled) accent else MaterialTheme.colorScheme.outline
+    val background = when {
+        !enabled -> MaterialTheme.colorScheme.surfaceVariant
+        filled -> accent
+        else -> Color.Transparent
+    }
+    val content = when {
+        !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+        filled -> MaterialTheme.colorScheme.onPrimary
+        else -> accent
+    }
+    Box(
+        modifier = modifier
+            .height(48.dp)
+            .clip(shape)
+            .background(background)
+            .border(1.dp, border, shape)
+            .clickable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(label, color = content, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+fun BackupPasswordDialog(
+    mode: BackupDialogMode,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+) {
+    var password by remember(mode) { mutableStateOf("") }
+    var confirmation by remember(mode) { mutableStateOf("") }
+    val longEnough = password.length >= SaveStore.PORTABLE_BACKUP_MIN_PASSWORD_CHARS
+    val matches = mode == BackupDialogMode.Import || password == confirmation
+    val canConfirm = longEnough && matches
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(if (mode == BackupDialogMode.Export) "암호화 백업 만들기" else "암호화 백업 불러오기")
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = if (mode == BackupDialogMode.Export) {
+                        "8글자 이상의 비밀번호를 정한다. 이 비밀번호는 게임에 저장되지 않는다."
+                    } else {
+                        "백업을 만들 때 사용한 비밀번호를 입력한다. 가져오면 현재 진행이 백업 내용으로 교체된다."
+                    },
+                    fontSize = 12.sp,
+                )
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("백업 비밀번호") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    isError = password.isNotEmpty() && !longEnough,
+                    supportingText = if (password.isNotEmpty() && !longEnough) {
+                        { Text("8글자 이상 입력") }
+                    } else {
+                        null
+                    },
+                )
+                if (mode == BackupDialogMode.Export) {
+                    OutlinedTextField(
+                        value = confirmation,
+                        onValueChange = { confirmation = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("비밀번호 다시 입력") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        isError = confirmation.isNotEmpty() && !matches,
+                        supportingText = if (confirmation.isNotEmpty() && !matches) {
+                            { Text("비밀번호가 서로 다름") }
+                        } else {
+                            null
+                        },
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = canConfirm, onClick = { onConfirm(password) }) {
+                Text(if (mode == BackupDialogMode.Export) "파일 선택" else "백업 선택")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("취소") }
+        },
+    )
 }

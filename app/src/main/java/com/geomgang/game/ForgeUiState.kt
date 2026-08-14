@@ -109,6 +109,8 @@ data class ForgeUiState(
     /** 자리를 비운 사이 쌓인 보상. 켜자마자 한 번 알리고 비운다. */
     val idleReward: IdleReward? = null,
     val settings: Settings = Settings(),
+    /** 변조된 저장값을 거부하거나 백업으로 복구했을 때 한 번 보여 주는 안내. */
+    val saveSecurityMessage: String? = null,
     /** 보관함에 든 검. 조합과 재료 강화가 여기서 꺼내 쓴다. */
     val storage: List<Sword> = emptyList(),
     val storageCapacity: Int = 0,

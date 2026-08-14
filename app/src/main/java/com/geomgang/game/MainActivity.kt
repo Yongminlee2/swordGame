@@ -1,21 +1,36 @@
 package com.geomgang.game
 
 import android.graphics.Color
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.net.Uri
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.Surface
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.geomgang.core.Difficulty
@@ -23,8 +38,11 @@ import com.geomgang.core.SaveStore
 import com.geomgang.core.WeaponFamily
 import com.geomgang.game.feel.HapticEngine
 import com.geomgang.game.feel.systemVibrator
+import com.geomgang.game.security.secureSaveCodec
 import com.geomgang.game.sound.SoundEngine
 import com.geomgang.game.ui.AchievementScreen
+import com.geomgang.game.ui.BackupDialogMode
+import com.geomgang.game.ui.BackupPasswordDialog
 import com.geomgang.game.ui.CodexScreen
 import com.geomgang.game.ui.CraftScreen
 import com.geomgang.game.ui.ForgeScreen
@@ -43,6 +61,13 @@ import com.geomgang.game.ui.StatsScreen
 import com.geomgang.game.ui.StorageScreen
 import com.geomgang.game.ui.TrainingScreen
 import com.geomgang.game.ui.SwordForgeTheme
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 /** 강화 화면 위에 무엇이 올라와 있는지. */
 private enum class Overlay {
@@ -82,10 +107,11 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(systemBarColor),
         )
         enterImmersiveMode()
+        val saveStore = SaveStore(filesDir, secureSaveCodec())
         setContent {
             SwordForgeTheme {
                 Surface {
-                    App(SaveStore(filesDir))
+                    App(saveStore)
                 }
             }
         }
@@ -113,8 +139,25 @@ private fun App(store: SaveStore) {
         lateinit var holder: ForgeViewModel
         val engine = SoundEngine { holder.soundEnabled() }
         val feel = HapticEngine(systemVibrator(context)) { holder.hapticsEnabled() }
-        holder = ForgeViewModel(store, ONLY_MODE, sound = engine, haptics = feel)
+        holder = ForgeViewModel(
+            store,
+            ONLY_MODE,
+            sound = engine,
+            haptics = feel,
+            saveDispatcher = Dispatchers.IO,
+        )
         holder
+    }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, vm) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) vm.flushPendingSaves()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            vm.dispose()
+        }
     }
     val state by vm.ui.collectAsStateWithLifecycle()
     var overlay by remember { mutableStateOf(Overlay.None) }
@@ -123,6 +166,8 @@ private fun App(store: SaveStore) {
     // 상점에서 고른 계열. **화면 밖에 둬야** 나갔다 와도 고른 것이 남는다 —
     // 상점 안에 remember 로 두면 화면을 닫는 순간 첫 계열로 되돌아갔다.
     var shopFamily by rememberSaveable { mutableStateOf(WeaponFamily.STRAIGHT.name) }
+    val backupTransfer = rememberBackupTransfer(vm, store)
+    var backupDialog by remember { mutableStateOf<BackupDialogMode?>(null) }
 
     BackHandler(enabled = !state.busy) {
         when {
@@ -281,6 +326,11 @@ private fun App(store: SaveStore) {
             onAutoPreventChange = vm::setAutoPrevent,
             onSoundChange = vm::setSoundOn,
             onHapticsChange = vm::setHapticsOn,
+            backupBusy = backupTransfer.busy,
+            backupMessage = backupTransfer.message,
+            backupError = backupTransfer.error,
+            onRequestExportBackup = { backupDialog = BackupDialogMode.Export },
+            onRequestImportBackup = { backupDialog = BackupDialogMode.Import },
             onReset = vm::resetProgress,
             onBack = { overlay = Overlay.Records },
         )
@@ -306,6 +356,180 @@ private fun App(store: SaveStore) {
             onAnimationEnd = vm::onAnimationFinished,
         )
     }
+            state.saveSecurityMessage?.let { message ->
+                AlertDialog(
+                    onDismissRequest = {},
+                    title = { Text("세이브 보호 작동") },
+                    text = { Text(message) },
+                    confirmButton = {
+                        TextButton(onClick = vm::dismissSaveSecurityMessage) {
+                            Text("확인")
+                        }
+                    },
+                )
+            }
+            backupDialog?.let { mode ->
+                BackupPasswordDialog(
+                    mode = mode,
+                    onDismiss = { backupDialog = null },
+                    onConfirm = { password ->
+                        backupDialog = null
+                        if (mode == BackupDialogMode.Export) {
+                            backupTransfer.onExport(password)
+                        } else {
+                            backupTransfer.onImport(password)
+                        }
+                    },
+                )
+            }
         }
     }
 }
+
+private data class BackupTransferUi(
+    val busy: Boolean,
+    val message: String?,
+    val error: Boolean,
+    val onExport: (String) -> Unit,
+    val onImport: (String) -> Unit,
+)
+
+/** 시스템 파일 선택기와 저장 계층 사이를 잇는다. 저장소 권한은 요청하지 않는다. */
+@Composable
+private fun rememberBackupTransfer(
+    vm: ForgeViewModel,
+    store: SaveStore,
+): BackupTransferUi {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var busy by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf<String?>(null) }
+    var error by remember { mutableStateOf(false) }
+    var exportPassword by remember { mutableStateOf<CharArray?>(null) }
+    var importPassword by remember { mutableStateOf<CharArray?>(null) }
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument(BACKUP_MIME),
+    ) { uri ->
+        val password = exportPassword
+        exportPassword = null
+        if (uri == null || password == null) {
+            password?.fill('\u0000')
+            return@rememberLauncherForActivityResult
+        }
+        busy = true
+        message = null
+        scope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    val backup = store.exportPortableBackup(password)
+                    try {
+                        context.contentResolver.openOutputStream(uri, "w")?.use { output ->
+                            output.write(backup)
+                            output.flush()
+                        } ?: throw IllegalStateException("cannot open backup destination")
+                    } finally {
+                        backup.fill(0)
+                    }
+                }
+                error = false
+                message = "암호화 백업을 저장했다."
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                error = true
+                message = "내보내지 못했다. 비밀번호와 저장 위치를 확인해 주세요."
+            } finally {
+                password.fill('\u0000')
+                busy = false
+            }
+        }
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        val password = importPassword
+        importPassword = null
+        if (uri == null || password == null) {
+            password?.fill('\u0000')
+            return@rememberLauncherForActivityResult
+        }
+        busy = true
+        message = null
+        vm.preparePortableImport()
+        scope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    val backup = readBackupBytes(context, uri)
+                    try {
+                        store.importPortableBackup(backup, password)
+                    } finally {
+                        backup.fill(0)
+                    }
+                }
+                error = false
+                message = "백업을 불러왔다. 게임을 다시 여는 중..."
+                Toast.makeText(context, "백업 복원 완료", Toast.LENGTH_SHORT).show()
+                context.findActivity()?.recreate()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                error = true
+                message = "가져오지 못했다. 비밀번호가 틀렸거나 백업 파일이 손상됐다."
+            } finally {
+                password.fill('\u0000')
+                busy = false
+            }
+        }
+    }
+
+    return BackupTransferUi(
+        busy = busy,
+        message = message,
+        error = error,
+        onExport = { password ->
+            if (!busy && vm.preparePortableBackup()) {
+                exportPassword?.fill('\u0000')
+                exportPassword = password.toCharArray()
+                val stamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm"))
+                exportLauncher.launch("검강화_백업_$stamp.sfgbackup")
+            }
+        },
+        onImport = { password ->
+            if (!busy) {
+                importPassword?.fill('\u0000')
+                importPassword = password.toCharArray()
+                importLauncher.launch(arrayOf(BACKUP_MIME, "application/octet-stream"))
+            }
+        },
+    )
+}
+
+private fun readBackupBytes(context: Context, uri: Uri): ByteArray {
+    val input = context.contentResolver.openInputStream(uri)
+        ?: throw IllegalStateException("cannot open backup")
+    return input.use {
+        val output = ByteArrayOutputStream()
+        val buffer = ByteArray(16 * 1024)
+        var total = 0
+        while (true) {
+            val read = it.read(buffer)
+            if (read < 0) break
+            total += read
+            if (total > SaveStore.PORTABLE_BACKUP_MAX_BYTES) {
+                throw IllegalArgumentException("backup is too large")
+            }
+            output.write(buffer, 0, read)
+        }
+        output.toByteArray()
+    }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
+
+private const val BACKUP_MIME = "application/vnd.swordforge.backup"
