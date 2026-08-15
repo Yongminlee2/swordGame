@@ -563,6 +563,12 @@ class ForgeViewModel(
         if (on) sound.purchase()
     }
 
+    fun setMusicOn(on: Boolean) {
+        settings = settings.copy(musicOn = on)
+        enqueueSave(SaveSnapshot(settings = settings))
+        _ui.value = render()
+    }
+
     fun setHapticsOn(on: Boolean) {
         settings = settings.copy(hapticsOn = on)
         enqueueSave(SaveSnapshot(settings = settings))

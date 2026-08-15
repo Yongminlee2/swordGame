@@ -48,6 +48,7 @@ fun SettingsScreen(
     deepUnlocked: Boolean,
     onAutoPreventChange: (Boolean) -> Unit,
     onSoundChange: (Boolean) -> Unit,
+    onMusicChange: (Boolean) -> Unit,
     onHapticsChange: (Boolean) -> Unit,
     backupBusy: Boolean,
     backupMessage: String?,
@@ -80,6 +81,32 @@ fun SettingsScreen(
                         )
                     }
                     PixelToggle(checked = settings.soundOn, onCheckedChange = onSoundChange)
+                }
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        ForgePanel(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("배경음", fontWeight = FontWeight.Medium)
+                        Text(
+                            text = if (deepUnlocked) {
+                                "대장간과 사냥터의 분위기에 맞춰 음악이 바뀐다."
+                            } else {
+                                "불씨 대장간의 8비트 배경 음악."
+                            },
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        )
+                    }
+                    PixelToggle(checked = settings.musicOn, onCheckedChange = onMusicChange)
                 }
             }
         }
@@ -245,7 +272,12 @@ fun SettingsScreen(
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Text(
-                    text = "효과음은 앱에서 실시간 합성한다.\n" +
+                    text = "배경음 · CC0\n" +
+                        "On The Offensive — Ted Kerr (Wolfgang_)\n" +
+                        "https://opengameart.org/content/8-bit-theme-on-the-offensive\n\n" +
+                        "Battle Theme A — cynicmusic\n" +
+                        "https://opengameart.org/content/battle-theme-a\n\n" +
+                        "효과음은 앱에서 실시간 합성한다.\n" +
                         "타사 상용 게임의 그래픽·사운드는 사용하지 않았다.",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),

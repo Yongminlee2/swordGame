@@ -64,7 +64,7 @@ class PortableBackupTest {
         val source = store(File(tmp.root, "source"), keySeed = 3)
         source.saveGame(GameState(Difficulty.ENDLESS, gold = 88_000, sword = Sword(WeaponFamily.DRAGON, 20)))
         source.saveProgress(ProgressState(achievements = setOf(Achievement.REACH_10)))
-        source.saveSettings(Settings(soundOn = false, hapticsOn = false))
+        source.saveSettings(Settings(soundOn = false, musicOn = false, hapticsOn = false))
         val backup = source.exportPortableBackup(password)
 
         val destinationDir = File(tmp.root, "destination")
@@ -74,6 +74,7 @@ class PortableBackupTest {
         assertEquals(88_000L, destination.loadGame(Difficulty.ENDLESS).gold)
         assertTrue(Achievement.REACH_10 in destination.loadProgress().achievements)
         assertFalse(destination.loadSettings().soundOn)
+        assertFalse(destination.loadSettings().musicOn)
         assertTrue(File(destinationDir, "save_endless.json").readBytes().startsWithSFSV())
         assertTrue(File(destinationDir, "collection.json").readBytes().startsWithSFSV())
         assertTrue(File(destinationDir, "settings.json").readBytes().startsWithSFSV())

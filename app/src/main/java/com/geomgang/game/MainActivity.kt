@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,6 +40,8 @@ import com.geomgang.core.WeaponFamily
 import com.geomgang.game.feel.HapticEngine
 import com.geomgang.game.feel.systemVibrator
 import com.geomgang.game.security.secureSaveCodec
+import com.geomgang.game.sound.BgmEngine
+import com.geomgang.game.sound.BgmScene
 import com.geomgang.game.sound.SoundEngine
 import com.geomgang.game.ui.AchievementScreen
 import com.geomgang.game.ui.BackupDialogMode
@@ -135,6 +138,7 @@ class MainActivity : ComponentActivity() {
 private fun App(store: SaveStore) {
     // 소리를 켤지는 ViewModel 의 설정을 그때그때 읽는다. 설정을 바꾸면 즉시 반영된다.
     val context = LocalContext.current
+    val bgm = remember { BgmEngine(context.applicationContext) }
     val vm = remember {
         lateinit var holder: ForgeViewModel
         val engine = SoundEngine { holder.soundEnabled() }
@@ -149,18 +153,39 @@ private fun App(store: SaveStore) {
         holder
     }
     val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner, vm) {
+    DisposableEffect(lifecycleOwner, vm, bgm) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_STOP) vm.flushPendingSaves()
+            when (event) {
+                Lifecycle.Event.ON_START -> bgm.onForeground()
+                Lifecycle.Event.ON_STOP -> {
+                    bgm.onBackground()
+                    vm.flushPendingSaves()
+                }
+                else -> Unit
+            }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
+        if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+            bgm.onForeground()
+        }
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+    DisposableEffect(vm, bgm) {
+        onDispose {
+            bgm.release()
             vm.dispose()
         }
     }
     val state by vm.ui.collectAsStateWithLifecycle()
     var overlay by remember { mutableStateOf(Overlay.None) }
+    val bgmScene = if (overlay == Overlay.Hunt || overlay == Overlay.Gauntlet) {
+        BgmScene.Hunt
+    } else {
+        BgmScene.Forge
+    }
+    SideEffect { bgm.update(bgmScene, state.settings.musicOn) }
     // 도감은 강화 화면과 기록 메뉴 두 곳에서 열린다. 들어온 곳으로 돌아가야 한다.
     var codexOrigin by remember { mutableStateOf(Overlay.Records) }
     // 상점에서 고른 계열. **화면 밖에 둬야** 나갔다 와도 고른 것이 남는다 —
@@ -325,6 +350,7 @@ private fun App(store: SaveStore) {
             deepUnlocked = state.deepUnlocked,
             onAutoPreventChange = vm::setAutoPrevent,
             onSoundChange = vm::setSoundOn,
+            onMusicChange = vm::setMusicOn,
             onHapticsChange = vm::setHapticsOn,
             backupBusy = backupTransfer.busy,
             backupMessage = backupTransfer.message,

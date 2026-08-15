@@ -131,18 +131,25 @@ class ForgeViewModelSettingsTest {
         val store = store()
         val first = vm(store = store)
         first.setAutoPrevent(true)
+        first.setMusicOn(false)
         assertTrue(first.ui.value.settings.autoPrevent)
+        assertFalse(first.ui.value.settings.musicOn)
 
         val second = ForgeViewModel(store, Difficulty.NORMAL, alwaysSucceed())
         assertTrue(second.ui.value.settings.autoPrevent)
+        assertFalse(second.ui.value.settings.musicOn)
     }
 
     @Test
     fun `설정은 모드 초기화의 영향을 받지 않는다`() = runTest(dispatcher) {
         val store = store()
-        vm(store = store).setAutoPrevent(true)
+        vm(store = store).apply {
+            setAutoPrevent(true)
+            setMusicOn(false)
+        }
         store.resetGame(Difficulty.NORMAL)
         assertTrue(store.loadSettings().autoPrevent)
+        assertFalse(store.loadSettings().musicOn)
     }
 
     // --- 칭호 ---

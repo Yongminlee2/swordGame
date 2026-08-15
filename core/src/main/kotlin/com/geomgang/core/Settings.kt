@@ -20,6 +20,9 @@ data class Settings(
     /** 효과음. 강화 게임 손맛의 절반이 소리라서 기본값은 켜짐이다. */
     val soundOn: Boolean = true,
 
+    /** 대장간·사냥터 배경음. 효과음과 따로 끌 수 있도록 분리한다. */
+    val musicOn: Boolean = true,
+
     /**
      * 진동. 기본값이 켜짐인 이유는 소리와 같다 — **손맛의 나머지 절반이 여기 있다.**
      *

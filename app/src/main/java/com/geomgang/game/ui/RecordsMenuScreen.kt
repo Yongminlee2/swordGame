@@ -91,7 +91,7 @@ fun RecordsMenuScreen(
         MenuRow(
             icon = R.drawable.ui_pixel_settings,
             title = "설정",
-            subtitle = "소리 · 라이선스",
+            subtitle = "소리 · 배경음 · 라이선스",
             onClick = onOpenSettings,
         )
     }

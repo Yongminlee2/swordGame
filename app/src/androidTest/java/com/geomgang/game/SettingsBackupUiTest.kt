@@ -24,6 +24,7 @@ class SettingsBackupUiTest {
 
         compose.onNodeWithContentDescription("기록 메뉴").performClick()
         compose.onNodeWithText("설정").performClick()
+        compose.onNodeWithText("배경음").assertIsDisplayed()
 
         compose.onNodeWithText("내보내기").performClick()
         compose.onNodeWithText("암호화 백업 만들기").assertIsDisplayed()

@@ -58,6 +58,19 @@ class SaveStoreTest {
     }
 
     @Test
+    fun `배경음 필드가 없던 옛 설정은 기본 켜짐으로 열린다`() {
+        File(tmp.root, "settings.json").writeText(
+            """{"autoPrevent":false,"soundOn":false,"hapticsOn":false}""",
+        )
+
+        val loaded = store().loadSettings()
+
+        assertEquals(false, loaded.soundOn)
+        assertEquals(true, loaded.musicOn)
+        assertEquals(false, loaded.hapticsOn)
+    }
+
+    @Test
     fun `고유검과 정수가 저장되고 복원된다`() {
         val s = store()
         val state = sample().copy(
