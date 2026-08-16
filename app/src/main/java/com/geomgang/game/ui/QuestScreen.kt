@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,14 +41,14 @@ fun QuestScreen(
     ) {
         ScreenHeader(title = "퀘스트", onBack = onBack, wallet = state.wallet())
 
-        Text(
+        LText(
             text = "자정에 새 일일 퀘스트가 온다",
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
         )
         Spacer(Modifier.height(12.dp))
 
-        Text(
+        LText(
             text = "일일",
             fontSize = 13.sp,
             fontWeight = FontWeight.Bold,
@@ -70,7 +69,7 @@ fun QuestScreen(
         val weekly = state.quests.weekly
         if (weekly != null) {
             Spacer(Modifier.height(8.dp))
-            Text(
+            LText(
                 text = "주간",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
@@ -105,25 +104,25 @@ private fun QuestRow(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text(
+                    LText(
                         text = "${quest.kind.label} ${quest.target}회",
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
                     )
-                    Text(
+                    LText(
                         text = "보상 %,d골드 · 조각 %d".format(goldReward, shardReward),
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     )
                 }
                 when {
-                    quest.claimed -> Text(
+                    quest.claimed -> LText(
                         "수령 완료",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                     )
-                    done -> Button(onClick = onClaim) { Text("수령", fontSize = 13.sp) }
-                    else -> Text(
+                    done -> Button(onClick = onClaim) { LText("수령", fontSize = 13.sp) }
+                    else -> LText(
                         "$progress / ${quest.target}",
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.primary,

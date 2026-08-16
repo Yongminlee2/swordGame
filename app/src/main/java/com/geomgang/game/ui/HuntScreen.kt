@@ -22,7 +22,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -112,15 +111,15 @@ fun HuntScreen(
                             contentDescription = null,
                             modifier = Modifier.size(21.dp),
                         )
-                        Text("사냥터")
+                        LText("사냥터")
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
+                        LText(
                             text = hunt.zone.displayName,
                             fontWeight = FontWeight.Black,
                             color = MaterialTheme.colorScheme.primary,
                         )
-                        Text(
+                        LText(
                             text = "공격력 %,d".format(hunt.attackPower),
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -146,7 +145,7 @@ fun HuntScreen(
         // --- 이벤트 띠 ---
         if (hunt.goldenRemainingMillis > 0) {
             Spacer(Modifier.height(8.dp))
-            Text(
+            LText(
                 text = "골든타임 · 골드·조각 2배 (${hunt.goldenRemainingMillis / 1000}초)",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
@@ -171,7 +170,7 @@ fun HuntScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text(
+                LText(
                     text = "떠돌이 상인 — ${hunt.merchantOffer.displayName} 30% 할인",
                     fontSize = 12.sp,
                     color = Color(0xFF9BD1FF),
@@ -180,7 +179,7 @@ fun HuntScreen(
                     onClick = onBuyMerchant,
                     enabled = state.gold >= hunt.merchantPrice,
                 ) {
-                    Text("%,d골드".format(hunt.merchantPrice), fontSize = 12.sp)
+                    LText("%,d골드".format(hunt.merchantPrice), fontSize = 12.sp)
                 }
             }
         }
@@ -206,7 +205,7 @@ fun HuntScreen(
                     modifier = Modifier.padding(horizontal = 22.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(
+                    LText(
                         text = "BOSS GATE OPEN",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Black,
@@ -218,19 +217,19 @@ fun HuntScreen(
                             .padding(horizontal = 9.dp, vertical = 3.dp),
                     )
                     Spacer(Modifier.height(8.dp))
-                    Text(
+                    LText(
                         text = "${hunt.zone.bossName} 출현",
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.error,
                     )
-                    Text(
+                    LText(
                         text = "잡몹 ${hunt.killsNeeded}마리 처치 완료",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f),
                     )
                     if (hunt.lastHitKilled && hunt.lastDamage > 0L) {
-                        Text(
+                        LText(
                             text = "마지막 피해 %,d".format(hunt.lastDamage),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Black,
@@ -245,7 +244,7 @@ fun HuntScreen(
                         enraged = false,
                         hitSeq = 0,
                     )
-                    Text(
+                    LText(
                         text = "아래 버튼을 눌러 보스전에 돌입",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
@@ -255,7 +254,7 @@ fun HuntScreen(
             } else Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (hunt.event != null) {
-                        Text(
+                        LText(
                             text = when (hunt.event) {
                                 HuntEvent.TREASURE -> "보물"
                                 HuntEvent.MIMIC -> "미믹"
@@ -273,7 +272,7 @@ fun HuntScreen(
                                 .padding(horizontal = 6.dp, vertical = 2.dp),
                         )
                     }
-                    Text(
+                    LText(
                         text = hunt.targetName,
                         fontSize = if (hunt.isBoss) 26.sp else 20.sp,
                         fontWeight = FontWeight.Bold,
@@ -285,7 +284,7 @@ fun HuntScreen(
                     )
                 }
                 if (hunt.event == HuntEvent.TREASURE && hunt.targetHp > 0) {
-                    Text(
+                    LText(
                         text = "%.1f초 안에 잡아라!".format(hunt.eventRemainingMillis / 1000.0),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
@@ -304,7 +303,7 @@ fun HuntScreen(
                     hitSeq = if (hunt.lastHitKilled && hunt.targetHp > 0) 0 else hunt.hitSeq,
                 )
                 if (hunt.targetHp <= 0) {
-                    Text(
+                    LText(
                         text = "쓰러짐",
                         fontSize = 13.sp,
                         color = Color.White.copy(alpha = 0.75f),
@@ -313,7 +312,7 @@ fun HuntScreen(
 
                 Spacer(Modifier.height(14.dp))
                 HpBar(hunt.hpRatio, hunt.isBoss)
-                Text(
+                LText(
                     text = "%,d / %,d".format(hunt.targetHp, hunt.targetMaxHp),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
@@ -322,7 +321,7 @@ fun HuntScreen(
                 if (hunt.isBoss) {
                     Spacer(Modifier.height(10.dp))
                     TimerBar(hunt.bossTimeRatio)
-                    Text(
+                    LText(
                         text = "남은 시간 %.1f초".format(hunt.bossRemainingMillis / 1000.0),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.error,
@@ -330,7 +329,7 @@ fun HuntScreen(
                 }
 
                 if (hunt.combo >= 3) {
-                    Text(
+                    LText(
                         text = "${hunt.combo}연속",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.primary,
@@ -339,7 +338,7 @@ fun HuntScreen(
 
                 if (hunt.targetHp > 0) {
                     Spacer(Modifier.height(14.dp))
-                    Text(
+                    LText(
                         "화면을 눌러 공격",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f),
@@ -365,7 +364,7 @@ fun HuntScreen(
                     .fillMaxWidth()
                     .height(52.dp),
             ) {
-                Text("금덩이가 떨어졌다! 탭!", fontWeight = FontWeight.Bold)
+                LText("금덩이가 떨어졌다! 탭!", fontWeight = FontWeight.Bold)
             }
         }
 
@@ -374,7 +373,7 @@ fun HuntScreen(
             Spacer(Modifier.height(10.dp))
             val beatable = Combat.canBeatBoss(state.sword, hunt.zone)
             if (!beatable) {
-                Text(
+                LText(
                     text = "공격력 부족 · 권장 +${hunt.zone.recommendedLevel}",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.error,
@@ -390,7 +389,7 @@ fun HuntScreen(
                     .fillMaxWidth()
                     .height(56.dp),
             ) {
-                Text("${hunt.zone.bossName} 도전", fontWeight = FontWeight.Bold)
+                LText("${hunt.zone.bossName} 도전", fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -404,7 +403,7 @@ private fun HuntStat(resource: Int, value: String) {
             contentDescription = null,
             modifier = Modifier.size(18.dp),
         )
-        Text(
+        LText(
             text = value,
             modifier = Modifier.padding(start = 5.dp),
             fontSize = 12.sp,
@@ -427,8 +426,8 @@ private fun ZonePicker(
         if (state.sword == null) {
             ForgePanel(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
-                    Text("검이 없다", fontWeight = FontWeight.Bold)
-                    Text(
+                    LText("검이 없다", fontWeight = FontWeight.Bold)
+                    LText(
                         text = "검을 장착해야 사냥할 수 있다.",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -439,20 +438,20 @@ private fun ZonePicker(
         }
 
         val sword = state.sword
-        Text(
+        LText(
             text = "공격력 %,d".format(state.attackPower),
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
         )
-        Text(
+        LText(
             text = "${sword.familyLabel} · ${FamilyStyle.of(sword.family).blurb}",
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
         )
         if (sword.family == com.geomgang.core.WeaponFamily.DRAGON) {
             val skill = com.geomgang.core.Skills.of(sword)
-            Text(
+            LText(
                 text = "스킬 ${skill.name} · ${skill.blurb}",
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.82f),
@@ -468,7 +467,7 @@ private fun ZonePicker(
             enabled = !state.busy && state.gauntletUnlocked,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(
+            LText(
                 text = when {
                     !state.gauntletUnlocked -> "잠김 · 무한 회랑 — 화산 보스를 잡으면 열린다"
                     state.gauntletBest > 0 -> "무한 회랑 · 최고 ${state.gauntletBest}층"
@@ -517,22 +516,22 @@ private fun ZoneForgePanel(
             val secondaryAlpha = if (unlocked) 0.60f else 0.44f
             val detailAlpha = if (unlocked) 0.50f else 0.38f
             Column(Modifier.weight(1f)) {
-                Text(
+                LText(
                     text = zone.displayName,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = titleAlpha),
                 )
-                Text(
+                LText(
                     text = "권장 +${zone.recommendedLevel} · 몬스터 ${zone.monsters.size}종",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = secondaryAlpha),
                 )
-                Text(
+                LText(
                     text = zone.monsters.joinToString(" · ") { it.name },
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = detailAlpha),
                 )
-                Text(
+                LText(
                     text = "마리당 %,d~%,d골드".format(
                         zone.monsters.minOf { zone.goldOf(it) },
                         zone.monsters.maxOf { zone.goldOf(it) },
@@ -543,13 +542,13 @@ private fun ZoneForgePanel(
             }
             Column(horizontalAlignment = Alignment.End) {
                 when {
-                    !unlocked -> Text(
+                    !unlocked -> LText(
                         "잠김",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f),
                     )
 
-                    cleared -> Text(
+                    cleared -> LText(
                         "클리어",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.primary,
@@ -564,7 +563,7 @@ private fun ZoneForgePanel(
                     )
                 }
                 if (unlocked && !Combat.canBeatBoss(sword, zone)) {
-                    Text(
+                    LText(
                         "보스 무리",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
@@ -640,7 +639,7 @@ private fun PopText(pop: DamagePop, onDone: () -> Unit) {
         pop.strong && pop.id > 0 -> "치명타! ${pop.text}"
         else -> pop.text
     }
-    Text(
+    LText(
         text = label,
         fontSize = if (pop.strong) 24.sp else 16.sp,
         fontWeight = FontWeight.Bold,
@@ -689,12 +688,12 @@ internal fun BossFailedDialog(
     AlertDialog(
         onDismissRequest = {},
         properties = STICKY_DIALOG,
-        title = { Text("보스를 놓쳤다", fontWeight = FontWeight.Bold) },
+        title = { LText("보스를 놓쳤다", fontWeight = FontWeight.Bold) },
         text = {
             Column {
-                Text("${hunt.zone.bossName} 도주", fontSize = 14.sp)
+                LText("${hunt.zone.bossName} 도주", fontSize = 14.sp)
                 Spacer(Modifier.height(8.dp))
-                Text(
+                LText(
                     text = "잡몹 처치 수는 초기화된다.",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -702,7 +701,7 @@ internal fun BossFailedDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onGiveUp) { Text("확인") }
+            TextButton(onClick = onGiveUp) { LText("확인") }
         },
     )
 }
@@ -719,20 +718,20 @@ private fun BossWonDialog(
     AlertDialog(
         onDismissRequest = {},
         properties = STICKY_DIALOG,
-        title = { Text("${hunt.zone.bossName} 격파", fontWeight = FontWeight.Bold) },
+        title = { LText("${hunt.zone.bossName} 격파", fontWeight = FontWeight.Bold) },
         text = {
             Column {
                 if (reward != null) {
-                    Text("골드 %,d".format(reward.gold), fontWeight = FontWeight.Bold)
-                    Text("조각 ${reward.shards}", fontWeight = FontWeight.Bold)
-                    Text("강화석 ${reward.stones}", fontWeight = FontWeight.Bold)
+                    LText("골드 %,d".format(reward.gold), fontWeight = FontWeight.Bold)
+                    LText("조각 ${reward.shards}", fontWeight = FontWeight.Bold)
+                    LText("강화석 ${reward.stones}", fontWeight = FontWeight.Bold)
                     reward.petName?.let {
-                        Text("$it 알 획득", color = MaterialTheme.colorScheme.primary)
+                        LText("$it 알 획득", color = MaterialTheme.colorScheme.primary)
                     }
                     Spacer(Modifier.height(8.dp))
                 }
                 if (hunt.lastHitKilled && hunt.lastDamage > 0L) {
-                    Text(
+                    LText(
                         text = "마지막 피해 %,d".format(hunt.lastDamage),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
@@ -740,7 +739,7 @@ private fun BossWonDialog(
                     )
                     Spacer(Modifier.height(4.dp))
                 }
-                Text(
+                LText(
                     text = "다음 구역 해금",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -751,9 +750,9 @@ private fun BossWonDialog(
         // 보스를 잡은 뒤가 강화하러 돌아가기 가장 좋은 때다 — 그 문을 여기 둔다.
         confirmButton = {
             Column(horizontalAlignment = Alignment.End) {
-                TextButton(onClick = onNextZone) { Text("다음 구역으로") }
-                TextButton(onClick = onStay) { Text("이 구역 더 돌기") }
-                TextButton(onClick = onGoHome) { Text("홈으로 · 강화하러") }
+                TextButton(onClick = onNextZone) { LText("다음 구역으로") }
+                TextButton(onClick = onStay) { LText("이 구역 더 돌기") }
+                TextButton(onClick = onGoHome) { LText("홈으로 · 강화하러") }
             }
         },
     )
@@ -774,5 +773,5 @@ private val STICKY_DIALOG = DialogProperties(
 @Composable
 private fun Notice(text: String, color: Color) {
     Spacer(Modifier.height(8.dp))
-    Text(text = text, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = color)
+    LText(text = text, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = color)
 }

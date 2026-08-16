@@ -35,7 +35,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonElevation
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -139,7 +138,7 @@ fun PixelIcon(
 ) {
     Image(
         bitmap = ImageBitmap.imageResource(resource),
-        contentDescription = contentDescription,
+        contentDescription = contentDescription?.let { gameText(it) },
         modifier = modifier.alpha(alpha),
         contentScale = ContentScale.Fit,
         filterQuality = FilterQuality.None,
@@ -178,7 +177,7 @@ fun ForgeSectionTitle(
                 contentDescription = null,
                 modifier = Modifier.size(18.dp),
             )
-            Text(
+            LText(
                 text = title,
                 modifier = Modifier.padding(start = 5.dp),
                 fontSize = 15.sp,
@@ -187,7 +186,7 @@ fun ForgeSectionTitle(
             )
         }
         subtitle?.let {
-            Text(
+            LText(
                 text = it,
                 modifier = Modifier.padding(top = 2.dp),
                 fontSize = 11.sp,
@@ -202,7 +201,7 @@ fun SeasonStamp(
     modifier: Modifier = Modifier,
     compact: Boolean = false,
 ) {
-    Text(
+    LText(
         text = LocalForgeSeason.current.let { season ->
             if (compact) "${season.roman} · ${season.shortName}" else {
                 "${season.roman} ${season.displayName}"

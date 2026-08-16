@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -77,7 +76,7 @@ fun CraftScreen(
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             item {
-                Text(
+                LText(
                     text = "+${Refinery.MATERIAL_LEVEL} 두 자루 → 새 계열",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
@@ -118,7 +117,7 @@ fun CraftScreen(
 
             if (state.storage.size < Fusion.MIN_MATERIALS) {
                 item {
-                    Text(
+                    LText(
                         text = "재료 검 ${Fusion.MIN_MATERIALS}자루 필요",
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
@@ -169,10 +168,10 @@ fun CraftScreen(
 private fun RecipeList(state: ForgeUiState) {
     ForgePanel(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
-            Text("조합법", fontWeight = FontWeight.Bold)
+            LText("조합법", fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(4.dp))
             Refinery.RECIPES.forEach { recipe ->
-                Text(
+                LText(
                     text = recipe.materials.joinToString(" + ") {
                         "${it.displayName}+${Refinery.MATERIAL_LEVEL}"
                     } + "  =  ${recipe.result.displayName} +${recipe.resultLevel}",
@@ -180,7 +179,7 @@ private fun RecipeList(state: ForgeUiState) {
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
                 )
             }
-            Text(
+            LText(
                 text = LegendForge.MATERIALS.joinToString(" + ") {
                     "${it.displayName}+${LegendForge.MATERIAL_LEVEL}"
                 } + "  =  용검 +${LegendForge.CRAFT_LEVEL}",
@@ -188,7 +187,7 @@ private fun RecipeList(state: ForgeUiState) {
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
             )
             Spacer(Modifier.height(8.dp))
-            Text(
+            LText(
                 text = "고유검 · 숨은 조합",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
@@ -208,7 +207,7 @@ private fun RecipeList(state: ForgeUiState) {
                     val have = state.essences[it.key] ?: 0
                     "${Zone.fromId(it.key).displayName} 정수 ${it.value} ($have)"
                 }
-                Text(
+                LText(
                     text = if (found) {
                         recipe.needs.joinToString(" + ") { (family, minLevel, count) ->
                             val name = family?.displayName ?: "아무 검"
@@ -233,7 +232,7 @@ private fun RecipeList(state: ForgeUiState) {
             // 그러지 않으면 "이 숫자는 어디서 났지" 로 끝난다. 시즌2 이야기다.
             if (state.deepUnlocked) {
                 Spacer(Modifier.height(6.dp))
-                Text(
+                LText(
                     text = if (state.essences.isEmpty()) {
                         "보스 처치 시 정수 획득 · 고유검 조합 재료"
                     } else {
@@ -264,23 +263,23 @@ private fun AltarPanel(state: ForgeUiState, onBuyWard: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("제단", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                Text(
+                LText("제단", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                LText(
                     text = "정수력 ${state.essencePower}",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
-            Text(
+            LText(
                 text = "깊은 구역 정수일수록 높은 가치",
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
             )
             Spacer(Modifier.height(10.dp))
 
-            Text("수호 각인", fontSize = 13.sp, fontWeight = FontWeight.Bold)
-            Text(
+            LText("수호 각인", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            LText(
                 text = "전설 파괴 시 1단계만 하락 · 1회용",
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -290,7 +289,7 @@ private fun AltarPanel(state: ForgeUiState, onBuyWard: () -> Unit) {
             // 한 장뿐이라는 것이 이 장치의 전부다. 지녔을 때는 살 자리도 없어야
             // "쌓아 두는 것" 이라는 오해가 안 생긴다.
             if (state.wardCharm) {
-                Text(
+                LText(
                     text = "각인 보유 중",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
@@ -302,11 +301,11 @@ private fun AltarPanel(state: ForgeUiState, onBuyWard: () -> Unit) {
                     enabled = state.canBuyWardCharm,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("정수력 ${state.wardCharmCost}로 새기기")
+                    LText("정수력 ${state.wardCharmCost}로 새기기")
                 }
                 if (!state.canBuyWardCharm) {
                     Spacer(Modifier.height(4.dp))
-                    Text(
+                    LText(
                             text = "정수력 ${state.wardCharmCost - state.essencePower} 부족",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.error,
@@ -314,7 +313,7 @@ private fun AltarPanel(state: ForgeUiState, onBuyWard: () -> Unit) {
                 }
             }
             Spacer(Modifier.height(6.dp))
-            Text(
+            LText(
                 text = "얕은 정수부터 자동 사용",
                 fontSize = 10.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
@@ -337,12 +336,12 @@ private fun RefinePanel(
     val recipe = status.recipe
     ForgePanel(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
-            Text(
+            LText(
                 text = "${recipe.result.displayName} 조합",
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
             )
-            Text(
+            LText(
                 text = "+${Refinery.MATERIAL_LEVEL} 두 자루 → ${recipe.result.displayName} +${recipe.resultLevel}",
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
@@ -350,7 +349,7 @@ private fun RefinePanel(
             Spacer(Modifier.height(8.dp))
             recipe.materials.forEach { family ->
                 val have = family !in status.missing
-                Text(
+                LText(
                     text = "${if (have) "보유" else "부족"} · ${family.displayName} " +
                         "+${Refinery.MATERIAL_LEVEL} (보관함)",
                     fontSize = 12.sp,
@@ -367,7 +366,7 @@ private fun RefinePanel(
                 enabled = status.canCraft,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("조합")
+                LText("조합")
             }
         }
     }
@@ -391,8 +390,8 @@ private fun LegendPanel(
 ) {
     ForgePanel(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
-            Text("용검 조합 — 전설", fontWeight = FontWeight.Bold, color = ForgeAmber)
-            Text(
+            LText("용검 조합 — 전설", fontWeight = FontWeight.Bold, color = ForgeAmber)
+            LText(
                 text = "마검 +${LegendForge.MATERIAL_LEVEL} + 성검 +${LegendForge.MATERIAL_LEVEL} → " +
                     "용검 +${LegendForge.CRAFT_LEVEL} · 이후 전설까지 강화",
                 fontSize = 11.sp,
@@ -401,7 +400,7 @@ private fun LegendPanel(
             Spacer(Modifier.height(8.dp))
             LegendForge.MATERIALS.forEach { family ->
                 val have = family !in missing
-                Text(
+                LText(
                     text = "${if (have) "보유" else "부족"} · ${family.displayName} " +
                         "+${LegendForge.MATERIAL_LEVEL}",
                     fontSize = 12.sp,
@@ -416,7 +415,7 @@ private fun LegendPanel(
             // 재료가 다 있는데도 손에 검이 있으면 안 눌린다. 그 이유를 말해 주지 않으면
             // 무엇이 모자란지 재료 목록만 몇 번씩 다시 보게 된다.
             if (handsFull && missing.isEmpty()) {
-                Text(
+                LText(
                         text = "재료 검은 보관함에 넣어야 한다",
                     fontSize = 11.sp,
                     color = ForgeAmber,
@@ -424,7 +423,7 @@ private fun LegendPanel(
                 Spacer(Modifier.height(4.dp))
             }
             Button(onClick = onCraft, enabled = canCraft, modifier = Modifier.fillMaxWidth()) {
-                Text("재료로 조합")
+                LText("재료로 조합")
             }
             // 한 번 넘은 벽을 두 번 넘으라고 하면 아무도 두 번째 도전을 하지 않는다.
             if (unlocked) {
@@ -434,7 +433,7 @@ private fun LegendPanel(
                     enabled = canRecraft,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text(
+                    LText(
                         text = "조각 ${LegendForge.RECRAFT_SHARDS}로 다시 조합  (보유 $shards)",
                         fontSize = 13.sp,
                     )
@@ -464,13 +463,13 @@ private fun FusionPanel(
 
     ForgePanel(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
-            Text(
+            LText(
                 text = "고유검 재료 선택 · ${picked.size}/2",
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
             )
             if (state.essences.isNotEmpty()) {
-                Text(
+                LText(
                     text = "보유 정수: " + state.essences.entries.joinToString(" · ") {
                         "${Zone.fromId(it.key).displayName} ${it.value}"
                     },
@@ -485,31 +484,31 @@ private fun FusionPanel(
                     SwordThumb(preview, size = 40.dp)
                     Column(Modifier.padding(start = 10.dp)) {
                         if (preview.uniqueId != null) {
-                            Text(
+                            LText(
                                 text = "고유 · ${SwordNames.nameFor(preview)}",
                                 fontWeight = FontWeight.Bold,
                                 color = ForgeAmber,
                             )
-                            Text(
+                            LText(
                                 text = UniqueSwords.byId(preview.uniqueId!!)?.blurb ?: "",
                                 fontSize = 11.sp,
                                 color = ForgeAmber.copy(alpha = 0.8f),
                             )
                         } else {
-                            Text(
+                            LText(
                                 text = "${SwordNames.nameFor(preview)} " +
                                     "(+${preview.level} ${preview.family.displayName})",
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
                             )
                         }
-                        Text(
+                        LText(
                             text = "비용 %,d골드".format(cost),
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         )
                         if (!affordable) {
-                            Text(
+                            LText(
                                 "골드가 모자라다",
                                 fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.error,
@@ -522,7 +521,7 @@ private fun FusionPanel(
             // 두 자루를 골랐는데 아무것도 안 나오면, 왜 안 되는지 화면이 말해야 한다.
             if (preview == null && materials.size == Fusion.MIN_MATERIALS) {
                 Spacer(Modifier.height(6.dp))
-                Text(
+                LText(
                     text = "맞는 레시피가 없다.",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -535,12 +534,12 @@ private fun FusionPanel(
                     onClick = onFuse,
                     enabled = affordable && !state.busy,
                     modifier = Modifier.weight(1f),
-                ) { Text("조합") }
+                ) { LText("조합") }
                 OutlinedButton(
                     onClick = onClear,
                     enabled = picked.isNotEmpty(),
                     modifier = Modifier.weight(1f),
-                ) { Text("선택 해제") }
+                ) { LText("선택 해제") }
             }
         }
     }
@@ -563,7 +562,7 @@ private fun MaterialRow(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
+            LText(
                 text = when {
                     !selectable -> "고유"
                     selected -> "선택"
@@ -579,12 +578,12 @@ private fun MaterialRow(
             )
             SwordThumb(sword, size = 38.dp, dimmed = !selectable)
             Column(Modifier.padding(start = 10.dp)) {
-                Text(
+                LText(
                     text = SwordNames.nameFor(sword),
                     fontWeight = FontWeight.Bold,
                     color = if (sword.uniqueId != null) ForgeAmber else Color.Unspecified,
                 )
-                Text(
+                LText(
                     text = if (selectable) {
                         "+${sword.level} ${sword.family.displayName}"
                     } else {

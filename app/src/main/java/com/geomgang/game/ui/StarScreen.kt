@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,9 +49,9 @@ fun StarScreen(
         if (sword == null || star == null) {
             ForgePanel(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
-                    Text("아직 별을 붙일 수 없다", fontWeight = FontWeight.Bold)
+                    LText("아직 별을 붙일 수 없다", fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(4.dp))
-                    Text(
+                    LText(
                         text = if (sword == null) {
                             "검 없음"
                         } else {
@@ -67,8 +66,8 @@ fun StarScreen(
         }
 
         SwordView(sword = sword, modifier = Modifier.size(140.dp))
-        Text(SwordNames.nameFor(sword), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Text(
+        LText(SwordNames.nameFor(sword), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        LText(
             text = "+${sword.level}",
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
@@ -86,7 +85,7 @@ fun StarScreen(
             }
         }
         if (star.attackBonusPercent > 0) {
-            Text(
+            LText(
                 text = "공격력 +${star.attackBonusPercent}%",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
@@ -96,7 +95,7 @@ fun StarScreen(
 
         star.lastUp?.let {
             Spacer(Modifier.height(8.dp))
-            Text(
+            LText(
                 text = if (it) "별 +1" else "실패 · 별 -1 (검 유지)",
                 fontSize = 13.sp,
                 color = if (it) ForgeGreen else Color(0xFFE0906A),
@@ -106,7 +105,7 @@ fun StarScreen(
         Spacer(Modifier.height(16.dp))
 
         if (star.stars >= star.maxStars) {
-            Text(
+            LText(
                 "더 올릴 별이 없다",
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
             )
@@ -127,11 +126,11 @@ fun StarScreen(
                     .fillMaxWidth()
                     .height(56.dp),
             ) {
-                Text("별 올리기", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                LText("별 올리기", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
             if (!star.affordable) {
                 Spacer(Modifier.height(4.dp))
-                Text(
+                LText(
                     "조각 또는 골드 부족",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.error,
@@ -140,7 +139,7 @@ fun StarScreen(
         }
 
         Spacer(Modifier.height(20.dp))
-        Text(
+        LText(
             text = "실패해도 검은 유지 · 별만 1단계 하락",
             fontSize = 11.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.annotation.DrawableRes
 import androidx.compose.ui.Alignment
@@ -121,8 +120,8 @@ private fun MenuRow(@DrawableRes icon: Int, title: String, subtitle: String, onC
                         .size(25.dp),
                 )
                 Column {
-                    Text(title, fontWeight = FontWeight.Bold)
-                    Text(
+                    LText(title, fontWeight = FontWeight.Bold)
+                    LText(
                         text = subtitle,
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),

@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -85,7 +84,7 @@ fun StorageScreen(
 
         // 골드·조각은 바로 위 지갑 줄([ScreenHeader])이 이미 보여 준다.
         // 같은 숫자를 두 줄 연달아 적으면 하나가 낡은 값처럼 읽힌다.
-        Text(
+        LText(
             text = "${state.storage.size} / ${state.storageCapacity}",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
@@ -138,8 +137,8 @@ private fun EmptyStoragePanel(deepUnlocked: Boolean, onOpenSource: () -> Unit) {
                     .weight(1f)
                     .padding(horizontal = 12.dp),
             ) {
-                Text("보관함이 비어 있다", fontWeight = FontWeight.Bold)
-                Text(
+                LText("보관함이 비어 있다", fontWeight = FontWeight.Bold)
+                LText(
                     text = if (deepUnlocked) {
                         "사냥 전리품과 보스 검 보관"
                     } else {
@@ -150,7 +149,7 @@ private fun EmptyStoragePanel(deepUnlocked: Boolean, onOpenSource: () -> Unit) {
                 )
             }
             OutlinedButton(onClick = onOpenSource) {
-                Text(if (deepUnlocked) "사냥터" else "상점")
+                LText(if (deepUnlocked) "사냥터" else "상점")
             }
         }
     }
@@ -168,7 +167,7 @@ private fun HeldSwordForgePanel(state: ForgeUiState, onStore: () -> Unit) {
         ) {
             val held = state.sword
             if (held == null) {
-                Text(
+                LText(
                     "손에 든 검이 없다",
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )
@@ -176,12 +175,12 @@ private fun HeldSwordForgePanel(state: ForgeUiState, onStore: () -> Unit) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     SwordThumb(held, size = 40.dp)
                     Column(Modifier.padding(start = 10.dp)) {
-                        Text(
+                        LText(
                             "장착 중",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.primary,
                         )
-                        Text(
+                        LText(
                             text = SwordNames.nameFor(held),
                             fontWeight = FontWeight.Bold,
                             color = if (held.uniqueId != null) {
@@ -190,7 +189,7 @@ private fun HeldSwordForgePanel(state: ForgeUiState, onStore: () -> Unit) {
                                 Color.Unspecified
                             },
                         )
-                        Text(
+                        LText(
                             text = swordLine(held),
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -200,7 +199,7 @@ private fun HeldSwordForgePanel(state: ForgeUiState, onStore: () -> Unit) {
                 OutlinedButton(
                     onClick = onStore,
                     enabled = !state.busy && state.storage.size < state.storageCapacity,
-                ) { Text("넣기") }
+                ) { LText("넣기") }
             }
         }
     }
@@ -226,7 +225,7 @@ private fun StorageRow(
                         .weight(1f)
                         .padding(horizontal = 8.dp),
                 ) {
-                    Text(
+                    LText(
                         text = SwordNames.nameFor(sword),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
@@ -237,7 +236,7 @@ private fun StorageRow(
                             Color.Unspecified
                         },
                     )
-                    Text(
+                    LText(
                         text = swordLine(sword),
                         fontSize = 10.sp,
                         maxLines = 1,
@@ -249,14 +248,14 @@ private fun StorageRow(
                     enabled = !state.busy && !state.awaitingDestroyChoice,
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                     modifier = Modifier.height(34.dp),
-                ) { Text("장착", fontSize = 12.sp, maxLines = 1) }
+                ) { LText("장착", fontSize = 12.sp, maxLines = 1) }
             }
 
             // 고유검 설명만 남긴다. 계열 설명은 어느 자루에나 같은 말이 붙어서
             // 스무 자루가 같은 문장을 스무 번 반복하는 줄이 됐다.
             sword.uniqueId?.let { id ->
                 UniqueSwords.byId(id)?.let { recipe ->
-                    Text(
+                    LText(
                         text = recipe.blurb,
                         fontSize = 10.sp,
                         maxLines = 1,
@@ -310,7 +309,7 @@ private fun RowAction(
         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp),
         modifier = modifier.height(30.dp),
     ) {
-        Text(label, fontSize = 11.sp, maxLines = 1)
+        LText(label, fontSize = 11.sp, maxLines = 1)
     }
 }
 
@@ -368,7 +367,7 @@ private fun ConfirmLossDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(
+            LText(
                 // 고유검은 단계를 붙이지 않는다 - swordLine 과 같은 이유다.
                 text = SwordNames.nameFor(loss.sword) +
                     if (loss.sword.uniqueId == null) " +${loss.sword.level}" else "",
@@ -383,18 +382,18 @@ private fun ConfirmLossDialog(
                     "용검 재료: 마검·성검 +${LegendForge.MATERIAL_LEVEL}"
                 else -> "조합검 재료: 기본 검 +${Refinery.MATERIAL_LEVEL} 두 자루"
             }
-            Text(
+            LText(
                 text = "${loss.verb}?\n$detail · 되돌릴 수 없다.",
                 fontSize = 13.sp,
             )
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(loss.verb, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                LText(loss.verb, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("그만두기") }
+            TextButton(onClick = onDismiss) { LText("그만두기") }
         },
     )
 }

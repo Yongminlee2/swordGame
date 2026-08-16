@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -154,7 +153,7 @@ private fun OutlinedCombatText(
     modifier: Modifier = Modifier,
 ) {
     Box(modifier, contentAlignment = Alignment.Center) {
-        Text(
+        LText(
             text = text,
             color = stroke,
             fontSize = size.sp,
@@ -164,7 +163,7 @@ private fun OutlinedCombatText(
                 TextStyle(drawStyle = Stroke(width = if (size >= 24) 7f else 5f)),
             ),
         )
-        Text(
+        LText(
             text = text,
             color = fill,
             fontSize = size.sp,

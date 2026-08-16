@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.annotation.DrawableRes
 import androidx.compose.ui.Alignment
@@ -51,7 +50,7 @@ fun HelpScreen(
     ) {
         ScreenHeader(title = "도움말", onBack = onBack)
 
-        Text(
+        LText(
             text = "강화 규칙과 해금 조건",
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
@@ -99,7 +98,7 @@ private fun TopicForgePanel(topic: HelpTopic) {
                     contentDescription = null,
                     modifier = Modifier.size(23.dp),
                 )
-                Text(
+                LText(
                     text = "  ${topic.title}",
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
@@ -107,7 +106,7 @@ private fun TopicForgePanel(topic: HelpTopic) {
                 )
             }
             Spacer(Modifier.height(4.dp))
-            Text(
+            LText(
                 text = topic.body,
                 fontSize = 12.sp,
                 lineHeight = 18.sp,

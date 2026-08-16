@@ -13,7 +13,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,13 +35,13 @@ fun AchievementScreen(
     onBack: () -> Unit,
 ) {
     ScrollableForgeScreen(title = "업적 · 칭호", onBack = onBack) {
-        Text(
+        LText(
             text = "${progress.achievements.size} / ${Achievement.entries.size}",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
         )
-        Text(
+        LText(
             text = "달성한 칭호를 눌러 장착",
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
@@ -60,7 +59,7 @@ fun AchievementScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Text("칭호 없음")
+                    LText("칭호 없음")
                     if (progress.selectedTitle == null) SelectedMark()
                 }
             }
@@ -101,12 +100,12 @@ private fun AchievementRow(
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(
+            LText(
                 text = achievement.displayName,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha),
             )
-            Text(
+            LText(
                 text = "칭호 · ${achievement.title}",
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.primary.copy(alpha = alpha * 0.9f),
@@ -118,7 +117,7 @@ private fun AchievementRow(
 
 @Composable
 private fun SelectedMark() {
-    Text(
+    LText(
         text = "착용 중",
         fontSize = 12.sp,
         fontWeight = FontWeight.Bold,

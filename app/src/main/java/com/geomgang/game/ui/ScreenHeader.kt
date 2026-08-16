@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,7 +54,7 @@ fun ScreenHeader(title: String, onBack: () -> Unit, wallet: Wallet? = null) {
                 contentDescription = "뒤로",
                 modifier = Modifier.size(20.dp),
             )
-            Text(
+            LText(
                 text = "뒤로",
                 modifier = Modifier.padding(start = 2.dp),
                 color = MaterialTheme.colorScheme.primary,
@@ -63,12 +62,14 @@ fun ScreenHeader(title: String, onBack: () -> Unit, wallet: Wallet? = null) {
                 fontWeight = FontWeight.Black,
             )
         }
-        Text(
+        LText(
             text = title,
             modifier = Modifier.weight(1f),
+            color = MaterialTheme.colorScheme.onBackground,
             fontSize = 21.sp,
             fontWeight = FontWeight.Black,
             letterSpacing = (-0.5).sp,
+            maxLines = 1,
         )
         Spacer(
             Modifier
@@ -154,14 +155,15 @@ private fun WalletItem(
             contentDescription = label,
             modifier = Modifier.size(21.dp),
         )
-        Text(
+        LText(
             text = value,
             modifier = Modifier.padding(start = 3.dp),
+            color = MaterialTheme.colorScheme.onBackground,
             fontSize = 13.sp,
             maxLines = 1,
             fontWeight = FontWeight.Black,
         )
-        Text(
+        LText(
             text = label,
             modifier = Modifier.padding(start = 4.dp),
             fontSize = 9.sp,

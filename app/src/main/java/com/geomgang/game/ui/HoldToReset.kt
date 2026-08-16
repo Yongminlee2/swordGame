@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -84,7 +83,7 @@ fun HoldToReset(
                 .fillMaxHeight()
                 .background(MaterialTheme.colorScheme.error.copy(alpha = 0.55f)),
         )
-        Text(
+        LText(
             text = if (progress > 0f) "계속 누르고 있으면 초기화된다" else label,
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f),

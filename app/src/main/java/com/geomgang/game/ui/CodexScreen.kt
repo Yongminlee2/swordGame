@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,7 +54,7 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
     ) {
         ScreenHeader(title = "도감", onBack = onBack)
 
-        Text(
+        LText(
             text = "${owned.size} / ${WeaponCatalog.ENTRIES.size}",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
@@ -113,13 +112,13 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Column {
                     Spacer(Modifier.height(10.dp))
-                    Text(
+                    LText(
                         text = "조합표",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.secondary,
                     )
-                    Text(
+                    LText(
                         text = "상점: 기본 4계열 · 조합: 마검·성검·용검",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
@@ -141,12 +140,12 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
                             size = 36.dp,
                         )
                         Column(Modifier.padding(start = 10.dp)) {
-                            Text(
+                            LText(
                                 text = recipe.result.displayName,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                             )
-                            Text(
+                            LText(
                                 text = recipe.materials.joinToString(" + ") {
                                     "${it.displayName}+${com.geomgang.core.Refinery.MATERIAL_LEVEL}"
                                 },
@@ -166,13 +165,13 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
                     ) {
                         LevelThumb(family = null, level = 21, size = 36.dp)
                         Column(Modifier.padding(start = 10.dp)) {
-                            Text(
+                            LText(
                                 "용검(전설)",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = ForgeAmber,
                             )
-                            Text(
+                            LText(
                                 text = "마검 +20 + 성검 +20",
                                 fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -186,13 +185,13 @@ fun CodexScreen(progress: ProgressState, onBack: () -> Unit) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Column {
                     Spacer(Modifier.height(10.dp))
-                    Text(
+                    LText(
                         text = "고유검  ${progress.uniqueFound.size} / ${UniqueSwords.RECIPES.size}",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = ForgeAmber,
                     )
-                    Text(
+                    LText(
                         text = "힌트에 맞는 재료를 조합한다.",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
@@ -219,7 +218,7 @@ private fun UniqueRow(recipe: com.geomgang.core.UniqueRecipe, found: Boolean) {
             // 미발견도 실루엣은 보여 준다 - 목표가 보여야 모으고 싶어진다
             UniqueThumb(uniqueId = recipe.id, size = 44.dp, dimmed = !found)
             Column(Modifier.padding(start = 10.dp)) {
-                Text(
+                LText(
                     text = if (found) "고유 · ${recipe.name}" else "???",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
@@ -229,7 +228,7 @@ private fun UniqueRow(recipe: com.geomgang.core.UniqueRecipe, found: Boolean) {
                         MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     },
                 )
-                Text(
+                LText(
                     // 발견하면 패시브가, 못 했으면 힌트가 보인다. 힌트가 곧 콘텐츠다.
                     text = if (found) recipe.blurb else recipe.hint,
                     fontSize = 11.sp,
@@ -255,8 +254,8 @@ private fun SectionHeader(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(text = title, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = color)
-        Text(
+        LText(text = title, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = color)
+        LText(
             text = "$owned / $total",
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(
@@ -306,7 +305,7 @@ private fun CodexCell(entry: CodexEntry, discovered: Boolean) {
                     size = 40.dp,
                 )
             }
-            Text(
+            LText(
                 text = "+${entry.level}",
                 fontSize = 10.sp,
                 maxLines = 1,

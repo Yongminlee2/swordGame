@@ -16,9 +16,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.Surface
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.Lifecycle
@@ -39,6 +40,8 @@ import com.geomgang.core.SaveStore
 import com.geomgang.core.WeaponFamily
 import com.geomgang.game.feel.HapticEngine
 import com.geomgang.game.feel.systemVibrator
+import com.geomgang.game.i18n.GameLanguage
+import com.geomgang.game.i18n.GameTranslator
 import com.geomgang.game.security.secureSaveCodec
 import com.geomgang.game.sound.BgmEngine
 import com.geomgang.game.sound.BgmScene
@@ -54,6 +57,8 @@ import com.geomgang.game.ui.ForgeSeasonTheme
 import com.geomgang.game.ui.GauntletScreen
 import com.geomgang.game.ui.HelpScreen
 import com.geomgang.game.ui.HuntScreen
+import com.geomgang.game.ui.LText
+import com.geomgang.game.ui.LocalGameTranslator
 import com.geomgang.game.ui.PetScreen
 import com.geomgang.game.ui.QuestScreen
 import com.geomgang.game.ui.RecordsMenuScreen
@@ -204,208 +209,221 @@ private fun App(store: SaveStore) {
         }
     }
 
-    ForgeSeasonTheme(season = state.season) {
-        ForgeBackdrop {
-    when (overlay) {
-        Overlay.Hunt -> HuntScreen(
-            state = state,
-            adventure = vm.adventure(),
-            onEnterGauntlet = {
-                vm.leaveHunt()
-                vm.enterGauntlet()
-                overlay = Overlay.Gauntlet
-            },
-            onEnterZone = vm::enterZone,
-            onTap = vm::tapTarget,
-            onChallengeBoss = vm::challengeBoss,
-            onTapNugget = vm::tapNugget,
-            onBuyMerchant = vm::buyMerchantOffer,
-            onGiveUpBoss = vm::giveUpBoss,
-            onStayInZone = vm::stayInZone,
-            onNextZone = vm::nextZone,
-            onLeave = vm::leaveHunt,
-            onBack = {
-                vm.leaveHunt()
-                overlay = Overlay.None
-            },
-        )
-
-        // 퀘스트 화면은 v2.1에서 숨겼다. Overlay.Quests 로 오는 길이 없지만
-        // enum 은 남겨 둔다 - 되살릴 때 화면과 길만 다시 잇는다.
-        Overlay.Quests -> QuestScreen(
-            state = state,
-            onClaim = vm::claimQuest,
-            onBack = { overlay = Overlay.None },
-        )
-
-        Overlay.Gauntlet -> GauntletScreen(
-            state = state,
-            onTap = vm::tapGauntlet,
-            onChoose = vm::chooseGauntlet,
-            onLeave = {
-                vm.leaveGauntlet()
-                overlay = Overlay.None
-            },
-        )
-
-        Overlay.Pets -> PetScreen(
-            state = state,
-            onEquip = vm::equipPet,
-            onBack = { overlay = Overlay.Records },
-        )
-
-        Overlay.Storage -> StorageScreen(
-            state = state,
-            onStore = vm::storeSword,
-            onEquip = vm::equipFromStorage,
-            onSell = vm::sellFromStorage,
-            onScrap = vm::scrapFromStorage,
-            onOffer = vm::offerFromStorage,
-            onOpenSource = {
-                overlay = if (state.deepUnlocked) Overlay.Hunt else Overlay.Shop
-            },
-            onBack = { overlay = Overlay.None },
-        )
-
-        Overlay.Shop -> ShopScreen(
-            state = state,
-            family = WeaponFamily.entries.firstOrNull { it.name == shopFamily }
-                ?: state.unlockedFamilies.first(),
-            onSelectFamily = { shopFamily = it.name },
-            onBuySword = vm::buySword,
-            onBuySwordToStorage = vm::buySwordToStorage,
-            onBuyStone = vm::buyStone,
-            onSellSword = vm::sellSword,
-            onBuyItem = vm::buyItem,
-            onBuyLegendPreventWithGold = vm::buyLegendPreventWithGold,
-            onBuyLegendPreventWithShards = vm::buyLegendPreventWithShards,
-            onCraft = { id, count, family -> vm.craft(id, count, family) },
-            onBack = { overlay = Overlay.None },
-        )
-
-        Overlay.Training -> TrainingScreen(
-            state = state,
-            onUpgradeSkill = vm::upgradeSkill,
-            onOpenStar = { overlay = Overlay.Star },
-            onBack = { overlay = Overlay.None },
-        )
-
-        Overlay.Star -> StarScreen(
-            state = state,
-            onStarUp = vm::starUp,
-            onBack = { overlay = Overlay.Training },
-        )
-
-        Overlay.Craft -> CraftScreen(
-            state = state,
-            onFuse = vm::fuse,
-            onRefine = vm::refine,
-            onCraftLegend = vm::craftLegend,
-            onRecraftLegend = vm::recraftLegend,
-            onBuyWard = vm::buyWardCharm,
-            onBack = { overlay = Overlay.None },
-        )
-
-        Overlay.Records -> RecordsMenuScreen(
-            progress = state.progress,
-            ownedPets = state.progress.petsFound.size,
-            deepUnlocked = state.deepUnlocked,
-            onOpenCodex = {
-                codexOrigin = Overlay.Records
-                overlay = Overlay.Codex
-            },
-            onOpenPets = { overlay = Overlay.Pets },
-            onOpenAchievements = { overlay = Overlay.Achievements },
-            onOpenHelp = { overlay = Overlay.Help },
-            onOpenStats = { overlay = Overlay.Stats },
-            onOpenSettings = { overlay = Overlay.Settings },
-            onBack = { overlay = Overlay.None },
-        )
-
-        Overlay.Codex -> CodexScreen(
-            progress = state.progress,
-            onBack = { overlay = codexOrigin },
-        )
-
-        Overlay.Achievements -> AchievementScreen(
-            progress = state.progress,
-            onSelectTitle = vm::selectTitle,
-            onBack = { overlay = Overlay.Records },
-        )
-
-        Overlay.Stats -> StatsScreen(
-            difficulty = state.difficulty,
-            progress = state.progress,
-            deepUnlocked = state.deepUnlocked,
-            onBack = { overlay = Overlay.Records },
-        )
-
-        Overlay.Help -> HelpScreen(
-            season = state.season,
-            onBack = { overlay = Overlay.Records },
-        )
-
-        Overlay.Settings -> SettingsScreen(
-            settings = state.settings,
-            deepUnlocked = state.deepUnlocked,
-            onAutoPreventChange = vm::setAutoPrevent,
-            onSoundChange = vm::setSoundOn,
-            onMusicChange = vm::setMusicOn,
-            onHapticsChange = vm::setHapticsOn,
-            backupBusy = backupTransfer.busy,
-            backupMessage = backupTransfer.message,
-            backupError = backupTransfer.error,
-            onRequestExportBackup = { backupDialog = BackupDialogMode.Export },
-            onRequestImportBackup = { backupDialog = BackupDialogMode.Import },
-            onReset = vm::resetProgress,
-            onBack = { overlay = Overlay.Records },
-        )
-
-        Overlay.None -> ForgeScreen(
-            state = state,
-            onForge = vm::forge,
-            onPrevent = vm::usePrevent,
-            onSalvage = vm::salvage,
-            onToggleBlessing = vm::toggleBlessing,
-            onToggleLuckCharm = vm::toggleLuckCharm,
-            onOpenHunt = { overlay = Overlay.Hunt },
-            onOpenStorage = { overlay = Overlay.Storage },
-            onOpenShop = { overlay = Overlay.Shop },
-            onOpenCraft = { overlay = Overlay.Craft },
-            onOpenCodex = {
-                codexOrigin = Overlay.None
-                overlay = Overlay.Codex
-            },
-            onOpenMenu = { overlay = Overlay.Records },
-            onDismissIdle = vm::dismissIdleReward,
-            onOpenTraining = { overlay = Overlay.Training },
-        )
+    val configuration = LocalConfiguration.current
+    val localeSignature = configuration.locales.toLanguageTags()
+    val gameLanguage = remember(state.settings.languageTag, localeSignature) {
+        val preferred = (0 until configuration.locales.size()).map { configuration.locales[it] }
+        GameLanguage.resolve(state.settings.languageTag, preferred)
     }
-            state.saveSecurityMessage?.let { message ->
-                AlertDialog(
-                    onDismissRequest = {},
-                    title = { Text("세이브 보호 작동") },
-                    text = { Text(message) },
-                    confirmButton = {
-                        TextButton(onClick = vm::dismissSaveSecurityMessage) {
-                            Text("확인")
-                        }
-                    },
-                )
-            }
-            backupDialog?.let { mode ->
-                BackupPasswordDialog(
-                    mode = mode,
-                    onDismiss = { backupDialog = null },
-                    onConfirm = { password ->
-                        backupDialog = null
-                        if (mode == BackupDialogMode.Export) {
-                            backupTransfer.onExport(password)
-                        } else {
-                            backupTransfer.onImport(password)
-                        }
-                    },
-                )
+    val translator = remember(gameLanguage) {
+        GameTranslator.load(context.assets, gameLanguage)
+    }
+
+    CompositionLocalProvider(LocalGameTranslator provides translator) {
+        ForgeSeasonTheme(season = state.season) {
+            ForgeBackdrop {
+                when (overlay) {
+                    Overlay.Hunt -> HuntScreen(
+                        state = state,
+                        adventure = vm.adventure(),
+                        onEnterGauntlet = {
+                            vm.leaveHunt()
+                            vm.enterGauntlet()
+                            overlay = Overlay.Gauntlet
+                        },
+                        onEnterZone = vm::enterZone,
+                        onTap = vm::tapTarget,
+                        onChallengeBoss = vm::challengeBoss,
+                        onTapNugget = vm::tapNugget,
+                        onBuyMerchant = vm::buyMerchantOffer,
+                        onGiveUpBoss = vm::giveUpBoss,
+                        onStayInZone = vm::stayInZone,
+                        onNextZone = vm::nextZone,
+                        onLeave = vm::leaveHunt,
+                        onBack = {
+                            vm.leaveHunt()
+                            overlay = Overlay.None
+                        },
+                    )
+
+                    // 퀘스트 화면은 v2.1에서 숨겼다. Overlay.Quests 로 오는 길이 없지만
+                    // enum 은 남겨 둔다 - 되살릴 때 화면과 길만 다시 잇는다.
+                    Overlay.Quests -> QuestScreen(
+                        state = state,
+                        onClaim = vm::claimQuest,
+                        onBack = { overlay = Overlay.None },
+                    )
+
+                    Overlay.Gauntlet -> GauntletScreen(
+                        state = state,
+                        onTap = vm::tapGauntlet,
+                        onChoose = vm::chooseGauntlet,
+                        onLeave = {
+                            vm.leaveGauntlet()
+                            overlay = Overlay.None
+                        },
+                    )
+
+                    Overlay.Pets -> PetScreen(
+                        state = state,
+                        onEquip = vm::equipPet,
+                        onBack = { overlay = Overlay.Records },
+                    )
+
+                    Overlay.Storage -> StorageScreen(
+                        state = state,
+                        onStore = vm::storeSword,
+                        onEquip = vm::equipFromStorage,
+                        onSell = vm::sellFromStorage,
+                        onScrap = vm::scrapFromStorage,
+                        onOffer = vm::offerFromStorage,
+                        onOpenSource = {
+                            overlay = if (state.deepUnlocked) Overlay.Hunt else Overlay.Shop
+                        },
+                        onBack = { overlay = Overlay.None },
+                    )
+
+                    Overlay.Shop -> ShopScreen(
+                        state = state,
+                        family = WeaponFamily.entries.firstOrNull { it.name == shopFamily }
+                            ?: state.unlockedFamilies.first(),
+                        onSelectFamily = { shopFamily = it.name },
+                        onBuySword = vm::buySword,
+                        onBuySwordToStorage = vm::buySwordToStorage,
+                        onBuyStone = vm::buyStone,
+                        onSellSword = vm::sellSword,
+                        onBuyItem = vm::buyItem,
+                        onBuyLegendPreventWithGold = vm::buyLegendPreventWithGold,
+                        onBuyLegendPreventWithShards = vm::buyLegendPreventWithShards,
+                        onCraft = { id, count, family -> vm.craft(id, count, family) },
+                        onBack = { overlay = Overlay.None },
+                    )
+
+                    Overlay.Training -> TrainingScreen(
+                        state = state,
+                        onUpgradeSkill = vm::upgradeSkill,
+                        onOpenStar = { overlay = Overlay.Star },
+                        onBack = { overlay = Overlay.None },
+                    )
+
+                    Overlay.Star -> StarScreen(
+                        state = state,
+                        onStarUp = vm::starUp,
+                        onBack = { overlay = Overlay.Training },
+                    )
+
+                    Overlay.Craft -> CraftScreen(
+                        state = state,
+                        onFuse = vm::fuse,
+                        onRefine = vm::refine,
+                        onCraftLegend = vm::craftLegend,
+                        onRecraftLegend = vm::recraftLegend,
+                        onBuyWard = vm::buyWardCharm,
+                        onBack = { overlay = Overlay.None },
+                    )
+
+                    Overlay.Records -> RecordsMenuScreen(
+                        progress = state.progress,
+                        ownedPets = state.progress.petsFound.size,
+                        deepUnlocked = state.deepUnlocked,
+                        onOpenCodex = {
+                            codexOrigin = Overlay.Records
+                            overlay = Overlay.Codex
+                        },
+                        onOpenPets = { overlay = Overlay.Pets },
+                        onOpenAchievements = { overlay = Overlay.Achievements },
+                        onOpenHelp = { overlay = Overlay.Help },
+                        onOpenStats = { overlay = Overlay.Stats },
+                        onOpenSettings = { overlay = Overlay.Settings },
+                        onBack = { overlay = Overlay.None },
+                    )
+
+                    Overlay.Codex -> CodexScreen(
+                        progress = state.progress,
+                        onBack = { overlay = codexOrigin },
+                    )
+
+                    Overlay.Achievements -> AchievementScreen(
+                        progress = state.progress,
+                        onSelectTitle = vm::selectTitle,
+                        onBack = { overlay = Overlay.Records },
+                    )
+
+                    Overlay.Stats -> StatsScreen(
+                        difficulty = state.difficulty,
+                        progress = state.progress,
+                        deepUnlocked = state.deepUnlocked,
+                        onBack = { overlay = Overlay.Records },
+                    )
+
+                    Overlay.Help -> HelpScreen(
+                        season = state.season,
+                        onBack = { overlay = Overlay.Records },
+                    )
+
+                    Overlay.Settings -> SettingsScreen(
+                        settings = state.settings,
+                        deepUnlocked = state.deepUnlocked,
+                        onAutoPreventChange = vm::setAutoPrevent,
+                        onSoundChange = vm::setSoundOn,
+                        onMusicChange = vm::setMusicOn,
+                        onHapticsChange = vm::setHapticsOn,
+                        onLanguageChange = vm::setLanguageTag,
+                        backupBusy = backupTransfer.busy,
+                        backupMessage = backupTransfer.message,
+                        backupError = backupTransfer.error,
+                        onRequestExportBackup = { backupDialog = BackupDialogMode.Export },
+                        onRequestImportBackup = { backupDialog = BackupDialogMode.Import },
+                        onReset = vm::resetProgress,
+                        onBack = { overlay = Overlay.Records },
+                    )
+
+                    Overlay.None -> ForgeScreen(
+                        state = state,
+                        onForge = vm::forge,
+                        onPrevent = vm::usePrevent,
+                        onSalvage = vm::salvage,
+                        onToggleBlessing = vm::toggleBlessing,
+                        onToggleLuckCharm = vm::toggleLuckCharm,
+                        onOpenHunt = { overlay = Overlay.Hunt },
+                        onOpenStorage = { overlay = Overlay.Storage },
+                        onOpenShop = { overlay = Overlay.Shop },
+                        onOpenCraft = { overlay = Overlay.Craft },
+                        onOpenCodex = {
+                            codexOrigin = Overlay.None
+                            overlay = Overlay.Codex
+                        },
+                        onOpenMenu = { overlay = Overlay.Records },
+                        onDismissIdle = vm::dismissIdleReward,
+                        onOpenTraining = { overlay = Overlay.Training },
+                    )
+                }
+                state.saveSecurityMessage?.let { message ->
+                    AlertDialog(
+                        onDismissRequest = {},
+                        title = { LText("세이브 보호 작동") },
+                        text = { LText(message) },
+                        confirmButton = {
+                            TextButton(onClick = vm::dismissSaveSecurityMessage) {
+                                LText("확인")
+                            }
+                        },
+                    )
+                }
+                backupDialog?.let { mode ->
+                    BackupPasswordDialog(
+                        mode = mode,
+                        onDismiss = { backupDialog = null },
+                        onConfirm = { password ->
+                            backupDialog = null
+                            if (mode == BackupDialogMode.Export) {
+                                backupTransfer.onExport(password)
+                            } else {
+                                backupTransfer.onImport(password)
+                            }
+                        },
+                    )
+                }
             }
         }
     }
@@ -426,6 +444,7 @@ private fun rememberBackupTransfer(
     store: SaveStore,
 ): BackupTransferUi {
     val context = LocalContext.current
+    val translator = LocalGameTranslator.current
     val scope = rememberCoroutineScope()
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
@@ -495,7 +514,11 @@ private fun rememberBackupTransfer(
                 }
                 error = false
                 message = "백업을 불러왔다. 게임을 다시 여는 중..."
-                Toast.makeText(context, "백업 복원 완료", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    translator.translate("백업 복원 완료"),
+                    Toast.LENGTH_SHORT,
+                ).show()
                 context.findActivity()?.recreate()
             } catch (e: CancellationException) {
                 throw e
@@ -518,7 +541,8 @@ private fun rememberBackupTransfer(
                 exportPassword?.fill('\u0000')
                 exportPassword = password.toCharArray()
                 val stamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm"))
-                exportLauncher.launch("검강화_백업_$stamp.sfgbackup")
+                val prefix = translator.translate("검강화_백업_")
+                exportLauncher.launch("$prefix$stamp.sfgbackup")
             }
         },
         onImport = { password ->

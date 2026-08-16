@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 중국어 번체는 대만·홍콩을 따로 선언해 총 14개 Android 로케일이다. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="ko" />
+    <locale android:name="en" />
+    <locale android:name="ja" />
+    <locale android:name="zh" />
+    <locale android:name="zh-TW" />
+    <locale android:name="zh-HK" />
+    <locale android:name="es" />
+    <locale android:name="fr" />
+    <locale android:name="de" />
+    <locale android:name="pt" />
+    <locale android:name="ru" />
+    <locale android:name="th" />
+    <locale android:name="vi" />
+    <locale android:name="id" />
+</locale-config>

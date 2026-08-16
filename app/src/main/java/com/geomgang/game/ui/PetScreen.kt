@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,7 +43,7 @@ fun PetScreen(
 
         // 수집 진행도는 전역 기록(도감)을 센다. 지금 보유는 모드 세이브가 들고 있다.
         val foundCount = state.progress.petsFound.size
-        Text(
+        LText(
             text = "$foundCount / ${PetKind.entries.size} · 보스가 5% 확률로 알을 떨어뜨린다",
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
@@ -88,7 +87,7 @@ private fun PetRow(
                     .weight(1f)
                     .padding(start = 12.dp),
             ) {
-                Text(
+                LText(
                     text = if (owned) "${pet.displayName}  Lv.$level" else "???",
                     fontWeight = FontWeight.Bold,
                     color = if (owned) {
@@ -97,7 +96,7 @@ private fun PetRow(
                         MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f)
                     },
                 )
-                Text(
+                LText(
                     text = if (owned) {
                         Pets.effectLine(pet, level)
                     } else {
@@ -109,7 +108,7 @@ private fun PetRow(
                     ),
                 )
                 if (owned) {
-                    Text(
+                    LText(
                         text = pet.blurb,
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
@@ -120,11 +119,11 @@ private fun PetRow(
                 equipped -> OutlinedButton(
                     onClick = { onEquip(null) },
                     enabled = !busy,
-                ) { Text("해제", fontSize = 12.sp) }
+                ) { LText("해제", fontSize = 12.sp) }
                 owned -> Button(
                     onClick = { onEquip(pet.id) },
                     enabled = !busy,
-                ) { Text("장착", fontSize = 12.sp) }
+                ) { LText("장착", fontSize = 12.sp) }
             }
         }
     }

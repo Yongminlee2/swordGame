@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">검 강화</string>
+    <!-- 지원하지 않는 기기 언어의 기본값은 영어다. -->
+    <string name="app_name">Sword Forge</string>
 </resources>

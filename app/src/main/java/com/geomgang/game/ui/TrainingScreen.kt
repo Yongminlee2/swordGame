@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,8 +62,8 @@ private fun SkillForgePanel(state: ForgeUiState, onUpgrade: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("대장 기술", fontSize = 17.sp, fontWeight = FontWeight.Bold)
-                Text(
+                LText("대장 기술", fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                LText(
                     text = "Lv ${state.skillLevel} / ${Smithy.MAX_LEVEL}",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
@@ -78,7 +77,7 @@ private fun SkillForgePanel(state: ForgeUiState, onUpgrade: () -> Unit) {
             )
             Spacer(Modifier.height(10.dp))
             // 지금 몇 % 를 받고 있는지 먼저 말한다. 다음 한 칸의 값어치가 거기서 읽힌다.
-            Text(
+            LText(
                 text = "현재 성공률 +%.2f%%p · 하락 방지 +%.2f%%p".format(
                     state.skillLevel * Smithy.PER_LEVEL * 100,
                     state.skillLevel * Smithy.PER_LEVEL * 100,
@@ -86,14 +85,14 @@ private fun SkillForgePanel(state: ForgeUiState, onUpgrade: () -> Unit) {
                 fontSize = 12.sp,
                 color = ForgeGreen,
             )
-            Text(
+            LText(
                 text = "한 칸 올릴 때마다 둘 다 +%.2f%%p".format(Smithy.PER_LEVEL * 100),
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
             )
             Spacer(Modifier.height(10.dp))
             if (maxed) {
-                Text(
+                LText(
                     text = "더 올릴 수 없다",
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
@@ -104,11 +103,11 @@ private fun SkillForgePanel(state: ForgeUiState, onUpgrade: () -> Unit) {
                     enabled = state.canUpgradeSkill,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("${compactGold(state.skillPrice)} 골드로 올리기")
+                    LText("${compactGold(state.skillPrice)} 골드로 올리기")
                 }
                 if (!state.canUpgradeSkill) {
                     Spacer(Modifier.height(4.dp))
-                    Text(
+                    LText(
                         text = "골드가 모자라다",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.error,
@@ -124,11 +123,11 @@ private fun SkillForgePanel(state: ForgeUiState, onUpgrade: () -> Unit) {
 private fun StarForgePanel(state: ForgeUiState, onOpenStar: () -> Unit) {
     ForgePanel(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp)) {
-            Text("별 강화", fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            LText("별 강화", fontSize = 17.sp, fontWeight = FontWeight.Bold)
             val star = state.star
             if (star == null) {
                 Spacer(Modifier.height(6.dp))
-                Text(
+                LText(
                     text = "검이 조건을 갖추면 별을 붙일 수 있다",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
@@ -136,12 +135,12 @@ private fun StarForgePanel(state: ForgeUiState, onOpenStar: () -> Unit) {
                 return@Column
             }
             Spacer(Modifier.height(6.dp))
-            Text(
+            LText(
                 text = "별 ${star.stars} / ${star.maxStars}",
                 fontSize = 18.sp,
                 color = Color(0xFFFFD24A),
             )
-            Text(
+            LText(
                 text = if (star.attackBonusPercent > 0) {
                     "공격력 +${star.attackBonusPercent}%  ·  강화 확률은 건드리지 않는다"
                 } else {
@@ -152,7 +151,7 @@ private fun StarForgePanel(state: ForgeUiState, onOpenStar: () -> Unit) {
             )
             Spacer(Modifier.height(10.dp))
             OutlinedButton(onClick = onOpenStar, modifier = Modifier.fillMaxWidth()) {
-                Text("별 강화 열기")
+                LText("별 강화 열기")
             }
         }
     }
@@ -169,7 +168,7 @@ private fun StarForgePanel(state: ForgeUiState, onOpenStar: () -> Unit) {
 private fun BonusForgePanel(sources: List<BonusSource>) {
     ForgePanel(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp)) {
-            Text("강화 확률 내역", fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            LText("강화 확률 내역", fontSize = 17.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
             sources.forEach { source ->
                 Row(
@@ -179,15 +178,15 @@ private fun BonusForgePanel(sources: List<BonusSource>) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text(source.label, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-                        Text(
+                        LText(source.label, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                        LText(
                             text = source.detail,
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
                         )
                     }
                     Column(horizontalAlignment = Alignment.End) {
-                        Text(
+                        LText(
                             text = "성공 +%.2f%%p".format(source.bonus.successRate * 100),
                             fontSize = 12.sp,
                             color = if (source.bonus.successRate > 0) {
@@ -196,7 +195,7 @@ private fun BonusForgePanel(sources: List<BonusSource>) {
                                 MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
                             },
                         )
-                        Text(
+                        LText(
                             text = "하락 방지 +%.2f%%p".format(source.bonus.dropGuard * 100),
                             fontSize = 12.sp,
                             color = if (source.bonus.dropGuard > 0) {

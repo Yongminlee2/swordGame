@@ -587,6 +587,13 @@ class ForgeViewModel(
         if (on) haptics.forgeSuccess(0)
     }
 
+    /** `null`은 기기 언어, 나머지는 앱에서 직접 고른 BCP 47 태그다. */
+    fun setLanguageTag(tag: String?) {
+        settings = settings.copy(languageTag = tag)
+        enqueueSave(SaveSnapshot(settings = settings))
+        _ui.value = render()
+    }
+
     /** 휴대용 백업을 만들기 직전 메모리의 최신 상태를 디스크에 확정한다. */
     fun preparePortableBackup(): Boolean {
         if (busy) return false

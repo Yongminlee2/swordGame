@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -166,7 +165,7 @@ fun ForgeScreen(
         ) {
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
+                    LText(
                         text = state.season.smithyName,
                         color = MaterialTheme.colorScheme.primary,
                         fontSize = 19.sp,
@@ -180,7 +179,7 @@ fun ForgeScreen(
                             .height(24.dp)
                             .background(MaterialTheme.colorScheme.outline),
                     )
-                    Text(
+                    LText(
                         text = "${state.season.roman} · ${state.season.displayName}",
                         color = MaterialTheme.colorScheme.primary,
                         fontSize = 13.sp,
@@ -188,7 +187,7 @@ fun ForgeScreen(
                     )
                 }
                 state.progress.selectedTitle?.let {
-                    Text(
+                    LText(
                         text = it.title,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
@@ -210,13 +209,13 @@ fun ForgeScreen(
                     )
                     Spacer(Modifier.width(5.dp))
                     Column(horizontalAlignment = Alignment.End) {
-                        Text(
+                        LText(
                             text = "최고 +${state.bestLevel}",
                             fontSize = 12.sp,
                             lineHeight = 12.sp,
                             fontWeight = FontWeight.Black,
                         )
-                        Text(
+                        LText(
                             text = "기록",
                             fontSize = 8.sp,
                             lineHeight = 9.sp,
@@ -281,7 +280,7 @@ fun ForgeScreen(
         }
 
         // 이름·강화 단계는 가변 영역 밖이라 어떤 화면에서도 잘리지 않는다.
-        Text(
+        LText(
             text = when (state.destroyPhase) {
                 is DestroyPhase.Choice -> "지금 골라야 한다"
                 // 이름은 단계마다 다르다. 계열은 형태만 정하고 부제로 내려간다.
@@ -301,7 +300,7 @@ fun ForgeScreen(
             },
         )
         if (state.destroyPhase == DestroyPhase.None && state.sword != null) {
-            Text(
+            LText(
                 text = "+${state.sword.level} · ${state.sword.familyLabel}" +
                     if (state.sword.stars > 0) "  · 별 ${state.sword.stars}" else "",
                 fontSize = 13.sp,
@@ -317,7 +316,7 @@ fun ForgeScreen(
                         modifier = Modifier.size(16.dp),
                     )
                     Spacer(Modifier.width(4.dp))
-                    Text(
+                    LText(
                         text = "${com.geomgang.core.Skills.stageLabel(state.sword)?.let { "$it · " } ?: ""}" +
                             "${skill.name} · ${skill.blurb}",
                         fontSize = 11.sp,
@@ -449,7 +448,7 @@ fun ForgeScreen(
 
         // 창이 열려 있으면 하단 버튼을 감춘다. 원과 파편을 눌러야 하기 때문이다.
         if (state.awaitingDestroyChoice) {
-            Text(
+            LText(
                 text = if (state.canPrevent) {
                     "왼쪽: 복구 · 오른쪽: 조각"
                 } else {
@@ -479,7 +478,7 @@ fun ForgeScreen(
                         .height(49.dp),
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
+                        LText(
                             "강화하기",
                             fontSize = 21.sp,
                             fontWeight = FontWeight.Black,
@@ -487,7 +486,7 @@ fun ForgeScreen(
                         )
                         val helper = state.forgeBlockedReason
                         helper?.let {
-                            Text(
+                            LText(
                                 text = it,
                                 fontSize = 10.sp,
                                 maxLines = 1,
@@ -503,7 +502,7 @@ fun ForgeScreen(
             }
             if (state.isRecord) {
                 Spacer(Modifier.height(6.dp))
-                Text(
+                LText(
                     text = "최고 기록!",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
@@ -563,10 +562,10 @@ fun ForgeScreen(
 private fun IdleRewardDialog(reward: IdleReward, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("자리를 비운 사이", fontWeight = FontWeight.Bold) },
+        title = { LText("자리를 비운 사이", fontWeight = FontWeight.Bold) },
         text = {
             Column {
-                Text(
+                LText(
                     // 시즌1에는 가리킬 구역이 없다 - 대장간이 대신 일한 것이다.
                     text = "${IdleRewards.durationText(reward.seconds)} 동안 " +
                         (reward.zone?.let { "${it.displayName}에서" } ?: "대장간에서") +
@@ -574,14 +573,14 @@ private fun IdleRewardDialog(reward: IdleReward, onDismiss: () -> Unit) {
                     fontSize = 14.sp,
                 )
                 Spacer(Modifier.height(10.dp))
-                Text(
+                LText(
                     text = "골드 %,d".format(reward.gold),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFFFFD24A),
                 )
                 if (reward.stones > 0) {
-                    Text(
+                    LText(
                         text = "강화석 ${reward.stones}",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
@@ -591,7 +590,7 @@ private fun IdleRewardDialog(reward: IdleReward, onDismiss: () -> Unit) {
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("확인") }
+            TextButton(onClick = onDismiss) { LText("확인") }
         },
     )
 }
@@ -627,7 +626,7 @@ private fun DestroyDialog(
             dismissOnClickOutside = false,
         ),
         title = {
-            Text(
+            LText(
                 text = "검이 부서졌다",
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.error,
@@ -635,7 +634,7 @@ private fun DestroyDialog(
         },
         text = {
             Column {
-                Text(
+                LText(
                     text = when {
                         survived && canPrevent -> "전설 방지권으로 원래 단계 복구"
                         survived -> "검 유지 · 복구권 없음 · 조각 회수 가능"
@@ -651,7 +650,7 @@ private fun DestroyDialog(
                     color = MaterialTheme.colorScheme.error,
                 )
                 Spacer(Modifier.height(4.dp))
-                Text(
+                LText(
                     text = if (survived) {
                         "시간 초과 시 조각 소멸"
                     } else {
@@ -666,7 +665,7 @@ private fun DestroyDialog(
         // AlertDialog 는 dismiss 를 왼쪽에 놓으므로 그 자리를 방지권이 쓴다.
         dismissButton = {
             TextButton(onClick = onPrevent, enabled = canPrevent) {
-                Text(
+                LText(
                     text = if (legendPrevent) {
                         "전설 방지권 $preventTickets"
                     } else {
@@ -683,7 +682,7 @@ private fun DestroyDialog(
         },
         confirmButton = {
             TextButton(onClick = onSalvage) {
-                Text("조각 줍기", fontWeight = FontWeight.Bold)
+                LText("조각 줍기", fontWeight = FontWeight.Bold)
             }
         },
     )
@@ -702,13 +701,13 @@ private fun TemperBar(temper: TemperUi) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(
+            LText(
                 text = "담금질 · 실패 보너스",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = ForgeAmber,
             )
-            Text(
+            LText(
                 text = if (temper.fails > 0) {
                     "실패 %d회 · %.1f%% → %.1f%%".format(
                         temper.fails,
@@ -736,7 +735,7 @@ private fun TemperBar(temper: TemperUi) {
         Spacer(Modifier.height(4.dp))
         // 0회일 때 "0.5% → 0.5%" 만 보이면 이게 무슨 장치인지 알 수 없다.
         // 다음 한 번의 실패가 무엇을 주는지 늘 적어 둔다.
-        Text(
+        LText(
             text = "실패 +%.2f%%p · 최대 %.0f%% · 성공 시 초기화".format(
                 temper.gainPerFail,
                 temper.maxPercent,
@@ -768,14 +767,14 @@ fun Stat(
             contentDescription = null,
             modifier = Modifier.size(27.dp),
         )
-        Text(
+        LText(
             text = value,
             fontSize = 16.sp,
             lineHeight = 18.sp,
             fontWeight = FontWeight.Black,
             color = resolvedColor,
         )
-        Text(
+        LText(
             text = label,
             fontSize = 11.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -799,12 +798,12 @@ private fun CostStat(
     Row(verticalAlignment = Alignment.CenterVertically) {
         PixelIcon(icon, contentDescription = null, modifier = Modifier.size(29.dp))
         Column(Modifier.padding(start = 8.dp)) {
-            Text(
+            LText(
                 text = label,
                 fontSize = 10.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Text(
+            LText(
                 text = value,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Black,
@@ -839,7 +838,7 @@ private fun PixelToggle(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         PixelIcon(icon, contentDescription = null, modifier = Modifier.size(25.dp))
-        Text(
+        LText(
             text = label,
             modifier = Modifier.padding(start = 7.dp),
             fontSize = 12.sp,
@@ -875,7 +874,7 @@ private fun DeepActionStrip(
                     modifier = Modifier.size(23.dp),
                 )
                 Spacer(Modifier.width(6.dp))
-                Text(
+                LText(
                     text = "강화석 $requiredStones",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
@@ -903,14 +902,14 @@ private fun DeepActionStrip(
                 )
                 Spacer(Modifier.width(6.dp))
                 Column {
-                    Text(
+                    LText(
                         text = "사냥터",
                         fontSize = 12.sp,
                         lineHeight = 12.sp,
                         fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.primary,
                     )
-                    Text(
+                    LText(
                         text = "공격 ${compactGold(attackPower)}",
                         fontSize = 8.sp,
                         lineHeight = 9.sp,
@@ -961,7 +960,7 @@ private fun IconEntry(
             contentDescription = label,
             modifier = Modifier.size(27.dp),
         )
-        Text(
+        LText(
             text = label,
             fontSize = 11.sp,
             lineHeight = 12.sp,
@@ -973,7 +972,7 @@ private fun IconEntry(
             },
         )
         badge?.let {
-            Text(
+            LText(
                 text = it,
                 fontSize = 7.sp,
                 lineHeight = 8.sp,
@@ -1004,12 +1003,12 @@ private fun BonusBreakdown(sources: List<BonusSource>) {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(
+        LText(
             text = "보너스",
             fontSize = 11.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
         )
-        Text(
+        LText(
             text = "성공 +%.2f%%p · 하락 방지 +%.2f%%p".format(success * 100, guard * 100),
             fontSize = 11.sp,
             color = if (earned) {
@@ -1033,14 +1032,14 @@ private fun FamilyCapNotice() {
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
+        LText(
             text = "계열 강화 완료",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             color = ForgeAmber,
         )
         Spacer(Modifier.height(2.dp))
-        Text(
+        LText(
             text = "다음 단계: 조합소에서 전설검 제작",
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
@@ -1066,7 +1065,7 @@ private fun ResultBanner(result: ForgeResult?) {
         is ForgeResult.Destroyed -> "파괴!" to ForgeRed
         null -> "" to Color.Transparent
     }
-    Text(text = text, color = color, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+    LText(text = text, color = color, fontSize = 18.sp, fontWeight = FontWeight.Bold)
 }
 
 /**

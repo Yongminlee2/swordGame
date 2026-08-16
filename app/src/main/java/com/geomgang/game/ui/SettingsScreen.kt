@@ -11,13 +11,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
+import androidx.compose.material3.Text as MaterialText
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import com.geomgang.core.SaveStore
 import com.geomgang.core.Settings
 import com.geomgang.core.Timing
+import com.geomgang.game.i18n.GameLanguage
 
 /**
  * 설정.
@@ -50,6 +52,7 @@ fun SettingsScreen(
     onSoundChange: (Boolean) -> Unit,
     onMusicChange: (Boolean) -> Unit,
     onHapticsChange: (Boolean) -> Unit,
+    onLanguageChange: (String?) -> Unit,
     backupBusy: Boolean,
     backupMessage: String?,
     backupError: Boolean,
@@ -58,7 +61,44 @@ fun SettingsScreen(
     onReset: () -> Unit,
     onBack: () -> Unit,
 ) {
+    var showLanguagePicker by remember { mutableStateOf(false) }
     ScrollableForgeScreen(title = "설정", onBack = onBack) {
+        ForgePanel(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp)) {
+                LText("언어", fontWeight = FontWeight.Medium)
+                val selectedLanguage = GameLanguage.fromTag(settings.languageTag)
+                if (selectedLanguage == null) {
+                    LText(
+                        "기기 언어 따르기",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    )
+                } else {
+                    MaterialText(
+                        selectedLanguage.nativeName,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    )
+                }
+                LText(
+                    "기기 언어와 같은 언어를 자동으로 사용하거나 앱에서 직접 고른다.",
+                    modifier = Modifier.padding(top = 3.dp),
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.52f),
+                )
+                Spacer(Modifier.height(10.dp))
+                BackupActionButton(
+                    label = "언어 변경",
+                    filled = false,
+                    enabled = true,
+                    onClick = { showLanguagePicker = true },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
         ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 Row(
@@ -67,8 +107,8 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text("효과음", fontWeight = FontWeight.Medium)
-                        Text(
+                        LText("효과음", fontWeight = FontWeight.Medium)
+                        LText(
                             text = if (deepUnlocked) {
                                 "강화 결과·복구·조각·사냥 타격 효과음. " +
                                     "단계가 높을수록 성공음도 높아진다."
@@ -95,8 +135,8 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text("배경음", fontWeight = FontWeight.Medium)
-                        Text(
+                        LText("배경음", fontWeight = FontWeight.Medium)
+                        LText(
                             text = if (deepUnlocked) {
                                 "대장간과 사냥터의 분위기에 맞춰 음악이 바뀐다."
                             } else {
@@ -121,8 +161,8 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text("진동", fontWeight = FontWeight.Medium)
-                        Text(
+                        LText("진동", fontWeight = FontWeight.Medium)
+                        LText(
                             text = if (deepUnlocked) {
                                 "강화 결과마다 다른 진동. 사냥 연타에는 진동이 없다."
                             } else {
@@ -147,8 +187,8 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text("방지권 자동 사용", fontWeight = FontWeight.Medium)
-                        Text(
+                        LText("방지권 자동 사용", fontWeight = FontWeight.Medium)
+                        LText(
                             text = "파괴 직후 사용 가능한 방지권을 즉시 쓴다",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -164,8 +204,8 @@ fun SettingsScreen(
 
         ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
-                Text("기기 이전 백업", fontWeight = FontWeight.Medium)
-                Text(
+                LText("기기 이전 백업", fontWeight = FontWeight.Medium)
+                LText(
                     text = "모든 진행과 설정을 비밀번호로 암호화해 파일로 옮긴다. " +
                         "새 기기에서도 같은 비밀번호가 필요하다.",
                     fontSize = 12.sp,
@@ -191,7 +231,7 @@ fun SettingsScreen(
                         label = "가져오기",
                     )
                 }
-                Text(
+                LText(
                     text = when {
                         backupBusy -> "백업을 안전하게 처리하는 중..."
                         backupMessage != null -> backupMessage
@@ -212,8 +252,8 @@ fun SettingsScreen(
 
         ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
-                Text("진행 초기화", fontWeight = FontWeight.Medium)
-                Text(
+                LText("진행 초기화", fontWeight = FontWeight.Medium)
+                LText(
                     text = if (deepUnlocked) {
                         "현재 판의 검·재화·아이템·사냥 진행 삭제. " +
                             "도감·업적·통계·설정은 유지된다."
@@ -233,15 +273,15 @@ fun SettingsScreen(
 
         ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
-                Text("리소스 라이선스", fontWeight = FontWeight.Medium)
+                LText("리소스 라이선스", fontWeight = FontWeight.Medium)
                 Spacer(Modifier.height(8.dp))
-                Text(
+                LText(
                     text = "프로젝트 전용 일러스트",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.primary,
                 )
-                Text(
+                LText(
                     text = "강화검 7계열 +0~+20 · 전설 +21~+50\n" +
                         "사냥 몬스터 24구역 144종 · 전투 효과 16종\n" +
                         "대장간 배경과 UI 픽셀 아이콘",
@@ -249,13 +289,13 @@ fun SettingsScreen(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )
                 Spacer(Modifier.height(12.dp))
-                Text(
+                LText(
                     text = "CC0 보조 스프라이트",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.primary,
                 )
-                Text(
+                LText(
                     // CC0 은 표기 의무가 없지만 출처를 남기는 것이 이 프로젝트의 방침이다.
                     text = "Dungeon Crawl 32x32 tiles · CC0\n" +
                         "제작: Dungeon Crawl Stone Soup 팀 외 다수\n" +
@@ -265,13 +305,13 @@ fun SettingsScreen(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )
                 Spacer(Modifier.height(12.dp))
-                Text(
+                LText(
                     text = "사운드와 기타",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.primary,
                 )
-                Text(
+                LText(
                     text = "배경음 · CC0\n" +
                         "On The Offensive — Ted Kerr (Wolfgang_)\n" +
                         "https://opengameart.org/content/8-bit-theme-on-the-offensive\n\n" +
@@ -286,6 +326,69 @@ fun SettingsScreen(
         }
     }
 
+    if (showLanguagePicker) {
+        LanguagePickerDialog(
+            selectedTag = settings.languageTag,
+            onSelect = { tag ->
+                onLanguageChange(tag)
+                showLanguagePicker = false
+            },
+            onDismiss = { showLanguagePicker = false },
+        )
+    }
+}
+
+@Composable
+private fun LanguagePickerDialog(
+    selectedTag: String?,
+    onSelect: (String?) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { LText("언어 선택", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 420.dp)
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                LanguageOption(
+                    label = gameText("기기 언어 따르기"),
+                    selected = selectedTag == null,
+                    onClick = { onSelect(null) },
+                )
+                GameLanguage.selectable.forEach { language ->
+                    LanguageOption(
+                        label = language.nativeName,
+                        selected = GameLanguage.fromTag(selectedTag) == language,
+                        onClick = { onSelect(language.tag) },
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { LText("취소") }
+        },
+    )
+}
+
+@Composable
+private fun LanguageOption(label: String, selected: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 6.dp, vertical = 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        MaterialText(
+            text = if (selected) "✓  $label" else "   $label",
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+        )
+    }
 }
 
 enum class BackupDialogMode { Export, Import }
@@ -320,7 +423,7 @@ private fun BackupActionButton(
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, color = content, fontWeight = FontWeight.Bold)
+        LText(label, color = content, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -339,11 +442,11 @@ fun BackupPasswordDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(if (mode == BackupDialogMode.Export) "암호화 백업 만들기" else "암호화 백업 불러오기")
+            LText(if (mode == BackupDialogMode.Export) "암호화 백업 만들기" else "암호화 백업 불러오기")
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
+                LText(
                     text = if (mode == BackupDialogMode.Export) {
                         "8글자 이상의 비밀번호를 정한다. 이 비밀번호는 게임에 저장되지 않는다."
                     } else {
@@ -355,12 +458,12 @@ fun BackupPasswordDialog(
                     value = password,
                     onValueChange = { password = it },
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("백업 비밀번호") },
+                    label = { LText("백업 비밀번호") },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     isError = password.isNotEmpty() && !longEnough,
                     supportingText = if (password.isNotEmpty() && !longEnough) {
-                        { Text("8글자 이상 입력") }
+                        { LText("8글자 이상 입력") }
                     } else {
                         null
                     },
@@ -370,12 +473,12 @@ fun BackupPasswordDialog(
                         value = confirmation,
                         onValueChange = { confirmation = it },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("비밀번호 다시 입력") },
+                        label = { LText("비밀번호 다시 입력") },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
                         isError = confirmation.isNotEmpty() && !matches,
                         supportingText = if (confirmation.isNotEmpty() && !matches) {
-                            { Text("비밀번호가 서로 다름") }
+                            { LText("비밀번호가 서로 다름") }
                         } else {
                             null
                         },
@@ -385,11 +488,11 @@ fun BackupPasswordDialog(
         },
         confirmButton = {
             TextButton(enabled = canConfirm, onClick = { onConfirm(password) }) {
-                Text(if (mode == BackupDialogMode.Export) "파일 선택" else "백업 선택")
+                LText(if (mode == BackupDialogMode.Export) "파일 선택" else "백업 선택")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("취소") }
+            TextButton(onClick = onDismiss) { LText("취소") }
         },
     )
 }

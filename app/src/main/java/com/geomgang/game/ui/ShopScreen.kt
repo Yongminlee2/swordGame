@@ -12,7 +12,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,10 +62,10 @@ fun ShopScreen(
         // --- 검 ---
         ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
-                Text("검", fontWeight = FontWeight.Bold)
+                LText("검", fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(10.dp))
 
-                Text("계열 선택", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                LText("계열 선택", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                 Spacer(Modifier.height(6.dp))
                 // 미리보기도 게임 전체와 같은 그림이다 - 사는 검이 곧 보이는 검
                 SwordThumb(
@@ -93,7 +92,7 @@ fun ShopScreen(
                         com.geomgang.core.Progress
                             .basicFamilyHint(state.progress, f)
                             ?.let { hint ->
-                                Text(
+                                LText(
                                     text = "잠김 · ${f.displayName} — $hint",
                                     fontSize = 11.sp,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -110,7 +109,7 @@ fun ShopScreen(
                         enabled = state.canBuySword,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text("손에 들기 · %,d".format(Economy.BASE_SWORD_PRICE))
+                        LText("손에 들기 · %,d".format(Economy.BASE_SWORD_PRICE))
                     }
                     if (!state.canBuySword) {
                         Reason("골드가 모자란다")
@@ -124,7 +123,7 @@ fun ShopScreen(
                     enabled = state.canBuyToStorage,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text(
+                    LText(
                         "가방에 넣기  ·  %,d  (%d/%d)".format(
                             Economy.BASE_SWORD_PRICE,
                             state.storage.size,
@@ -146,14 +145,14 @@ fun ShopScreen(
                     Spacer(Modifier.height(12.dp))
                     HorizontalDivider()
                     Spacer(Modifier.height(10.dp))
-                    Text("들고 있는 검 · +${state.sword.level} ${state.sword.familyLabel}")
+                    LText("들고 있는 검 · +${state.sword.level} ${state.sword.familyLabel}")
                     Spacer(Modifier.height(8.dp))
                     OutlinedButton(
                         onClick = onSellSword,
                         enabled = !state.busy,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text("판매 · %,d".format(state.sellPrice))
+                        LText("판매 · %,d".format(state.sellPrice))
                     }
                 }
             }
@@ -167,7 +166,7 @@ fun ShopScreen(
         if (state.deepUnlocked) {
         ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
-                Text("재료", fontWeight = FontWeight.Bold)
+                LText("재료", fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(4.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -175,15 +174,15 @@ fun ShopScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text("강화석", fontWeight = FontWeight.Medium)
-                        Text(
+                        LText("강화석", fontWeight = FontWeight.Medium)
+                        LText(
                             text = "보유 ${state.forgeStones}개",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                         )
                     }
                     Button(onClick = onBuyStone, enabled = state.canBuyStone) {
-                        Text("%,d".format(state.stonePrice))
+                        LText("%,d".format(state.stonePrice))
                     }
                 }
             }
@@ -195,14 +194,14 @@ fun ShopScreen(
         if (state.season == GameSeason.LEGEND) {
             ForgePanel(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
-                    Text("전설 파괴 방지권", fontWeight = FontWeight.Bold)
-                    Text(
+                    LText("전설 파괴 방지권", fontWeight = FontWeight.Bold)
+                    LText(
                         text = "전설 구간 파괴 시 원래 단계 복구",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
                     )
                     Spacer(Modifier.height(4.dp))
-                    Text(
+                    LText(
                         text = "보유 ${state.legendPreventTickets}개",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.primary,
@@ -218,14 +217,14 @@ fun ShopScreen(
                             enabled = state.canBuyLegendPreventWithGold,
                             modifier = Modifier.weight(1f),
                         ) {
-                            Text("골드 %,d".format(LegendProtection.GOLD_PRICE), fontSize = 12.sp)
+                            LText("골드 %,d".format(LegendProtection.GOLD_PRICE), fontSize = 12.sp)
                         }
                         OutlinedButton(
                             onClick = onBuyLegendPreventWithShards,
                             enabled = state.canBuyLegendPreventWithShards,
                             modifier = Modifier.weight(1f),
                         ) {
-                            Text("조각 %,d".format(LegendProtection.SHARD_PRICE), fontSize = 12.sp)
+                            LText("조각 %,d".format(LegendProtection.SHARD_PRICE), fontSize = 12.sp)
                         }
                     }
                 }
@@ -236,7 +235,7 @@ fun ShopScreen(
         // --- 아이템 ---
         ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
-                Text("아이템", fontWeight = FontWeight.Bold)
+                LText("아이템", fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(4.dp))
                 Item.entries.forEachIndexed { index, item ->
                     if (index > 0) HorizontalDivider(Modifier.padding(vertical = 4.dp))
@@ -263,14 +262,14 @@ fun ShopScreen(
         val recipes = Recipes.availableIn(state.deepUnlocked)
         ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
-                Text("조각 교환", fontWeight = FontWeight.Bold)
-                Text(
+                LText("조각 교환", fontWeight = FontWeight.Bold)
+                LText(
                     text = "조각으로 워프권 교환 · 선택 계열로 지급",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
                 )
                 if (!state.deepUnlocked) {
-                    Text(
+                    LText(
                         text = "용검 조합 후 강화석·소모품 해금",
                         fontSize = 10.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
@@ -321,7 +320,7 @@ private fun RecipeRow(
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(recipe.displayName, fontWeight = FontWeight.Medium)
+            LText(recipe.displayName, fontWeight = FontWeight.Medium)
             val reason = when {
                 blockedBySword -> "검을 들고 있으면 바꿀 수 없다"
                 !enough -> "조각 ${recipe.shardCost - state.shards}개 부족"
@@ -329,7 +328,7 @@ private fun RecipeRow(
                 else -> null
             }
             if (reason != null) {
-                Text(
+                LText(
                     text = reason,
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
@@ -338,12 +337,12 @@ private fun RecipeRow(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Button(onClick = { onCraft(1) }, enabled = canTap) {
-                Text("조각 ${recipe.shardCost}", fontSize = 13.sp)
+                LText("조각 ${recipe.shardCost}", fontSize = 13.sp)
             }
             // 고단계 강화석은 한 판에 열댓 개가 든다. 하나씩 누르면 그건 노가다다.
             if (most > 1) {
                 OutlinedButton(onClick = { onCraft(most) }, enabled = canTap) {
-                    Text("최대 ×$most", fontSize = 13.sp)
+                    LText("최대 ×$most", fontSize = 13.sp)
                 }
             }
         }
@@ -366,27 +365,27 @@ private fun ItemRow(
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(item.displayName, fontWeight = FontWeight.Medium)
-            Text(
+            LText(item.displayName, fontWeight = FontWeight.Medium)
+            LText(
                 text = item.hint(),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             )
-            Text(
+            LText(
                 text = "보유 ${owned}개",
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
             )
         }
         Button(onClick = onBuy, enabled = affordable) {
-            Text("%,d".format(price))
+            LText("%,d".format(price))
         }
     }
 }
 
 @Composable
 private fun Reason(text: String) {
-    Text(
+    LText(
         text = text,
         fontSize = 12.sp,
         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),

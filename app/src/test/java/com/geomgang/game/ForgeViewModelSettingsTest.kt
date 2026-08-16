@@ -18,6 +18,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -147,6 +148,20 @@ class ForgeViewModelSettingsTest {
         store.resetGame(Difficulty.NORMAL)
         assertTrue(store.loadSettings().autoPrevent)
         assertFalse(store.loadSettings().musicOn)
+    }
+
+    @Test
+    fun `고른 언어는 저장되고 기기 언어로 다시 돌릴 수 있다`() = runTest(dispatcher) {
+        val store = store()
+        val vm = vm(store = store)
+
+        vm.setLanguageTag("de")
+        assertEquals("de", vm.ui.value.settings.languageTag)
+        assertEquals("de", store.loadSettings().languageTag)
+
+        vm.setLanguageTag(null)
+        assertNull(vm.ui.value.settings.languageTag)
+        assertNull(store.loadSettings().languageTag)
     }
 
     // --- 칭호 ---

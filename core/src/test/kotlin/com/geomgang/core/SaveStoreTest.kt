@@ -68,6 +68,7 @@ class SaveStoreTest {
         assertEquals(false, loaded.soundOn)
         assertEquals(true, loaded.musicOn)
         assertEquals(false, loaded.hapticsOn)
+        assertNull(loaded.languageTag)
     }
 
     @Test

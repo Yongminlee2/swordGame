@@ -13,7 +13,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,8 +44,8 @@ fun StatsScreen(
     val stats = progress.stats
 
     ScrollableForgeScreen(title = "통계", onBack = onBack) {
-        Text("표기 확률 대 실제 확률", fontWeight = FontWeight.Bold)
-        Text(
+        LText("표기 확률 대 실제 확률", fontWeight = FontWeight.Bold)
+        LText(
             text = "표기: ${difficulty.statsLabel()} · 실제 기록: 전 모드 합산",
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
@@ -69,7 +68,7 @@ fun StatsScreen(
         }
 
         Spacer(Modifier.height(16.dp))
-        Text("누적", fontWeight = FontWeight.Bold)
+        LText("누적", fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
 
         ForgePanel(Modifier.fillMaxWidth()) {
@@ -103,7 +102,7 @@ fun StatsScreen(
         // "내가 뭘 놓치고 있나"라는 잘못된 신호만 준다.
         if (deepUnlocked) {
             Spacer(Modifier.height(16.dp))
-            Text("사냥과 수집", fontWeight = FontWeight.Bold)
+            LText("사냥과 수집", fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
 
             ForgePanel(Modifier.fillMaxWidth()) {
@@ -123,7 +122,7 @@ fun StatsScreen(
             }
         } else {
             Spacer(Modifier.height(12.dp))
-            Text(
+            LText(
                 text = "용검을 조합하면 사냥과 수집 통계가 열린다",
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f),
@@ -173,7 +172,7 @@ private fun androidx.compose.foundation.layout.RowScope.Cell(
     bold: Boolean = false,
     color: Color = Color.Unspecified,
 ) {
-    Text(
+    LText(
         text = text,
         modifier = Modifier.weight(weight),
         fontSize = 12.sp,
@@ -190,12 +189,12 @@ private fun StatRow(label: String, value: String) {
             .padding(vertical = 3.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(
+        LText(
             text = label,
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
         )
-        Text(text = value, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+        LText(text = value, fontSize = 13.sp, fontWeight = FontWeight.Medium)
     }
     Spacer(Modifier.width(0.dp))
 }

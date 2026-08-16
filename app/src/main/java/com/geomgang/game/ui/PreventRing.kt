@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -90,7 +89,7 @@ fun PreventRing(
             )
         }
 
-        Text(
+        LText(
             text = if (enabled) "살리기" else "방지권 없음",
             color = ringColor,
             fontSize = if (enabled) 16.sp else 12.sp,
