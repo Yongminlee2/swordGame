@@ -60,15 +60,16 @@ private fun effectDrawable(skillId: String?, critical: Boolean): Int = when (ski
 /** Illustrated attack VFX, ornate skill plate, and outlined damage from the selected mock. */
 @Composable
 fun CombatFeedbackOverlay(hunt: HuntUiState, modifier: Modifier = Modifier) {
-    // 보스는 제한 시간과 큰 실루엣만 또렷하게 보이게 한다.
-    if (hunt.isBoss || hunt.bossFailed || hunt.zoneCleared) return
+    // 보스 대기 화면의 잔상은 HuntScreen 쪽에서 막고, 실제 보스전은
+    // 일반 전투와 같이 타격 이펙트·데미지·스킬명을 보여 준다.
+    if (hunt.bossFailed || hunt.zoneCleared) return
     val incoming = if (hunt.hitSeq == 0L || hunt.lastDamage <= 0L) null else CombatHit(
             seq = hunt.hitSeq,
             damage = hunt.lastDamage,
             hits = hunt.lastHits,
             critical = hunt.lastCrit,
             skill = hunt.lastSkill,
-            killGold = if (hunt.targetHp <= 0L) hunt.lastKillGold else 0L,
+            killGold = if (hunt.lastHitKilled) hunt.lastKillGold else 0L,
         )
     var visible by remember(hunt.hitSeq) { mutableStateOf(incoming != null) }
     LaunchedEffect(hunt.hitSeq) {

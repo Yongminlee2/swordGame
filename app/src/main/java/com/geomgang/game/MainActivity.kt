@@ -379,7 +379,6 @@ private fun App(store: SaveStore) {
             onOpenMenu = { overlay = Overlay.Records },
             onDismissIdle = vm::dismissIdleReward,
             onOpenTraining = { overlay = Overlay.Training },
-            onAnimationEnd = vm::onAnimationFinished,
         )
     }
             state.saveSecurityMessage?.let { message ->

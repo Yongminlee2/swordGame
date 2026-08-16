@@ -11,9 +11,8 @@ import org.junit.Test
  * 수입은 초원 잡몹 14골드에서 끝의 문 1.4억골드까지 천만 배가 되는데 상점 값은
  * 처음 그대로였다. 그래서 후반에 골드는 쌓이기만 했다.
  *
- * 두 가지를 동시에 지켜야 한다.
- * - **몰아 사기 금지**: 살수록 비싸져야 사냥이 계속 쓸모 있다
- * - **영원히 비싸지지 않기**: 한 단계 올리면 값이 되돌아와야 골드가 다시 쓸 데를 얻는다
+ * 강화석과 소모품은 상점에 표시된 고정가를 지키고, 재료 검만
+ * 후반 골드 소모처 역할을 하도록 누진 곡선을 쓴다.
  */
 class GoldShopTest {
 
@@ -26,25 +25,24 @@ class GoldShopTest {
     )
 
     @Test
-    fun `살수록 비싸진다`() {
+    fun `강화석은 연속으로 사도 고정가다`() {
         val s = state(best = 20)
         val first = GoldShop.stonePrice(s)
         val second = GoldShop.stonePrice(s.copy(stonesBought = 1))
         val fifth = GoldShop.stonePrice(s.copy(stonesBought = 4))
 
-        assertTrue("$first -> $second", second > first)
-        assertTrue("$second -> $fifth", fifth > second)
+        assertEquals(GoldShop.STONE_PRICE, first)
+        assertEquals(first, second)
+        assertEquals(first, fifth)
     }
 
     @Test
-    fun `한 단계 올리면 값이 되돌아온다`() {
-        // 이 게임의 골드 싱크가 막다른 길이 되지 않게 하는 장치다.
+    fun `최고 단계가 올라도 강화석 값은 같다`() {
         val spent = state(best = 20).copy(stonesBought = 10)
-        val expensive = GoldShop.stonePrice(spent)
+        val before = GoldShop.stonePrice(spent)
 
         val leveled = GoldShop.rebase(spent.copy(bestLevel = 21))
-        assertEquals("누진이 풀려야 한다", 0, leveled.stonesBought)
-        assertTrue("$expensive -> ${GoldShop.stonePrice(leveled)}", GoldShop.stonePrice(leveled) < expensive)
+        assertEquals(before, GoldShop.stonePrice(leveled))
     }
 
     @Test
@@ -54,8 +52,8 @@ class GoldShopTest {
     }
 
     @Test
-    fun `깊이 갈수록 기준가가 오른다`() {
-        assertTrue(GoldShop.stonePrice(state(best = 26)) > GoldShop.stonePrice(state(best = 20)))
+    fun `깊이 가도 강화석은 고정가다`() {
+        assertEquals(GoldShop.stonePrice(state(best = 20)), GoldShop.stonePrice(state(best = 50)))
     }
 
     @Test
@@ -75,7 +73,7 @@ class GoldShopTest {
 
         assertEquals(before.forgeStones + 1, after.forgeStones)
         assertEquals(before.gold - price, after.gold)
-        assertEquals(1, after.stonesBought)
+        assertEquals(before.stonesBought, after.stonesBought)
     }
 
     @Test
@@ -95,6 +93,17 @@ class GoldShopTest {
                 Economy.PREVENT_TICKET_PRICE,
                 Economy.priceOf(Item.PREVENT_TICKET),
             )
+        }
+    }
+
+    @Test
+    fun `소모품은 연속으로 사도 가격이 그대로다`() {
+        for (item in Item.entries) {
+            val first = state(best = 50)
+            val boughtMany = first.copy(itemsBought = 999)
+            assertEquals(Economy.priceOf(item), GoldShop.itemPrice(first, item))
+            assertEquals(Economy.priceOf(item), GoldShop.itemPrice(boughtMany, item))
+            assertEquals(999, GoldShop.buyItem(boughtMany, item).itemsBought)
         }
     }
 

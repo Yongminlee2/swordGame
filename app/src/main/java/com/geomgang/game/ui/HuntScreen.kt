@@ -229,6 +229,14 @@ fun HuntScreen(
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f),
                     )
+                    if (hunt.lastHitKilled && hunt.lastDamage > 0L) {
+                        Text(
+                            text = "마지막 피해 %,d".format(hunt.lastDamage),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Black,
+                            color = ForgeAmber,
+                        )
+                    }
                     MonsterSprite(
                         name = hunt.zone.bossName,
                         hpRatio = 1f,
@@ -292,7 +300,8 @@ fun HuntScreen(
                     isBoss = hunt.isBoss,
                     isRare = hunt.isRare,
                     enraged = hunt.enraged,
-                    hitSeq = if (hunt.isBoss) 0 else hunt.hitSeq,
+                    // 한 방 처치 후 바로 나온 다음 몬스터를 이전 타격으로 흔들지 않는다.
+                    hitSeq = if (hunt.lastHitKilled && hunt.targetHp > 0) 0 else hunt.hitSeq,
                 )
                 if (hunt.targetHp <= 0) {
                     Text(
@@ -441,6 +450,14 @@ private fun ZonePicker(
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
         )
+        if (sword.family == com.geomgang.core.WeaponFamily.DRAGON) {
+            val skill = com.geomgang.core.Skills.of(sword)
+            Text(
+                text = "스킬 ${skill.name} · ${skill.blurb}",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.82f),
+            )
+        }
 
         Spacer(Modifier.height(12.dp))
 
@@ -713,6 +730,15 @@ private fun BossWonDialog(
                         Text("$it 알 획득", color = MaterialTheme.colorScheme.primary)
                     }
                     Spacer(Modifier.height(8.dp))
+                }
+                if (hunt.lastHitKilled && hunt.lastDamage > 0L) {
+                    Text(
+                        text = "마지막 피해 %,d".format(hunt.lastDamage),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = ForgeAmber,
+                    )
+                    Spacer(Modifier.height(4.dp))
                 }
                 Text(
                     text = "다음 구역 해금",

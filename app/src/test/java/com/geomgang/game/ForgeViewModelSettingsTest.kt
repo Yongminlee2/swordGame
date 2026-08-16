@@ -75,32 +75,29 @@ class ForgeViewModelSettingsTest {
         return ForgeViewModel(store, Difficulty.NORMAL, rng)
     }
 
-    /**
-     * 손으로 [times] 번 굴린다.
-     *
-     * 강화 한 번은 연출 잠금을 건다. 화면이 연출을 끝내면서 그 잠금을 푸는데,
-     * 테스트에는 화면이 없으므로 여기서 대신 풀어 준다.
-     */
+    /** 손으로 [times] 번 연속 강화한다. 일반 결과는 즉시 다음 입력을 받는다. */
     private fun ForgeViewModel.forgeTimes(times: Int) {
         repeat(times) {
             forge()
-            onAnimationFinished()
         }
     }
 
-    // --- 연출 잠금 ---
+    // --- 즉시 재입력 ---
 
     @Test
-    fun `연출이 끝나기 전에는 다음 강화가 먹히지 않는다`() = runTest(dispatcher) {
+    fun `일반 강화는 연출 대기 없이 바로 다음 강화를 받는다`() = runTest(dispatcher) {
         val vm = vm(level = 0)
+        val before = vm.ui.value.forgeResultSeq
         vm.forge()
-        val locked = vm.ui.value.sword?.level
-        vm.forge()
-        assertEquals("연출 중에는 잠겨 있어야 한다", locked, vm.ui.value.sword?.level)
+        val first = vm.ui.value.sword?.level
+        val firstSeq = vm.ui.value.forgeResultSeq
+        assertEquals(false, vm.ui.value.busy)
+        assertTrue(firstSeq > before)
 
-        vm.onAnimationFinished()
         vm.forge()
-        assertEquals((locked ?: 0) + 1, vm.ui.value.sword?.level)
+        assertEquals((first ?: 0) + 1, vm.ui.value.sword?.level)
+        assertEquals(false, vm.ui.value.busy)
+        assertTrue(vm.ui.value.forgeResultSeq > firstSeq)
     }
 
     // --- 방지권 자동사용 ---

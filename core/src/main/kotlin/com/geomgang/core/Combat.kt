@@ -17,7 +17,7 @@ import kotlin.math.roundToLong
  * @param comboGain     연속 탭마다 붙는 추가 배수
  * @param bossBonus     보스에게 주는 추가 배수
  * @param shardBonus    조각 획득 배수
- * @param burnRatio     탭하지 않는 동안 1초마다 들어가는 공격력 비율
+ * @param burnRatio     화상 폭발 스킬이 참조하는 공격력 비율
  */
 enum class FamilyStyle(
     val damage: Double,
@@ -38,7 +38,7 @@ enum class FamilyStyle(
     DOUBLE(0.62, 2, 150, 0.0, 1.0, 1.0, 0.0, "2연타"),
     GREEDY(0.95, 1, 150, 0.0, 1.0, 1.6, 0.0, "조각 +60%"),
     SACRED(1.0, 1, 150, 0.0, 1.6, 1.0, 0.0, "보스 피해 +60%"),
-    BURNING(0.85, 1, 150, 0.0, 1.0, 1.0, 0.22, "화상 지속 피해"),
+    BURNING(0.85, 1, 150, 0.0, 1.0, 1.0, 0.22, "용검 스킬 계승"),
     REAPING(1.35, 1, 240, 0.02, 1.0, 1.2, 0.0, "강타 · 조각 보너스"),
     CLEAVING(2.6, 1, 520, 0.0, 1.0, 1.0, 0.0, "초중량 강타"),
     PIERCING(0.78, 3, 190, 0.0, 1.15, 1.0, 0.0, "3연타 · 보스 피해 +15%"),
@@ -179,7 +179,7 @@ object Combat {
         )
     }
 
-    /** 탭하지 않는 동안 1초마다 들어가는 피해. 용검 계열만 0이 아니다. */
+    /** 화상 폭발 스킬 한 단위의 피해. 시간 경과만으로는 적용하지 않는다. */
     fun burnPerSecond(sword: Sword?): Long {
         if (sword == null) return 0
         val style = FamilyStyle.of(sword.family)
@@ -210,7 +210,6 @@ object Combat {
         val tapsAvailable = (zone.bossSeconds * tapsPerSecond)
             .coerceAtMost(zone.bossSeconds * 1000.0 / style.minTapMillis)
         val perTap = hit(sword, combo = Int.MAX_VALUE / 2, isBoss = true).damage
-        val burn = burnPerSecond(sword) * zone.bossSeconds
-        return tapsAvailable * perTap + burn >= zone.bossHp
+        return tapsAvailable * perTap >= zone.bossHp
     }
 }

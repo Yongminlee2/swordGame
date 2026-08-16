@@ -1,7 +1,7 @@
 package com.geomgang.game.ui
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.Modifier
@@ -51,19 +52,16 @@ import com.geomgang.game.DestroyPhase
 import com.geomgang.game.ForgeUiState
 import com.geomgang.game.R
 import com.geomgang.game.TemperUi
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
-/**
- * 결과별 연출 길이(ms).
- *
- * 결과가 몸에 남을 만큼만, 진행을 막지 않을 만큼 짧게. 이 값이 커지면
- * 연타로 굴리는 맛이 사라지고 게임이 답답해진다.
- */
+/** S20 Ultra에서 쓰던 결과별 연출 길이(ms). 입력을 잠그지는 않는다. */
 private const val SUCCESS_MILLIS = 350
 private const val STAY_MILLIS = 250
 private const val DROP_MILLIS = 400
 private const val DESTROY_MILLIS = 300
 
-/** 흔들림 진폭(px). 하락이 유지보다 크게 흔들려야 손해를 체감한다. */
+/** 흔들림 진폭(px). 하락은 유지보다 크게 흔들려 손해가 바로 느껴진다. */
 private const val STAY_SHAKE = 12f
 private const val DROP_SHAKE = 26f
 
@@ -83,48 +81,45 @@ fun ForgeScreen(
     onOpenMenu: () -> Unit,
     onDismissIdle: () -> Unit,
     onOpenTraining: () -> Unit,
-    onAnimationEnd: () -> Unit,
 ) {
     val shake = remember { Animatable(0f) }
-    val flash = remember { Animatable(0f) }
-    var flashColor by remember { mutableStateOf(Color.White) }
+    val buttonFeedback = remember { Animatable(0f) }
+    var buttonFeedbackColor by remember { mutableStateOf(Color.White) }
+    // 화면을 나갔다 돌아왔을 때 저장된 마지막 결과를 새 강화로 오인하지 않는다.
+    val effectGate = remember { ForgeEffectGate(state.forgeResultSeq) }
 
-    // 파괴는 사용자의 응답을 기다려야 하므로 잠금을 자동으로 풀지 않는다.
-    LaunchedEffect(state.lastResult) {
-        when (val result = state.lastResult) {
-            null -> {
-                shake.snapTo(0f)
-                flash.snapTo(0f)
-            }
-
-            is ForgeResult.Success -> {
-                flashColor = Color(0xFFFFF3D0)
-                flash.flashOnce(SUCCESS_MILLIS)
-                onAnimationEnd()
-            }
-
-            is ForgeResult.Stay -> {
-                shake.shakeOnce(STAY_SHAKE, STAY_MILLIS)
-                onAnimationEnd()
-            }
-
-            is ForgeResult.Drop -> {
-                // 부서졌다가 바닥으로 살아 돌아온 것은 평범한 하락과 다른 사건이다.
-                // 같은 흔들림으로 지나가면 +14 가 +1 이 된 것이 버그로 보인다.
-                if (result.shattered) {
-                    flashColor = ForgeRed
-                    flash.flashOnce(DESTROY_MILLIS)
+    // 강화 판정과 연출을 분리했다. 효과는 예전처럼 나오지만 다음 입력을 막지 않는다.
+    // 결과 객체 대신 시도 번호를 키로 써서 같은 실패가 연속되어도 매번 다시 재생한다.
+    LaunchedEffect(state.forgeResultSeq) {
+        if (!effectGate.consume(state.forgeResultSeq)) {
+            shake.snapTo(0f)
+            buttonFeedback.snapTo(0f)
+            return@LaunchedEffect
+        }
+        val result = state.lastResult ?: run {
+            shake.snapTo(0f)
+            buttonFeedback.snapTo(0f)
+            return@LaunchedEffect
+        }
+        val (color, durationMillis) = when (result) {
+            is ForgeResult.Success -> Color(0xFFFFF3D0) to SUCCESS_MILLIS
+            is ForgeResult.Stay -> Color(0xFF6C5A3A) to STAY_MILLIS
+            is ForgeResult.Drop ->
+                (if (result.shattered) ForgeRed else ForgeOrange) to DROP_MILLIS
+            is ForgeResult.Destroyed -> ForgeRed to DESTROY_MILLIS
+        }
+        buttonFeedbackColor = color
+        // 흔들림과 버튼 피드백은 같은 판정에서 동시에 시작한다.
+        coroutineScope {
+            launch {
+                when (result) {
+                    is ForgeResult.Stay -> shake.shakeOnceRealtime(STAY_SHAKE, STAY_MILLIS)
+                    is ForgeResult.Drop -> shake.shakeOnceRealtime(DROP_SHAKE, DROP_MILLIS)
+                    is ForgeResult.Success,
+                    is ForgeResult.Destroyed -> shake.snapTo(0f)
                 }
-                shake.shakeOnce(DROP_SHAKE, DROP_MILLIS)
-                onAnimationEnd()
             }
-
-            is ForgeResult.Destroyed -> {
-                flashColor = ForgeRed
-                flash.flashOnce(DESTROY_MILLIS)
-                // 여기서 onAnimationEnd 를 부르지 않는다.
-                // 제한 시간 창이 열려 있고, 그 잠금은 ViewModel 이 푼다.
-            }
+            launch { buttonFeedback.buttonFeedbackOnceRealtime(durationMillis) }
         }
     }
 
@@ -281,8 +276,6 @@ fun ForgeScreen(
                     sword = state.sword,
                     modifier = Modifier.size(if (state.deepUnlocked) 184.dp else 190.dp),
                     shake = shake.value,
-                    flash = flash.value,
-                    flashColor = flashColor,
                 )
             }
         }
@@ -314,30 +307,21 @@ fun ForgeScreen(
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
             )
-            // 사냥터가 없는 시즌1에는 검 스킬을 보여 주지 않는다.
-            if (state.deepUnlocked) {
-                val skill = com.geomgang.core.Skills.of(state.sword.family)
-                val unlocked = com.geomgang.core.Skills.unlocked(state.sword)
+            // 스킬은 사냥터와 함께 열리는 용검 전용이다.
+            if (state.sword.family == com.geomgang.core.WeaponFamily.DRAGON) {
+                val skill = com.geomgang.core.Skills.of(state.sword)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     PixelIcon(
-                        resource = if (unlocked) R.drawable.ui_pixel_bolt else R.drawable.ui_pixel_lock,
+                        resource = R.drawable.ui_pixel_bolt,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
-                        alpha = if (unlocked) 1f else 0.45f,
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(
-                        text = if (unlocked) {
-                            "${skill.name} · ${skill.blurb}"
-                        } else {
-                            "${skill.name} · +${com.geomgang.core.Skills.MIN_LEVEL} 해금"
-                        },
+                        text = "${com.geomgang.core.Skills.stageLabel(state.sword)?.let { "$it · " } ?: ""}" +
+                            "${skill.name} · ${skill.blurb}",
                         fontSize = 11.sp,
-                        color = if (unlocked) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                        },
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 }
             }
@@ -488,6 +472,8 @@ fun ForgeScreen(
                 PixelActionButton(
                     onClick = onForge,
                     enabled = state.canForge,
+                    feedback = buttonFeedback.value,
+                    feedbackColor = buttonFeedbackColor,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(49.dp),
@@ -1083,34 +1069,67 @@ private fun ResultBanner(result: ForgeResult?) {
     Text(text = text, color = color, fontSize = 18.sp, fontWeight = FontWeight.Bold)
 }
 
-/** 좌우로 몇 번 흔들리다 제자리로 돌아온다. */
-private suspend fun Animatable<Float, *>.shakeOnce(amplitude: Float, durationMillis: Int) {
-    snapTo(0f)
-    animateTo(
-        targetValue = 0f,
-        animationSpec = keyframes {
-            this.durationMillis = durationMillis
-            0f at 0
-            amplitude at durationMillis / 6
-            -amplitude at durationMillis * 2 / 6
-            amplitude * 0.6f at durationMillis * 3 / 6
-            -amplitude * 0.35f at durationMillis * 4 / 6
-            amplitude * 0.15f at durationMillis * 5 / 6
-            0f at durationMillis
-        },
+/**
+ * 시스템 애니메이션 배율을 쓰지 않고 실제 프레임 시간으로 좌우로 흔든다.
+ *
+ * 이 방식이면 애니메이션 배율이 0인 S20 Ultra와 1인 A16이 같은 시간 동안 연출한다.
+ */
+private suspend fun Animatable<Float, AnimationVector1D>.shakeOnceRealtime(
+    amplitude: Float,
+    durationMillis: Int,
+) {
+    val points = floatArrayOf(
+        0f,
+        amplitude,
+        -amplitude,
+        amplitude * 0.6f,
+        -amplitude * 0.35f,
+        amplitude * 0.15f,
+        0f,
     )
+    snapTo(0f)
+    playRealtime(durationMillis) { progress ->
+        val scaled = progress * (points.size - 1)
+        val segment = scaled.toInt().coerceAtMost(points.size - 2)
+        val local = scaled - segment
+        snapTo(points[segment] + (points[segment + 1] - points[segment]) * local)
+    }
+    snapTo(0f)
 }
 
-/** 확 밝아졌다가 가라앉는다. */
-private suspend fun Animatable<Float, *>.flashOnce(durationMillis: Int) {
+/** 강화 버튼을 즉시 밝힌 뒤 짧게 가라앉힌다. 입력 가능 여부와는 완전히 독립적이다. */
+private suspend fun Animatable<Float, AnimationVector1D>.buttonFeedbackOnceRealtime(
+    durationMillis: Int,
+) {
+    snapTo(1f)
+    playRealtime(durationMillis) { progress -> snapTo(1f - progress) }
     snapTo(0f)
-    animateTo(
-        targetValue = 0f,
-        animationSpec = keyframes {
-            this.durationMillis = durationMillis
-            0f at 0
-            1f at durationMillis / 5
-            0f at durationMillis
-        },
-    )
+}
+
+/** Compose 애니메이션 배율 대신 모노토닉 프레임 시간으로 진행률을 계산한다. */
+private suspend fun playRealtime(durationMillis: Int, update: suspend (Float) -> Unit) {
+    require(durationMillis > 0)
+    val startNanos = withFrameNanos { it }
+    update(0f)
+    while (true) {
+        val frameNanos = withFrameNanos { it }
+        val progress = ((frameNanos - startNanos) / 1_000_000f / durationMillis)
+            .coerceIn(0f, 1f)
+        update(progress)
+        if (progress >= 1f) return
+    }
+}
+
+/**
+ * 현재 화면이 생기기 전에 이미 끝난 강화 결과는 소비한 것으로 본다.
+ * 그래야 상점·가방에서 돌아왔을 때 버튼이 자동으로 눌린 것처럼 빛나지 않는다.
+ */
+internal class ForgeEffectGate(initialSequence: Long) {
+    private var handledSequence = initialSequence
+
+    fun consume(sequence: Long): Boolean {
+        if (sequence == handledSequence) return false
+        handledSequence = sequence
+        return true
+    }
 }

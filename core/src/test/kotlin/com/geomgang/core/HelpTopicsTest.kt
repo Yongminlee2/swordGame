@@ -45,7 +45,10 @@ class HelpTopicsTest {
     @Test
     fun `스킬 설명이 실제 해금 단계를 말한다`() {
         val body = HelpTopics.ALL.first { it.title == "검 스킬" }.body
-        assertTrue(body.contains("+${Skills.MIN_LEVEL}"))
+        assertTrue(body.contains("+${Skills.DRAGON_MIN_LEVEL}"))
+        assertTrue(body.contains("용검 전용"))
+        assertTrue(body.contains(Skills.of(WeaponFamily.CURVED).name))
+        assertTrue(body.contains(Skills.of(WeaponFamily.DRAGON).name))
     }
 
     @Test

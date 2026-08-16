@@ -11,6 +11,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "art-review" / "combat-redesign" / "transparent-source"
+REPLACEMENT_SOURCE = ROOT / "tools" / "art-source" / "combat"
 DRAWABLE = ROOT / "app" / "src" / "main" / "res" / "drawable"
 
 MONSTER_CELL = 384
@@ -32,6 +33,19 @@ MONSTER_GROUPS = (
     "monster-atlas-06-star-time-blood.png",
     "monster-atlas-07-frost-forge-final.png",
 )
+
+# These ImageGen review atlases have no cell borders. Their characters are not
+# perfectly centred on a mathematical 6 x 3 grid, so a grid crop cuts limbs and
+# weapons. Extract their 18 real connected subjects from the entire atlas first.
+COMPONENT_GROUPS = frozenset({0, 1, 3, 4, 5})
+
+# The review originals for these two bosses were close-up compositions rather
+# than complete silhouettes. Their full-body reconstructions live in the repo so
+# rebuilding the combat atlases remains deterministic on another machine.
+MONSTER_REPLACEMENTS = {
+    (8, 5): REPLACEMENT_SOURCE / "monster_abyss_king.png",
+    (15, 5): REPLACEMENT_SOURCE / "monster_twisted_root.png",
+}
 
 EFFECT_NAMES = (
     "normal",
@@ -99,6 +113,125 @@ def largest_component(image: Image.Image, threshold: int = 18) -> Image.Image:
     return Image.fromarray(rgba, "RGBA")
 
 
+def connected_subjects(image: Image.Image, expected: int = 18) -> list[Image.Image]:
+    """Extract complete subjects without assuming hard atlas cell boundaries.
+
+    ImageGen laid out six characters on each of three rows, but several arms,
+    wings and weapons cross the equal-grid midpoint. We label the entire atlas,
+    use its 18 large connected components as subject anchors, and attach nearby
+    detached particles or props to the closest anchor before making each cutout.
+    """
+    rgba = np.asarray(image).copy()
+    mask = rgba[:, :, 3] > 8
+    height, width = mask.shape
+    labels = np.zeros((height, width), dtype=np.int16)
+    components: list[dict[str, int]] = []
+    label = 0
+
+    for start_y, start_x in zip(*np.nonzero(mask)):
+        if labels[start_y, start_x] != 0:
+            continue
+        label += 1
+        stack = [(int(start_y), int(start_x))]
+        labels[start_y, start_x] = label
+        size = 0
+        min_x = max_x = int(start_x)
+        min_y = max_y = int(start_y)
+        sum_x = 0
+        sum_y = 0
+        while stack:
+            y, x = stack.pop()
+            size += 1
+            sum_x += x
+            sum_y += y
+            min_x = min(min_x, x)
+            max_x = max(max_x, x)
+            min_y = min(min_y, y)
+            max_y = max(max_y, y)
+            for next_y, next_x in (
+                (y - 1, x),
+                (y + 1, x),
+                (y, x - 1),
+                (y, x + 1),
+            ):
+                if 0 <= next_y < height and 0 <= next_x < width:
+                    if mask[next_y, next_x] and labels[next_y, next_x] == 0:
+                        labels[next_y, next_x] = label
+                        stack.append((next_y, next_x))
+        components.append(
+            {
+                "label": label,
+                "size": size,
+                "min_x": min_x,
+                "min_y": min_y,
+                "max_x": max_x,
+                "max_y": max_y,
+                "center_x": sum_x // size,
+                "center_y": sum_y // size,
+            }
+        )
+
+    anchors = sorted(components, key=lambda component: component["size"], reverse=True)[:expected]
+    if len(anchors) != expected or anchors[-1]["size"] < 5_000:
+        raise ValueError(
+            f"expected {expected} complete monster components, got "
+            f"{len(anchors)} with smallest={anchors[-1]['size'] if anchors else 0}",
+        )
+
+    # The montage contract is three visual rows of six. Sorting the actual
+    # component centres, rather than cutting at row/column midpoints, preserves
+    # every pixel that crossed a nominal grid boundary.
+    by_y = sorted(anchors, key=lambda component: component["center_y"])
+    ordered: list[dict[str, int]] = []
+    for row in range(3):
+        ordered.extend(
+            sorted(by_y[row * 6 : (row + 1) * 6], key=lambda component: component["center_x"]),
+        )
+
+    slot_by_label = np.zeros(label + 1, dtype=np.int16)
+    for slot, anchor in enumerate(ordered, start=1):
+        slot_by_label[anchor["label"]] = slot
+
+    # Preserve detached effects, floating shards and weapon pieces when they are
+    # close to a subject. Tiny distant keying specks stay discarded.
+    anchor_labels = {anchor["label"] for anchor in anchors}
+    for component in components:
+        if component["label"] in anchor_labels or component["size"] < 8:
+            continue
+
+        def gap(anchor: dict[str, int]) -> int:
+            dx = max(
+                anchor["min_x"] - component["max_x"],
+                component["min_x"] - anchor["max_x"],
+                0,
+            )
+            dy = max(
+                anchor["min_y"] - component["max_y"],
+                component["min_y"] - anchor["max_y"],
+                0,
+            )
+            return dx * dx + dy * dy
+
+        nearest = min(ordered, key=gap)
+        if gap(nearest) <= 96 * 96:
+            slot_by_label[component["label"]] = ordered.index(nearest) + 1
+
+    sprites: list[Image.Image] = []
+    for slot in range(1, expected + 1):
+        selected = slot_by_label[labels] == slot
+        ys, xs = np.nonzero(selected)
+        if len(xs) == 0:
+            raise ValueError(f"empty extracted monster slot: {slot - 1}")
+        left = int(xs.min())
+        top = int(ys.min())
+        right = int(xs.max()) + 1
+        bottom = int(ys.max()) + 1
+        crop = rgba[top:bottom, left:right].copy()
+        crop[:, :, 3] = np.where(selected[top:bottom, left:right], crop[:, :, 3], 0)
+        sprites.append(Image.fromarray(crop, "RGBA"))
+    return sprites
+
+
 def clear_source_frame(image: Image.Image, inset: int = SOURCE_INSET) -> Image.Image:
     """Remove the generated white grid stroke before subject extraction."""
     rgba = np.asarray(image).copy()
@@ -134,8 +267,9 @@ def fitted(image: Image.Image, side: int, padding: int) -> Image.Image:
 
 def build_monsters() -> None:
     zone = 0
-    for filename in MONSTER_GROUPS:
+    for group_index, filename in enumerate(MONSTER_GROUPS):
         atlas = Image.open(SOURCE / filename).convert("RGBA")
+        subjects = connected_subjects(atlas) if group_index in COMPONENT_GROUPS else None
         for source_row in range(3):
             sheet = Image.new(
                 "RGBA",
@@ -143,8 +277,14 @@ def build_monsters() -> None:
                 (0, 0, 0, 0),
             )
             for monster in range(6):
-                source = clear_source_frame(grid_crop(atlas, monster, source_row, 6, 3))
-                source = largest_component(source)
+                replacement = MONSTER_REPLACEMENTS.get((zone, monster))
+                if replacement is not None:
+                    source = Image.open(replacement).convert("RGBA")
+                elif subjects is not None:
+                    source = subjects[source_row * 6 + monster]
+                else:
+                    source = clear_source_frame(grid_crop(atlas, monster, source_row, 6, 3))
+                    source = largest_component(source)
                 padding = MONSTER_BOSS_PADDING if monster == 5 else MONSTER_PADDING
                 cell = fitted(source, MONSTER_CELL, padding)
                 x = (monster % MONSTER_COLS) * MONSTER_CELL

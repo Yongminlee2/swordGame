@@ -2,7 +2,7 @@ package com.geomgang.core
 
 /** 시즌3 전용 파괴 복구권 상점 규칙. */
 object LegendProtection {
-    const val GOLD_PRICE: Long = 10_000_000L
+    const val GOLD_PRICE: Long = 100_000_000L
     const val SHARD_PRICE: Int = 10_000
 
     fun canBuyWithGold(state: GameState): Boolean =

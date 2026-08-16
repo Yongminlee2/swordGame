@@ -43,15 +43,15 @@ class PetsTest {
     fun `효과는 장착한 펫만 낸다`() {
         val owned = Pets.addEgg(Pets.addEgg(empty, "quokka"), "spriggan")
         // 장착 없음 - 전부 중립
-        assertEquals(0.0, Pets.autoTapRatio(owned), 0.0)
+        assertEquals(0.0, Pets.assistDamageRatio(owned), 0.0)
         assertEquals(1.0, Pets.goldMultOf(owned), 0.0)
-        // 쿼카 장착 - 자동 타격만
+        // 쿼카 장착 - 탭 공격 보조만
         val quokka = Pets.equip(owned, "quokka")
-        assertTrue(Pets.autoTapRatio(quokka) > 0.0)
+        assertTrue(Pets.assistDamageRatio(quokka) > 0.0)
         assertEquals(1.0, Pets.goldMultOf(quokka), 0.0)
         // 요정 장착 - 골드만
         val sprig = Pets.equip(owned, "spriggan")
-        assertEquals(0.0, Pets.autoTapRatio(sprig), 0.0)
+        assertEquals(0.0, Pets.assistDamageRatio(sprig), 0.0)
         assertTrue(Pets.goldMultOf(sprig) > 1.0)
     }
 
@@ -61,9 +61,9 @@ class PetsTest {
         low = Pets.equip(low, "quokka")
         var high = low
         repeat(4) { high = Pets.addEgg(high, "quokka") }
-        assertTrue(Pets.autoTapRatio(high) > Pets.autoTapRatio(low))
-        assertEquals(0.10, Pets.autoTapRatio(low), 1e-9)
-        assertEquals(0.30, Pets.autoTapRatio(high), 1e-9)
+        assertTrue(Pets.assistDamageRatio(high) > Pets.assistDamageRatio(low))
+        assertEquals(0.10, Pets.assistDamageRatio(low), 1e-9)
+        assertEquals(0.30, Pets.assistDamageRatio(high), 1e-9)
     }
 
     @Test

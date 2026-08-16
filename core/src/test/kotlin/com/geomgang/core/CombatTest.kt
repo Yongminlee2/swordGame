@@ -161,7 +161,7 @@ class CombatTest {
     }
 
     @Test
-    fun `용검과 정령검만 화상 피해가 있다`() {
+    fun `용검과 정령검만 화상 폭발 기반 피해가 있다`() {
         val burning = setOf(WeaponFamily.DRAGON, WeaponFamily.SPIRIT)
         burning.forEach {
             assertTrue("${it.id} 는 화상이 있어야 한다", Combat.burnPerSecond(sword(10, it)) > 0)
@@ -172,7 +172,7 @@ class CombatTest {
     }
 
     @Test
-    fun `용검이 정령검보다 화상이 세다`() {
+    fun `용검이 정령검보다 화상 폭발 기반 피해가 세다`() {
         assertTrue(
             Combat.burnPerSecond(sword(10, WeaponFamily.DRAGON)) >
                 Combat.burnPerSecond(sword(10, WeaponFamily.SPIRIT)),

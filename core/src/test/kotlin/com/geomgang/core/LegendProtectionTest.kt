@@ -20,7 +20,7 @@ class LegendProtectionTest {
     )
 
     @Test
-    fun `시즌3에서 천만 골드로 한 장 산다`() {
+    fun `시즌3에서 일억 골드로 한 장 산다`() {
         val after = LegendProtection.buyWithGold(season3())
         assertEquals(0, after.gold)
         assertEquals(1, after.inventory.legendPreventTickets)
@@ -45,7 +45,7 @@ class LegendProtectionTest {
 
     @Test
     fun `두 결제 수단은 각각 잔액을 검사한다`() {
-        assertFalse(LegendProtection.canBuyWithGold(season3(gold = 9_999_999)))
+        assertFalse(LegendProtection.canBuyWithGold(season3(gold = 99_999_999)))
         assertFalse(LegendProtection.canBuyWithShards(season3(shards = 9_999)))
         assertTrue(LegendProtection.canBuyWithGold(season3()))
         assertTrue(LegendProtection.canBuyWithShards(season3()))

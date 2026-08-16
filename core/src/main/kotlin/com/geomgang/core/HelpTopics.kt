@@ -52,8 +52,8 @@ object HelpTopics {
         ),
         HelpTopic(
             "검 스킬",
-            "+${Skills.MIN_LEVEL}부터 계열 고유 스킬이 열린다. 공격 시 낮은 확률로 발동한다.\n" +
-                "치명타와 동시에 발동할 수 있다.",
+            "스킬은 용검 전용이며 +${Skills.DRAGON_MIN_LEVEL}부터 타격 시 발동한다.\n" +
+                Skills.dragonProgressionText(),
         ),
         HelpTopic(
             "별 강화",

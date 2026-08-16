@@ -1,6 +1,8 @@
 package com.geomgang.game
 
 import com.geomgang.core.Difficulty
+import com.geomgang.core.AdventureState
+import com.geomgang.core.Combat
 import com.geomgang.core.GameState
 import com.geomgang.core.HuntEvent
 import com.geomgang.core.HuntEvents
@@ -18,6 +20,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -140,6 +143,25 @@ class ForgeViewModelHuntTest {
     }
 
     @Test
+    fun `용검으로 한 방에 죽여도 피해와 스킬 표시값이 남는다`() = runTest(dispatcher) {
+        // 진입: 희귀 없음·이벤트 없음, 타격: 치명타 없음·스킬 발동.
+        val vm = huntReadyViewModel(
+            rng = QueueRandom(doubles = listOf(0.5, 1.0, 1.0, 0.0)),
+            sword = Sword(WeaponFamily.DRAGON, 5),
+        )
+        vm.tapTarget()
+        val hunt = vm.ui.value.hunt!!
+        vm.leaveHunt()
+
+        assertTrue(hunt.lastHitKilled)
+        assertTrue(hunt.lastDamage > 0)
+        assertNotNull(hunt.lastSkill)
+        assertTrue(hunt.lastKillGold > 0)
+        // 처치 직후 다음 몬스터는 이미 나왔지만 위 표시값은 지워지지 않는다.
+        assertTrue(hunt.targetHp > 0)
+    }
+
+    @Test
     fun `표시 이름에는 희귀 접두어가 붙고 rawTargetName에는 안 붙는다`() = runTest(dispatcher) {
         val vm = huntReadyViewModel(rng = QueueRandom(doubles = listOf(0.01)))
         val hunt = vm.ui.value.hunt!!
@@ -187,45 +209,65 @@ class ForgeViewModelHuntTest {
 
     @Test
     fun `보스를 잡으면 그 구역 정수가 1 오른다`() = runTest(dispatcher) {
-        // 용검의 화상이 가상 시간만으로 잡몹 12마리와 보스를 잡는다 -
-        // 탭 연타 가드(실제 시각)를 피하는 방법이다.
-        // v2.3에서 사냥터가 용검 기준으로 재편성되며 초원 잡몹 체력이 437배가 됐다.
-        // +20 으로는 틱마다 못 잡아 12마리를 못 채운다.
-        val vm = huntReadyViewModel(sword = Sword(WeaponFamily.DRAGON, 30))
-        advanceTimeBy((Zone.MONSTERS_BEFORE_BOSS + 2) * 1000L)
-        val kills = vm.ui.value.hunt!!.killsInZone
+        val store = SaveStore(tmp.root)
+        store.saveGame(
+            GameState(
+                difficulty = Difficulty.ENDLESS,
+                sword = Sword(WeaponFamily.DRAGON, 30),
+                adventure = AdventureState(killsInZone = Zone.MONSTERS_BEFORE_BOSS),
+            ),
+        )
+        val vm = ForgeViewModel(store, Difficulty.ENDLESS, QueueRandom())
+        vm.enterZone(Zone.MEADOW)
         vm.challengeBoss()
-        advanceTimeBy(3_000)
+        vm.tapTarget()
         val essences = vm.ui.value.essences
         vm.leaveHunt()
-        assertTrue("잡몹 $kills 마리", kills >= Zone.MONSTERS_BEFORE_BOSS)
         assertEquals(1, essences[Zone.MEADOW.id])
     }
 
     @Test
     fun `보스 알 롤이 낮으면 그 구역 펫 알을 얻는다`() = runTest(dispatcher) {
-        val vm = huntReadyViewModel(sword = Sword(WeaponFamily.DRAGON, 30))
-        advanceTimeBy((Zone.MONSTERS_BEFORE_BOSS + 2) * 1000L)
+        val store = SaveStore(tmp.root)
+        store.saveGame(
+            GameState(
+                difficulty = Difficulty.ENDLESS,
+                sword = Sword(WeaponFamily.DRAGON, 30),
+                adventure = AdventureState(killsInZone = Zone.MONSTERS_BEFORE_BOSS),
+            ),
+        )
+        // 스폰 희귀·이벤트 없음 → 탭 치명타·스킬 없음 → 보스 알 획득.
+        val vm = ForgeViewModel(
+            store,
+            Difficulty.ENDLESS,
+            QueueRandom(doubles = listOf(0.5, 1.0, 1.0, 1.0, 0.0)),
+        )
+        vm.enterZone(Zone.MEADOW)
         vm.challengeBoss()
-        // 보스 처치 시 난수: 드롭(보스는 확정이라 chance 롤 없이 계열 nextInt·단계 nextInt) 뒤 알 롤.
-        // QueueRandom 의 doubles 기본값이 1.0이라 알이 안 나온다 - 이 테스트는 doubles 를
-        // 미리 채울 수 없으므로(스폰 12회가 소비) 직접 addEgg 경로 대신 통계로 확인하지 않고
-        // 기본값(알 없음)을 확인한다. 알 지급 자체는 PetsTest·아래 장착 테스트가 지킨다.
-        advanceTimeBy(3_000)
+        vm.tapTarget()
         val pets = vm.ui.value.pets
         vm.leaveHunt()
-        assertTrue(pets.counts.isEmpty())
+        assertEquals(1, pets.counts["quokka"])
     }
 
     @Test
-    fun `펫 자동 타격이 틱마다 체력을 깎는다`() = runTest(dispatcher) {
-        // 쿼카 장착 + 탭 없이 가상 시간만 흘린다
+    fun `용검도 입력이 없으면 몬스터 체력이 줄지 않는다`() = runTest(dispatcher) {
+        val vm = huntReadyViewModel(sword = Sword(WeaponFamily.DRAGON, 1))
+        val before = vm.ui.value.hunt!!.targetHp
+        advanceTimeBy(3_100)
+        val after = vm.ui.value.hunt!!.targetHp
+        vm.leaveHunt()
+        assertEquals(before, after)
+    }
+
+    @Test
+    fun `펫은 가만히 있을 때가 아니라 탭할 때만 보조 피해를 준다`() = runTest(dispatcher) {
         val store = SaveStore(tmp.root)
         store.saveGame(
             GameState(
                 difficulty = Difficulty.ENDLESS,
                 gold = 0,
-                sword = Sword(WeaponFamily.STRAIGHT, 28), // 화상 없음, 자동 타격만
+                sword = Sword(WeaponFamily.STRAIGHT, 0),
                 pets = com.geomgang.core.PetState(
                     counts = mapOf("quokka" to 1),
                     equippedId = "quokka",
@@ -234,12 +276,15 @@ class ForgeViewModelHuntTest {
         )
         val vm = ForgeViewModel(store, Difficulty.ENDLESS, QueueRandom())
         vm.enterZone(Zone.MEADOW)
-        val before = vm.ui.value.hunt!!.killsInZone
-        // 펫은 공격력의 일부로 때린다 - 틱마다 들쥐를 잡을 만큼은 된다
-        advanceTimeBy(2_100)
-        val after = vm.ui.value.hunt!!.killsInZone
+        val before = vm.ui.value.hunt!!.targetHp
+        advanceTimeBy(3_100)
+        val idle = vm.ui.value.hunt!!.targetHp
+        vm.tapTarget()
+        val hunt = vm.ui.value.hunt!!
         vm.leaveHunt()
-        assertTrue("펫이 안 때렸다: 처치 $before -> $after", after > before)
+        assertEquals(before, idle)
+        assertTrue(hunt.targetHp < idle)
+        assertTrue(hunt.lastDamage > Combat.hit(Sword(WeaponFamily.STRAIGHT, 0), 0, false).damage)
     }
 
     @Test

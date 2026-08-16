@@ -3,10 +3,12 @@ package com.geomgang.game.ui
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -35,6 +37,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -43,6 +47,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.semantics.Role
@@ -298,33 +304,62 @@ fun PixelActionButton(
     onClick: () -> Unit,
     enabled: Boolean,
     modifier: Modifier = Modifier,
+    feedback: Float = 0f,
+    feedbackColor: Color = Color.White,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val shape = CutCornerShape(6.dp)
-    val background = if (enabled) ForgeAmber else MaterialTheme.colorScheme.surfaceVariant
-    val border = if (enabled) Color(0xFFFFCF52) else MaterialTheme.colorScheme.outline
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val amount = feedback.coerceIn(0f, 1f)
+    val normalBackground = if (enabled) ForgeAmber else MaterialTheme.colorScheme.surfaceVariant
+    val normalBorder = if (enabled) Color(0xFFFFCF52) else MaterialTheme.colorScheme.outline
+    val pressedBackground = if (pressed && enabled) Color(0xFFD58A17) else normalBackground
+    val background = lerp(pressedBackground, feedbackColor, amount * 0.44f)
+    val border = lerp(normalBorder, feedbackColor, amount * 0.72f)
+    val topBevel = if (pressed) Color(0xFFC77B13) else Color(0xFFFFD76B)
+    val bottomBevel = if (pressed) Color(0xFFFFD76B) else Color(0xFFC77B13)
     Box(
         modifier = modifier
+            .graphicsLayer {
+                scaleX = if (pressed && enabled) 0.985f else 1f
+                scaleY = if (pressed && enabled) 0.92f else 1f
+                translationY = if (pressed && enabled) 2.dp.toPx() else 0f
+            }
             .semantics { role = Role.Button }
             .border(2.dp, border, shape)
             .background(background, shape)
-            .clickable(enabled = enabled, onClick = onClick)
+            .clip(shape)
+            .clickable(
+                interactionSource = interaction,
+                indication = LocalIndication.current,
+                enabled = enabled,
+                onClick = onClick,
+            )
             .padding(vertical = 2.dp),
         contentAlignment = Alignment.Center,
     ) {
+        // 판정 직후 버튼 전체가 한 번 번쩍인다. 버튼은 계속 활성 상태라 연타를 막지 않는다.
+        if (amount > 0f) {
+            Spacer(
+                Modifier
+                    .fillMaxSize()
+                    .background(feedbackColor.copy(alpha = amount * 0.18f), shape),
+            )
+        }
         Spacer(
             Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .height(2.dp)
-                .background(if (enabled) Color(0xFFFFD76B) else border),
+                .background(if (enabled) lerp(topBevel, feedbackColor, amount) else border),
         )
         Spacer(
             Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .height(3.dp)
-                .background(if (enabled) Color(0xFFC77B13) else border),
+                .background(if (enabled) lerp(bottomBevel, feedbackColor, amount) else border),
         )
         content()
     }

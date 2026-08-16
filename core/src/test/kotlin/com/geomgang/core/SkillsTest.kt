@@ -15,20 +15,54 @@ class SkillsTest {
     // --- 해금과 발동 ---
 
     @Test
-    fun `15단계 미만에는 스킬이 없다`() {
-        for (level in 0..14) {
-            assertNull("+$level", Skills.roll(sword(level), skillRoll = 0.0))
-        }
-        assertFalse(Skills.unlocked(sword(14)))
-        assertTrue(Skills.unlocked(sword(15)))
+    fun `용검은 1단계부터 스킬을 쓴다`() {
+        val zero = sword(0, WeaponFamily.DRAGON)
+        val one = sword(1, WeaponFamily.DRAGON)
+        assertFalse(Skills.unlocked(zero))
+        assertNull(Skills.roll(zero, skillRoll = 0.0))
+        assertTrue(Skills.unlocked(one))
+        assertNotNull(Skills.roll(one, skillRoll = 0.0))
     }
 
     @Test
-    fun `15단계부터 확률 안에서 발동한다`() {
-        assertNotNull(Skills.roll(sword(15), skillRoll = 0.0))
-        assertNotNull(Skills.roll(sword(15), skillRoll = Skills.CHANCE - 0.001))
-        assertNull(Skills.roll(sword(15), skillRoll = Skills.CHANCE))
-        assertNull(Skills.roll(sword(15), skillRoll = 0.9))
+    fun `용검은 확률 안에서만 발동한다`() {
+        val dragon = sword(1, WeaponFamily.DRAGON)
+        assertNotNull(Skills.roll(dragon, skillRoll = 0.0))
+        assertNotNull(Skills.roll(dragon, skillRoll = Skills.CHANCE - 0.001))
+        assertNull(Skills.roll(dragon, skillRoll = Skills.CHANCE))
+        assertNull(Skills.roll(dragon, skillRoll = 0.9))
+    }
+
+    @Test
+    fun `원래 계열은 고강화여도 스킬을 쓰지 않는다`() {
+        for (family in WeaponFamily.entries - WeaponFamily.DRAGON) {
+            val sourceSword = sword(50, family)
+            assertFalse(family.name, Skills.unlocked(sourceSword))
+            assertNull(family.name, Skills.roll(sourceSword, skillRoll = 0.0))
+        }
+    }
+
+    @Test
+    fun `용검은 강화 구간마다 일반 계열 스킬을 순서대로 계승한다`() {
+        val expected = mapOf(
+            1 to WeaponFamily.CURVED,
+            7 to WeaponFamily.CURVED,
+            8 to WeaponFamily.STRAIGHT,
+            14 to WeaponFamily.STRAIGHT,
+            15 to WeaponFamily.DEMON,
+            20 to WeaponFamily.DEMON,
+            21 to WeaponFamily.RAPIER,
+            27 to WeaponFamily.RAPIER,
+            28 to WeaponFamily.GREAT,
+            34 to WeaponFamily.GREAT,
+            35 to WeaponFamily.HOLY,
+            41 to WeaponFamily.HOLY,
+            42 to WeaponFamily.DRAGON,
+            50 to WeaponFamily.DRAGON,
+        )
+        expected.forEach { (level, family) ->
+            assertEquals("+$level", Skills.of(family), Skills.of(sword(level, WeaponFamily.DRAGON)))
+        }
     }
 
     @Test
@@ -73,13 +107,13 @@ class SkillsTest {
 
     @Test
     fun `스킬이 터지면 피해가 배수만큼 커진다`() {
-        val s = sword(20, WeaponFamily.AXE) // 분쇄 6배
+        val s = sword(28, WeaponFamily.DRAGON) // 대검에서 계승한 붕괴 5배
         val plain = Combat.hit(s, 0, isBoss = false, skillRoll = 1.0)
         val skilled = Combat.hit(s, 0, isBoss = false, skillRoll = 0.0)
         assertNull(plain.skill)
         assertNotNull(skilled.skill)
         assertEquals(
-            Skills.of(WeaponFamily.AXE).damageMult,
+            Skills.of(WeaponFamily.GREAT).damageMult,
             skilled.damage.toDouble() / plain.damage,
             0.05,
         )
@@ -87,13 +121,13 @@ class SkillsTest {
 
     @Test
     fun `연타 스킬은 타격 수가 늘어난다`() {
-        val hit = Combat.hit(sword(20, WeaponFamily.RAPIER), 0, false, skillRoll = 0.0)
+        val hit = Combat.hit(sword(21, WeaponFamily.DRAGON), 0, false, skillRoll = 0.0)
         assertEquals(4, hit.hits)
     }
 
     @Test
     fun `심판은 보스에게 두 배 더 아프다`() {
-        val s = sword(20, WeaponFamily.HOLY)
+        val s = sword(35, WeaponFamily.DRAGON)
         val onMob = Combat.hit(s, 0, isBoss = false, skillRoll = 0.0)
         val plainMob = Combat.hit(s, 0, isBoss = false, skillRoll = 1.0)
         val onBoss = Combat.hit(s, 0, isBoss = true, skillRoll = 0.0)
@@ -103,17 +137,15 @@ class SkillsTest {
     }
 
     @Test
-    fun `사신의 낫은 최대체력 비례 피해를 더한다`() {
-        val s = sword(20, WeaponFamily.SCYTHE)
-        val small = Combat.hit(s, 0, false, skillRoll = 0.0, targetMaxHp = 0)
-        val big = Combat.hit(s, 0, false, skillRoll = 0.0, targetMaxHp = 1_000_000)
-        val expected = 1_000_000 * Skills.of(WeaponFamily.SCYTHE).maxHpRatio
-        assertEquals(expected, (big.damage - small.damage).toDouble(), expected * 0.05)
+    fun `원래 검은 스킬 롤이 성공해도 평타다`() {
+        val sourceSword = sword(50, WeaponFamily.GREAT)
+        val hit = Combat.hit(sourceSword, 0, false, skillRoll = 0.0)
+        assertNull(hit.skill)
     }
 
     @Test
     fun `스킬과 치명타는 함께 터질 수 있다`() {
-        val s = sword(20, WeaponFamily.AXE)
+        val s = sword(28, WeaponFamily.DRAGON)
         val both = Combat.hit(s, 0, false, critRoll = 0.0, skillRoll = 0.0)
         val skillOnly = Combat.hit(s, 0, false, critRoll = 1.0, skillRoll = 0.0)
         assertTrue(both.crit)

@@ -57,27 +57,11 @@ class LegendSafetyTest {
         assertTrue(Storage.canScrap(Sword(WeaponFamily.STRAIGHT, 20)))
     }
 
-    /**
-     * 값 누진의 상한.
-     *
-     * [GoldShop.rebase] 는 최고 단계가 올라야 누진을 푸는데, 계열이 +20 에서 끝나면서
-     * 최고 단계가 그 자리에 오래 머무는 구간이 생겼다. 그동안 값이 끝없이 오르면
-     * 골드가 다시 쓸 데를 잃는다.
-     */
     @Test
-    fun `강화석 값은 끝없이 오르지 않는다`() {
+    fun `강화석은 기존 누진 저장값과 무관하게 고정가다`() {
         val base = GameState(Difficulty.ENDLESS, bestLevel = 20)
-        val capped = GoldShop.stonePrice(base.copy(stonesBought = GoldShop.GROWTH_CAP))
-        val beyond = GoldShop.stonePrice(base.copy(stonesBought = GoldShop.GROWTH_CAP + 200))
-        assertEquals(capped, beyond)
-    }
-
-    @Test
-    fun `상한 전까지는 값이 오른다`() {
-        val base = GameState(Difficulty.ENDLESS, bestLevel = 20)
-        val one = GoldShop.stonePrice(base.copy(stonesBought = 1))
-        val ten = GoldShop.stonePrice(base.copy(stonesBought = 10))
-        assertTrue("1개=$one 10개=$ten", ten > one)
+        assertEquals(GoldShop.STONE_PRICE, GoldShop.stonePrice(base))
+        assertEquals(GoldShop.STONE_PRICE, GoldShop.stonePrice(base.copy(stonesBought = 999)))
     }
 
     /** 재료 검도 같은 상한을 쓴다. 둘 중 하나만 막으면 상대 순서가 뒤집힌다. */

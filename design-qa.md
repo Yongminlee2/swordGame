@@ -66,7 +66,6 @@ The implementation capture was normalized to the reference aspect and inspected 
 - Accepted P3: the source illustrations themselves use a retro pixel-art outline; that intrinsic source style is intentionally preserved rather than smoothed into newly invented artwork.
 
 final result: passed
-
 ## 2026-08-14 three-season and legend-protection pass
 
 - Source visual truth: the established selected Design 1 UI in `C:/workAndroid/SwordForge/art-review/ui-reference/selected-design-1.png` and the current fixed-height forge/shop components.
@@ -194,5 +193,36 @@ final result: passed
 - Runtime errors checked: Android runtime log contained no crash after the final build; 24 monster atlases and 16 effect assets passed size/alpha validation.
 - Remaining P0/P1/P2: none.
 - Accepted P3: the debug comparison uses the existing red boss arena while the selected mock shows a teal normal arena; production retains the correct zone/boss semantic color.
+
+final result: passed
+
+## 2026-08-16 launcher icon pass
+
+- Source visual truth: `C:/workAndroid/SwordForge/app/src/main/res/drawable-nodpi/ic_launcher_art.png` (1024 x 1024).
+- Implementation screenshot: `C:/workAndroid/SwordForge/app/build/reports/icon-qa/a16-app-info-final.png` (1080 x 2340, physical SM-A165N capture).
+- Full comparison: `C:/workAndroid/SwordForge/app/build/reports/icon-qa/source-vs-a16-final-icon.png`.
+- Focused icon crop: `C:/workAndroid/SwordForge/app/build/reports/icon-qa/a16-icon-final-crop.png`.
+- Viewport/state: native Android adaptive launcher icon, physical Galaxy A16/One UI squircle mask, 4 dp foreground inset on a 108 dp canvas. CSS size and device scale factor are not applicable.
+
+### Fidelity surfaces
+
+- Fonts and typography: not applicable; the selected icon contains no text.
+- Spacing and layout rhythm: the hammer, sword, and impact flare remain balanced inside the adaptive mask.
+- Colors and visual tokens: the selected charcoal, ember-orange, silver, and violet palette is preserved.
+- Image quality and asset fidelity: the project PNG is a byte-identical copy of the selected 1024 px source. No redraw, crop, or recompression was applied.
+- Copy and content: not applicable; no app-specific text appears in the icon.
+- Full-view evidence: the physical Galaxy-style squircle keeps the hammer, blade, guard, and central spark readable at launcher size.
+- Focused evidence: the A16 app-information capture shows stronger visual weight than the earlier 12 dp build without losing the two-object silhouette.
+
+### Comparison history
+
+1. P2: an initial 18 dp simulated inset prevented cropping but made the subjects too small at launcher size.
+2. P2: the first physical A16 pass at 12 dp confirmed Android applied additional foreground scaling and the icon still lacked visual weight.
+3. Fix: reduced the adaptive foreground inset to 4 dp without modifying the selected PNG.
+4. Post-fix evidence: the final A16 capture shows a larger, immediately recognizable hammer-versus-sword impact and the game launches normally.
+
+- Automated checks: `testDebugUnitTest`, `lintDebug`, and `assembleDebug` passed.
+- Remaining P0/P1/P2: none.
+- Accepted P3: the One UI mask trims the outermost hammer handle and blade-tip decoration, as expected for this corner-to-corner source composition; the hammer, sword, guard, and impact remain readable.
 
 final result: passed

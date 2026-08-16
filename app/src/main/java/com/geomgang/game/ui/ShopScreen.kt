@@ -181,23 +181,11 @@ fun ShopScreen(
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                         )
-                        Text(
-                            text = "다음 개는 %,d".format(state.nextStonePrice),
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                        )
                     }
                     Button(onClick = onBuyStone, enabled = state.canBuyStone) {
                         Text("%,d".format(state.stonePrice))
                     }
                 }
-                Spacer(Modifier.height(6.dp))
-                // 값이 왜 오르고 언제 풀리는지 말해 주지 않으면 그냥 짜증으로만 남는다.
-                Text(
-                    text = "연속 구매 시 상승 · 강화 성공 시 초기화",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                )
             }
         }
 
@@ -249,16 +237,6 @@ fun ShopScreen(
         ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
                 Text("아이템", fontWeight = FontWeight.Bold)
-                // 값이 왜 오르고 언제 풀리는지 말해 주지 않으면 그냥 짜증으로만 남는다.
-                Text(
-                    text = if (state.itemsBought > 0) {
-                        "이번 구간 ${state.itemsBought}개 · 연속 구매 시 가격 상승"
-                    } else {
-                        "연속 구매 시 가격 상승 · 강화 성공 시 초기화"
-                    },
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
-                )
                 Spacer(Modifier.height(4.dp))
                 Item.entries.forEachIndexed { index, item ->
                     if (index > 0) HorizontalDivider(Modifier.padding(vertical = 4.dp))

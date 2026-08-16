@@ -80,7 +80,7 @@ import kotlin.random.Random
  * 강화 화면의 상태 보유자.
  *
  * 도메인은 순수 함수라 상태를 스스로 들고 있지 않는다. 그 역할이 여기다.
- * 연출 중 입력 잠금도 여기서만 한다 — 잠금 주체가 여럿이면 연타로 상태가 꼬인다.
+ * 연출은 화면이 담당하고, 여기서는 파괴 선택창처럼 판정을 진짜로 멈춰야 할 때만 입력을 잠그다.
  *
  * 프로퍼티 초기화 순서에 의미가 있다. [progress] → [game] → [busy] → [_ui] 순으로 선언해야
  * 마지막의 `render()` 가 앞의 셋을 모두 읽을 수 있다.
@@ -134,6 +134,7 @@ class ForgeViewModel(
     private var lastSkill: Skill? = null
     private var hitSeq = 0L
     private var lastKillGold = 0L
+    private var lastHitKilled = false
     private var bossFailed = false
     private var zoneCleared = false
     /** 방금 보스에게서 얻은 것. 승리 팝업이 읽고 나면 비운다. */
@@ -161,14 +162,17 @@ class ForgeViewModel(
     private var lastStarUp: Boolean? = null
 
     /**
-     * 마지막 강화 결과. 연출이 끝나거나 파괴 창이 닫힐 때까지 유지한다.
+     * 마지막 강화 결과. 다음 시도가 들어오거나 파괴 창이 닫힐 때까지 유지한다.
      *
      * 카운트다운이 매 틱마다 화면을 다시 그리는데, 여기서 결과를 들고 있지 않으면
      * "파괴!!" 배너가 첫 틱에 사라져 버린다.
      */
     private var lastResult: ForgeResult? = null
 
-    /** 이번 성공이 최고 기록을 넘었는지. 연출이 끝나면 내려간다. */
+    /** 같은 결과가 연속되어도 Compose 연출을 매번 다시 시작시키는 번호. */
+    private var forgeResultSeq: Long = 0
+
+    /** 이번 성공이 최고 기록을 넘었는지. 다음 강화 판정에서 다시 갱신한다. */
     private var lastWasRecord: Boolean = false
 
     /** 다음 강화에 쓸 아이템. 한 번 쓰면 [UsedItems.NONE] 으로 돌아간다. */
@@ -291,6 +295,7 @@ class ForgeViewModel(
         val result = runAttempt(pendingItems) ?: return
         busy = true
         lastResult = result
+        forgeResultSeq++
         _ui.value = render()
 
         // 소리와 진동은 늘 나란히 간다. 한쪽만 울리면 손과 귀가 다른 말을 한다.
@@ -329,6 +334,11 @@ class ForgeViewModel(
         // 잠기고 파편은 똑같이 줍는다([ForgeEngine.shatter]).
         if (result is ForgeResult.Destroyed || (result is ForgeResult.Drop && result.shattered)) {
             openDestroyWindow()
+        } else {
+            // 일반 강화는 화면 연출을 기다리지 않는다. 시스템 애니메이션 배율이나
+            // 기기 성능과 무관하게 결과 계산 직후 곧바로 다음 입력을 받는다.
+            busy = false
+            _ui.value = render()
         }
     }
 
@@ -697,31 +707,42 @@ class ForgeViewModel(
         }
         val hit = Combat.hit(sword, combo, fightingBoss, critRoll, targetMaxHp, skillRoll)
         combo++
-        lastDamage = hit.damage
+        // 펫과 화상 폭발도 사용자가 탭한 바로 그 공격에만 합산한다.
+        // 실제로 깎인 양과 화면에 뜨는 피해 숫자가 달라지지 않게 총합을 먼저 만든다.
+        val petAssist = (Combat.attackPower(sword) * Pets.assistDamageRatio(game.pets))
+            .roundToLong()
+        val burnBurst = if (hit.skill?.burnBurst == true) {
+            Combat.burnPerSecond(sword) * Skills.BURN_BURST_MULT
+        } else {
+            0L
+        }
+        val totalDamage = hit.damage + petAssist + burnBurst
+        lastDamage = totalDamage
         lastHits = hit.hits
         lastCrit = hit.crit
         lastSkill = hit.skill
         hitSeq++
-        targetHp -= hit.damage
+        targetHp -= totalDamage
 
-        // 스킬 부가 효과. 화상 폭발은 즉시 피해로, 흡혈은 조각으로 들어온다.
+        // 피해는 위에서 합산했고, 여기서는 비피해 부가 효과만 처리한다.
         hit.skill?.let { skill ->
-            if (skill.burnBurst) {
-                targetHp -= Combat.burnPerSecond(sword) * Skills.BURN_BURST_MULT
-            }
             if (skill.shardBonus > 0) {
                 game = game.copy(shards = game.shards + skill.shardBonus)
             }
             progress = Progress.onSkill(progress)
         }
 
+        lastHitKilled = targetHp <= 0
+        if (!lastHitKilled) lastKillGold = 0
+
         if (fightingBoss) sound.bossHit(combo) else sound.hit(combo)
 
-        if (targetHp <= 0) onTargetDown(zone)
+        if (lastHitKilled) onTargetDown(zone, preserveHitFeedback = true)
         _ui.value = render()
     }
 
-    private fun onTargetDown(zone: Zone) {
+    private fun onTargetDown(zone: Zone, preserveHitFeedback: Boolean = false) {
+        if (!preserveHitFeedback) lastHitKilled = false
         val sword = game.sword
         targetHp = 0
         combo = 0
@@ -810,7 +831,7 @@ class ForgeViewModel(
             }
             activeEvent = null
             eventRemainingMillis = 0
-            if (!game.adventure.bossReady) spawnNext()
+            if (!game.adventure.bossReady) spawnNext(preserveHitFeedback)
         }
         persist()
     }
@@ -867,6 +888,13 @@ class ForgeViewModel(
     private fun startBossFight(zone: Zone) {
         fightingBoss = true
         bossFailed = false
+        // 보스 대기 화면에서 방금 잡은 잡몽의 피해 연출을 보스에 재생하지 않는다.
+        lastDamage = 0
+        lastHits = 0
+        lastCrit = false
+        lastSkill = null
+        lastKillGold = 0
+        lastHitKilled = false
         targetMaxHp = zone.bossHp
         targetHp = zone.bossHp
         bossRemainingMillis = zone.bossSeconds * 1000L + Pets.bossTimeBonusMillis(game.pets)
@@ -875,7 +903,7 @@ class ForgeViewModel(
         _ui.value = render()
     }
 
-    private fun spawnNext() {
+    private fun spawnNext(preserveHitFeedback: Boolean = false) {
         val zone = huntZone ?: return
         fightingBoss = false
 
@@ -931,12 +959,17 @@ class ForgeViewModel(
         targetMaxHp = (zone.hpOf(kind) * hpMult).toLong().coerceAtLeast(1)
         targetHp = targetMaxHp
         bossRemainingMillis = 0
-        lastDamage = 0
-        lastHits = 0
+        // 탭 한 번으로 죽인 경우에는 다음 몬스터가 즉시 나와도
+        // 방금의 피해·스킬·처치 골드를 화면이 읽을 수 있게 남겨 둔다.
+        if (!preserveHitFeedback) {
+            lastDamage = 0
+            lastHits = 0
+            lastCrit = false
+            lastSkill = null
+            lastKillGold = 0
+            lastHitKilled = false
+        }
         // hitSeq 는 리셋하지 않는다 - 화면이 팝업 키로 쓰므로 되돌리면 충돌한다.
-        // lastKillGold 도 리셋하지 않는다 - 처치 직후 스폰되므로 화면이 아직 그리는 중이다.
-        lastCrit = false
-        lastSkill = null
     }
 
     // ---------------- 무한 회랑 ----------------
@@ -1110,7 +1143,7 @@ class ForgeViewModel(
     /**
      * 사냥터에서 1초마다 도는 루프.
      *
-     * 용검의 화상 피해를 넣고, 보스전이면 제한 시간을 깎는다.
+     * 전투·이벤트 제한 시간만 센다. 사용자가 누르지 않은 동안에는 누구도 피해를 받지 않는다.
      */
     private fun startHuntLoop() {
         stopHuntLoop()
@@ -1118,24 +1151,6 @@ class ForgeViewModel(
             while (huntZone != null) {
                 delay(HUNT_TICK_MILLIS)
                 val zone = huntZone ?: break
-
-                if (targetHp > 0) {
-                    val burn = Combat.burnPerSecond(game.sword)
-                    if (burn > 0) {
-                        targetHp -= burn
-                        if (targetHp <= 0) onTargetDown(zone)
-                    }
-                }
-
-                // 펫 자동 타격 (쿼카·아기 용)
-                if (targetHp > 0) {
-                    val petDps =
-                        (Combat.attackPower(game.sword) * Pets.autoTapRatio(game.pets)).toLong()
-                    if (petDps > 0) {
-                        targetHp -= petDps
-                        if (targetHp <= 0) onTargetDown(zone)
-                    }
-                }
 
                 // --- 이벤트 타이머 ---
                 if (goldenRemainingMillis > 0) {
@@ -1214,6 +1229,7 @@ class ForgeViewModel(
             hitSeq = hitSeq,
             isRare = rareTarget && !fightingBoss,
             lastKillGold = lastKillGold,
+            lastHitKilled = lastHitKilled,
             bossFailed = bossFailed,
             zoneCleared = zoneCleared,
             bossReward = bossReward,
@@ -1333,15 +1349,6 @@ class ForgeViewModel(
         if (busy || !Economy.canBuyToStorage(game)) return
         game = Economy.buyToStorage(game, family)
         persist()
-        _ui.value = render()
-    }
-
-    /** 결과 연출이 끝났다고 화면이 알려 준다. 입력 잠금을 푼다. */
-    fun onAnimationFinished() {
-        if (!busy) return
-        busy = false
-        lastResult = null
-        lastWasRecord = false
         _ui.value = render()
     }
 
@@ -1584,7 +1591,7 @@ class ForgeViewModel(
     }
 
     private companion object {
-        /** 사냥 루프 주기. 화상 피해와 보스 제한 시간을 이 간격으로 처리한다. */
+        /** 사냥 루프 주기. 이벤트와 보스 제한 시간을 이 간격으로 처리한다. */
         const val HUNT_TICK_MILLIS = 1_000L
 
         /** 앱 종료를 막지 않으면서 보통 수십 ms인 암호화 저장을 마칠 수 있는 상한. */
@@ -1695,7 +1702,6 @@ class ForgeViewModel(
             canBuySword = !busy && Economy.canBuySword(game),
             canBuyToStorage = !busy && Economy.canBuyToStorage(game),
             stonePrice = GoldShop.stonePrice(game),
-            nextStonePrice = GoldShop.stonePrice(game.copy(stonesBought = game.stonesBought + 1)),
             canBuyStone = !busy && GoldShop.canBuyStone(game),
             itemPrices = Item.entries.associateWith { GoldShop.itemPrice(game, it) },
             itemsBought = game.itemsBought,
@@ -1763,6 +1769,7 @@ class ForgeViewModel(
                 dailyReady || weeklyReady
             },
             lastResult = lastResult,
+            forgeResultSeq = forgeResultSeq,
             destroyPhase = phase,
             canPrevent = ForgeEngine.canPrevent(game),
             usesLegendPrevent = ForgeEngine.usesLegendPrevent(game),

@@ -66,6 +66,8 @@ data class HuntUiState(
     val nugget: Boolean = false,
     /** 방금 보스에게서 얻은 것. 승리 팝업이 그대로 띄운다. */
     val bossReward: BossReward? = null,
+    /** 마지막 탭이 대상을 처치했는지. 다음 몬스터가 떠도 처치 피해를 표시한다. */
+    val lastHitKilled: Boolean = false,
 ) {
     val hpRatio: Float get() = (targetHp.toFloat() / targetMaxHp).coerceIn(0f, 1f)
 

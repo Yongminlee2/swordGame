@@ -1,7 +1,7 @@
 package com.geomgang.core
 
 /**
- * 계열 고유 스킬.
+ * 용검이 강화 구간별로 계승하는 스킬.
  *
  * @param damageMult   총 피해 배수 (연타 스킬은 합계 배수다)
  * @param hits         화면에 몇 번 튀는지
@@ -25,16 +25,15 @@ data class Skill(
 /**
  * 스킬 발동.
  *
- * 강화 단계가 [MIN_LEVEL] 이상이면 탭할 때 [CHANCE] 확률로 계열 고유 스킬이 터진다.
- * +15는 파괴 구간 한복판이라 "위험을 무릅쓸 값어치"가 생기고,
- * 5초 보스전에서는 스킬이 터지느냐가 승패를 가른다.
+ * 사냥터와 함께 열리는 용검만 탭할 때 [CHANCE] 확률로 스킬을 쓴다.
+ * 기존 계열의 스킬은 용검의 강화 구간으로 옮겨 왔으며, 원래 검에서는 발동하지 않는다.
  *
  * 판정은 난수를 값으로 받는다 — 치명타와 같은 방식이라 테스트가 결정적이다.
  */
 object Skills {
 
-    /** 스킬이 열리는 최소 강화 단계. */
-    const val MIN_LEVEL = 15
+    /** 용검은 사냥터와 함께 열리므로 제작 직후부터 스킬을 쓴다. */
+    const val DRAGON_MIN_LEVEL = LegendForge.CRAFT_LEVEL
 
     /** 탭 한 번에 스킬이 터질 확률. */
     const val CHANCE = 0.12
@@ -72,8 +71,8 @@ object Skills {
             blurb = "보스 6배 · 일반 3배",
         ),
         WeaponFamily.DRAGON to Skill(
-            "dragonbreath", "용의 숨결", damageMult = 3.0, hits = 1, burnBurst = true,
-            blurb = "3배 · 화상 폭발",
+            "dragonbreath", "용의 숨결", damageMult = 5.0, hits = 1, burnBurst = true,
+            blurb = "5배 · 화상 폭발",
         ),
         WeaponFamily.SCYTHE to Skill(
             "reap", "사신의 낫", damageMult = 3.0, hits = 1, maxHpRatio = 0.05,
@@ -104,8 +103,49 @@ object Skills {
     fun of(family: WeaponFamily): Skill =
         BY_FAMILY[family] ?: error("no skill for $family")
 
+    /** 용검이 강화되며 계승하는 스킬 구간. 후반일수록 화력과 특수 효과가 커진다. */
+    data class DragonStage(
+        val levels: IntRange,
+        val sourceFamily: WeaponFamily,
+    ) {
+        val skill: Skill get() = of(sourceFamily)
+
+        val rangeLabel: String get() = if (levels.last == Int.MAX_VALUE) {
+            "+${levels.first} 이상"
+        } else {
+            "+${levels.first}~+${levels.last}"
+        }
+    }
+
+    private val DRAGON_STAGES: List<DragonStage> = listOf(
+        DragonStage(1..7, WeaponFamily.CURVED),
+        DragonStage(8..14, WeaponFamily.STRAIGHT),
+        DragonStage(15..20, WeaponFamily.DEMON),
+        DragonStage(21..27, WeaponFamily.RAPIER),
+        DragonStage(28..34, WeaponFamily.GREAT),
+        DragonStage(35..41, WeaponFamily.HOLY),
+        DragonStage(42..Int.MAX_VALUE, WeaponFamily.DRAGON),
+    )
+
+    fun dragonStage(level: Int): DragonStage =
+        DRAGON_STAGES.first { level.coerceAtLeast(DRAGON_MIN_LEVEL) in it.levels }
+
+    /** 실제 검이 쓸 스킬. 용검 외의 검에 요청하는 것은 규칙 위반이다. */
+    fun of(sword: Sword): Skill {
+        require(sword.family == WeaponFamily.DRAGON) { "skills are exclusive to dragon swords" }
+        return dragonStage(sword.level).skill
+    }
+
+    fun stageLabel(sword: Sword): String? =
+        if (sword.family == WeaponFamily.DRAGON) dragonStage(sword.level).rangeLabel else null
+
+    fun dragonProgressionText(): String = DRAGON_STAGES.joinToString(" · ") {
+        "${it.rangeLabel} ${it.skill.name}"
+    }
+
     /** 이 검이 스킬을 쓸 수 있는지. */
-    fun unlocked(sword: Sword?): Boolean = sword != null && sword.level >= MIN_LEVEL
+    fun unlocked(sword: Sword?): Boolean =
+        sword?.family == WeaponFamily.DRAGON && sword.level >= DRAGON_MIN_LEVEL
 
     /**
      * 스킬 발동 판정.
@@ -115,6 +155,6 @@ object Skills {
     fun roll(sword: Sword?, skillRoll: Double = 1.0): Skill? {
         if (!unlocked(sword)) return null
         if (skillRoll >= CHANCE) return null
-        return of(sword!!.family)
+        return of(sword!!)
     }
 }

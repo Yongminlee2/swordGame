@@ -9,7 +9,7 @@ import kotlinx.serialization.Serializable
  * 효과를 **데이터로** 들고 있으면 펫 표에 한 줄만 늘리면 된다.
  */
 enum class PetEffect {
-    /** 틱마다 공격력의 이 비율만큼 자동 타격. */
+    /** 사용자가 공격할 때 공격력의 이 비율만큼 함께 때린다. */
     AUTO_TAP,
     GOLD,
     EVENT,
@@ -181,8 +181,8 @@ object Pets {
         return scaled(level, kind.min, kind.max)
     }
 
-    /** 틱마다 공격력의 이 비율만큼 자동 타격. */
-    fun autoTapRatio(state: PetState): Double = amountOf(state, PetEffect.AUTO_TAP)
+    /** 사용자가 탭한 공격에 더해지는 펫의 보조 피해 비율. */
+    fun assistDamageRatio(state: PetState): Double = amountOf(state, PetEffect.AUTO_TAP)
 
     fun goldMultOf(state: PetState): Double = 1.0 + amountOf(state, PetEffect.GOLD)
 
@@ -214,7 +214,7 @@ object Pets {
         val value = scaled(lv, kind.min, kind.max)
         val percent = (value * 100).toInt()
         return when (kind.effect) {
-            PetEffect.AUTO_TAP -> "자동 타격 공격력의 $percent%"
+            PetEffect.AUTO_TAP -> "공격 시 추가 피해 $percent%"
             PetEffect.GOLD -> "골드 +$percent%"
             PetEffect.EVENT -> "이벤트 확률 +$percent%p"
             PetEffect.SHARD -> "조각 +$percent%"

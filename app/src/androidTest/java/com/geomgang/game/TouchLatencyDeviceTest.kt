@@ -69,7 +69,7 @@ class TouchLatencyDeviceTest {
                 val started = SystemClock.elapsedRealtimeNanos()
                 vm.forge()
                 samples += SystemClock.elapsedRealtimeNanos() - started
-                vm.onAnimationFinished()
+                assertEquals(false, vm.ui.value.busy)
             }
         }
 

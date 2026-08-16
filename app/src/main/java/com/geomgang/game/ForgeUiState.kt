@@ -80,10 +80,8 @@ data class ForgeUiState(
     val canBuySword: Boolean,
     /** 손에 든 검과 무관하게 보관함으로 바로 살 수 있는지. */
     val canBuyToStorage: Boolean = false,
-    /** 지금 강화석 한 개 값. 살수록 오르고, 한 단계 올리면 되돌아온다. */
+    /** 지금 강화석 한 개 고정가. */
     val stonePrice: Long = 0,
-    /** 그다음 개의 값. 왜 오르는지 화면이 직접 보여 줘야 짜증이 되지 않는다. */
-    val nextStonePrice: Long = 0,
     val canBuyStone: Boolean = false,
     /** 지금 아이템 값. 살수록 오른다 — 화면이 상수를 다시 쓰지 않게 여기서 준다. */
     val itemPrices: Map<Item, Long> = emptyMap(),
@@ -95,14 +93,16 @@ data class ForgeUiState(
     val useBlessing: Boolean = false,
     /** 다음 강화에 행운부적을 쓸지. 한 번 쓰면 자동으로 내려간다. */
     val useLuckCharm: Boolean = false,
-    /** 마지막 강화 결과. 연출이 끝나면 null 로 돌아간다. */
+    /** 마지막 강화 결과. 다음 시도 또는 파괴 선택 전까지 결과 문구로 남는다. */
     val lastResult: ForgeResult? = null,
+    /** 강화 시도마다 증가하는 연출 번호. 같은 결과가 연속되어도 효과를 다시 시작한다. */
+    val forgeResultSeq: Long = 0,
     /** 파괴 이후 무엇을 기다리는 중인지. 제한 시간 진행도가 여기 들어 있다. */
     val destroyPhase: DestroyPhase = DestroyPhase.None,
     val canPrevent: Boolean = false,
     /** 현재 파괴창이 일반 방지권이 아니라 전설 방지권을 쓰는 상태인지. */
     val usesLegendPrevent: Boolean = false,
-    /** 연출 재생 중이거나 제한 시간 창이 열려 있으면 입력을 받지 않는다. */
+    /** 파괴 후 제한 시간 창처럼 사용자의 선택을 기다리는 동안에는 입력을 받지 않는다. */
     val busy: Boolean = false,
     /** 도감·업적·칭호·통계. 모드와 무관한 전역 진행도다. */
     val progress: ProgressState = ProgressState(),
