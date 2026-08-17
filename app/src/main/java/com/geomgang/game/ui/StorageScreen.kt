@@ -172,7 +172,12 @@ private fun HeldSwordForgePanel(state: ForgeUiState, onStore: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )
             } else {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                // 왼쪽이 남는 폭을 다 쓰면 버튼 칸이 글자 하나 너비로 줄어든다.
+                // 독일어 「setzen」·러시아어 「положить」가 세로로 한 글자씩 쪼개졌다.
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     SwordThumb(held, size = 40.dp)
                     Column(Modifier.padding(start = 10.dp)) {
                         LText(
@@ -199,7 +204,8 @@ private fun HeldSwordForgePanel(state: ForgeUiState, onStore: () -> Unit) {
                 OutlinedButton(
                     onClick = onStore,
                     enabled = !state.busy && state.storage.size < state.storageCapacity,
-                ) { LText("넣기") }
+                    modifier = Modifier.padding(start = 8.dp),
+                ) { LText("넣기", maxLines = 1, softWrap = false, fontSize = 13.sp) }
             }
         }
     }
