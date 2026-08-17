@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -377,6 +378,9 @@ private fun ItemRow(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
             )
         }
+        // 설명과 값 사이를 띄운다. 붙여 두면 번역된 긴 설명이 값 단추에
+        // 맞닿아 한 덩어리처럼 읽혔다 - 러시아어에서 그랬다.
+        Spacer(Modifier.width(10.dp))
         Button(onClick = onBuy, enabled = affordable) {
             LText("%,d".format(price))
         }
