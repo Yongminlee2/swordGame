@@ -189,17 +189,25 @@ private fun WalletItem(
  * 한국어·일본어·중국어는 만(10⁴)으로 끊어 읽고 나머지는 천(10³)으로 끊는다.
  * 한 규칙만 쓰고 번역 사전에 맡겼더니 "16만" 이 "16×10K" 로 나왔다 —
  * 숫자 표기는 번역할 것이 아니라 **언어에 맞게 만들어야 하는 것**이다.
+ *
+ * 단위 글자도 언어마다 다르다 — 한국어 만·억·조, 일본어 万·億·兆, 중국어
+ * 간체 万·亿·兆, 번체 萬·億·兆. 한글 글자를 그대로 쓰면 중국어 화면에
+ * 한글이 섞여 나온다.
  */
 @Composable
 fun compactGold(value: Long): String =
-    compactGold(value, LocalGameTranslator.current.language.groupsByTenThousand)
+    compactGold(value, LocalGameTranslator.current.language.myriadUnits)
 
-fun compactGold(value: Long, groupsByTenThousand: Boolean): String = when {
-    groupsByTenThousand -> when {
-        value >= 1_000_000_000_000L -> "%.1f조".format(value / 1_000_000_000_000.0)
-        value >= 100_000_000L -> "%.1f억".format(value / 100_000_000.0)
-        value >= 10_000L -> "%,d만".format(value / 10_000L)
-        else -> "%,d".format(value)
+fun compactGold(value: Long, myriadUnits: List<String>?): String = when {
+    myriadUnits != null -> {
+        val (man, eok, jo) = Triple(myriadUnits[0], myriadUnits[1], myriadUnits[2])
+        when {
+            value >= 1_000_000_000_000L ->
+                "%.1f$jo".format(value / 1_000_000_000_000.0)
+            value >= 100_000_000L -> "%.1f$eok".format(value / 100_000_000.0)
+            value >= 10_000L -> "%,d$man".format(value / 10_000L)
+            else -> "%,d".format(value)
+        }
     }
     value >= 1_000_000_000L -> "%.1fB".format(value / 1_000_000_000.0)
     value >= 1_000_000L -> "%.1fM".format(value / 1_000_000.0)

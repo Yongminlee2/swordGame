@@ -8,18 +8,19 @@ enum class GameLanguage(
     val nativeName: String,
     val assetCode: String,
     /**
-     * 큰 수를 만(10⁴) 단위로 끊어 읽는 언어인지.
+     * 큰 수를 만(10⁴) 단위로 끊어 읽는 언어의 단위 글자 — 만·억·조 자리.
      *
-     * 한중일만 참이다. 나머지는 천(10³) 단위라 K·M·B 를 쓴다
-     * ([com.geomgang.game.ui.compactGold]).
+     * 한중일만 값이 있다. 나머지는 천(10³) 단위라 K·M·B 를 쓴다
+     * ([com.geomgang.game.ui.compactGold]). 글자는 언어마다 다르다 —
+     * 한국어 만·억·조, 일본어 万·億·兆, 중국어 간체 万·亿·兆, 번체 萬·億·兆.
      */
-    val groupsByTenThousand: Boolean = false,
+    val myriadUnits: List<String>? = null,
 ) {
-    KOREAN("ko", "한국어", "ko", groupsByTenThousand = true),
+    KOREAN("ko", "한국어", "ko", myriadUnits = listOf("만", "억", "조")),
     ENGLISH("en", "English", "en"),
-    JAPANESE("ja", "日本語", "ja", groupsByTenThousand = true),
-    CHINESE_SIMPLIFIED("zh-Hans", "简体中文", "zh", groupsByTenThousand = true),
-    CHINESE_TRADITIONAL("zh-Hant", "繁體中文", "zh_Hant", groupsByTenThousand = true),
+    JAPANESE("ja", "日本語", "ja", myriadUnits = listOf("万", "億", "兆")),
+    CHINESE_SIMPLIFIED("zh-Hans", "简体中文", "zh", myriadUnits = listOf("万", "亿", "兆")),
+    CHINESE_TRADITIONAL("zh-Hant", "繁體中文", "zh_Hant", myriadUnits = listOf("萬", "億", "兆")),
     SPANISH("es", "Español", "es"),
     FRENCH("fr", "Français", "fr"),
     GERMAN("de", "Deutsch", "de"),
