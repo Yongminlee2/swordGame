@@ -106,17 +106,22 @@ fun WalletBar(wallet: Wallet, modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.spacedBy(1.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            // 강화석까지 네 칸이 되면 한 칸이 좁아진다. 한국어는 두세 글자라 버티지만
+            // 번역된 이름은 잘려 나가므로 그때는 아이콘과 숫자만 남긴다.
+            val labels = !wallet.deep
             WalletItem(
                 R.drawable.ui_pixel_gold,
                 "골드",
                 compactGold(wallet.gold),
                 Modifier.weight(1.3f),
+                showLabel = labels,
             )
             WalletItem(
                 R.drawable.ui_pixel_gem,
                 "조각",
                 "${wallet.shards}",
                 Modifier.weight(0.95f),
+                showLabel = labels,
             )
             if (wallet.deep) {
                 WalletItem(
@@ -124,6 +129,7 @@ fun WalletBar(wallet: Wallet, modifier: Modifier = Modifier) {
                     "강화석",
                     "${wallet.stones}",
                     Modifier.weight(1.05f),
+                    showLabel = false,
                 )
             }
             WalletItem(
@@ -131,6 +137,7 @@ fun WalletBar(wallet: Wallet, modifier: Modifier = Modifier) {
                 "방지권",
                 "${wallet.tickets}",
                 Modifier.weight(1.05f),
+                showLabel = labels,
             )
         }
         ThinRule(Modifier.fillMaxWidth())
@@ -144,6 +151,7 @@ private fun WalletItem(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
+    showLabel: Boolean = true,
 ) {
     Row(
         modifier = modifier,
@@ -163,13 +171,15 @@ private fun WalletItem(
             maxLines = 1,
             fontWeight = FontWeight.Black,
         )
-        LText(
-            text = label,
-            modifier = Modifier.padding(start = 4.dp),
-            fontSize = 9.sp,
-            maxLines = 1,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        if (showLabel) {
+            LText(
+                text = label,
+                modifier = Modifier.padding(start = 4.dp),
+                fontSize = 9.sp,
+                maxLines = 1,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

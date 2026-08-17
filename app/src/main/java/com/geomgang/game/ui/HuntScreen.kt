@@ -113,15 +113,21 @@ fun HuntScreen(
                         )
                         LText("사냥터")
                     }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    // 가운데 칸에 폭을 주지 않으면 번역된 긴 이름이 계절 도장 위로 넘친다.
+                    Column(
+                        modifier = Modifier.weight(1f).padding(horizontal = 6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
                         LText(
                             text = hunt.zone.displayName,
                             fontWeight = FontWeight.Black,
+                            maxLines = 1,
                             color = MaterialTheme.colorScheme.primary,
                         )
                         LText(
                             text = "공격력 %,d".format(hunt.attackPower),
                             fontSize = 11.sp,
+                            maxLines = 1,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }

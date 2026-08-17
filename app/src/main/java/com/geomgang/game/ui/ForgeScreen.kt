@@ -7,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -241,12 +242,12 @@ fun ForgeScreen(
         WalletBar(state.wallet())
         Spacer(Modifier.height(6.dp))
 
-        // 그림 영역만 남는 높이를 가져간다. 진행 정보가 늘어나면 검 영역이 먼저
-        // 줄어들고, 강화 버튼과 하단 메뉴는 화면 안에 그대로 남는다.
+        // 검 그림이 남는 높이를 **전부** 가져간다. 상한을 두었더니 용검처럼 아래
+        // 정보가 많은 판에서 그림만 손톱만 해졌다 - 이 화면의 주인공은 검이다.
         Box(
             modifier = Modifier
                 .weight(1f)
-                .heightIn(min = 132.dp, max = 168.dp)
+                .heightIn(min = 132.dp)
                 .fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
@@ -269,11 +270,11 @@ fun ForgeScreen(
                     )
                 }
 
-                // 표시 크기는 고정이다. 가변으로 두면 주변 UI(별 강화 바 등)가 나타날
-                // 때마다 검이 커졌다 작아졌다 해서 들쭉날쭉해 보인다.
+                // 남는 높이에 맞춰 커진다. 화면마다 조금씩 달라지더라도 검이 크게
+                // 보이는 쪽을 택했다.
                 DestroyPhase.None -> SwordView(
                     sword = state.sword,
-                    modifier = Modifier.size(if (state.deepUnlocked) 184.dp else 190.dp),
+                    modifier = Modifier.fillMaxHeight().aspectRatio(1f),
                     shake = shake.value,
                 )
             }
@@ -384,7 +385,7 @@ fun ForgeScreen(
                         Spacer(
                             Modifier
                                 .width(1.dp)
-                                .height(72.dp)
+                                .height(42.dp)
                                 .background(MaterialTheme.colorScheme.outline),
                         )
                     }
@@ -411,7 +412,7 @@ fun ForgeScreen(
                 Spacer(
                     Modifier
                         .width(1.dp)
-                        .height(42.dp)
+                        .height(34.dp)
                         .background(MaterialTheme.colorScheme.outline),
                 )
                 CostStat(R.drawable.ui_pixel_tag, "판매가", compactGold(state.sellPrice))
@@ -444,7 +445,7 @@ fun ForgeScreen(
             }
         }
 
-        Spacer(Modifier.height(15.dp))
+        Spacer(Modifier.height(8.dp))
 
         // 창이 열려 있으면 하단 버튼을 감춘다. 원과 파편을 눌러야 하기 때문이다.
         if (state.awaitingDestroyChoice) {
@@ -475,12 +476,12 @@ fun ForgeScreen(
                     feedbackColor = buttonFeedbackColor,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(49.dp),
+                        .height(42.dp),
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         LText(
                             "강화하기",
-                            fontSize = 21.sp,
+                            fontSize = 19.sp,
                             fontWeight = FontWeight.Black,
                             color = Color(0xFF171005),
                         )
@@ -765,12 +766,12 @@ fun Stat(
         PixelIcon(
             resource = icon,
             contentDescription = null,
-            modifier = Modifier.size(27.dp),
+            modifier = Modifier.size(18.dp),
         )
         LText(
             text = value,
-            fontSize = 16.sp,
-            lineHeight = 18.sp,
+            fontSize = 15.sp,
+            lineHeight = 17.sp,
             fontWeight = FontWeight.Black,
             color = resolvedColor,
         )
@@ -796,7 +797,7 @@ private fun CostStat(
     value: String,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        PixelIcon(icon, contentDescription = null, modifier = Modifier.size(29.dp))
+        PixelIcon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
         Column(Modifier.padding(start = 8.dp)) {
             LText(
                 text = label,
@@ -805,7 +806,7 @@ private fun CostStat(
             )
             LText(
                 text = value,
-                fontSize = 17.sp,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Black,
             )
         }
@@ -824,7 +825,7 @@ private fun PixelToggle(
     val shape = CutCornerShape(4.dp)
     Row(
         modifier = modifier
-            .height(48.dp)
+            .height(38.dp)
             .border(1.dp, MaterialTheme.colorScheme.outline, shape)
             .background(
                 if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
@@ -860,7 +861,7 @@ private fun DeepActionStrip(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(40.dp),
+                .height(38.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
@@ -940,7 +941,7 @@ private fun IconEntry(
 ) {
     Column(
         modifier = modifier
-            .height(76.dp)
+            .height(62.dp)
             .border(0.5.dp, MaterialTheme.colorScheme.outline)
             .background(
                 if (highlight) {
