@@ -175,11 +175,15 @@ fun ForgeScreen(
         ) {
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    // 태국어는 낱말 사이에 공백이 없어 줄바꿈이 글자 단위로 일어난다.
+                    // 한 줄로 못 박아 두면 「III · 전설의 시대」가 네 줄로 쪼개져
+                    // 머리글이 화면 위쪽을 잡아먹었다. LText 가 한 줄이면 글자를 줄인다.
                     LText(
                         text = state.season.smithyName,
                         color = MaterialTheme.colorScheme.primary,
                         fontSize = 19.sp,
                         fontWeight = FontWeight.Black,
+                        maxLines = 1,
                         letterSpacing = (-0.5).sp,
                     )
                     Spacer(
@@ -194,6 +198,7 @@ fun ForgeScreen(
                         color = MaterialTheme.colorScheme.primary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Black,
+                        maxLines = 1,
                     )
                 }
                 state.progress.selectedTitle?.let {
