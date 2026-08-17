@@ -633,7 +633,7 @@
   "스킬 확률 +{}%p": "Skill chance +{}%p",
   "스킬은 용검 전용이며 +": "Skill is exclusive to Dragon Sword and +",
   "스킬은 용검 전용이며 +{}부터 타격 시 발동한다.\n": "Skills belong to the Dragon Sword alone and fire on hit from +{}.\n",
-  "스킬은 용검 전용이며 +{}부터 타격 시 발동한다.\n+{}~+{} 월광참 · +{}~+{} 일섬 · +{}~+{} 흡혈 · +{}~+{} 연속 찌르기 · +{}~+{} 붕괴 · +{}~+{} 심판 · +{} 이상 용의 숨결": "Skills belong to the Dragon Sword alone, firing on hit from +{}.\n+{}~+{} Moonlight Slash · +{}~+{} Flash Cut · +{}~+{} Lifesteal · +{}~+{} Flurry · +{}~+{} Collapse · +{}~+{} Judgment · +{} and above Dragon's Breath",
+  "스킬은 용검 전용이며 +{}부터 타격 시 발동한다.\n+{}~+{} 월광참 · +{}~+{} 일섬 · +{}~+{} 흡혈 · +{}~+{} 연속 찌르기 · +{}~+{} 붕괴 · +{}~+{} 심판 · +{} 이상 용의 숨결": "Skills belong to the Dragon Sword alone and fire on hit from +{}.\n+{}~+{} Moonlight Slash · +{}~+{} Flash Cut · +{}~+{} Lifesteal · +{}~+{} Flurry · +{}~+{} Collapse · +{}~+{} Judgment · +{} and above Dragon's Breath",
   "시간": "Time",
   "시간 ": "Time ",
   "시간 조각": "Time Shards",
