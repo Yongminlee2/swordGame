@@ -16,7 +16,7 @@ enum class Achievement(val id: String, val displayName: String, val title: Strin
     REACH_10("reach_10", "+10 달성", "숙련 대장장이"),
     REACH_12("reach_12", "+12 달성", "쌍검의 계승자"),
     REACH_15("reach_15", "+15 달성", "빛을 담은 자"),
-    REACH_18("reach_18", "+18 달성", "용을 벼린 자"),
+    REACH_18("reach_18", "+18 달성", "용을 만들어 낸 자"),
     REACH_20("reach_20", "+20 달성", "흑룡참의 주인"),
     ENDLESS_25("endless_25", "무한 모드 +25 달성", "끝을 보는 자"),
 
