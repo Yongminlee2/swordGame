@@ -65,6 +65,14 @@ private const val DESTROY_MILLIS = 300
 private const val STAY_SHAKE = 12f
 private const val DROP_SHAKE = 26f
 
+/**
+ * 검 그림의 최대 크기.
+ *
+ * **용검 판에서 남는 높이에 맞춘 값이다.** 담금질 바와 강화석·사냥터 줄이 더
+ * 붙는 쪽을 기준으로 잡아야, 직검이든 용검이든 검이 같은 크기로 보인다.
+ */
+private val SWORD_ART_MAX = 300.dp
+
 @Composable
 fun ForgeScreen(
     state: ForgeUiState,
@@ -270,11 +278,15 @@ fun ForgeScreen(
                     )
                 }
 
-                // 남는 높이에 맞춰 커진다. 화면마다 조금씩 달라지더라도 검이 크게
-                // 보이는 쪽을 택했다.
+                // 남는 높이에 맞춰 커지되 [SWORD_ART_MAX] 에서 멈춘다. 용검 판은
+                // 담금질 바와 강화석·사냥터 줄이 더 붙어 남는 높이가 작다 - 상한이
+                // 없으면 직검일 때만 검이 훌쩍 커져 다른 화면처럼 보인다.
                 DestroyPhase.None -> SwordView(
                     sword = state.sword,
-                    modifier = Modifier.fillMaxHeight().aspectRatio(1f),
+                    modifier = Modifier
+                        .heightIn(max = SWORD_ART_MAX)
+                        .fillMaxHeight()
+                        .aspectRatio(1f),
                     shake = shake.value,
                 )
             }
@@ -409,12 +421,16 @@ fun ForgeScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 CostStat(R.drawable.ui_pixel_fire, "강화 비용", compactGold(state.upgradeCost))
-                Spacer(
-                    Modifier
-                        .width(1.dp)
-                        .height(34.dp)
-                        .background(MaterialTheme.colorScheme.outline),
-                )
+                CostDivider()
+                // 강화석도 이번 한 번의 값이다. 따로 띠를 두지 않고 비용 옆에 세운다.
+                if (state.deepUnlocked) {
+                    CostStat(
+                        R.drawable.ui_pixel_stone,
+                        "강화석",
+                        "${state.requiredStones}",
+                    )
+                    CostDivider()
+                }
                 CostStat(R.drawable.ui_pixel_tag, "판매가", compactGold(state.sellPrice))
             }
 
@@ -511,16 +527,9 @@ fun ForgeScreen(
                 )
             }
             Spacer(Modifier.height(4.dp))
-            if (state.deepUnlocked) {
-                DeepActionStrip(
-                    requiredStones = state.requiredStones,
-                    attackPower = state.attackPower,
-                    huntEnabled = state.huntOpen && !state.busy && state.sword != null,
-                    onOpenHunt = onOpenHunt,
-                )
-                Spacer(Modifier.height(7.dp))
-            }
-            // 회랑은 사냥터 안으로 갔다. 퀘스트는 v2.1에서 숨겼다 — 다섯 개면 한 줄에 선다.
+            // 회랑은 사냥터 안으로 갔다. 퀘스트는 v2.1에서 숨겼다.
+            // 사냥터도 여기로 들어왔다 - 따로 띠를 두었더니 용검 판에서만 한 줄이
+            // 더 붙어 검 그림이 그만큼 작아졌다. 입구는 다 같은 줄에 선다.
             val enabled = !state.busy
             ThinRule(Modifier.fillMaxWidth())
             Row(
@@ -546,6 +555,16 @@ fun ForgeScreen(
                     // 올릴 돈이 있으면 알려 준다 - 안 그러면 들어가 볼 이유를 잊는다
                     highlight = state.canUpgradeSkill,
                 )
+                if (state.deepUnlocked) {
+                    IconEntry(
+                        icon = R.drawable.ui_pixel_hunt,
+                        label = "사냥터",
+                        enabled = state.huntOpen && enabled && state.sword != null,
+                        modifier = Modifier.weight(1f),
+                        onClick = onOpenHunt,
+                        badge = "공격 ${compactGold(state.attackPower)}",
+                    )
+                }
                 IconEntry(R.drawable.ui_pixel_book, "도감", enabled, Modifier.weight(1f), onOpenCodex)
             }
         }
@@ -697,54 +716,51 @@ private fun DestroyDialog(
  */
 @Composable
 private fun TemperBar(temper: TemperUi) {
-    Column(Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            LText(
-                text = "담금질 · 실패 보너스",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                color = ForgeAmber,
-            )
-            LText(
-                text = if (temper.fails > 0) {
-                    "실패 %d회 · %.1f%% → %.1f%%".format(
-                        temper.fails,
-                        temper.basePercent,
-                        temper.currentPercent,
-                    )
-                } else {
-                    "%.1f%%".format(temper.basePercent)
-                },
-                fontSize = 11.sp,
-                fontWeight = if (temper.fails > 0) FontWeight.Bold else FontWeight.Normal,
-                color = if (temper.fails > 0) {
-                    ForgeAmber
-                } else {
-                    MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                },
-            )
-        }
-        Spacer(Modifier.height(4.dp))
-        PixelProgressBar(
-            progress = temper.ratio,
-            modifier = Modifier.fillMaxWidth(),
+    // 세 줄을 한 줄로 접었다. 용검 판에서만 세 줄이 더 붙어 검 그림이 그만큼
+    // 작아졌다. 규칙 설명(실패 +n%p·최대·초기화)은 도움말에 있다.
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        LText(
+            text = "담금질",
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
             color = ForgeAmber,
         )
-        Spacer(Modifier.height(4.dp))
-        // 0회일 때 "0.5% → 0.5%" 만 보이면 이게 무슨 장치인지 알 수 없다.
-        // 다음 한 번의 실패가 무엇을 주는지 늘 적어 둔다.
+        PixelProgressBar(
+            progress = temper.ratio,
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 8.dp),
+            color = ForgeAmber,
+        )
         LText(
-            text = "실패 +%.2f%%p · 최대 %.0f%% · 성공 시 초기화".format(
-                temper.gainPerFail,
-                temper.maxPercent,
-            ),
-            fontSize = 10.sp,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+            text = if (temper.fails > 0) {
+                "실패 %d회 · %.1f%%".format(temper.fails, temper.currentPercent)
+            } else {
+                "%.1f%%".format(temper.basePercent)
+            },
+            fontSize = 11.sp,
+            fontWeight = if (temper.fails > 0) FontWeight.Bold else FontWeight.Normal,
+            color = if (temper.fails > 0) {
+                ForgeAmber
+            } else {
+                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+            },
         )
     }
+}
+
+/** 비용 칸 사이 세로선. */
+@Composable
+private fun CostDivider() {
+    Spacer(
+        Modifier
+            .width(1.dp)
+            .height(34.dp)
+            .background(MaterialTheme.colorScheme.outline),
+    )
 }
 
 // 최근 자취(MarkStrip)는 v2.1에서 삭제했다. 범례까지 붙여 봤지만
@@ -849,79 +865,6 @@ private fun PixelToggle(
         )
     }
 }
-
-@Composable
-private fun DeepActionStrip(
-    requiredStones: Int,
-    attackPower: Long,
-    huntEnabled: Boolean,
-    onOpenHunt: () -> Unit,
-) {
-    ForgePanel(Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(38.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                PixelIcon(
-                    resource = R.drawable.ui_pixel_stone,
-                    contentDescription = null,
-                    modifier = Modifier.size(23.dp),
-                )
-                Spacer(Modifier.width(6.dp))
-                LText(
-                    text = "강화석 $requiredStones",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-            Spacer(
-                Modifier
-                    .width(1.dp)
-                    .fillMaxHeight()
-                    .background(MaterialTheme.colorScheme.outline),
-            )
-            Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .clickable(enabled = huntEnabled, onClick = onOpenHunt)
-                    .alpha(if (huntEnabled) 1f else 0.38f),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                PixelIcon(
-                    resource = R.drawable.ui_pixel_hunt,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                )
-                Spacer(Modifier.width(6.dp))
-                Column {
-                    LText(
-                        text = "사냥터",
-                        fontSize = 12.sp,
-                        lineHeight = 12.sp,
-                        fontWeight = FontWeight.Black,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                    LText(
-                        text = "공격 ${compactGold(attackPower)}",
-                        fontSize = 8.sp,
-                        lineHeight = 9.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
-    }
-}
-
 
 /**
  * 아이콘 입구 하나. 큰 아이콘 + 아주 작은 라벨.
