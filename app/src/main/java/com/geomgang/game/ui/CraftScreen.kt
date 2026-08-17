@@ -203,29 +203,35 @@ private fun RecipeList(state: ForgeUiState) {
                 // **정수 요구는 숨기지 않는다.** 이건 비밀이 아니라 값이다.
                 // 어떤 검을 섞는지가 수수께끼고, 정수는 "얼마를 내야 하는지" 다.
                 // 감춰 두면 사냥에서 모은 정수가 뭐에 쓰이는지 알 길이 없다.
-                val essenceText = recipe.essences.entries.joinToString(" + ") {
-                    val have = state.essences[it.key] ?: 0
-                    "${Zone.fromId(it.key).displayName} 정수 ${it.value} ($have)"
-                }
+                //
+                // 정수 요구는 줄을 따로 둔다. 힌트와 한 덩어리로 묶으면 문장이
+                // 통째로 번역 사전에 없어 조각 이어 붙이기로 흘러, 「심연 정수 5」가
+                // 스페인어에서 「Abismo Esencia 5」처럼 어순이 뒤집혔다.
+                val dim = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 LText(
                     text = if (found) {
                         recipe.needs.joinToString(" + ") { (family, minLevel, count) ->
                             val name = family?.displayName ?: "아무 검"
                             val level = if (minLevel > 0) " +$minLevel↑" else ""
                             if (count > 1) "$name$level ×$count" else "$name$level"
-                        } + (if (essenceText.isEmpty()) "" else " + $essenceText") +
-                            "  =  고유 · ${recipe.name}"
+                        } + "  =  고유 · ${recipe.name}"
                     } else {
-                        "??? — ${recipe.hint}" +
-                            (if (essenceText.isEmpty()) "" else "\n필요 · $essenceText")
+                        "??? — ${recipe.hint}"
                     },
                     fontSize = 11.sp,
-                    color = if (found) {
-                        ForgeAmber.copy(alpha = 0.85f)
-                    } else {
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                    },
+                    color = if (found) ForgeAmber.copy(alpha = 0.85f) else dim,
                 )
+                recipe.essences.forEach { (zoneId, need) ->
+                    val have = state.essences[zoneId] ?: 0
+                    Row {
+                        LText("필요 · ", fontSize = 11.sp, color = dim)
+                        LText(
+                            "${Zone.fromId(zoneId).displayName} 정수 $need ($have)",
+                            fontSize = 11.sp,
+                            color = dim,
+                        )
+                    }
+                }
             }
 
             // 정수는 보스가 준다. 어디서 오는지도 한 줄로 말해 준다 —
