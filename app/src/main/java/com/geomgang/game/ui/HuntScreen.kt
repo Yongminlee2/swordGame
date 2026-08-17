@@ -35,6 +35,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -532,9 +533,13 @@ private fun ZoneForgePanel(
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = secondaryAlpha),
                 )
+                // 몬스터 목록은 두 줄에서 끊는다. 이름이 긴 언어에서는 넉 줄까지
+                // 늘어나 오른쪽 「클리어」 배지와 한 문장처럼 붙어 읽혔다.
                 LText(
                     text = zone.monsters.joinToString(" · ") { it.name },
                     fontSize = 11.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = detailAlpha),
                 )
                 LText(
@@ -546,6 +551,7 @@ private fun ZoneForgePanel(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = secondaryAlpha),
                 )
             }
+            Spacer(Modifier.size(8.dp))
             Column(horizontalAlignment = Alignment.End) {
                 when {
                     !unlocked -> LText(
