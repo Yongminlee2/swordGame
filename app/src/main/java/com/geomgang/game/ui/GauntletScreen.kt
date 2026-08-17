@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geomgang.core.GauntletChoice
@@ -80,15 +81,22 @@ fun GauntletScreen(
                 }
 
                 ThinRule(Modifier.fillMaxWidth().padding(vertical = 8.dp))
+                // 두 문장에 폭을 나눠 준다. 폭이 없으면 번역된 긴 문장이 서로
+                // 맞붙어 두 줄로 넘쳤다 - 인도네시아어에서 그랬다.
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     LText(
                         "확정 %,d골드 · %d조각".format(g.bankedGold, g.bankedShards),
+                        modifier = Modifier.weight(1f),
                         fontSize = 12.sp,
+                        maxLines = 1,
                         color = ForgeGreen,
                     )
                     LText(
                         "미확정 %,d골드 · %d조각".format(g.pendingGold, g.pendingShards),
+                        modifier = Modifier.weight(1f),
                         fontSize = 12.sp,
+                        maxLines = 1,
+                        textAlign = TextAlign.End,
                         color = ForgeAmber,
                     )
                 }
