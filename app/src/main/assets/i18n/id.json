@@ -592,7 +592,7 @@
   "세검": "Rapier",
   "세검: +": "rapier: +",
   "세검: +{} 달성.\n": "rapier: +{} mencapai.\n",
-  "세이브 검증에 실패해 인증된 백업본으로 복구했습니다.": "Gagal menyimpan Pedang, dipulihkan dari salinan cadangan yang terverifikasi.",
+  "세이브 검증에 실패해 인증된 백업본으로 복구했습니다.": "Pemeriksaan data simpanan gagal, jadi dipulihkan dari cadangan yang terverifikasi.",
   "세이브 변조 또는 손상을 감지해 해당 값을 차단했습니다. 안전한 저장값으로 시작합니다.": "Simpan Tampering atau korupsi telah terdeteksi dan nilainya telah diblokir. Mulailah dengan penyelamatan yang aman.",
   "세이브 보호 작동": "Simpan operasi perlindungan",
   "소리 · 배경음 · 라이선스": "Suara, suara latar belakang, lisensi",

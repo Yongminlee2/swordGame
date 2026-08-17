@@ -592,7 +592,7 @@
   "세검": "Rapier",
   "세검: +": "Rapier: +",
   "세검: +{} 달성.\n": "Rapier: +{} erreichen.\n",
-  "세이브 검증에 실패해 인증된 백업본으로 복구했습니다.": "Speichern von Schwert fehlgeschlagen, Wiederherstellung aus einer verifizierten Backup-Kopie durchgeführt.",
+  "세이브 검증에 실패해 인증된 백업본으로 복구했습니다.": "Die Prüfung des Spielstands schlug fehl, daher wurde aus einer geprüften Sicherung wiederhergestellt.",
   "세이브 변조 또는 손상을 감지해 해당 값을 차단했습니다. 안전한 저장값으로 시작합니다.": "Speichern Manipulation oder Beschädigung wurden erkannt und der Wert wurde blockiert. Beginnen Sie mit einem sicheren Speichern.",
   "세이브 보호 작동": "Schutzbetrieb speichern",
   "소리 · 배경음 · 라이선스": "Ton, Hintergrundton, Lizenz",

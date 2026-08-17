@@ -592,7 +592,7 @@
   "세검": "Estoque",
   "세검: +": "estoque: +",
   "세검: +{} 달성.\n": "estoque: +{} lograr.\n",
-  "세이브 검증에 실패해 인증된 백업본으로 복구했습니다.": "Fallo al guardar espada, se restauró desde una copia de seguridad verificada.",
+  "세이브 검증에 실패해 인증된 백업본으로 복구했습니다.": "La verificación de la partida falló, así que se restauró desde una copia de seguridad verificada.",
   "세이브 변조 또는 손상을 감지해 해당 값을 차단했습니다. 안전한 저장값으로 시작합니다.": "Guardar Se ha detectado manipulación o corrupción y se ha bloqueado su valor. Comience con un guardado seguro.",
   "세이브 보호 작동": "Guardar operación de protección",
   "소리 · 배경음 · 라이선스": "Sonido, sonido de fondo, licencia.",
