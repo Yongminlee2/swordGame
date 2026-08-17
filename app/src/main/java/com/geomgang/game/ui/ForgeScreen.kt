@@ -51,6 +51,7 @@ import com.geomgang.core.isLegend
 import com.geomgang.game.DestroyPhase
 import com.geomgang.game.ForgeUiState
 import com.geomgang.game.R
+import com.geomgang.game.i18n.GameLanguage
 import com.geomgang.game.TemperUi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -313,26 +314,40 @@ fun ForgeScreen(
             },
         )
         if (state.destroyPhase == DestroyPhase.None && state.sword != null) {
-            LText(
-                text = "+${state.sword.level} · ${state.sword.familyLabel}" +
-                    if (state.sword.stars > 0) "  · 별 ${state.sword.stars}" else "",
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
-            )
-            // 스킬은 사냥터와 함께 열리는 용검 전용이다.
-            if (state.sword.family == com.geomgang.core.WeaponFamily.DRAGON) {
-                val skill = com.geomgang.core.Skills.of(state.sword)
-                Row(verticalAlignment = Alignment.CenterVertically) {
+            // 단계·계열·별·스킬을 **한 줄**에 세운다. 스킬만 따로 줄을 쓰면 용검
+            // 판에서 검 그림이 그만큼 작아진다.
+            //
+            // 번역된 이름은 한국어보다 길다. 줄을 넘기는 대신 글자를 줄인다 -
+            // 두 줄이 되면 검 그림이 또 밀린다.
+            val korean = LocalGameTranslator.current.language == GameLanguage.KOREAN
+            val isDragon = state.sword.family == com.geomgang.core.WeaponFamily.DRAGON
+            val subtitleSize = when {
+                korean -> 13.sp
+                isDragon -> 10.sp
+                else -> 12.sp
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                LText(
+                    text = "+${state.sword.level} · ${state.sword.familyLabel}" +
+                        if (state.sword.stars > 0) "  · 별 ${state.sword.stars}" else "",
+                    fontSize = subtitleSize,
+                    maxLines = 1,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
+                )
+                // 스킬은 사냥터와 함께 열리는 용검 전용이다.
+                if (isDragon) {
+                    val skill = com.geomgang.core.Skills.of(state.sword)
+                    Spacer(Modifier.width(6.dp))
                     PixelIcon(
                         resource = R.drawable.ui_pixel_bolt,
                         contentDescription = null,
-                        modifier = Modifier.size(16.dp),
+                        modifier = Modifier.size(if (korean) 16.dp else 13.dp),
                     )
-                    Spacer(Modifier.width(4.dp))
+                    Spacer(Modifier.width(3.dp))
                     LText(
-                        text = "${com.geomgang.core.Skills.stageLabel(state.sword)?.let { "$it · " } ?: ""}" +
-                            "${skill.name} · ${skill.blurb}",
-                        fontSize = 11.sp,
+                        text = "${skill.name} · ${skill.blurb}",
+                        fontSize = subtitleSize,
+                        maxLines = 1,
                         color = MaterialTheme.colorScheme.primary,
                     )
                 }
