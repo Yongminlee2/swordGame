@@ -173,9 +173,26 @@ private fun WalletItem(
     }
 }
 
-fun compactGold(value: Long): String = when {
-    value >= 1_000_000_000_000L -> "%.1f조".format(value / 1_000_000_000_000.0)
-    value >= 100_000_000L -> "%.1f억".format(value / 100_000_000.0)
-    value >= 10_000L -> "%,d만".format(value / 10_000L)
+/**
+ * 큰 수를 짧게 줄인다. **자릿수를 끊는 자리는 언어마다 다르다.**
+ *
+ * 한국어·일본어·중국어는 만(10⁴)으로 끊어 읽고 나머지는 천(10³)으로 끊는다.
+ * 한 규칙만 쓰고 번역 사전에 맡겼더니 "16만" 이 "16×10K" 로 나왔다 —
+ * 숫자 표기는 번역할 것이 아니라 **언어에 맞게 만들어야 하는 것**이다.
+ */
+@Composable
+fun compactGold(value: Long): String =
+    compactGold(value, LocalGameTranslator.current.language.groupsByTenThousand)
+
+fun compactGold(value: Long, groupsByTenThousand: Boolean): String = when {
+    groupsByTenThousand -> when {
+        value >= 1_000_000_000_000L -> "%.1f조".format(value / 1_000_000_000_000.0)
+        value >= 100_000_000L -> "%.1f억".format(value / 100_000_000.0)
+        value >= 10_000L -> "%,d만".format(value / 10_000L)
+        else -> "%,d".format(value)
+    }
+    value >= 1_000_000_000L -> "%.1fB".format(value / 1_000_000_000.0)
+    value >= 1_000_000L -> "%.1fM".format(value / 1_000_000.0)
+    value >= 10_000L -> "%,dK".format(value / 1_000L)
     else -> "%,d".format(value)
 }

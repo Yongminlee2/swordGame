@@ -7,12 +7,19 @@ enum class GameLanguage(
     val tag: String,
     val nativeName: String,
     val assetCode: String,
+    /**
+     * 큰 수를 만(10⁴) 단위로 끊어 읽는 언어인지.
+     *
+     * 한중일만 참이다. 나머지는 천(10³) 단위라 K·M·B 를 쓴다
+     * ([com.geomgang.game.ui.compactGold]).
+     */
+    val groupsByTenThousand: Boolean = false,
 ) {
-    KOREAN("ko", "한국어", "ko"),
+    KOREAN("ko", "한국어", "ko", groupsByTenThousand = true),
     ENGLISH("en", "English", "en"),
-    JAPANESE("ja", "日本語", "ja"),
-    CHINESE_SIMPLIFIED("zh-Hans", "简体中文", "zh"),
-    CHINESE_TRADITIONAL("zh-Hant", "繁體中文", "zh_Hant"),
+    JAPANESE("ja", "日本語", "ja", groupsByTenThousand = true),
+    CHINESE_SIMPLIFIED("zh-Hans", "简体中文", "zh", groupsByTenThousand = true),
+    CHINESE_TRADITIONAL("zh-Hant", "繁體中文", "zh_Hant", groupsByTenThousand = true),
     SPANISH("es", "Español", "es"),
     FRENCH("fr", "Français", "fr"),
     GERMAN("de", "Deutsch", "de"),
