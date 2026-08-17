@@ -24,3 +24,7 @@ keystore.properties
 /.kotlin/
 __pycache__/
 *.pyc
+
+# 스토어 스크린샷 78장(70MB)은 깃에 올리지 않는다. 스크립트로 다시 찍을 수 있고,
+# 콘솔에 한 번 올리고 나면 저장소에 남길 이유가 없다 - store/스크린샷-찍기.sh
+store/screenshots/
