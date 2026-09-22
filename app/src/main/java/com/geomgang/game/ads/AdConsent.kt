@@ -82,9 +82,6 @@ object AdConsent {
             )
             // initialize 는 디스크를 읽어 몇백 밀리초가 걸린다. 주 화면을 막지 않는다.
             Thread { MobileAds.initialize(activity.applicationContext) }.start()
-            if (AdConfig.usingTestUnits) {
-                Log.w(TAG, "아직 시험용 광고 단위다. AdConfig.kt 의 ID 를 바꿔야 수익이 잡힌다.")
-            }
         }
         onReady()
     }

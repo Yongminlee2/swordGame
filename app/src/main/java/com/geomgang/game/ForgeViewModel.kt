@@ -106,6 +106,9 @@ class ForgeViewModel(
     /** 이번에 켜면서 받은 자리비움 보상. 화면이 알리고 나면 비운다. */
     private var idleReward: IdleReward? = null
 
+    /** 광고로 두 배를 이미 받았는지. 한 보상에 한 번만 준다. */
+    private var idleRewardDoubled: Boolean = false
+
     private var game: GameState = loadAndRepair(difficulty)
 
     private var saveSecurityMessage: String? = null
@@ -281,6 +284,23 @@ class ForgeViewModel(
     fun dismissIdleReward() {
         if (idleReward == null) return
         idleReward = null
+        idleRewardDoubled = false
+        _ui.value = render()
+    }
+
+    /**
+     * 자리비움 보상을 한 번 더 준다. 광고를 **끝까지 본 뒤에만** 불린다.
+     *
+     * 창에 뜬 숫자도 두 배로 바꾼다 — 골드만 슬쩍 늘리면 두 배를 받았는지
+     * 알 수 없다. 두 번 겹쳐 부르는 것은 [idleRewardDoubled] 로 막는다.
+     */
+    fun doubleIdleReward() {
+        val reward = idleReward ?: return
+        if (idleRewardDoubled) return
+        idleRewardDoubled = true
+        game = IdleRewards.apply(game, reward)
+        idleReward = reward.copy(gold = reward.gold * 2, stones = reward.stones * 2)
+        persist()
         _ui.value = render()
     }
 
@@ -1751,6 +1771,7 @@ class ForgeViewModel(
             settings = settings,
             saveSecurityMessage = saveSecurityMessage,
             idleReward = idleReward,
+            idleRewardDoubled = idleRewardDoubled,
             hunt = renderHunt(),
             attackPower = Combat.attackPower(game.sword),
             essences = game.essences,

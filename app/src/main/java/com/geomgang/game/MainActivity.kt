@@ -20,6 +20,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +41,8 @@ import com.geomgang.core.SaveStore
 import com.geomgang.core.WeaponFamily
 import com.geomgang.game.ads.AdConsent
 import com.geomgang.game.ads.ForgeBannerAd
+import com.geomgang.game.ads.InterstitialAds
+import com.geomgang.game.ads.RewardedAds
 import com.geomgang.game.feel.HapticEngine
 import com.geomgang.game.feel.systemVibrator
 import com.geomgang.game.i18n.GameLanguage
@@ -209,6 +212,35 @@ private fun App(store: SaveStore, adsReady: Boolean) {
     var shopFamily by rememberSaveable { mutableStateOf(WeaponFamily.STRAIGHT.name) }
     val backupTransfer = rememberBackupTransfer(vm, store)
     var backupDialog by remember { mutableStateOf<BackupDialogMode?>(null) }
+
+    // --- 광고 ---------------------------------------------------------------
+    val activity = remember(context) { context.findActivity() }
+
+    LaunchedEffect(adsReady, activity) {
+        if (adsReady && activity != null) {
+            InterstitialAds.preload(activity)
+            RewardedAds.preload(activity)
+        }
+    }
+
+    // 전면 광고는 **사냥터나 무한 회랑에서 대장간으로 돌아올 때** 띄운다.
+    // 화면이 바뀌는 자리라 손이 멈춰 있고, 한 판이 끝난 매듭이기도 하다.
+    // 뒤로 가기·나가기·포기 어느 길로 나오든 걸리도록 화면 전환 자체를 본다.
+    var previousOverlay by remember { mutableStateOf(Overlay.None) }
+    LaunchedEffect(overlay, activity) {
+        val leftBattle = overlay == Overlay.None &&
+            (previousOverlay == Overlay.Hunt || previousOverlay == Overlay.Gauntlet)
+        previousOverlay = overlay
+        if (leftBattle && activity != null) InterstitialAds.showIfDue(activity)
+    }
+
+    // 띄울 광고가 없으면 null 을 넘겨 「두 배로」 단추를 아예 그리지 않는다.
+    val onDoubleIdle: (() -> Unit)? =
+        if (adsReady && RewardedAds.isReady && activity != null) {
+            { RewardedAds.show(activity) { vm.doubleIdleReward() } }
+        } else {
+            null
+        }
 
     BackHandler(enabled = !state.busy) {
         when {
@@ -413,6 +445,7 @@ private fun App(store: SaveStore, adsReady: Boolean) {
                         },
                         onOpenMenu = { overlay = Overlay.Records },
                         onDismissIdle = vm::dismissIdleReward,
+                        onDoubleIdle = onDoubleIdle,
                         onOpenTraining = { overlay = Overlay.Training },
                     )
                 }

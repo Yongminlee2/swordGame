@@ -89,6 +89,8 @@ fun ForgeScreen(
     onOpenCodex: () -> Unit,
     onOpenMenu: () -> Unit,
     onDismissIdle: () -> Unit,
+    /** 광고를 보고 자리비움 보상을 두 배로. 띄울 광고가 없으면 null. */
+    onDoubleIdle: (() -> Unit)? = null,
     onOpenTraining: () -> Unit,
 ) {
     val shake = remember { Animatable(0f) }
@@ -133,7 +135,13 @@ fun ForgeScreen(
     }
 
     // 자리비움 보상은 창으로 알린다. 화면에 자리를 만들어 두면 평소에는 빈 칸이다.
-    state.idleReward?.let { IdleRewardDialog(it, onDismissIdle) }
+    state.idleReward?.let {
+        IdleRewardDialog(
+            reward = it,
+            onDismiss = onDismissIdle,
+            onDouble = if (state.idleRewardDoubled) null else onDoubleIdle,
+        )
+    }
 
     // 파괴는 이 게임에서 가장 아픈 순간이다. 작은 원 하나로 지나가면 무엇을 놓쳤는지도
     // 모른 채 검이 사라진다. 창으로 묻되 **제한 시간은 그대로 둔다** - 2.5초의 긴장이
@@ -597,9 +605,17 @@ fun ForgeScreen(
  *
  * 보상은 이미 들어가 있다. 이 창은 "얼마가 들어왔는지" 만 알린다 —
  * 받기를 눌러야 들어오게 하면 창을 놓쳤을 때 보상이 사라진다.
+ *
+ * [onDouble] 이 있으면 광고를 보고 두 배로 받는 단추를 함께 그린다. 띄울
+ * 광고가 없으면 null 로 와서 **단추 자체가 없다** — 눌러도 안 되는 단추를
+ * 보여 주느니 없는 편이 낫다.
  */
 @Composable
-private fun IdleRewardDialog(reward: IdleReward, onDismiss: () -> Unit) {
+private fun IdleRewardDialog(
+    reward: IdleReward,
+    onDismiss: () -> Unit,
+    onDouble: (() -> Unit)? = null,
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { LText("자리를 비운 사이", fontWeight = FontWeight.Bold) },
@@ -631,6 +647,9 @@ private fun IdleRewardDialog(reward: IdleReward, onDismiss: () -> Unit) {
         },
         confirmButton = {
             TextButton(onClick = onDismiss) { LText("확인") }
+        },
+        dismissButton = onDouble?.let {
+            { TextButton(onClick = it) { LText("광고 보고 두 배로") } }
         },
     )
 }

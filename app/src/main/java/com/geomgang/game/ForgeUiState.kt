@@ -108,6 +108,8 @@ data class ForgeUiState(
     val progress: ProgressState = ProgressState(),
     /** 자리를 비운 사이 쌓인 보상. 켜자마자 한 번 알리고 비운다. */
     val idleReward: IdleReward? = null,
+    /** 광고로 두 배를 이미 받았는지. 받았으면 그 단추를 지운다. */
+    val idleRewardDoubled: Boolean = false,
     val settings: Settings = Settings(),
     /** 변조된 저장값을 거부하거나 백업으로 복구했을 때 한 번 보여 주는 안내. */
     val saveSecurityMessage: String? = null,
