@@ -38,6 +38,8 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.geomgang.core.Difficulty
 import com.geomgang.core.SaveStore
 import com.geomgang.core.WeaponFamily
+import com.geomgang.game.ads.AdConsent
+import com.geomgang.game.ads.ForgeBannerAd
 import com.geomgang.game.feel.HapticEngine
 import com.geomgang.game.feel.systemVibrator
 import com.geomgang.game.i18n.GameLanguage
@@ -105,8 +107,17 @@ private fun Overlay.parent(): Overlay = when (this) {
 private val ONLY_MODE = Difficulty.ENDLESS
 
 class MainActivity : ComponentActivity() {
+
+    /**
+     * 광고를 요청해도 되는 상태가 됐는지.
+     *
+     * 유럽 이용자는 동의 창을 닫아야 참이 된다. 그 전에는 배너를 붙이지 않는다.
+     */
+    private var adsReady by mutableStateOf(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AdConsent.start(this) { adsReady = true }
         // targetSdk 35 부터 **edge-to-edge 가 강제**다 - 앱이 상태바·내비게이션 바
         // 아래까지 그려진다. 끌 수 없으므로 명시적으로 켜 두고, 인셋은 아래에서 뺀다.
         val systemBarColor = Color.rgb(9, 9, 11)
@@ -119,7 +130,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             SwordForgeTheme {
                 Surface {
-                    App(saveStore)
+                    App(saveStore, adsReady)
                 }
             }
         }
@@ -140,7 +151,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun App(store: SaveStore) {
+private fun App(store: SaveStore, adsReady: Boolean) {
     // 소리를 켤지는 ViewModel 의 설정을 그때그때 읽는다. 설정을 바꾸면 즉시 반영된다.
     val context = LocalContext.current
     val bgm = remember { BgmEngine(context.applicationContext) }
@@ -221,7 +232,14 @@ private fun App(store: SaveStore) {
 
     CompositionLocalProvider(LocalGameTranslator provides translator) {
         ForgeSeasonTheme(season = state.season) {
-            ForgeBackdrop {
+            ForgeBackdrop(
+                bottomBar = {
+                    // 사냥터와 무한 회랑은 화면을 쉬지 않고 두드리는 곳이다.
+                    // 거기에 배너를 두면 잘못 눌러 광고로 튕겨 나간다.
+                    val tapping = overlay == Overlay.Hunt || overlay == Overlay.Gauntlet
+                    if (adsReady && !tapping) ForgeBannerAd()
+                },
+            ) {
                 when (overlay) {
                     Overlay.Hunt -> HuntScreen(
                         state = state,

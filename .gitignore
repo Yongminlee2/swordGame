@@ -31,3 +31,7 @@ store/screenshots/
 
 # 콘솔에 올릴 것만 모아 둔 폴더 (빌드 산출물 복사본)
 _출시업로드/
+
+# 메모리가 모자라 JVM 이 죽을 때 남기는 기록. 고아 gradle 데몬을 먼저 죽인다.
+hs_err_pid*.log
+replay_pid*.log

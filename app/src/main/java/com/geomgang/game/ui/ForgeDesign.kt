@@ -91,9 +91,18 @@ fun ScrollableForgeScreen(
     }
 }
 
-/** 기준 시안의 어두운 격자와 불씨를 모든 게임 화면의 공통 무대로 사용한다. */
+/**
+ * 기준 시안의 어두운 격자와 불씨를 모든 게임 화면의 공통 무대로 사용한다.
+ *
+ * [bottomBar] 는 화면 맨 아래에 깔리는 띠다. 광고 배너가 여기로 들어온다.
+ * 게임 내용 **위에 겹치지 않고 밀어 올린다** - 겹치면 마지막 줄의 버튼이
+ * 광고에 가려 눌리지 않는다.
+ */
 @Composable
-fun ForgeBackdrop(content: @Composable BoxScope.() -> Unit) {
+fun ForgeBackdrop(
+    bottomBar: @Composable () -> Unit = {},
+    content: @Composable BoxScope.() -> Unit,
+) {
     val deep = LocalForgeDeep.current
     Box(
         modifier = Modifier
@@ -118,13 +127,15 @@ fun ForgeBackdrop(content: @Composable BoxScope.() -> Unit) {
         )
         // Android 15의 edge-to-edge 환경에서도 시스템 뒤로·홈 버튼 위로 UI가
         // 내려가지 않게 모든 화면에 같은 하단 안전 영역을 적용한다.
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .navigationBarsPadding()
                 .padding(bottom = 6.dp),
-            content = content,
-        )
+        ) {
+            Box(modifier = Modifier.weight(1f), content = content)
+            bottomBar()
+        }
     }
 }
 

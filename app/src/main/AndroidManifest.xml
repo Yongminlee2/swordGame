@@ -4,6 +4,10 @@
     <!-- 진동은 런타임 요청이 없는 권한이다. 선언만 하면 된다. -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- 광고를 받아 오는 데만 쓴다. 세이브는 기기 안에만 있고 어디로도 보내지 않는다. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <!--
         allowBackup 은 꺼 둔다.
 
@@ -23,6 +27,20 @@
         android:localeConfig="@xml/locales_config"
         android:supportsRtl="false"
         android:theme="@style/Theme.SwordForge">
+
+        <!--
+            애드몹 앱 ID.
+
+            **이 값이 틀리면 앱이 켜지자마자 죽는다.** 광고 SDK 가 시작할 때 읽어
+            보고 형식이 맞지 않으면 예외를 던지기 때문이다.
+
+            지금 들어 있는 것은 구글이 공개한 **시험용 앱 ID** 다. 애드몹에서
+            앱을 만든 뒤 거기서 받은 진짜 ID(ca-app-pub-숫자~숫자)로 바꾼다.
+            광고 단위 ID 는 ads/AdConfig.kt 에 따로 있다.
+        -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
 
         <activity
             android:name=".MainActivity"

@@ -28,8 +28,8 @@ android {
         applicationId = "com.geomgang.game"
         minSdk = 26
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.0.2"
+        versionCode = 4
+        versionName = "1.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -90,6 +90,11 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.kotlinx.serialization.json)
+
+    // 광고. user-messaging-platform 은 유럽 이용자 동의를 받는 구글 인증 도구로,
+    // 이것 없이 유럽에 광고를 내보내면 정책 위반이다.
+    implementation(libs.play.services.ads)
+    implementation(libs.user.messaging.platform)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
