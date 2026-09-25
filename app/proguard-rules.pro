@@ -16,3 +16,10 @@
     public static **[] values();
     public static ** valueOf(java.lang.String);
 }
+
+# 광고 SDK 가 WorkManager 를 끌고 오고, WorkManager 는 Room 으로 만든
+# WorkDatabase_Impl 을 **이름으로 찾아 기본 생성자로** 만든다. 축소기가 그
+# 생성자를 지우면 앱이 켜지자마자 "Failed to create an instance of
+# androidx.work.impl.WorkDatabase" 로 죽는다. 디버그 빌드는 축소하지 않아 멀쩡하고
+# 릴리스에서만 터지므로, 릴리스를 실기기에서 켜 보기 전에는 드러나지 않는다.
+-keep class * extends androidx.room.RoomDatabase { <init>(); }
