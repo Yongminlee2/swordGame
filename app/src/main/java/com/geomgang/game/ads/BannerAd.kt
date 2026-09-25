@@ -3,6 +3,11 @@ package com.geomgang.game.ads
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -25,7 +30,7 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 
 /**
- * 화면 아래에 붙는 배너.
+ * 화면 맨 위에 붙는 배너.
  *
  * 광고가 **실제로 들어왔을 때만** 자리를 차지한다. 미리 자리를 비워 두면 광고가
  * 안 들어오는 동안 빈 회색 띠가 남아 게임이 망가져 보인다.
@@ -75,7 +80,9 @@ fun ForgeBannerAd(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color(0xFF09090B)),
+            .background(Color(0xFF09090B))
+            // 맨 위에는 카메라 구멍(노치)이 있다. 광고가 그 밑으로 들어가면 가려진다.
+            .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Top)),
         contentAlignment = Alignment.Center,
     ) {
         AndroidView(factory = { adView })

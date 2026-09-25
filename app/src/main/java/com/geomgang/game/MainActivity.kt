@@ -242,6 +242,15 @@ private fun App(store: SaveStore, adsReady: Boolean) {
             null
         }
 
+    // 상점 「광고 보고 골드 받기」. 보상형 광고 한 개를 자리비움 두 배와 함께 쓴다 —
+    // 보여 주고 나면 [RewardedAds] 가 다음 것을 알아서 받아 둔다.
+    val onWatchAdForGold: (() -> Unit)? =
+        if (adsReady && RewardedAds.isReady && activity != null) {
+            { RewardedAds.show(activity) { vm.claimAdGold() } }
+        } else {
+            null
+        }
+
     BackHandler(enabled = !state.busy) {
         when {
             // 사냥 중이면 먼저 사냥터 목록으로, 거기서 한 번 더 누르면 강화 화면으로
@@ -265,7 +274,7 @@ private fun App(store: SaveStore, adsReady: Boolean) {
     CompositionLocalProvider(LocalGameTranslator provides translator) {
         ForgeSeasonTheme(season = state.season) {
             ForgeBackdrop(
-                bottomBar = {
+                topBar = {
                     // 사냥터와 무한 회랑은 화면을 쉬지 않고 두드리는 곳이다.
                     // 거기에 배너를 두면 잘못 눌러 광고로 튕겨 나간다.
                     val tapping = overlay == Overlay.Hunt || overlay == Overlay.Gauntlet
@@ -347,6 +356,7 @@ private fun App(store: SaveStore, adsReady: Boolean) {
                         onBuyLegendPreventWithShards = vm::buyLegendPreventWithShards,
                         onCraft = { id, count, family -> vm.craft(id, count, family) },
                         onBack = { overlay = Overlay.None },
+                        onWatchAdForGold = onWatchAdForGold,
                     )
 
                     Overlay.Training -> TrainingScreen(

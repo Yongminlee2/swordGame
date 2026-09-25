@@ -78,6 +78,10 @@ object AdConsent {
                     .setTagForChildDirectedTreatment(
                         RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_FALSE,
                     )
+                    // 개발자 폰은 릴리스 빌드에서도 시험 광고만 받는다. 내 광고를 내가
+                    // 누르면 부정 클릭으로 계정이 막힌다. 다른 사람의 폰에는 영향이 없다.
+                    // 값은 이 폰에서 앱을 켰을 때 로그의 setTestDeviceIds 줄에 나온다.
+                    .setTestDeviceIds(TEST_DEVICES)
                     .build(),
             )
             // initialize 는 디스크를 읽어 몇백 밀리초가 걸린다. 주 화면을 막지 않는다.
@@ -86,3 +90,6 @@ object AdConsent {
         onReady()
     }
 }
+
+/** 시험 광고만 받을 개발자 폰. A16(RF9Y101ZZPB). */
+private val TEST_DEVICES = listOf("073DD498848F5B5FE2DADE6D1A419E5A")

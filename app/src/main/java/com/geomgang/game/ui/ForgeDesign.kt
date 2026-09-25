@@ -94,13 +94,16 @@ fun ScrollableForgeScreen(
 /**
  * 기준 시안의 어두운 격자와 불씨를 모든 게임 화면의 공통 무대로 사용한다.
  *
- * [bottomBar] 는 화면 맨 아래에 깔리는 띠다. 광고 배너가 여기로 들어온다.
- * 게임 내용 **위에 겹치지 않고 밀어 올린다** - 겹치면 마지막 줄의 버튼이
- * 광고에 가려 눌리지 않는다.
+ * [topBar] 는 화면 맨 위에 붙는 띠다. 광고 배너가 여기로 들어온다.
+ * 게임 내용 **위에 겹치지 않고 밀어 내린다** - 겹치면 머리글이 가려진다.
+ *
+ * 처음에는 맨 아래에 두었는데, 강화하기·상점 단추 바로 밑이라 **연타하다
+ * 광고를 누르기 쉬웠다.** 잘못 누른 클릭은 이용자도 불쾌하고 애드몹도 부정
+ * 클릭으로 본다. 맨 위는 손가락이 거의 가지 않는 자리다.
  */
 @Composable
 fun ForgeBackdrop(
-    bottomBar: @Composable () -> Unit = {},
+    topBar: @Composable () -> Unit = {},
     content: @Composable BoxScope.() -> Unit,
 ) {
     val deep = LocalForgeDeep.current
@@ -133,8 +136,8 @@ fun ForgeBackdrop(
                 .navigationBarsPadding()
                 .padding(bottom = 6.dp),
         ) {
+            topBar()
             Box(modifier = Modifier.weight(1f), content = content)
-            bottomBar()
         }
     }
 }

@@ -15,6 +15,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -23,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import com.geomgang.core.Economy
 import com.geomgang.core.Item
 import com.geomgang.core.GameSeason
@@ -58,8 +60,11 @@ fun ShopScreen(
     onBuyLegendPreventWithShards: () -> Unit,
     onCraft: (recipeId: String, count: Int, family: WeaponFamily?) -> Unit,
     onBack: () -> Unit,
+    /** 보상형 광고를 띄운다. 띄울 광고가 없으면 null. */
+    onWatchAdForGold: (() -> Unit)? = null,
 ) {
     ScrollableForgeScreen(title = "상점", onBack = onBack, wallet = state.wallet()) {
+        AdGoldPanel(state, onWatchAdForGold)
         // --- 검 ---
         ForgePanel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
@@ -407,4 +412,55 @@ private fun ForgeUiState.ownedCountOf(item: Item): Int = when (item) {
     Item.PREVENT_TICKET -> preventTickets
     Item.BLESSING_SCROLL -> blessingScrolls
     Item.LUCK_CHARM -> luckCharms
+}
+
+/**
+ * 상점 맨 위의 「광고 보고 골드 받기」.
+ *
+ * 세 가지 모습이다.
+ * - 광고가 준비됐고 쿨타임이 아니다 → 누를 수 있는 단추
+ * - 쿨타임 중이다 → 잠긴 단추와 「잠시 뒤」 안내. 광고가 있든 없든 보인다
+ * - 광고가 없고 쿨타임도 아니다 → **칸째로 없다.** 눌러도 안 되는 단추는 두지 않는다
+ *
+ * 금액은 숫자만 적는다. 「골드」를 붙인 문장을 새로 만들면 열두 사전에 숫자
+ * 자리까지 맞춰 넣어야 한다 — 금화 그림이 이미 무엇인지 말해 준다.
+ */
+@Composable
+private fun AdGoldPanel(state: ForgeUiState, onWatch: (() -> Unit)?) {
+    // 쿨타임이 풀리는 순간 단추가 저절로 살아나야 한다. 1초마다 시계를 본다.
+    val now by produceState(System.currentTimeMillis()) {
+        while (true) {
+            delay(1_000)
+            value = System.currentTimeMillis()
+        }
+    }
+    val cooling = now < state.adGoldReadyAt
+    if (!cooling && onWatch == null) return
+
+    ForgePanel(Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column(Modifier.weight(1f)) {
+                LText("광고 보고 골드 받기", fontWeight = FontWeight.Bold)
+                LText(
+                    text = if (cooling) "잠시 뒤 다시 받을 수 있다" else "+%,d".format(state.adGoldAmount),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+            }
+            Spacer(Modifier.width(10.dp))
+            Button(
+                onClick = { onWatch?.invoke() },
+                enabled = !cooling && onWatch != null && !state.busy,
+            ) {
+                LText("▶")
+            }
+        }
+    }
+    Spacer(Modifier.height(12.dp))
 }

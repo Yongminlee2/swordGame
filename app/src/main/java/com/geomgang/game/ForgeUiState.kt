@@ -110,6 +110,10 @@ data class ForgeUiState(
     val idleReward: IdleReward? = null,
     /** 광고로 두 배를 이미 받았는지. 받았으면 그 단추를 지운다. */
     val idleRewardDoubled: Boolean = false,
+    /** 상점 광고 한 번에 받는 골드. */
+    val adGoldAmount: Long = 0L,
+    /** 상점 광고를 다시 받을 수 있는 시각(밀리초). 0 이면 바로 된다. */
+    val adGoldReadyAt: Long = 0L,
     val settings: Settings = Settings(),
     /** 변조된 저장값을 거부하거나 백업으로 복구했을 때 한 번 보여 주는 안내. */
     val saveSecurityMessage: String? = null,

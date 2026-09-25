@@ -518,9 +518,11 @@ fun ForgeScreen(
                     enabled = state.canForge,
                     feedback = buttonFeedback.value,
                     feedbackColor = buttonFeedbackColor,
+                    // 높이를 못 박지 않는다. 「골드가 모자라다」 같은 안내가 둘째 줄로 붙으면
+                    // 42dp 안에 두 줄이 안 들어가 아랫줄이 잘렸다. 한 줄일 때는 42dp 그대로다.
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(42.dp),
+                        .heightIn(min = 42.dp),
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         LText(

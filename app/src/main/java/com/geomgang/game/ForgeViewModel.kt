@@ -109,6 +109,14 @@ class ForgeViewModel(
     /** 광고로 두 배를 이미 받았는지. 한 보상에 한 번만 준다. */
     private var idleRewardDoubled: Boolean = false
 
+    /**
+     * 상점 「광고 보고 골드 받기」를 다시 누를 수 있는 시각.
+     *
+     * ponytail: 메모리에만 둔다 — 앱을 껐다 켜면 풀린다. 한 번 받으려면 광고를
+     * 끝까지 봐야 하므로 그 자체가 제동이다. 남용이 보이면 세이브로 옮긴다.
+     */
+    private var adGoldReadyAt: Long = 0L
+
     private var game: GameState = loadAndRepair(difficulty)
 
     private var saveSecurityMessage: String? = null
@@ -285,6 +293,26 @@ class ForgeViewModel(
         if (idleReward == null) return
         idleReward = null
         idleRewardDoubled = false
+        _ui.value = render()
+    }
+
+    /**
+     * 상점 광고 한 번에 주는 골드. **지금 검을 몇 번 더 굴릴 만큼**이다.
+     *
+     * 고정 금액으로 주면 초반에는 판이 뒤집히고 후반에는 아무 의미가 없다.
+     * 강화 비용에 묶어 두면 어느 단계에서든 "몇 번 더"라는 같은 무게가 된다.
+     */
+    private fun adGoldAmount(): Long {
+        val level = game.sword?.level ?: 0
+        return maxOf(Economy.upgradeCost(level) * AD_GOLD_FORGES, AD_GOLD_MIN)
+    }
+
+    /** 상점 광고를 끝까지 본 뒤에만 불린다. 쿨타임 안이면 아무 일도 하지 않는다. */
+    fun claimAdGold() {
+        if (now() < adGoldReadyAt) return
+        adGoldReadyAt = now() + AD_GOLD_COOLDOWN_MILLIS
+        game = game.copy(gold = game.gold + adGoldAmount())
+        persist()
         _ui.value = render()
     }
 
@@ -1772,6 +1800,8 @@ class ForgeViewModel(
             saveSecurityMessage = saveSecurityMessage,
             idleReward = idleReward,
             idleRewardDoubled = idleRewardDoubled,
+            adGoldAmount = adGoldAmount(),
+            adGoldReadyAt = adGoldReadyAt,
             hunt = renderHunt(),
             attackPower = Combat.attackPower(game.sword),
             essences = game.essences,
@@ -1813,3 +1843,12 @@ class ForgeViewModel(
         else -> null
     }
 }
+
+/** 상점 광고 한 번 = 지금 강화 몇 번 값. */
+private const val AD_GOLD_FORGES = 5L
+
+/** 맨 처음(+0, 강화 30골드)에도 받는 느낌이 나도록 바닥을 둔다. */
+private const val AD_GOLD_MIN = 300L
+
+/** 한 번 받은 뒤 다시 받을 때까지. */
+private const val AD_GOLD_COOLDOWN_MILLIS = 5 * 60 * 1000L
